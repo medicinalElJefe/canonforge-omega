@@ -188,3 +188,25 @@ graph TD
     Domains --> Globals
     Axes --> Globals
 ```
+```mermaid
+sequenceDiagram
+
+    participant User as User
+    participant UI as Console (Electron)
+    participant API as FastAPI Backend
+    participant Fusion as Fusion Core
+    participant Core as Omega 144D Core
+
+    User->>UI: Action / Trigger Pattern
+    UI->>API: /api/status or /api/run-pattern
+    API->>Fusion: Build OmegaPacket
+    Fusion->>Fusion: Compute TIC + Universal Moment
+    Fusion->>Core: Provide 144D vector
+    Core->>Core: DSSEngine step + EventQueue logging
+    Core->>Core: Build Ω188 overlay (SubverseCore)
+    Core-->>Fusion: Return coherence + overlay
+    Fusion-->>API: Status payload
+    API-->>UI: JSON response
+    UI-->>User: Updated display (TIC, Grid, Events)
+```
+
