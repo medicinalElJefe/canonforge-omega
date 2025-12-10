@@ -104,5 +104,39 @@ This project is released under the MIT License – see `LICENSE` for details.
 
 ## Architecture Diagram
 
+flowchart TD
+
+    subgraph UI["Desktop UI (Electron)"]
+        Console["CanonForge Omega Console"]
+    end
+
+    subgraph API["FastAPI Backend (api/app.py)"]
+        Status["/api/status"]
+        Patterns["/api/patterns"]
+        Events["/api/events"]
+        RunPattern["/api/run-pattern"]
+    end
+
+    subgraph Fusion["Omega Fusion Core (omega_fusion_core)"]
+        Model["OmegaPacket / Domain / State / Role / Channel"]
+        TIC["TICCalculator"]
+        UM["UniversalMomentCalculator"]
+        SeqStore["SequenceStore (~/.omega_fusion/sequences.json)"]
+        Macro["MacroPlayer + MacroExecutor"]
+    end
+
+    subgraph Core144["Omega 144D Core (omega_144d_core)"]
+        Bus["CoreBus"]
+        DSS["DSSEngine (12x12 to 144D)"]
+        EQ["EventQueue"]
+        Subverse["SubverseCore (188 overlay)"]
+    end
+
+    UI --> API
+    API --> Fusion
+    API --> Core144
+    Fusion --> Core144
+    Core144 --> Fusion
+    Core144 --> API
 
 
