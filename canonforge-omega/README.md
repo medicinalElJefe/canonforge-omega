@@ -142,3 +142,48 @@ flowchart TD
     Core144 --> Fusion
     Core144 --> API
 ```
+
+graph TD
+
+    subgraph Grid["12 x 12 Grid (144 Base Nodes)"]
+        G1["State[1..144]"]
+    end
+
+    subgraph Domains["12 Domain Aggregates (Rows)"]
+        D1["D1"]
+        D2["D2"]
+        D3["..."]
+        D12["D12"]
+    end
+
+    subgraph Axes["12 Axis Aggregates (Columns)"]
+        A1["A1"]
+        A2["A2"]
+        A3["..."]
+        A12["A12"]
+    end
+
+    subgraph Globals["20 Global Metrics"]
+        GCoh["Coherence"]
+        GVar["Variance"]
+        GMax["Max Magnitude"]
+        GReg["Regime"]
+        GT["TIC Truth"]
+        GI["TIC Integrity"]
+        GC["TIC Courage"]
+        GDom["Domain Spread"]
+        GAxis["Axis Spread"]
+        GEng["Energy Level"]
+        GDrift["Drift Index"]
+        GPatt["Pattern Alignment"]
+        GNoise["Noise-to-Signal"]
+        GRec["Recovery Potential"]
+        GVol["Volatility"]
+        GExtra["Other Globals"]
+    end
+
+    Grid --> Domains
+    Grid --> Axes
+    Grid --> Globals
+    Domains --> Globals
+    Axes --> Globals
