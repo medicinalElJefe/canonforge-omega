@@ -142,7 +142,7 @@ flowchart TD
     Core144 --> Fusion
     Core144 --> API
 ```
-
+```mermaid
 graph TD
 
     subgraph Grid["12 x 12 Grid (144 Base Nodes)"]
@@ -187,3 +187,4 @@ graph TD
     Grid --> Globals
     Domains --> Globals
     Axes --> Globals
+```
