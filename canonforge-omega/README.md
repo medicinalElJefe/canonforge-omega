@@ -101,3 +101,10 @@ Together, these layers form a **Cognitive Operating System** designed for perfor
 ## 📜 License
 
 This project is released under the MIT License – see `LICENSE` for details.
+
+## Architecture Diagram
+
+```mermaid
+flowchart TD
+...
+
