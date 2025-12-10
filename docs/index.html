@@ -1,1 +1,288 @@
-docs/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CanonForge Omega — Cognitive Operating System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CanonForge Omega — The First Cognitive Operating System: Intent Engine · 144D Coherence Physics · Executable Behavioral Patterns.">
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #020617;
+      --panel: #020617;
+      --panel-soft: #0b1120;
+      --accent: #4f46e5;
+      --accent-soft: #6366f1;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #111827 0, #020617 45%, #000 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    header {
+      padding: 3.5rem 6vw 3rem;
+      border-bottom: 1px solid rgba(148,163,184,0.2);
+      background: radial-gradient(circle at top left, rgba(79,70,229,0.4), rgba(15,23,42,0.96) 55%, #020617);
+    }
+    .logo {
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      color: #c7d2fe;
+    }
+    h1 {
+      margin: 1.2rem 0 0.4rem;
+      font-size: clamp(2.4rem, 4vw, 3.4rem);
+    }
+    .tagline {
+      font-size: 1.05rem;
+      max-width: 34rem;
+      color: #e5e7eb;
+      opacity: 0.95;
+    }
+    .tagline span {
+      display: block;
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+    .cta-row {
+      margin-top: 1.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .btn {
+      padding: 0.75rem 1.35rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.55);
+      background: rgba(15,23,42,0.9);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.92rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 15px 40px rgba(59,130,246,0.45);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(15,23,42,0.5);
+      border-color: rgba(191,219,254,0.7);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 20px 50px rgba(59,130,246,0.6);
+    }
+    main {
+      padding: 3rem 6vw 4rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    section {
+      margin-bottom: 3rem;
+    }
+    h2 {
+      font-size: 1.6rem;
+      margin-bottom: 0.4rem;
+    }
+    p {
+      margin-top: 0.5rem;
+      color: #e5e7eb;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.2rem;
+    }
+    .card {
+      padding: 1.25rem 1.15rem;
+      border-radius: 1.1rem;
+      border: 1px solid rgba(31,41,55,0.9);
+      background: radial-gradient(circle at top left, rgba(79,70,229,0.35), rgba(15,23,42,0.96) 55%, #020617);
+    }
+    .card h3 {
+      margin-top: 0.2rem;
+      font-size: 1.05rem;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #e5e7eb;
+      margin-bottom: 0.4rem;
+    }
+    ul {
+      padding-left: 1.1rem;
+    }
+    li {
+      margin-bottom: 0.25rem;
+    }
+    code {
+      background: rgba(15,23,42,0.9);
+      border-radius: 0.25rem;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.86rem;
+    }
+    a {
+      color: #a5b4fc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      padding: 2rem 6vw 2.5rem;
+      border-top: 1px solid rgba(31,41,55,0.95);
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: #020617;
+    }
+    footer a { color: #a5b4fc; }
+
+    @media (max-width: 640px) {
+      header { padding: 3rem 5vw 2.6rem; }
+      main { padding: 2.5rem 5vw 3rem; }
+      .cta-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">CANONFORGE · OMEGA</div>
+    <h1>The First Cognitive Operating System</h1>
+    <p class="tagline">
+      Intent Engine · 144D Coherence Physics · Executable Behavioral Patterns.
+      <span>CanonForge Omega adds a cognition-layer to modern computing: it measures how coherent things are, understands the moment, and executes patterns that move people and systems toward stability.</span>
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/medicinalElJefe/canonforge-omega" target="_blank" rel="noopener">
+        View Source on GitHub
+      </a>
+      <a class="btn" href="#architecture">
+        Explore Architecture
+      </a>
+      <a class="btn" href="#docs">
+        Read the Documentation
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section id="why">
+      <h2>Why CanonForge Omega?</h2>
+      <p>
+        Traditional operating systems react to clicks, keystrokes, and API calls. They do not understand intention,
+        coherence, or drift. They cannot tell when a workflow is stabilizing, when a team is burning out, or when a pattern
+        of behavior is pushing a system into chaos.
+      </p>
+      <p>
+        CanonForge Omega introduces a new layer: a cognitive operating system that models
+        <strong>the moment</strong>, <strong>system coherence</strong>, and <strong>the behaviors that restore alignment</strong>.
+      </p>
+    </section>
+
+    <section id="architecture">
+      <h2>Architecture</h2>
+      <p class="muted">
+        CanonForge Omega is built from four core subsystems. Together they form a closed loop of
+        perception → evaluation → pattern execution → feedback.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <div class="pill">Fusion Core</div>
+          <h3>Intent &amp; Moment Engine</h3>
+          <p>
+            Models the current moment using Domains, Roles, States, and Channels wrapped in an OmegaPacket.
+            Computes TIC (Truth · Integrity · Courage) and a Universal Moment index that anchors context in time.
+          </p>
+        </div>
+        <div class="card">
+          <div class="pill">144D Core</div>
+          <h3>Deep System Symmetry</h3>
+          <p>
+            Represents system state on a 12×12 grid (144D). DSSEngine applies coupling and damping, calculates
+            coherence, regime, and a 188-state overlay of domains, axes, and global metrics.
+          </p>
+        </div>
+        <div class="card">
+          <div class="pill">Pattern OS</div>
+          <h3>Executable Behavioral Sequences</h3>
+          <p>
+            JSON-based MacroSequences, played through MacroPlayer and a safe HostMuscles adapter. Encodes human-like
+            workflows (focus rituals, review blocks, reset patterns) as reproducible sequences.
+          </p>
+        </div>
+        <div class="card">
+          <div class="pill">Console</div>
+          <h3>Desktop UI (Electron)</h3>
+          <p>
+            A live console powered by FastAPI. Shows TIC, coherence state, the 12×12 grid, pattern lists, and a rolling
+            Omega event stream. The human-facing window into the CanonForge Omega kernel.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="docs">
+      <h2>Source Code &amp; Documentation</h2>
+      <p>
+        CanonForge Omega is released as an open-core prototype under the MIT license. The repository includes the
+        Fusion Core, Ω144D engine, Pattern OS, and Desktop Console.
+      </p>
+      <ul>
+        <li><strong>GitHub Repository:</strong> <a href="https://github.com/medicinalElJefe/canonforge-omega" target="_blank" rel="noopener">medicinalElJefe/canonforge-omega</a></li>
+        <li><strong>Project Wiki:</strong> <a href="https://github.com/medicinalElJefe/canonforge-omega/wiki" target="_blank" rel="noopener">Architecture, Fusion Core, Ω144D &amp; Ω188, Pattern OS, API, Roadmap</a></li>
+      </ul>
+      <p class="muted">
+        The prototype is built with Python 3.10+, FastAPI, and Electron. Developers can run the backend with
+        <code>uvicorn api.app:app --reload</code> and start the console from <code>desktop_ui/electron</code>
+        with <code>npm start</code>.
+      </p>
+    </section>
+
+    <section id="founder">
+      <h2>Founder</h2>
+      <p>
+        CanonForge Omega is created by <strong>Jeffrey Alan Dewey</strong>, who has spent years developing the
+        CanonForge framework: a unified language of geometry, coherence, and human performance. Omega is the
+        first public prototype of that work, released as a deep-tech cognitive OS kernel.
+      </p>
+      <ul>
+        <li>GitHub: <a href="https://github.com/medicinalElJefe" target="_blank" rel="noopener">@medicinalElJefe</a></li>
+        <li>Email: <em>add your preferred contact email here</em></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    CanonForge Omega · The First Cognitive Operating System ·
+    <a href="https://github.com/medicinalElJefe/canonforge-omega" target="_blank" rel="noopener">GitHub</a> ·
+    MIT License · © 2025 Jeffrey Alan Dewey
+  </footer>
+</body>
+</html>
+
