@@ -210,3 +210,84 @@ sequenceDiagram
     UI-->>User: Updated display (TIC, Grid, Events)
 ```
 
+```mermaid
+flowchart LR
+
+    SeqStore["SequenceStore (~/.omega_fusion/sequences.json)"]
+    MacroPlayer["MacroPlayer"]
+    Executor["MacroExecutor"]
+    Muscles["HostMuscles"]
+    Fusion["Fusion Event Stream"]
+
+    SeqStore --> MacroPlayer
+    MacroPlayer --> Executor
+    Executor --> Muscles
+    MacroPlayer --> Fusion
+```
+
+```mermaid
+graph TD
+
+    Root["canonforge-omega/"] --> FCore["omega_fusion_core/"]
+    Root --> Core144["omega_144d_core/"]
+    Root --> API["api/"]
+    Root --> Desktop["desktop_ui/electron/"]
+    Root --> Examples["examples/"]
+    Root --> Docs["docs/"]
+    Root --> Data["data/"]
+
+    FCore --> FCoreCore["core/"]
+    FCore --> Storage["storage/"]
+    FCore --> PatternHub["pattern_hub/"]
+    FCore --> Host["host/"]
+
+    Core144 --> RC["rc144_core.py"]
+    Core144 --> DSS["dss_engine.py"]
+    Core144 --> EQ["event_queue.py"]
+    Core144 --> Bus["core_bus.py"]
+    Core144 --> Sub["subverse_core.py"]
+
+    API --> App["app.py"]
+    Desktop --> ElectronPkg["package.json"]
+    Desktop --> ElectronMain["main.js"]
+```
+
+```mermaid
+flowchart LR
+
+    Pkt["OmegaPacket<br/>Domain · State · Role · Channel"]
+    TICCalc["TICCalculator"]
+    UMCalc["UniversalMomentCalculator"]
+    FusionOut["Fusion Output Vector"]
+
+    Pkt --> TICCalc
+    Pkt --> UMCalc
+    TICCalc --> FusionOut
+    UMCalc --> FusionOut
+```
+
+```mermaid
+flowchart LR
+
+    Pkt["OmegaPacket (Domain, State, Role, Channel)"]
+    TICCalc["TICCalculator"]
+    UMCalc["UniversalMomentCalculator"]
+    FusionOut["Fusion Output Vector"]
+
+    Pkt --> TICCalc
+    Pkt --> UMCalc
+    TICCalc --> FusionOut
+    UMCalc --> FusionOut
+```
+
+```mermaid
+stateDiagram-v2
+
+    [*] --> Chaotic
+    Chaotic --> Drift : stabilization
+    Drift --> Stabilizing : coherence rising
+    Stabilizing --> Coherent : coherence > 0.80
+    Coherent --> Stabilizing : fluctuation
+    Stabilizing --> Drift : noise or imbalance
+    Drift --> Chaotic : instability or overload
+```
