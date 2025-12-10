@@ -1,0 +1,13 @@
+[project]
+name = "canonforge-omega"
+version = "0.2.0"
+description = "CanonForge Omega — Cognitive Operating System prototype (FastAPI backend + 144D coherence engine + desktop console)."
+requires-python = ">=3.10"
+authors = [{name = "Jeffrey Alan Dewey"}]
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+]
+
+[project.scripts]
+canonforge-omega = "api.app:app"

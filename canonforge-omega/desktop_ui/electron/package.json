@@ -1,0 +1,12 @@
+{
+  "name": "omega-os-desktop-console",
+  "version": "0.1.0",
+  "description": "Omega OS Desktop UI (TIC-calibrated) Electron wrapper",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^32.0.0"
+  }
+}
