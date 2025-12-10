@@ -104,6 +104,9 @@ This project is released under the MIT License – see `LICENSE` for details.
 
 ## Architecture Diagram
 
+## Architecture Diagram
+
+```mermaid
 flowchart TD
 
     subgraph UI["Desktop UI (Electron)"]
@@ -127,7 +130,7 @@ flowchart TD
 
     subgraph Core144["Omega 144D Core (omega_144d_core)"]
         Bus["CoreBus"]
-        DSS["DSSEngine (12x12 to 144D)"]
+        DSS["DSSEngine (12x12 → 144D)"]
         EQ["EventQueue"]
         Subverse["SubverseCore (188 overlay)"]
     end
@@ -138,5 +141,4 @@ flowchart TD
     Fusion --> Core144
     Core144 --> Fusion
     Core144 --> API
-
-
+```
