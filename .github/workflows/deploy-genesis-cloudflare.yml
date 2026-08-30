@@ -34,9 +34,14 @@ jobs:
       - name: Check Worker syntax
         working-directory: cloudflare/omega-genesis-worker
         run: npm run check
-      - name: Deploy Genesis Worker
+      - name: Deploy Genesis Worker or report credential boundary
         working-directory: cloudflare/omega-genesis-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npm run deploy
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "BLOCKED_CREDENTIALS: core + Worker checks passed; add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository Actions secrets to deploy omega-genesis-v1." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npm run deploy
