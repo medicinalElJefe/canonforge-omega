@@ -8,7 +8,10 @@ version = "1.1.0"
 description = "Sovereign, provenance-aware OMEGA runtime with one canonical state authority"
 requires-python = ">=3.11"
 authors = [{name = "Jeffrey Alan Dewey"}]
-dependencies = ["openpyxl>=3.1,<4"]
+dependencies = [
+  "openpyxl>=3.1,<4",
+  "websockets>=13,<17"
+]
 
 [project.scripts]
 omega-genesis = "omega_genesis.server:main"
