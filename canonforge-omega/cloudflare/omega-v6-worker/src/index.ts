@@ -1,5 +1,6 @@
 export interface Env {
   SOVEREIGN_ORIGIN?: string;
+  SOVEREIGN_GATEWAY_TOKEN?: string;
   BUILD_ID?: string;
 }
 
@@ -19,12 +20,15 @@ refresh();setInterval(refresh,5000);
 </script></body></html>`;
 
 function upstream(request: Request, env: Env): Request | null {
-  if (!env.SOVEREIGN_ORIGIN) return null;
+  if (!env.SOVEREIGN_ORIGIN || !env.SOVEREIGN_GATEWAY_TOKEN) return null;
   const origin = env.SOVEREIGN_ORIGIN.replace(/\/$/, '');
   const incoming = new URL(request.url);
   const target = new URL(origin + incoming.pathname + incoming.search);
   const headers = new Headers(request.headers);
+  headers.delete('cookie');
+  headers.delete('authorization');
   headers.set('x-omega-public-gateway', 'cloudflare-worker');
+  headers.set('x-omega-gateway-token', env.SOVEREIGN_GATEWAY_TOKEN);
   return new Request(target, { method: request.method, headers, body: request.method === 'GET' || request.method === 'HEAD' ? undefined : request.body, redirect: 'manual' });
 }
 
@@ -32,18 +36,23 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === '/_omega/health') {
-      return Response.json({ ok: true, layer: 'public-interface', build: env.BUILD_ID || 'dev', sovereignConfigured: Boolean(env.SOVEREIGN_ORIGIN) });
+      return Response.json({ ok: true, layer: 'public-interface', build: env.BUILD_ID || 'dev',
+        sovereignConfigured: Boolean(env.SOVEREIGN_ORIGIN), gatewayTokenConfigured: Boolean(env.SOVEREIGN_GATEWAY_TOKEN),
+        authority: 'public-interface-only' });
     }
     if (url.pathname.startsWith('/api/')) {
       const proxy = upstream(request, env);
-      if (!proxy) return Response.json({ error: 'sovereign_origin_not_configured', boundary: 'public gateway will not fabricate runtime state' }, { status: 503 });
+      if (!proxy) return Response.json({ error: 'sovereign_gateway_not_configured', boundary: 'public gateway requires origin + secret and will not fabricate runtime state' }, { status: 503 });
       try {
         const response = await fetch(proxy);
-        return new Response(response.body, { status: response.status, headers: response.headers });
+        const headers = new Headers(response.headers);
+        headers.set('cache-control', 'no-store');
+        headers.set('x-omega-authority', 'sovereign-runtime');
+        return new Response(response.body, { status: response.status, headers });
       } catch (error) {
         return Response.json({ error: 'sovereign_host_unreachable', detail: String(error) }, { status: 502 });
       }
     }
-    return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+    return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', 'x-omega-authority': 'public-interface-only' } });
   }
 };
