@@ -32,7 +32,7 @@ jobs:
       - name: Validate Worker syntax
         working-directory: cloudflare/omega-genesis-worker
         run: |
-          npm install
+          npm install --package-lock=false
           npm run check
 
       - name: Verify committed manifest
