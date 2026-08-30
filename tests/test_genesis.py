@@ -212,3 +212,106 @@ def test_all_mode_orchestrator_evaluates_single_packet_without_mutation():
     assert out["mutation_authority"]=="OmegaRuntime only"
     assert out["results"]["MODE188"]["dispatch"] in {"STAY","TURN","ESCALATE"}
     assert set(out["boundary_only"]) <= {m["id"] for m in catalog()}
+
+
+def test_61917364224_capacity_address_is_exact_and_reversible():
+    from omega_genesis.capacity import CAPACITY_61917364224, CapacityAddress61917364224
+    assert CAPACITY_61917364224 == 61_917_364_224
+    for index in (0, 1, 11, 12, 20735, 20736, CAPACITY_61917364224 - 1):
+        address = CapacityAddress61917364224.from_index0(index)
+        assert len(address.coordinates) == 10
+        assert address.index0 == index
+        assert CapacityAddress61917364224.from_state_id(address.state_id) == address
+
+
+def test_145152_star_layer_is_reversible_without_replacing_canonical_address():
+    from omega_genesis.capacity import CAPACITY_145152, StarAddress145152
+    assert CAPACITY_145152 == 145_152
+    for index in (0, 20735, 20736, CAPACITY_145152 - 1):
+        address = StarAddress145152.from_index0(index)
+        assert address.index0 == index
+        assert 1 <= address.star <= 7
+        assert 1 <= address.address.state_id <= 20_736
+
+
+def test_host_compiler_requires_provenance_for_strong_evidence():
+    import pytest
+    from omega_genesis.host import compile_observation
+    with pytest.raises(ValueError):
+        compile_observation(
+            evidence_class="OBSERVED",
+            source_id="camera-1",
+            authority="operator-camera",
+            payload={"frame": 1},
+        )
+    packet = compile_observation(
+        evidence_class="OBSERVED",
+        source_id="camera-1",
+        authority="operator-camera",
+        payload={"frame": 1},
+        observed_at="2026-08-30T22:00:00Z",
+        immutable_ref="frame://camera-1/1",
+    )
+    assert packet.evidence_class is EvidenceClass.OBSERVED
+    assert packet.canonical_mutation is False
+    assert len(packet.payload_sha256) == 64
+
+
+def test_one_plus_six_shell_is_reversible():
+    from omega_genesis.shell import shell_1_plus_6, move
+    center = Address20736(4, 1, 12, 6)
+    shell = shell_1_plus_6(center)
+    assert shell["count"] == 7
+    assert len(shell["neighbors"]) == 6
+    for row in shell["neighbors"]:
+        target = Address20736(*row["address"])
+        axis = row["axis"]
+        position = {"phase": 1, "regulation": 2, "lens": 3}[axis[:-1]]
+        reverse = [0, 0, 0, 0]
+        reverse[position] = 1 if axis.endswith("-") else -1
+        assert move(target, tuple(reverse)) == center
+
+
+def test_rollback_creates_new_proven_child_instead_of_rewriting_history():
+    with tempfile.TemporaryDirectory() as td:
+        rt = OmegaRuntime(Path(td))
+        original = rt.state
+        m = CanonicalMetrics(
+            continuity=.91,
+            future_plasticity=.72,
+            burden=.08,
+            contradiction=.04,
+            stability=.93,
+            evidence_strength=.95,
+        )
+        moved = rt.propose(Address20736(2, 3, 8, 4), m, EvidenceClass.DERIVED)
+        assert moved["committed"] is True
+        before_rollback = rt.state
+        out = rt.rollback_to_digest(original.digest, reason="test recovery")
+        assert out["committed"] is True
+        assert rt.state.sequence == before_rollback.sequence + 1
+        assert rt.state.parent_digest == before_rollback.digest
+        assert rt.state.address == original.address
+        assert rt.state.digest != original.digest
+        assert rt.state.payload["recovery"]["restored_from_digest"] == original.digest
+        assert rt.verify_replay()["valid"] is True
+
+
+def test_software_registry_matches_drive_authority():
+    from omega_genesis.systems import coverage, catalog, family_catalog
+    report = coverage()
+    assert report["status"] == "PASS"
+    assert report["systems"] == 24
+    assert report["families"] == 6
+    assert len(catalog()) == 24
+    assert len(family_catalog()) == 6
+
+
+def test_earth_motion_executes_on_quantized_heading():
+    a = GeoPoint(32.2, -110.9)
+    twelve_degrees = math.radians(12)
+    ten_degrees = math.radians(10)
+    p12 = destination(a, twelve_degrees, 5000)
+    p10 = destination(a, ten_degrees, 5000)
+    assert abs(p12.lat - p10.lat) < 1e-12
+    assert abs(p12.lon - p10.lon) < 1e-12
