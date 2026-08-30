@@ -1,0 +1,39 @@
+{
+  "schema": "omega-genesis-software-registry-v1",
+  "source": "OMEGA_ALL_SOFTWARE_61917364224D_FULL_BUILD_v22.xlsx",
+  "boundary": "Software-system registry only; runtime readiness is reported separately.",
+  "families": [
+    {"id":"F00","name":"Core Runtime"},
+    {"id":"F01","name":"Proof / Governance"},
+    {"id":"F02","name":"Traversal / Domain"},
+    {"id":"F03","name":"Rendering / Media"},
+    {"id":"F04","name":"Recovery / Packaging"},
+    {"id":"F05","name":"Control Planes"}
+  ],
+  "systems": [
+    {"id":"S00","name":"Omega Atlas Desktop / Runtime OS","family":"Core Runtime","primary_output":"runtime"},
+    {"id":"S01","name":"Omega Reality Compiler","family":"Core Runtime","primary_output":"runtime"},
+    {"id":"S02","name":"Persistent Packet Substrate","family":"Core Runtime","primary_output":"runtime"},
+    {"id":"S03","name":"Hybrid Link Software","family":"Core Runtime","primary_output":"runtime"},
+    {"id":"S04","name":"CanonForge / Genesis Engine","family":"Proof / Governance","primary_output":"control/proof"},
+    {"id":"S05","name":"VGCL / Vigil Geometry","family":"Proof / Governance","primary_output":"runtime"},
+    {"id":"S06","name":"Executable Atlas Generator","family":"Traversal / Domain","primary_output":"runtime"},
+    {"id":"S07","name":"Shell / Mandala Engine","family":"Traversal / Domain","primary_output":"runtime"},
+    {"id":"S08","name":"Field Render Engine","family":"Rendering / Media","primary_output":"render/media"},
+    {"id":"S09","name":"Earth Traversal Engine","family":"Traversal / Domain","primary_output":"control/proof"},
+    {"id":"S10","name":"Biological Traversal Engine","family":"Traversal / Domain","primary_output":"control/proof"},
+    {"id":"S11","name":"Omega Patch System","family":"Recovery / Packaging","primary_output":"package"},
+    {"id":"S12","name":"Omega Micro Build","family":"Recovery / Packaging","primary_output":"package"},
+    {"id":"S13","name":"Living Coherence Membrane","family":"Rendering / Media","primary_output":"runtime"},
+    {"id":"S14","name":"Dewey Calculus Engine","family":"Proof / Governance","primary_output":"runtime"},
+    {"id":"S15","name":"Proof / Forensic / Ledger System","family":"Proof / Governance","primary_output":"package"},
+    {"id":"S16","name":"Workbook / Excel Atlas Runtime","family":"Control Planes","primary_output":"control/proof"},
+    {"id":"S17","name":"Echo-Chamber / SOMA Audio Engine","family":"Rendering / Media","primary_output":"render/media"},
+    {"id":"S18","name":"Universal Language / Lexicon Engine","family":"Control Planes","primary_output":"control/proof"},
+    {"id":"S19","name":"Observer / Now-Frame System","family":"Traversal / Domain","primary_output":"runtime"},
+    {"id":"S20","name":"Recovery Board System","family":"Recovery / Packaging","primary_output":"package"},
+    {"id":"S21","name":"Cinematic Field Renderer","family":"Rendering / Media","primary_output":"render/media"},
+    {"id":"S22","name":"Omega Installer / One-Click Shell","family":"Recovery / Packaging","primary_output":"package"},
+    {"id":"S23","name":"Runtime API / WebSocket Service","family":"Recovery / Packaging","primary_output":"runtime"}
+  ]
+}
