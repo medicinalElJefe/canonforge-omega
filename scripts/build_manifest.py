@@ -5,20 +5,25 @@ import json
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-EXCLUDE_DIRS={".git",".pytest_cache","__pycache__","node_modules","runtime-data","release"}
+EXCLUDE_DIRS={".git",".pytest_cache","__pycache__","node_modules","runtime-data","release",".venv",".omega-venv"}
 EXCLUDE_FILES={"omega.manifest.json","SHA256SUMS.txt"}
 
 
 def selected_files():
     for p in sorted(x for x in ROOT.rglob("*") if x.is_file()):
         rel=p.relative_to(ROOT)
-        if any(part in EXCLUDE_DIRS for part in rel.parts): continue
-        if rel.as_posix() in EXCLUDE_FILES: continue
-        if p.suffix in {".pyc",".pyo"}: continue
+        if any(part in EXCLUDE_DIRS or part.endswith(".egg-info") for part in rel.parts):
+            continue
+        if rel.as_posix() in EXCLUDE_FILES:
+            continue
+        if p.suffix in {".pyc",".pyo"}:
+            continue
         yield p
 
 
-def digest(path:Path): return sha256(path.read_bytes()).hexdigest()
+def digest(path:Path):
+    return sha256(path.read_bytes()).hexdigest()
+
 
 files=[{"path":p.relative_to(ROOT).as_posix(),"sha256":digest(p),"bytes":p.stat().st_size} for p in selected_files()]
 manifest={
