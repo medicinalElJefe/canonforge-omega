@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omega-genesis"
+version = "1.0.0"
+description = "Sovereign, provenance-aware OMEGA runtime with one canonical state authority"
+requires-python = ">=3.11"
+authors = [{name = "Jeffrey Alan Dewey"}]
+dependencies = []
+
+[project.scripts]
+omega-genesis = "omega_genesis.server:main"
+omega-index = "omega_genesis.corpus:main"
+
+[tool.setuptools.packages.find]
+include = ["omega_genesis*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
