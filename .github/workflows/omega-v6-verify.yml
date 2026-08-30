@@ -1,0 +1,45 @@
+name: OMEGA V6 verify
+
+on:
+  push:
+    branches: [omega-v6-full-convergence]
+  pull_request:
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-verify.yml'
+
+jobs:
+  sovereign-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Compile
+        working-directory: canonforge-omega
+        run: python -m compileall -q omega_runtime api omega_144d_core omega_fusion_core
+      - name: Full runtime tests
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+      - name: Import FastAPI authority
+        working-directory: canonforge-omega
+        run: python -c "from api.app import app; assert app.title == 'OMEGA V6 Sovereign Runtime'"
+
+  cloudflare-interface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and typecheck
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
