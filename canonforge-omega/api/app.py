@@ -23,6 +23,7 @@ from omega_runtime.forecast import deterministic_local_forecast
 from omega_runtime.proof import ProofLedger
 from omega_runtime.relativity import ObserverFrame, phase_transform, outverse_inverse, rotate_shell_axes
 from omega_runtime.render import living_glyph_scene
+from omega_runtime.state_store import StateStore
 
 app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.0.0-convergence")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
@@ -31,14 +32,16 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
 _calc = UniversalMomentCalculator()
 _tic_calc = TICCalculator()
 EVENT_LOG: List[Dict[str, Any]] = []
-LEDGER_PATH = Path.home() / ".omega" / "ledger" / "proof.jsonl"
+OMEGA_HOME = Path.home() / ".omega"
+LEDGER_PATH = OMEGA_HOME / "ledger" / "proof.jsonl"
+STATE_PATH = OMEGA_HOME / "state" / "canonical.json"
 _initial = StateEnvelope(
     address=Address20736(1, 1, 1, 1), evidence_class=EvidenceClass.DERIVED,
     metrics=StateMetrics(continuity=1.0, burden=0.20, contradiction=0.10, future_plasticity=0.50),
     source_id="OMEGA_BOOTSTRAP_SCHEMA",
     payload={"boundary": "runtime initialization record; not an empirical observation"},
 )
-_runtime = OmegaRuntime(_initial, ProofLedger(LEDGER_PATH))
+_runtime = OmegaRuntime(_initial, ProofLedger(LEDGER_PATH), StateStore(STATE_PATH))
 
 
 class PatternInfo(BaseModel):
@@ -89,7 +92,7 @@ class ObserverRequest(BaseModel):
 @app.get("/api/health")
 def health() -> Dict[str, Any]:
     return {"ok": True, "runtime": "OMEGA V6 Sovereign Runtime", "state_digest": _runtime.state.digest,
-            "proof_records": len(_runtime.ledger.records),
+            "proof_records": len(_runtime.ledger.records), "persistent_state": str(STATE_PATH),
             "representation_boundary": "144/1728/20736 are software state-space representations unless independently evidenced otherwise"}
 
 
