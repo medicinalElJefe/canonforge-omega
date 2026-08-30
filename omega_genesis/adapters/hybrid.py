@@ -14,12 +14,13 @@ from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 from ..corpus import write_catalog
 from ..release import hash_tree, sha256_file, verify_manifest
 from ..training import train_local
+from ..reality import RealityConfig, analyze_delimited
 from .workbook import inspect_workbook
 
 ALLOWED_OPS={
     "READ_FILE","READ_TEXT","WRITE_OUTPUT","HASH_TREE","INDEX_CORPUS","INDEX","SEARCH_TEXT",
     "SAFE_IMPORT","WORKBOOK_AUDIT","RUN_VERIFICATION","TRAIN_LOCAL_BOUNDED","TRAIN_LOCAL",
-    "BUILD","TEST","PACKAGE","SUPPORT_BUNDLE","APPLY_PATCH"
+    "BUILD","TEST","PACKAGE","SUPPORT_BUNDLE","APPLY_PATCH","REALITY_ANALYZE"
 }
 MAX_READ_BYTES=2*1024*1024
 MAX_WRITE_BYTES=2*1024*1024
@@ -216,6 +217,11 @@ def execute_plan(root:Path,steps:list[HybridStep])->dict[str,Any]:
             elif op=="RUN_VERIFICATION":
                 result=verify_manifest(path or root)
                 if result["status"]!="PASS": raise ValueError(f"release verification failed: {result['errors']}")
+            elif op=="REALITY_ANALYZE":
+                if path is None: raise ValueError("REALITY_ANALYZE requires path")
+                text=_read_text(path)["text"]
+                cfg=RealityConfig(**dict(args.get("config") or {}))
+                result=analyze_delimited(text,cfg)
             elif op in {"TRAIN_LOCAL_BOUNDED","TRAIN_LOCAL"}:
                 rel=_rel(root,path) if path else "."; result=train_local(root,rel,proof_lessons=list(args.get("proof_lessons",[])))
                 if result.get("status")!="PASS": raise ValueError(f"training held: {result.get('reason')}")
