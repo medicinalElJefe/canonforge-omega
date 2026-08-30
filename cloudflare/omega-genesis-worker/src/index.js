@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import {MODES,MENUS,GATES,ER} from "./catalog.js";
-import {clamp,pad,hash,idx,addr,validAddr,validMetrics,arc,gate,calc,digestState,seed,proj,forecast,classify,mode,orchestrate,dest,hav} from "./kernel.js";\nimport {handleExtendedApi} from "./api_ext.js";
+import {clamp,pad,hash,idx,addr,validAddr,validMetrics,arc,gate,calc,digestState,seed,proj,forecast,classify,mode,orchestrate,dest,hav} from "./kernel.js";
+import {handleExtendedApi} from "./api_ext.js";
 
 const BUILD_ID="omega-genesis-v1.1";
 
