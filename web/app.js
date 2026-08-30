@@ -24,7 +24,7 @@ $('nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;document.qu
 $('mobileMenu').onclick=()=>document.querySelector('.sidebar').classList.toggle('open');
 
 async function api(url,opts={}){const r=await fetch(url,{cache:'no-store',...opts});let d;try{d=await r.json()}catch{d={error:'non_json_response',status:r.status}}if(!r.ok)throw d;return d}
-async function post(url,body){const headers={'content-type':'application/json'};if(url==='/api/transition'){let token=sessionStorage.getItem('omegaWriteToken')||'';if(!token&&location.hostname!=='127.0.0.1'&&location.hostname!=='localhost'){token=prompt('OMEGA cloud write token (leave blank for read-only)')||'';if(token)sessionStorage.setItem('omegaWriteToken',token)}if(token)headers['X-Omega-Write-Token']=token}return api(url,{method:'POST',headers,body:JSON.stringify(body)})}
+async function post(url,body){const headers={'content-type':'application/json'};if(url==='/api/transition'||url==='/api/recovery/rollback'){let token=sessionStorage.getItem('omegaWriteToken')||'';if(!token&&location.hostname!=='127.0.0.1'&&location.hostname!=='localhost'){token=prompt('OMEGA cloud write token (leave blank for read-only)')||'';if(token)sessionStorage.setItem('omegaWriteToken',token)}if(token)headers['X-Omega-Write-Token']=token}return api(url,{method:'POST',headers,body:JSON.stringify(body)})}
 
 let SNAP=null;
 function metric(k,v,cls=''){return `<div class="metric"><small>${k}</small><strong class="${cls}">${v}</strong></div>`}
