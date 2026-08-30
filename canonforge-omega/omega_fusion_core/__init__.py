@@ -1,1 +1,0 @@
-# CanonForge Omega Fusion Core

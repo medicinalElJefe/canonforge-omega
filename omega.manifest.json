@@ -1,0 +1,13 @@
+{
+  "name":"OMEGA Genesis",
+  "version":"1.0.0",
+  "authority":"ONE_CANONICAL_PACKET_ONE_PROOF_CHAIN",
+  "atlas_states":20736,
+  "mode_count":35,
+  "master_surfaces":12,
+  "capability_contracts":18,
+  "acceptance_gates":12,
+  "source_policy":"KEEP/MERGE/DONOR/QUARANTINE with hash provenance",
+  "truth_boundary":"representation dimensions are software spaces unless independently evidenced",
+  "private_corpus_policy":"public repository stores names/hashes/contracts, not private Drive identifiers or corpus contents"
+}

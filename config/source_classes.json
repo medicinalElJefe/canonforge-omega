@@ -1,0 +1,11 @@
+{
+  "policy": "Evidence, executable donors, visual derivatives and historical artifacts remain distinct.",
+  "precedence": ["CANONICAL_EVIDENCE", "EXECUTABLE_AUTHORITY", "ACCEPTED_DONOR", "DERIVED_VIEW", "HISTORICAL", "QUARANTINE"],
+  "non_negotiable": [
+    "renderer_never_owns_truth",
+    "forecast_never_becomes_observed_without_evidence",
+    "plugin_never_commits_canonical_state_directly",
+    "unknown_donor_never_executes_during_intake",
+    "one_packet_fingerprint_across_views"
+  ]
+}

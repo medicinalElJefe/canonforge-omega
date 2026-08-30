@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OMEGA Genesis · Sovereign Computational Environment</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">Ω</div><div><strong>OMEGA</strong><span>GENESIS</span></div></div>
+    <div class="authority"><span class="pulse"></span><div><b id="runtimeStatus">CONNECTING</b><small>one canonical authority</small></div></div>
+    <nav id="nav"></nav>
+    <div class="side-foot"><small>Packet</small><code id="sideDigest">—</code><small>Evidence</small><b id="sideEvidence">—</b></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <button class="mobile-menu" id="mobileMenu">☰</button>
+      <div><h1 id="viewTitle">Command Overview</h1><p id="viewSub">State, proof, motion and source authority in one instrument.</p></div>
+      <div class="topchips"><span class="chip" id="stateChip">STATE —</span><span class="chip good" id="proofChip">PROOF —</span></div>
+    </header>
+    <main>
+      <section class="view active" data-view="overview">
+        <div class="hero-grid">
+          <article class="card field-card">
+            <div class="card-head"><div><small>CANONICAL FIELD</small><h2>One packet. Many projections.</h2></div><span class="tag">STATE-BOUND</span></div>
+            <div class="field" id="field">
+              <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div>
+              <div class="phase-dots" id="phaseDots"></div>
+              <div class="core"><span>Ω</span><strong id="coreState">—</strong><small id="corePhase">P—</small></div>
+            </div>
+            <div class="field-foot"><span>Renderer uses the canonical packet fingerprint.</span><code id="projectionFingerprint">—</code></div>
+          </article>
+          <div class="stack">
+            <article class="card"><div class="card-head"><div><small>LIVE METRICS</small><h2>Relational state</h2></div></div><div class="metric-grid" id="metrics"></div></article>
+            <article class="card"><div class="card-head"><div><small>LAW ENGINE</small><h2>Mode 188 + calculus</h2></div></div><div class="decision-row"><div><small>DISPATCH</small><strong id="dispatch">—</strong></div><div><small>ADMISSION</small><strong id="admission">—</strong></div><div><small>RATIO</small><strong id="ratio">—</strong></div></div><div class="lens-bars" id="lensBars"></div></article>
+          </div>
+        </div>
+        <div class="grid three" id="overviewCards"></div>
+      </section>
+
+      <section class="view" data-view="runtime"><div class="section-grid"><article class="card span2"><div class="card-head"><div><small>01 RUNTIME CORE</small><h2>Canonical authority</h2></div><span class="tag">NO SHADOW STATE</span></div><div class="raw" id="stateRaw"></div></article><article class="card"><h3>Invariant</h3><p>The UI, renderer, plugins, forecast and host adapters can transform or propose. Only the runtime commits canonical state.</p><div class="invariant-list"><span>Single packet type</span><span>Hash identity</span><span>Append-only proof</span><span>Evidence rank lock</span></div></article></div></section>
+
+      <section class="view" data-view="proof"><div class="section-grid"><article class="card"><small>02 PROOF & GOVERNANCE</small><h2>Acceptance spine</h2><div id="gates" class="gate-list"></div></article><article class="card span2"><div class="card-head"><div><small>HASH-CHAIN</small><h2>Proof ledger</h2></div><button class="btn" data-action="refresh-proof">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Kind</th><th>Decision</th><th>State before</th><th>State after</th></tr></thead><tbody id="proofRows"></tbody></table></div></article></div></section>
+
+      <section class="view" data-view="traversal"><div class="section-grid"><article class="card"><small>03 TRAVERSAL</small><h2>State address</h2><label>Atlas index 0–20735<input id="atlasIndex" type="number" min="0" max="20735" value="0"></label><button class="btn primary" data-action="atlas">Resolve address</button><div class="result" id="atlasResult"></div></article><article class="card"><small>CALCULUS LAB</small><h2>RSC / Mode 188</h2><div class="form2"><label>CΩ<input id="c" type="number" step="0.01" value="0.8"></label><label>Φ<input id="phi" type="number" step="0.01" value="0.5"></label><label>Λ<input id="lambda" type="number" step="0.01" value="0.2"></label><label>q<input id="q" type="number" step="0.01" value="0.1"></label><label>S<input id="stability" type="number" step="0.01" value="0.8"></label><label>Evidence<input id="evidence" type="number" step="0.01" value="0.9"></label></div><button class="btn primary" data-action="simulate">Evaluate proposal</button><div class="result" id="simResult"></div></article><article class="card"><small>DEWEY-BAL</small><h2>Regression contract</h2><p>Source 11499 → MODE188+ → target 11687. Altered source, target, edge, burden or score must HOLD before mutation.</p><button class="btn" data-action="dewey">Validate exact contract</button><div class="result" id="deweyResult"></div></article></div></section>
+
+      <section class="view" data-view="render"><div class="section-grid"><article class="card span2"><small>04 RENDER FIELD</small><h2>Projection authority</h2><div class="render-surface" id="renderSurface"><div class="render-grid"></div><div class="render-node">Ω</div></div></article><article class="card"><h3>Truth boundary</h3><p>Every visual frame carries the same canonical state digest plus its own projection fingerprint. Skin, zoom and observer transforms cannot rewrite source metrics.</p><div class="invariant-list"><span>No second phase clock</span><span>q → visible torsion</span><span>Host-only presentation presets</span><span>No synthetic evidence</span></div></article></div></section>
+
+      <section class="view" data-view="host"><div class="section-grid"><article class="card"><small>05 HOST INPUTS</small><h2>Evidence contract</h2><div class="source-classes"><span>OBSERVED</span><span>IMPORTED</span><span>DERIVED</span><span>FORECAST</span><span>INFERRED</span><span>ASSUMED</span><span>SYMBOLIC</span><span>USER_ASSERTED</span></div></article><article class="card span2"><h2>Host adapter rules</h2><div class="rule-grid"><div><b>Camera</b><p>Frames become timestamped observation pressure, never decorative “reality.”</p></div><div><b>Workbook</b><p>Seeds are checksummed and retain source provenance.</p></div><div><b>External data</b><p>LIVE requires the displayed values and timestamp to bind to the same immutable evidence object.</p></div><div><b>Missing evidence</b><p>HOLD / NO_EVIDENCE. Never invent street, terrain, sensor or future observation data.</p></div></div></article></div></section>
+
+      <section class="view" data-view="ai"><div class="section-grid"><article class="card"><small>06 AI ORCHESTRATION</small><h2>Human-governed intelligence</h2><p>AI may search, compare, translate, plan, rank donors and propose transitions. It cannot silently promote evidence or commit canonical state.</p></article><article class="card span2"><h2>Mode stack</h2><div class="mode-grid" id="modeGrid"></div></article></div></section>
+
+      <section class="view" data-view="data"><div class="section-grid"><article class="card"><small>07 DATA / EXCEL ATLAS</small><h2>Corpus governance</h2><p>The corpus is treated as a provenance graph rather than one giant undifferentiated database.</p><label>Test artifact name<input id="corpusName" value="OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx"></label><button class="btn" data-action="classify">Classify</button><div class="result" id="classifyResult"></div></article><article class="card span2"><h2>Recovered corpus structure</h2><div class="stat-grid"><div><strong>100</strong><small>software rows</small></div><div><strong>12</strong><small>master menus</small></div><div><strong>18</strong><small>capabilities</small></div><div><strong>12</strong><small>acceptance gates</small></div><div><strong>20,736</strong><small>canonical software addresses</small></div><div><strong>61,917,364,224</strong><small>design-capacity map</small></div></div><p class="note">Capacity figures are software representation/design spaces unless independently evidenced otherwise.</p></article></div></section>
+
+      <section class="view" data-view="audio"><div class="section-grid"><article class="card"><small>08 AUDIO / SIGNAL</small><h2>Deterministic sonification</h2><p>State metrics can drive audio mappings for feedback. Audio remains a derived output and carries no medical or physical-frequency efficacy claim.</p></article><article class="card"><h3>Channels</h3><div class="invariant-list"><span>CΩ → coherence texture</span><span>Λ → load envelope</span><span>q → dissonance/torsion</span><span>phase → timing/rotation</span></div></article><article class="card"><h3>Default policy</h3><p>Muted by default. Experimental carrier layers are explicitly labeled and never treated as source evidence.</p></article></div></section>
+
+      <section class="view" data-view="world"><div class="section-grid"><article class="card"><small>09 WORLD / BIO / FORECAST</small><h2>Forecast topology</h2><label>Horizon (transition units)<input id="horizon" type="number" min="1" max="100" value="3"></label><button class="btn primary" data-action="forecast">Freeze prior</button><div class="result" id="forecastResult"></div></article><article class="card"><h2>Earth / Ground</h2><p>WGS84 traversal uses a mean Earth radius of 6,371,008.8 m, π/36 heading quantization, and F(r)=πr⁴ as an executable scale mapping.</p><div class="boundary">No returned ground image → <b>NO EVIDENCE</b>. No generated substitute.</div></article><article class="card"><h2>Multiscale</h2><div class="scale-strip"><span>Nuclear</span><span>Atomic</span><span>Chemical</span><span>Biological</span><span>Human/material</span><span>Planetary</span><span>Stellar</span><span>Galactic</span></div></article></div></section>
+
+      <section class="view" data-view="recovery"><div class="section-grid"><article class="card"><small>10 RECOVERY / PACKAGING</small><h2>Release gate</h2><p>No “100% complete” claim unless the executable acceptance suite passes on the target environment.</p><div class="invariant-list"><span>Health before UI</span><span>Checksummed manifest</span><span>Rollbackable patch</span><span>One launcher path</span></div></article><article class="card"><small>11 ARCHIVE MERGE</small><h2>Donor board</h2><div class="disposition"><span class="keep">KEEP</span><span class="merge">MERGE</span><span class="donor">DONOR</span><span class="quarantine">QUARANTINE</span></div><p>Unknown archives are fingerprinted and classified before extraction or execution.</p></article><article class="card"><small>12 OPERATOR COCKPIT</small><h2>UI rule</h2><p>Critical proof and source boundaries stay visible; panels never cover the primary render view on desktop or mobile.</p></article></div></section>
+
+      <section class="view" data-view="plugins"><div class="section-grid"><article class="card span2"><div class="card-head"><div><small>PLUGIN RUNTIME</small><h2>Bounded capability registry</h2></div><button class="btn" data-action="refresh-plugins">Rescan</button></div><p>Plugins declare capabilities, permissions, evidence inputs and mutations. Direct canonical commit, evidence promotion, proof rewrite, arbitrary shell and arbitrary network are forbidden.</p><div class="table-wrap"><table><thead><tr><th>Plugin</th><th>Status</th><th>Permissions</th><th>Capabilities</th></tr></thead><tbody id="pluginRows"><tr><td colspan="4">Loading plugin registry…</td></tr></tbody></table></div></article><article class="card"><h3>Isolation + live test</h3><p>Plugin entry must remain inside its plugin directory; subprocess receives only declared capability/permission metadata.</p><button class="btn primary" data-action="run-plugin" data-plugin="atlas_echo">Run Atlas Echo</button><div class="result" id="pluginResult"></div></article><article class="card"><h3>Authority boundary</h3><div class="invariant-list"><span>state.read — allowed</span><span>state.propose — gated</span><span>canonical.commit — denied</span><span>evidence.promote — denied</span><span>proof.rewrite — denied</span><span>shell.exec — denied</span></div></article></div></section>
+    </main>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

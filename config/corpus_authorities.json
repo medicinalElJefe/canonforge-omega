@@ -1,0 +1,22 @@
+{
+  "schema": "omega-genesis-corpus-authorities-v1",
+  "policy": "names/hashes only; private Drive URLs and IDs are not published",
+  "facts": {
+    "software_registry_rows": 100,
+    "software_families_in_full_ledger": 24,
+    "master_menus": 12,
+    "menu_option_rows": 36,
+    "capability_contracts": 18,
+    "acceptance_gates": 12,
+    "growth_sequence_rows": 144,
+    "atlas_states": 20736
+  },
+  "sources": [
+    {"name":"OMEGA_ALL_SOFTWARE_61917364224D_FULL_BUILD_v22.xlsx","role":"SOFTWARE_UNIVERSE","disposition":"KEEP","sha256":"688f85cc8f64cc8cf6cc9effd694d0bb46342e05f04598868e20de0dad4afe97","bytes":4808795},
+    {"name":"OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx","role":"CONTROL_LEDGER","disposition":"KEEP","sha256":"32bd230a02040d3d283e561bc44a136ab0a0738c96206a866ea41ecba84275b4","bytes":89860},
+    {"name":"Math_Atlas_20736D_FullCanon_GraphEdges.xlsx","role":"ATLAS_GRAPH","disposition":"KEEP","sha256":"1daa73b90ab07453141056e74db1a5488232ef871eef83033f1aa0f5d45631a5","bytes":2150619},
+    {"name":"OMEGA_B058_CORRESPONDENCE_LEDGER.md","role":"CURRENT_RUNTIME_CORRESPONDENCE_AUTHORITY","disposition":"KEEP","reviewed_via":"connected Drive"},
+    {"name":"OMEGA_HYBRID_LINK_BRIDGE_V90_R4.ps1","role":"HYBRID_LINK_DONOR","disposition":"MERGE","reviewed_via":"connected Drive"},
+    {"name":"plugin_runtime/sdk.py","role":"PLUGIN_SDK_DONOR","disposition":"MERGE","reviewed_via":"connected Drive"}
+  ]
+}

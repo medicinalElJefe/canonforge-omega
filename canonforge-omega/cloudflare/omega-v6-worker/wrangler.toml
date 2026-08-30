@@ -1,9 +1,0 @@
-name = "omegav6"
-main = "src/index.ts"
-compatibility_date = "2026-08-29"
-workers_dev = true
-
-[vars]
-BUILD_ID = "omega-v6-full-convergence"
-# Configure SOVEREIGN_ORIGIN in the deployment environment.
-# It must point at the authenticated ingress of the sovereign runtime/bridge.
