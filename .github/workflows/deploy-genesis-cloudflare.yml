@@ -1,0 +1,50 @@
+name: OMEGA Genesis Cloudflare deploy
+on:
+  push:
+    branches: [omega-genesis-v1-full]
+    paths:
+      - 'cloudflare/omega-genesis-worker/**'
+      - 'web/**'
+      - '.github/workflows/deploy-genesis-cloudflare.yml'
+      - 'release/**'
+  workflow_dispatch:
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify Genesis core
+        run: |
+          python -m pip install -U pip pytest
+          python -m pip install -e .
+          python -m pytest -q
+          python scripts/verify_release.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Worker dependencies
+        working-directory: cloudflare/omega-genesis-worker
+        run: npm install
+      - name: Check Worker syntax
+        working-directory: cloudflare/omega-genesis-worker
+        run: npm run check
+      - name: Deploy Genesis Worker
+        working-directory: cloudflare/omega-genesis-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy
+      - name: Configure optional write secret
+        if: ${{ secrets.OMEGA_GENESIS_WRITE_TOKEN != '' }}
+        working-directory: cloudflare/omega-genesis-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          OMEGA_GENESIS_WRITE_TOKEN: ${{ secrets.OMEGA_GENESIS_WRITE_TOKEN }}
+        run: printf '%s' "$OMEGA_GENESIS_WRITE_TOKEN" | npx wrangler secret put OMEGA_WRITE_TOKEN
