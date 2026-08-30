@@ -49,6 +49,33 @@
         ${result("hostCompileResult")}
       </article>`);
 
+    const ai=q('[data-view="ai"] .section-grid');
+    ai?.insertAdjacentHTML("beforeend",`
+      <article class="card span2"><small>GOVERNED PLANNER</small><h2>Objective → PRUNE / TRANSLATE / PROVE</h2>
+        <label>Objective<input id="aiObjective" value="Preserve canonical truth while advancing the current system safely"></label>
+        <button class="btn primary" data-advanced="ai-plan">Build governed plan</button>
+        <button class="btn" data-advanced="language">Decode current packet</button>
+        ${result("aiPlanResult")}
+      </article>`);
+
+    const world=q('[data-view="world"] .section-grid');
+    world?.insertAdjacentHTML("beforeend",`
+      <article class="card span2"><small>SOURCE-BOUND BIOLOGY</small><h2>Multiscale relation analyzer</h2>
+        <p>Analyzes only supplied nodes and relations. It does not fabricate microscopy, diagnosis, DNA, brain, or organism evidence.</p>
+        <label>Nodes JSON<textarea id="bioNodes" rows="7">[{"node_id":"n1","scale":"BIOLOGICAL","evidence_class":"USER_ASSERTED","properties":{"label":"source node"}},{"node_id":"n2","scale":"CHEMICAL","evidence_class":"DERIVED","properties":{"label":"derived node"}}]</textarea></label>
+        <label>Relations JSON<textarea id="bioRelations" rows="5">[{"source":"n1","target":"n2","relation":"CONTEXT"}]</textarea></label>
+        <button class="btn primary" data-advanced="bio-analyze">Analyze supplied network</button>
+        ${result("bioResult")}
+      </article>`);
+
+    const cockpit=q('[data-view="cockpit"] .section-grid');
+    cockpit?.insertAdjacentHTML("beforeend",`
+      <article class="card span2"><small>12-GATE ACCEPTANCE BOARD</small><h2>No fake completion</h2>
+        <p>Runs the Drive-defined acceptance gates against the current source/runtime and distinguishes source PASS from target-specific Windows/browser/device evidence.</p>
+        <button class="btn primary" data-advanced="acceptance">Run full acceptance board</button>
+        ${result("acceptanceResult")}
+      </article>`);
+
     const recovery=q('[data-view="recovery"] .section-grid');
     recovery?.insertAdjacentHTML("beforeend",`
       <article class="card span2"><small>APPEND-ONLY RECOVERY</small><h2>Proven-state rollback</h2>
@@ -99,6 +126,10 @@
     if(!b)return;
     const a=b.dataset.advanced;
     if(a==="authority") safe(()=>api("/api/authority"),"authorityResult");
+    if(a==="acceptance") safe(()=>api("/api/acceptance"),"acceptanceResult");
+    if(a==="language") safe(()=>api("/api/language/current"),"aiPlanResult");
+    if(a==="ai-plan") safe(()=>post("/api/ai/plan",{objective:document.getElementById("aiObjective").value}),"aiPlanResult");
+    if(a==="bio-analyze") safe(()=>post("/api/bio/analyze",{nodes:JSON.parse(document.getElementById("bioNodes").value||"[]"),relations:JSON.parse(document.getElementById("bioRelations").value||"[]")}),"bioResult");
     if(a==="stream-status") safe(()=>api("/api/stream/status"),"streamResult");
     if(a==="capacity") safe(()=>api("/api/capacity?index="+encodeURIComponent(document.getElementById("capacityIndex").value)),"capacityResult");
     if(a==="star") safe(()=>api("/api/star?index="+encodeURIComponent(document.getElementById("starIndex").value)),"capacityResult");
