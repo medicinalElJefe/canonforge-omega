@@ -2,7 +2,7 @@ name: OMEGA V6 verify
 
 on:
   push:
-    branches: [omega-v6-full-convergence]
+    branches: [omega-v6-full-convergence, omega-v6-fresh-full]
   pull_request:
     paths:
       - 'canonforge-omega/**'
@@ -21,15 +21,24 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -e '.[dev]'
-      - name: Compile
+      - name: Compile all authorities
         working-directory: canonforge-omega
         run: python -m compileall -q omega_runtime api omega_144d_core omega_fusion_core
-      - name: Full runtime tests
+      - name: Full runtime regression suite
         working-directory: canonforge-omega
         run: python -m pytest -q
       - name: Import FastAPI authority
         working-directory: canonforge-omega
-        run: python -c "from api.app import app; assert app.title == 'OMEGA V6 Sovereign Runtime'"
+        run: |
+          python - <<'PY'
+          from api.app import app, health, system_manifest, system_quality, omega_graph_summary
+          assert app.title == 'OMEGA V6 Sovereign Runtime'
+          assert health()['ok'] is True
+          assert system_manifest()['summary']['complete_manifest'] is True
+          assert system_quality()['pass'] is True
+          assert omega_graph_summary()['node_count'] == 20736
+          assert omega_graph_summary()['directed_edge_count'] == 145152
+          PY
 
   cloudflare-interface:
     runs-on: ubuntu-latest
