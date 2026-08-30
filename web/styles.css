@@ -4,3 +4,9 @@
 textarea{display:block;width:100%;margin-top:4px;background:#070c13;color:#dce7f7;border:1px solid #30405a;border-radius:8px;padding:9px;resize:vertical;font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
 .daily{position:relative;overflow:hidden;min-height:128px}.daily:after{content:"";position:absolute;width:150px;height:150px;border:1px solid #d9b86d22;border-radius:50%;right:-55px;bottom:-80px;box-shadow:0 0 60px #d9b86d0d}.daily-glyph{width:44px;height:44px;border:1px solid #665a39;border-radius:50%;display:grid;place-items:center;color:var(--gold);font:700 21px Georgia,serif;background:#17140d;box-shadow:0 0 25px #d9b86d15}.daily p{margin:10px 0 7px;max-width:94%}
 .green{color:var(--green)}.teal{color:var(--teal)}.red{color:var(--red)}
+
+select{display:block;width:100%;margin-top:4px;background:#070c13;color:white;border:1px solid #30405a;border-radius:8px;padding:8px}
+.webgl-field{position:relative}
+.webgl-field canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.render-legend{position:absolute;left:14px;bottom:14px;z-index:2;display:flex;flex-direction:column;gap:3px;padding:8px 10px;border:1px solid #33425a;border-radius:9px;background:rgba(6,9,14,.72);backdrop-filter:blur(10px);pointer-events:none}
+.render-legend b{font-size:.7rem;letter-spacing:.08em;color:#d9b86d}.render-legend span{font-size:.62rem;color:#8e9bb1}
