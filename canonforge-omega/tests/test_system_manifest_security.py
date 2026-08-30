@@ -10,12 +10,15 @@ def test_all_24_source_defined_software_families_are_bound():
     assert all(f.name and f.invariant and f.purpose and f.evidence_boundary for f in families)
 
 
-def test_full_system_does_not_pretend_planned_adapters_are_live_core():
+def test_full_system_adapters_are_live_without_overclaiming_external_evidence():
     by_id = {f.family_id: f for f in manifest()}
-    assert by_id["F09"].status is FamilyStatus.PLANNED_WITH_BOUNDARY  # Earth source adapters required
-    assert by_id["F10"].status is FamilyStatus.PLANNED_WITH_BOUNDARY  # biological evidence adapters required
-    assert by_id["F17"].status is FamilyStatus.PLANNED_WITH_BOUNDARY  # sonification boundary
-    assert by_id["F12"].status is FamilyStatus.RECOVERY_ONLY          # seed is not release authority
+    assert by_id["F09"].status is FamilyStatus.LIVE_ADAPTER
+    assert "timestamped sources" in by_id["F09"].evidence_boundary
+    assert by_id["F10"].status is FamilyStatus.LIVE_ADAPTER
+    assert "no diagnosis" in by_id["F10"].evidence_boundary
+    assert by_id["F17"].status is FamilyStatus.LIVE_ADAPTER
+    assert "no therapeutic" in by_id["F17"].evidence_boundary
+    assert by_id["F12"].status is FamilyStatus.RECOVERY_ONLY
 
 
 def test_gateway_security_local_and_remote_boundaries():
