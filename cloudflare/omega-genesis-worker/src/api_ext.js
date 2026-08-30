@@ -147,11 +147,13 @@ export async function handleExtendedApi({url,request,env,stateStub,stateSnapshot
       boundary:"observation compiler only; runtime admission is a separate proof-gated operation"
     });
   }
+  if(path==="/api/history") return stateStub.fetch("https://state/history");
   if(path==="/api/recovery/rollback"&&request.method==="POST"){
-    return Response.json({
-      error:"cloud_recovery_boundary",
-      boundary:"append-only rollback is implemented by the sovereign local runtime; hosted rollback remains locked until cloud recovery receipts are enabled"
-    },{status:409});
+    const token=env.OMEGA_WRITE_TOKEN;
+    if(!token||request.headers.get("X-Omega-Write-Token")!==token){
+      return Response.json({error:"hosted_write_locked",boundary:"Configure OMEGA_WRITE_TOKEN and send X-Omega-Write-Token."},{status:403});
+    }
+    return stateStub.fetch(new Request("https://state/rollback",{method:"POST",headers:{"content-type":"application/json"},body:await request.text()}));
   }
   return null;
 }
