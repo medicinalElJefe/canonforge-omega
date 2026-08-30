@@ -1,0 +1,37 @@
+name: Expand verified OMEGA Genesis
+on:
+  push:
+    branches: [omega-genesis-v1-full]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  expand:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: omega-genesis-v1-full
+      - name: Reconstruct verified source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .omega-bootstrap/src.part00.b64 .omega-bootstrap/src.part01.b64 .omega-bootstrap/src.part02.b64 .omega-bootstrap/src.part03.b64 .omega-bootstrap/src.part04.b64 .omega-bootstrap/src.part05.b64 > /tmp/omega-genesis.b64
+          base64 --decode /tmp/omega-genesis.b64 > /tmp/omega-genesis.tar.xz
+          echo "ac0b39fa484b0501be7a5384c95c34dee5f08595a2c07ac2ab963fe9ba8994af  /tmp/omega-genesis.tar.xz" | sha256sum -c -
+          mkdir -p /tmp/omega-genesis
+          tar -xJf /tmp/omega-genesis.tar.xz -C /tmp/omega-genesis
+          rsync -a --delete --exclude='.git/' /tmp/omega-genesis/ ./
+          python -m pip install --quiet pytest
+          python scripts/verify_release.py
+          python -m pytest -q
+      - name: Commit clean Genesis tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "OMEGA Genesis Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Build OMEGA Genesis v1 clean source"
+          git push origin HEAD:omega-genesis-v1-full
