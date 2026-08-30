@@ -33,7 +33,11 @@ from .adapters.workbook import inspect_workbook, roundtrip_workbook
 from .adapters.earth import GeoPoint, destination, haversine_m
 from .calculus import quantize_heading
 from .orchestrator import evaluate_all
-from .release import verify_manifest\nfrom .acceptance import evaluate as evaluate_acceptance\nfrom .language import decode_packet\nfrom .intelligence import plan as plan_objective\nfrom .adapters.biology import from_dicts as analyze_biology
+from .release import verify_manifest
+from .acceptance import evaluate as evaluate_acceptance
+from .language import decode_packet
+from .intelligence import plan as plan_objective
+from .adapters.biology import from_dicts as analyze_biology
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -169,7 +173,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {"history": RUNTIME.history(int(query.get("limit", [100])[0]))})
             if path == "/api/stream/status":
                 return self._json(200, stream_status())
-            if path == "/api/acceptance":\n                return self._json(200, evaluate_acceptance(ROOT, RUNTIME))\n            if path == "/api/language/current":\n                return self._json(200, decode_packet(RUNTIME.state))\n            if path == "/api/modes":
+            if path == "/api/acceptance":
+                return self._json(200, evaluate_acceptance(ROOT, RUNTIME))
+            if path == "/api/language/current":
+                return self._json(200, decode_packet(RUNTIME.state))
+            if path == "/api/modes":
                 return self._json(200, {"modes": mode_catalog()})
             if path == "/api/orchestrate":
                 return self._json(200, evaluate_all(RUNTIME.state))
@@ -305,7 +313,11 @@ class Handler(BaseHTTPRequestHandler):
                     note=str(body.get("note", "")),
                 )
                 return self._json(200, packet.public_dict())
-            if path == "/api/ai/plan":\n                return self._json(200, plan_objective(RUNTIME.state, str(body.get("objective", ""))))\n            if path == "/api/bio/analyze":\n                return self._json(200, analyze_biology(list(body.get("nodes") or []), list(body.get("relations") or [])))\n            if path == "/api/dewey-bal/validate":
+            if path == "/api/ai/plan":
+                return self._json(200, plan_objective(RUNTIME.state, str(body.get("objective", ""))))
+            if path == "/api/bio/analyze":
+                return self._json(200, analyze_biology(list(body.get("nodes") or []), list(body.get("relations") or [])))
+            if path == "/api/dewey-bal/validate":
                 return self._json(200, RUNTIME.validate_dewey_bal_contract(
                     int(body["source_state"]),
                     int(body["target_state"]),
