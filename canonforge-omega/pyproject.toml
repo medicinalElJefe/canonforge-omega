@@ -1,7 +1,7 @@
 [project]
 name = "canonforge-omega"
-version = "0.2.0"
-description = "CanonForge Omega — Cognitive Operating System prototype (FastAPI backend + 144D coherence engine + desktop console)."
+version = "6.0.0"
+description = "OMEGA V6 sovereign convergence runtime: Mode 188, Dewey operators, 144/1728/20736 atlas, proof ledger, motion relativity, forecast boundaries, and desktop/public interfaces."
 requires-python = ">=3.10"
 authors = [{name = "Jeffrey Alan Dewey"}]
 dependencies = [
@@ -9,5 +9,13 @@ dependencies = [
     "uvicorn>=0.29.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
 [project.scripts]
-canonforge-omega = "api.app:app"
+canonforge-omega = "omega_runtime.cli:main"
+omega-v6 = "omega_runtime.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
