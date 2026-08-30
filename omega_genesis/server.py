@@ -38,6 +38,10 @@ from .acceptance import evaluate as evaluate_acceptance
 from .language import decode_packet
 from .intelligence import plan as plan_objective
 from .adapters.biology import from_dicts as analyze_biology
+from .mission import plan_prompt, validate_mission
+from .reality import RealityConfig, analyze_delimited
+from .training import retrieve as retrieve_training
+from .observations import earth_context
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -116,6 +120,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _body(self):
         length = int(self.headers.get("Content-Length", "0") or 0)
+        if length > 16 * 1024 * 1024:
+            raise ValueError("request body exceeds 16 MiB")
         return json.loads(self.rfile.read(length) or b"{}")
 
     def _auth(self):
@@ -258,6 +264,17 @@ class Handler(BaseHTTPRequestHandler):
                 })
             if path == "/api/release/verify":
                 return self._json(200, verify_manifest(ROOT))
+            if path == "/api/earth/context":
+                lat = float(query.get("lat", [0])[0])
+                lon = float(query.get("lon", [0])[0])
+                return self._json(200, earth_context(lat, lon))
+            if path == "/api/link/status":
+                return self._json(200, {
+                    "status": "LOCAL_HOST_BOUNDARY",
+                    "authority": "sovereign local executor",
+                    "cloud_pairing": "requires deployed Genesis Worker Mission Control",
+                    "canonical_mutation": False,
+                })
             if path == "/api/host/status":
                 import platform
                 return self._json(200, {
@@ -315,6 +332,17 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, packet.public_dict())
             if path == "/api/ai/plan":
                 return self._json(200, plan_objective(RUNTIME.state, str(body.get("objective", ""))))
+            if path == "/api/hybrid/plan":
+                return self._json(200, plan_prompt(str(body.get("prompt", "")), project_path=str(body.get("project_path", "."))))
+            if path == "/api/mission/validate":
+                result = validate_mission(dict(body))
+                return self._json(200 if result.get("status") == "PASS" else 422, result)
+            if path == "/api/reality/analyze":
+                config = RealityConfig(**dict(body.get("config") or {}))
+                return self._json(200, analyze_delimited(str(body.get("text", "")), config))
+            if path == "/api/training/retrieve":
+                root = _resolve_approved_root(body.get("root"))
+                return self._json(200, retrieve_training(root, str(body.get("query", "")), limit=int(body.get("limit", 8))))
             if path == "/api/bio/analyze":
                 return self._json(200, analyze_biology(list(body.get("nodes") or []), list(body.get("relations") or [])))
             if path == "/api/dewey-bal/validate":
