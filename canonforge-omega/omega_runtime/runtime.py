@@ -1,22 +1,36 @@
 from __future__ import annotations
 
 from threading import RLock
-from typing import Sequence
+from typing import Protocol, Sequence
 
 from .state import StateEnvelope, EvidenceClass
 from .mode188 import gate, operator_decision, opposite_pair_axes, simplex_from_axes, GateDecision, OperatorDecision
 from .proof import ProofLedger
 
 
-class OmegaRuntime:
-    """Single-authority state machine. Views, AI, cloud and bridge may propose; only this object accepts."""
+class StatePersistence(Protocol):
+    def load(self) -> StateEnvelope | None: ...
+    def save(self, state: StateEnvelope) -> None: ...
 
-    def __init__(self, initial: StateEnvelope, ledger: ProofLedger | None = None) -> None:
+
+class OmegaRuntime:
+    """Single-authority state machine.
+
+    Views, AI, cloud and bridge may propose; only this object accepts. When a
+    persistence adapter is supplied, the last accepted canonical state survives
+    restarts and every new accepted state is atomically persisted.
+    """
+
+    def __init__(self, initial: StateEnvelope, ledger: ProofLedger | None = None, store: StatePersistence | None = None) -> None:
         self._lock = RLock()
-        self._state = initial
+        self.store = store
+        recovered = store.load() if store is not None else None
+        self._state = recovered or initial
         self.ledger = ledger or ProofLedger()
-        self.ledger.append(kind="BOOT", input_digest=None, output_digest=initial.digest, decision="ACCEPT",
-                           evidence={"schema": initial.schema_version})
+        self.ledger.append(kind="BOOT", input_digest=None, output_digest=self._state.digest, decision="ACCEPT",
+                           evidence={"schema": self._state.schema_version, "recovered": recovered is not None})
+        if store is not None and recovered is None:
+            store.save(self._state)
 
     @property
     def state(self) -> StateEnvelope:
@@ -56,4 +70,6 @@ class OmegaRuntime:
                                rejected_alternatives=op.rejected)
             if accepted:
                 self._state = candidate
+                if self.store is not None:
+                    self.store.save(candidate)
             return {"accepted": accepted, "decision": decision, "gate": g, "operator": op, "simplex": simplex}
