@@ -11,3 +11,5 @@ runtime-data/
 node_modules/
 dist/
 build/
+.omega-venv/
+release/

@@ -12,11 +12,30 @@ from .capabilities import CAPABILITIES, MENUS, GATES
 from .corpus import classify_name
 from .forecast import frozen_prior
 from .plugins import inspect_plugin, run_isolated
-from .adapters.hybrid import HybridStep, validate_plan
+from .adapters.hybrid import HybridStep, validate_plan, execute_plan
+from .adapters.workbook import inspect_workbook, roundtrip_workbook
+from .adapters.earth import GeoPoint, destination, haversine_m
+from .calculus import quantize_heading
+from .orchestrator import evaluate_all
+from .release import verify_manifest
 
 ROOT=Path(__file__).resolve().parents[1]; WEB=ROOT/"web"
 DATA=Path(os.environ.get("OMEGA_DATA",ROOT/"runtime-data")); RUNTIME=OmegaRuntime(DATA)
 PLUGIN_ROOT=(ROOT/"plugins").resolve()
+
+
+def _approved_hybrid_roots():
+    raw=os.environ.get("OMEGA_HYBRID_ROOTS",str(ROOT))
+    parts=[x.strip() for x in raw.replace(os.pathsep,";").split(";") if x.strip()]
+    return [Path(x).expanduser().resolve() for x in parts] or [ROOT.resolve()]
+
+def _resolve_approved_root(requested):
+    approved=_approved_hybrid_roots()
+    if not requested: return approved[0]
+    p=Path(str(requested)).expanduser().resolve()
+    for root in approved:
+        if p==root or root in p.parents: return p
+    raise PermissionError("requested root is outside OMEGA_HYBRID_ROOTS")
 
 def _plugin_catalog():
     out=[]
@@ -42,16 +61,23 @@ def _plugin_by_id(plugin_id):
     return matches[0]
 
 def _json_safe(value):
-    if isinstance(value, float) and not math.isfinite(value): return None
-    if isinstance(value, dict): return {k:_json_safe(v) for k,v in value.items()}
-    if isinstance(value, (list, tuple)): return [_json_safe(v) for v in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {k:_json_safe(v) for k,v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
     return value
 
 class Handler(BaseHTTPRequestHandler):
-    server_version="OmegaGenesis/1.0"
+    server_version="OmegaGenesis/1.1"
     def _json(self,status,obj,head_only=False):
         raw=json.dumps(_json_safe(obj),ensure_ascii=False,default=str,allow_nan=False,separators=(",",":")).encode()
-        self.send_response(status); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(raw))); self.send_header("Cache-Control","no-store"); self.end_headers()
+        self.send_response(status)
+        self.send_header("Content-Type","application/json; charset=utf-8")
+        self.send_header("Content-Length",str(len(raw)))
+        self.send_header("Cache-Control","no-store")
+        self.end_headers()
         if not head_only: self.wfile.write(raw)
     def _body(self):
         n=int(self.headers.get("Content-Length","0") or 0); return json.loads(self.rfile.read(n) or b"{}")
@@ -62,18 +88,20 @@ class Handler(BaseHTTPRequestHandler):
         u=urlparse(self.path); p=u.path
         if p.startswith("/api/"):
             if not self._auth(): return self._json(401,{"error":"unauthorized_sovereign_ingress"},head_only=True)
-            if p=="/api/health": return self._json(200,{"status":"OK","runtime":"OMEGA_GENESIS","version":"1.0.0"},head_only=True)
+            if p=="/api/health": return self._json(200,{"status":"OK","runtime":"OMEGA_GENESIS","version":"1.1.0"},head_only=True)
             return self._json(405,{"error":"head_not_supported_for_endpoint"},head_only=True)
         return self._static(p,head_only=True)
     def do_GET(self):
         u=urlparse(self.path); p=u.path; q=parse_qs(u.query)
         if p.startswith("/api/") and not self._auth(): return self._json(401,{"error":"unauthorized_sovereign_ingress"})
-        if p=="/api/health": return self._json(200,{"status":"OK","runtime":"OMEGA_GENESIS","version":"1.0.0","canonical_digest":RUNTIME.state.digest,"state_id":RUNTIME.state.address.state_id,"proof":RUNTIME.ledger.verify()})
+        if p=="/api/health": return self._json(200,{"status":"OK","runtime":"OMEGA_GENESIS","version":"1.1.0","canonical_digest":RUNTIME.state.digest,"state_id":RUNTIME.state.address.state_id,"proof":RUNTIME.ledger.verify()})
         if p=="/api/state": return self._json(200,RUNTIME.snapshot())
         if p=="/api/modes": return self._json(200,{"modes":mode_catalog()})
+        if p=="/api/orchestrate": return self._json(200,evaluate_all(RUNTIME.state))
         if p=="/api/capabilities": return self._json(200,{"menus":MENUS,"capabilities":CAPABILITIES,"acceptance_gates":GATES})
         if p=="/api/plugins": return self._json(200,{"policy":"plugins propose/read/render within declared leases; kernel retains commit authority","plugins":_plugin_catalog()})
-        if p=="/api/proof": return self._json(200,{"verify":RUNTIME.ledger.verify(),"records":RUNTIME.ledger.read()[-100:]})
+        if p=="/api/proof": return self._json(200,{"verify":RUNTIME.ledger.verify(),"replay":RUNTIME.verify_replay(),"records":RUNTIME.ledger.read()[-100:]})
+        if p=="/api/replay": return self._json(200,RUNTIME.verify_replay())
         if p=="/api/forecast": return self._json(200,{**asdict(frozen_prior(RUNTIME.state,int(q.get("horizon",[1])[0]))),"evidence_class":"FORECAST"})
         if p=="/api/mode": return self._json(200,{"mode":q.get("id",["MODE188"])[0],"result":evaluate_mode(q.get("id",["MODE188"])[0],RUNTIME.state),"state_digest":RUNTIME.state.digest})
         if p=="/api/atlas":
@@ -81,6 +109,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200,{"index0":i,"state_id":a.state_id,"address":a.as_tuple(),"opposite":((a.domain+5)%12+1,(a.phase+5)%12+1,(a.regulation+5)%12+1,(a.lens+5)%12+1),"phase_portal_size":12**3})
         if p=="/api/corpus/classify":
             name=q.get("name",[""])[0]; d,a,r,why=classify_name(name); return self._json(200,{"name":name,"disposition":d,"authority":a,"role":r,"reason":why})
+        if p=="/api/release/verify": return self._json(200,verify_manifest(ROOT))
+        if p=="/api/host/status":
+            import platform
+            return self._json(200,{"status":"PASS","host":platform.node(),"platform":platform.platform(),"python":platform.python_version(),"cpu_count":os.cpu_count(),"hybrid_roots":[str(x) for x in _approved_hybrid_roots()],"canonical_digest":RUNTIME.state.digest})
         return self._static(p)
     def do_POST(self):
         p=urlparse(self.path).path
@@ -98,17 +130,41 @@ class Handler(BaseHTTPRequestHandler):
                 result=run_isolated(plugin_dir,payload,timeout=min(30,max(1,int(body.get("timeout",10)))))
                 return self._json(200,result)
             if p=="/api/hybrid/validate":
-                root=Path(str(body.get("root",ROOT))).resolve()
+                root=_resolve_approved_root(body.get("root"))
                 steps=[HybridStep(str(x["op"]),x.get("path"),x.get("output"),x.get("args")) for x in body.get("steps",[])]
-                return self._json(200,validate_plan(root,steps))
+                return self._json(200,{**validate_plan(root,steps),"root":str(root)})
+            if p=="/api/hybrid/run":
+                root=_resolve_approved_root(body.get("root"))
+                steps=[HybridStep(str(x["op"]),x.get("path"),x.get("output"),x.get("args")) for x in body.get("steps",[])]
+                result=execute_plan(root,steps); result["root"]=str(root)
+                return self._json(200 if result.get("status")=="PASS" else 422,result)
+            if p=="/api/workbook/inspect":
+                root=_resolve_approved_root(body.get("root"))
+                return self._json(200,inspect_workbook(root,str(body["path"])))
+            if p=="/api/workbook/roundtrip":
+                root=_resolve_approved_root(body.get("root"))
+                result=roundtrip_workbook(root,str(body["path"]),str(body["output"]))
+                return self._json(200 if result.get("status")=="PASS" else 422,result)
+            if p=="/api/earth/destination":
+                origin=GeoPoint(float(body["lat"]),float(body["lon"]))
+                bearing=float(body.get("bearing_rad",0)); distance_m=float(body.get("distance_m",0))
+                target=destination(origin,bearing,distance_m)
+                return self._json(200,{"origin":asdict(origin),"destination":asdict(target),"requested_distance_m":distance_m,"computed_distance_m":haversine_m(origin,target),"bearing_rad":bearing,"quantized_heading_rad":quantize_heading(bearing),"evidence_class":"DERIVED","boundary":"geodesic computation only; not a claim about current ground conditions"})
         except Exception as e: return self._json(422,{"error":type(e).__name__,"detail":str(e)})
         self._json(404,{"error":"not_found"})
     def _static(self,p,head_only=False):
         rel="index.html" if p in {"/",""} else p.lstrip("/")
         f=(WEB/rel).resolve()
-        if WEB.resolve()!=f and WEB.resolve() not in f.parents: return self._json(403,{"error":"forbidden"},head_only=head_only)
-        if not f.is_file(): return self._json(404,{"error":"static_not_found","path":p},head_only=head_only)
-        raw=f.read_bytes(); self.send_response(200); self.send_header("Content-Type",mimetypes.guess_type(str(f))[0] or "application/octet-stream"); self.send_header("Content-Length",str(len(raw))); self.send_header("Cache-Control","no-store"); self.end_headers()
+        if WEB.resolve()!=f and WEB.resolve() not in f.parents:
+            return self._json(403,{"error":"forbidden"},head_only=head_only)
+        if not f.is_file():
+            return self._json(404,{"error":"static_not_found","path":p},head_only=head_only)
+        raw=f.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type",mimetypes.guess_type(str(f))[0] or "application/octet-stream")
+        self.send_header("Content-Length",str(len(raw)))
+        self.send_header("Cache-Control","no-store")
+        self.end_headers()
         if not head_only: self.wfile.write(raw)
     def log_message(self,fmt,*args): pass
 

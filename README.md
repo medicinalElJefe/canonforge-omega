@@ -9,7 +9,7 @@ It preserves useful OMEGA concepts while removing the architectural failure mode
 ## What is implemented
 
 - **20,736-state reversible address lattice**: 12 domains × 12 phases × 12 regulation states × 12 knowledge lenses.
-- **Canonical packet authority** with SHA-256 identity, parent linkage and an append-only proof ledger.
+- **Canonical packet authority** with SHA-256 identity, parent linkage, an append-only state journal, restart recovery and an append-only proof ledger.
 - **Mode 188** STAY / TURN / ESCALATE admissibility using the accepted compatibility ratio.
 - **DEWEY-BAL** burden-compression regression contract, including the exact 11499 → `MODE188+` → 11687 acceptance path and HOLD-on-mismatch rule.
 - **Relational Skin Calculus (RSC)** plus Deep Mother, High Father and Deep Thought computational lenses.
@@ -19,12 +19,15 @@ It preserves useful OMEGA concepts while removing the architectural failure mode
 - **Earth traversal math** using WGS84 coordinates, mean Earth radius 6,371,008.8 m, π/36 heading quantization and `F(r)=πr⁴` scale mapping.
 - **Bounded plugin runtime** with declared permissions/capabilities and explicit denial of `canonical.commit`, `evidence.promote`, `proof.rewrite`, arbitrary shell and arbitrary network authority.
 - **Corpus classifier/indexer** using KEEP / MERGE / DONOR / QUARANTINE and content hashes.
-- **Governed Hybrid Link plan validator** with approved-root containment and typed operations only.
-- **12-surface responsive cockpit** derived from the authoritative one-system menu ledger.
-- **35-mode governed registry** so “all modes active” means all lenses are available while mutation authority remains singular.
+- **Governed Hybrid Link executor** with approved-root containment, typed operations, bounded reads/writes, corpus indexing, release verification and deterministic run fingerprints; arbitrary shell execution is not part of the protocol.
+- **12-surface responsive cockpit** derived from the authoritative one-system menu ledger, with each master surface independently navigable.
+- **36-mode governed registry + all-mode orchestrator** so every registered lens evaluates the same immutable packet while mutation authority remains singular.
 - **Live plugin registry + bounded execution API** for declared read/query/render/proposal capabilities.
 - **18 capability contracts and 12 acceptance-gate definitions** recovered from the workbook design.
-- **Zero required third-party runtime dependencies** for the core local server.
+- **Excel semantic roundtrip adapter** for `.xlsx`/`.xlsm`, including formulas, cell types, number formats, merged ranges and semantic fingerprints.
+- **Deterministic release manifest + reproducible ZIP builder** with SHA-256 verification.
+- **Browser sonification, geodesic traversal and cockpit diagnostics** as state-bound derived interfaces.
+- **OpenPyXL 3.1+** is the only required Python package beyond the standard library, used for the workbook bridge.
 
 ## Start locally
 
@@ -50,6 +53,44 @@ The indexer hashes files and classifies them. It does **not** execute unknown ar
 
 `OBSERVED`, `IMPORTED`, `DERIVED`, `FORECAST`, `INFERRED`, `ASSUMED`, `SYMBOLIC`, and `USER_ASSERTED` are distinct. Modes and renderers can consume evidence but cannot silently promote it. External adapters must establish the provenance required for stronger evidence classes.
 
+## Repository layout
+
+```text
+omega_genesis/
+  schema.py          canonical packet and evidence model
+  calculus.py        Mode 188, Dewey, RSC and motion math
+  modes.py           36-mode governed stack and mutation policy
+  runtime.py         sole canonical mutation authority
+  proof.py           append-only hash-chain receipts
+  journal.py         append-only canonical packet replay history
+  orchestrator.py    all-mode evaluation against one packet
+  release.py         manifest/tree hashing and verification
+  projection.py      state-bound render packet
+  forecast.py        frozen-prior forecast
+  corpus.py          provenance-aware corpus classification/index
+  plugins.py         bounded plugin SDK/runtime + capability leases
+  adapters/
+    earth.py         WGS84 / ground traversal math
+    hybrid.py        governed Desktop/Hybrid Link validation + execution
+    workbook.py      verified Excel semantic inspection/roundtrip
+  server.py          local API + web application
+web/                  responsive 12-surface operator cockpit
+config/               resolver and source-governance contracts
+tests/                executable regression/acceptance tests
+docs/                 architecture, review, migration and acceptance
+```
+
 ## Truth boundary
 
 The 144 / 1,728 / 20,736 / 145,152 / 61,917,364,224 values are software representation or design-capacity spaces unless independent evidence establishes a physical interpretation. Render output is a view, not measurement authority. Forecasts remain forecasts. Missing real-world evidence produces HOLD / NO_EVIDENCE rather than synthetic substitution.
+
+
+## Windows one-click host setup
+
+Run `INSTALL_OMEGA_WINDOWS.bat`. It creates an isolated `.omega-venv`, installs the declared Python dependency, verifies the repository manifest, and launches Genesis. Python 3.11+ is required. The installer does not disable Windows security controls or execute arbitrary shell jobs through Hybrid Link.
+
+To authorize Hybrid Link/workbook access outside the repository, set `OMEGA_HYBRID_ROOTS` to a semicolon-separated list of approved directories before launch. Non-loopback API ingress additionally requires `OMEGA_GATEWAY_TOKEN`.
+
+## Release build
+
+`python scripts/build_manifest.py` regenerates the file manifest and `SHA256SUMS.txt`. After verification, `python scripts/build_release.py` produces a reproducible release ZIP plus a separate `.sha256` file in `release/`.

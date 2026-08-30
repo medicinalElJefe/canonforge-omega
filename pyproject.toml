@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "omega-genesis"
-version = "1.0.0"
+version = "1.1.0"
 description = "Sovereign, provenance-aware OMEGA runtime with one canonical state authority"
 requires-python = ">=3.11"
 authors = [{name = "Jeffrey Alan Dewey"}]
-dependencies = []
+dependencies = ["openpyxl>=3.1,<4"]
 
 [project.scripts]
 omega-genesis = "omega_genesis.server:main"
