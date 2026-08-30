@@ -1,9 +1,44 @@
 import {ER} from "./catalog.js";
 import {addr,hash} from "./kernel.js";
 import {TIERS,SYSTEMS,FAMILIES,capacityAddress,starAddress,shell} from "./system.js";
+const EARTH_IMAGES=[
+  {id:"GOES19_CONUS_GEOCOLOR",label:"GOES-19 East CONUS",url:"https://cdn.star.nesdis.noaa.gov/GOES19/ABI/CONUS/GEOCOLOR/1250x750.jpg",authority:"NOAA NESDIS / CIRA GeoColor"},
+  {id:"GOES19_FD_GEOCOLOR",label:"GOES-19 East Full Disk",url:"https://cdn.star.nesdis.noaa.gov/GOES19/ABI/FD/GEOCOLOR/1808x1808.jpg",authority:"NOAA NESDIS / CIRA GeoColor"},
+  {id:"GOES18_FD_GEOCOLOR",label:"GOES-18 West Full Disk",url:"https://cdn.star.nesdis.noaa.gov/GOES18/ABI/FD/GEOCOLOR/1808x1808.jpg",authority:"NOAA NESDIS / CIRA GeoColor"}
+];
+const EARTH_URLS={usgs:"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",eonet:"https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=100",kp:"https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"};
+const erSp=(a,b,c,d)=>{const R=6371.0088,r=x=>x*Math.PI/180,p1=r(a),p2=r(c),dp=r(c-a),dl=r(d-b),x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(x)))};
+async function jfetch(url){const r=await fetch(url,{headers:{"user-agent":"OMEGA-Genesis/1.1","accept":"application/json"}});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
+async function imageEvidence(i){try{const r=await fetch(i.url,{headers:{Range:"bytes=0-0"}}),ct=r.headers.get("content-type")||"",ev={...i,http_status:r.status,content_type:ct,observation_at:r.headers.get("last-modified"),retrieved_at:new Date().toISOString(),binding:"LATEST_ALIAS_DIRECT_IMAGE",historical_playback:false,geoColor_boundary:"NOAA/CIRA derived sensor composite; daytime simulated green; nighttime ABI 7/13; city-light orientation layer is not a live OMEGA observation"};ev.status=r.ok&&ct.toLowerCase().startsWith("image/")?"CURRENT_VERIFIED":"HOLD";ev.evidence_hash=await hash(ev);try{r.body?.cancel()}catch{}return ev}catch(err){return{...i,status:"NO_EVIDENCE",detail:String(err?.message||err),retrieved_at:new Date().toISOString(),binding:"LATEST_ALIAS_DIRECT_IMAGE"}}}
+async function earthEvidence(lat,lon){if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180)throw new Error("WGS84 coordinate out of range");const settled=await Promise.allSettled([
+  jfetch(EARTH_URLS.usgs),jfetch(EARTH_URLS.eonet),jfetch(EARTH_URLS.kp),
+  jfetch("https://api.open-meteo.com/v1/forecast?latitude="+encodeURIComponent(lat)+"&longitude="+encodeURIComponent(lon)+"&current=temperature_2m,wind_speed_10m,cloud_cover&timezone=UTC")
+]);const channels={};
+  if(settled[0].status==="fulfilled"){const fs=settled[0].value.features||[],mags=fs.map(f=>f.properties?.mag).filter(Number.isFinite);let near=null;for(const f of fs){const z=f.geometry?.coordinates||[];if(z.length<2)continue;const d=erSp(lat,lon,+z[1],+z[0]);if(!near||d<near.distance_km)near={distance_km:d,magnitude:f.properties?.mag,place:f.properties?.place,time_ms:f.properties?.time,url:f.properties?.url}}channels.seismic={status:"PASS",authority:"USGS Earthquake Hazards Program",source_url:EARTH_URLS.usgs,past_day_count:fs.length,max_magnitude:mags.length?Math.max(...mags):null,nearest:near,evidence_class:"OBSERVED_EXTERNAL"}}
+  else channels.seismic={status:"NO_EVIDENCE",detail:String(settled[0].reason)};
+  if(settled[1].status==="fulfilled"){const es=settled[1].value.events||[];channels.natural_events={status:"PASS",authority:"NASA EONET v3",source_url:EARTH_URLS.eonet,open_event_count:es.length,categories:Object.fromEntries([...new Set(es.flatMap(e=>(e.categories||[]).map(c=>c.title||c.id)))].sort().map(k=>[k,es.filter(e=>(e.categories||[]).some(c=>(c.title||c.id)===k)).length])),evidence_class:"IMPORTED_EXTERNAL"}} else channels.natural_events={status:"NO_EVIDENCE",detail:String(settled[1].reason)};
+  if(settled[2].status==="fulfilled"){const rows=settled[2].value,head=Array.isArray(rows)&&Array.isArray(rows[0])?rows[0]:[],last=Array.isArray(rows)?[...rows.slice(1)].reverse().find(r=>Array.isArray(r)&&r.length>=2):null;channels.space_weather={status:last?"PASS":"NO_EVIDENCE",authority:"NOAA Space Weather Prediction Center",source_url:EARTH_URLS.kp,latest:last?Object.fromEntries(head.map((k,i)=>[k,last[i]])):null,evidence_class:"IMPORTED_EXTERNAL"}} else channels.space_weather={status:"NO_EVIDENCE",detail:String(settled[2].reason)};
+  if(settled[3].status==="fulfilled")channels.local_conditions={status:"PASS",authority:"Open-Meteo",source_url:"https://api.open-meteo.com/",current:settled[3].value.current,current_units:settled[3].value.current_units,evidence_class:"IMPORTED_EXTERNAL",boundary:"provider output may blend model and observational inputs; not canonical OMEGA measurement"};else channels.local_conditions={status:"NO_EVIDENCE",detail:String(settled[3].reason)};
+  const satellite=await Promise.all(EARTH_IMAGES.map(imageEvidence));const num=v=>Number.isFinite(+v)?+v:0,mag=num(channels.seismic?.max_magnitude),wind=num(channels.local_conditions?.current?.wind_speed_10m),events=num(channels.natural_events?.open_event_count),kp=num(channels.space_weather?.latest?.Kp??channels.space_weather?.latest?.kp);const context=Math.min(1,.30*Math.min(1,mag/8)+.25*Math.min(1,kp/9)+.20*Math.min(1,wind/100)+.25*Math.min(1,events/100));const out={schema:"OMEGA_EARTH_EVIDENCE_V1",target:{lat,lon,crs:"EPSG:4326"},satellite,channels,derived_context_index:context,derived_context_boundary:"normalized display context only; not empirical proof, physical law or forecast",generated_pixels_substituted:false,retrieved_at:new Date().toISOString()};out.packet_fingerprint=await hash(out);return out}
+function promptDraft(prompt,projectPath="."){const t=String(prompt||"").trim(),low=t.toLowerCase();let action="INDEX",profile="NONE",warning=null;if(/train|learn locally|learning cycle/.test(low))action="TRAIN_LOCAL";else if(/support bundle|diagnostic bundle|support packet/.test(low))action="SUPPORT_BUNDLE";else if(/workbook|excel|xlsx|xlsm/.test(low))action="WORKBOOK_AUDIT";else if(/package|zip|release bundle/.test(low))action="PACKAGE";else if(/test|pytest|unit test|acceptance/.test(low)){action="TEST";profile=/python|pytest/.test(low)?"PYTHON_TEST":"AUTO_BUILD"}else if(/build|compile|repair|fix|patch/.test(low)){action="BUILD";profile=/node|npm|javascript|typescript/.test(low)?"NODE_BUILD":/dotnet|\.net|c#/.test(low)?"DOTNET_BUILD":"AUTO_BUILD"}else warning="No executable intent was unambiguous; discovery INDEX selected.";const p=String(projectPath||".").replaceAll("\\","/");if((action==="BUILD"||action==="TEST")&&(p==="."||p==="")){action="INDEX";profile="NONE";warning="Broad-root build/test converted to discovery-only INDEX; locate a child project first."}return{schema:"OMEGA_HYBRID_DRAFT_V1",action,profile,project_path:p||".",rationale:"Prompt mapped to a typed governed action; execution remains paired-host only and requires confirmation.",warnings:warning?[warning]:[],requiresConfirmation:true,confirmed:false,queued:false,hostStateMutation:false}}
+
 
 export async function handleExtendedApi({url,request,env,stateStub,stateSnapshot}){
   const path=url.pathname;
+
+  if(path==="/api/earth/context"){
+    const lat=Number(url.searchParams.get("lat")),lon=Number(url.searchParams.get("lon"));
+    try{return Response.json(await earthEvidence(lat,lon))}catch(err){return Response.json({error:"earth_context_failed",detail:String(err?.message||err)},{status:422})}
+  }
+  if(path==="/api/hybrid/plan"&&request.method==="POST"){
+    const body=await request.json();return Response.json(promptDraft(body.prompt,body.project_path||"."));
+  }
+  if(path==="/api/reality/analyze"&&request.method==="POST"){
+    return Response.json({error:"host_only_operation",boundary:"Reality Lab executes against approved local source data. Queue REALITY_ANALYZE through a paired Desktop Link device or use the local Genesis API."},{status:409});
+  }
+  if(path==="/api/training/retrieve"&&request.method==="POST"){
+    return Response.json({error:"host_only_operation",boundary:"Local SAI retrieval remains on the sovereign host; private corpus chunks are not uploaded to the Worker."},{status:409});
+  }
 
   if(path==="/host/current") return stateStub.fetch("https://state/state");
   if(path==="/host/proof/current") return stateStub.fetch("https://state/proof");
