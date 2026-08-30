@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -24,10 +26,27 @@ from omega_runtime.proof import ProofLedger
 from omega_runtime.relativity import ObserverFrame, phase_transform, outverse_inverse, rotate_shell_axes
 from omega_runtime.render import living_glyph_scene
 from omega_runtime.state_store import StateStore
+from omega_runtime.security import gateway_authorized
+from omega_runtime.system_manifest import manifest as software_manifest, summary as software_summary
 
 app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.0.0-convergence")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["GET", "POST"], allow_headers=["*"])
+
+GATEWAY_TOKEN = os.environ.get("OMEGA_GATEWAY_TOKEN")
+
+
+@app.middleware("http")
+async def sovereign_ingress(request: Request, call_next):
+    """Keep localhost frictionless while requiring a secret for remote API ingress."""
+    if request.url.path.startswith("/api/"):
+        client_host = request.client.host if request.client else None
+        presented = request.headers.get("x-omega-gateway-token")
+        if not gateway_authorized(client_host=client_host, presented_token=presented, configured_token=GATEWAY_TOKEN):
+            return JSONResponse({"error": "unauthorized_sovereign_ingress",
+                                 "boundary": "remote API access requires OMEGA_GATEWAY_TOKEN; localhost remains directly usable"}, status_code=401)
+    return await call_next(request)
+
 
 _calc = UniversalMomentCalculator()
 _tic_calc = TICCalculator()
@@ -93,7 +112,13 @@ class ObserverRequest(BaseModel):
 def health() -> Dict[str, Any]:
     return {"ok": True, "runtime": "OMEGA V6 Sovereign Runtime", "state_digest": _runtime.state.digest,
             "proof_records": len(_runtime.ledger.records), "persistent_state": str(STATE_PATH),
+            "remote_ingress_secured": bool(GATEWAY_TOKEN), "software_families": software_summary(),
             "representation_boundary": "144/1728/20736 are software state-space representations unless independently evidenced otherwise"}
+
+
+@app.get("/api/system/manifest")
+def system_manifest() -> Dict[str, Any]:
+    return {"summary": software_summary(), "families": [asdict(f) for f in software_manifest()]}
 
 
 @app.get("/api/status")
@@ -101,9 +126,10 @@ def get_status() -> Dict[str, Any]:
     snap = _calc.compute_from_packets([])
     tic = _tic_calc.from_moment(snap)
     return {"timestamp": snap.timestamp.isoformat(), "uai": snap.uai, "life_coherence": snap.life_coherence,
-            "system_coherence": snap.system_coherence, "truth": tic.truth, "integrity": tic.integrity,
-            "courage": tic.courage, "omega_effective": tic.omega_effective,
-            "boundary": "Fusion/TIC status is derived by the existing CanonForge prototype, not an empirical physical measurement."}
+            "system_coherence": snap.system_coherence, "evidence_count": snap.evidence_count,
+            "truth": tic.truth, "integrity": tic.integrity, "courage": tic.courage,
+            "omega_effective": tic.omega_effective,
+            "boundary": "Fusion/TIC is a compatibility-derived layer. With no explicit evidence it returns zero; canonical authority is StateEnvelope."}
 
 
 @app.get("/api/omega/state")
@@ -138,7 +164,10 @@ def omega_transition(req: TransitionRequest) -> Dict[str, Any]:
 
 @app.get("/api/omega/atlas")
 def omega_atlas(index: int | None = None) -> Dict[str, Any]:
-    address = _runtime.state.address if index is None else Address20736.from_index(index)
+    try:
+        address = _runtime.state.address if index is None else Address20736.from_index(index)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     outverse, inverse = outverse_inverse(address)
     return {"address": address.as_tuple(), "index": address.index, "ping_next": ping_next(address).as_tuple(),
             "ping_prev": ping_prev(address).as_tuple(), "opposite": opposite_address(address).as_tuple(),
@@ -157,7 +186,10 @@ def omega_observer(req: ObserverRequest) -> Dict[str, Any]:
 
 @app.get("/api/omega/forecast")
 def omega_forecast(horizon: int = 1) -> Dict[str, Any]:
-    p = deterministic_local_forecast(_runtime.state, horizon)
+    try:
+        p = deterministic_local_forecast(_runtime.state, horizon)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"source_digest": p.source_digest, "horizon_transitions": p.horizon_transitions,
             "evidence_class": p.evidence_class, "calibrated": p.calibrated, "branches": [asdict(b) for b in p.branches]}
 
