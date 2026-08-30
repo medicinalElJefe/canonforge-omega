@@ -6,7 +6,7 @@
   "atlas_states": 20736,
   "capacity_145152": 145152,
   "design_capacity": 61917364224,
-  "design_capacity_formula": "12^10 = 2^20 × 3^10",
+  "design_capacity_formula": "12^10 = 2^20 \u00d7 3^10",
   "software_systems": 24,
   "software_families": 6,
   "mode_count": 36,
@@ -18,72 +18,340 @@
   "private_corpus_policy": "names/hashes/contracts only; no private Drive identifiers/content published",
   "truth_boundary": "high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",
   "files": [
-    {"path": ".env.example","sha256": "01437e65b1d0fe7599b645ebec66f57b4c50933f6cdc113b8d1fdd3a5275152a","bytes": 492},
-    {"path": ".github/workflows/deploy-genesis-cloudflare.yml","sha256": "f1480f01c66693fcf5fb10d5be8b037c6a602107237e96c16718a912eac629df","bytes": 1654},
-    {"path": ".github/workflows/verify.yml","sha256": "8f49e94ba03e5ca93b03e2a1cf5617c3041a4b532bc016fb477a12cb688d90a3","bytes": 1942},
-    {"path": ".gitignore","sha256": "88c3f2ff019e930c47c84f13ae38bd19367e8ed30eb21791e253243116b4fa62","bytes": 143},
-    {"path": "INSTALL_OMEGA_WINDOWS.bat","sha256": "cf338601ffaa85b639bf8dcc4291ef31ccd1f19ba735f36764cdec67f4d943ea","bytes": 222},
-    {"path": "INSTALL_OMEGA_WINDOWS.ps1","sha256": "d4e5d7a4bed9b033acf8a045304d596132fcbdb45ce0404ff41db2403a4c57df","bytes": 1907},
-    {"path": "README.md","sha256": "114c29a823f9cb8296ab18d36288692e4894144f73e7e3f196e257cb5e8b1cb5","bytes": 6316},
-    {"path": "START_OMEGA.py","sha256": "d545d3d3ee5ed1f76f4d97d64b7a57171913b9e464c8dd8c3e4e270dd5d6f809","bytes": 456},
-    {"path": "START_OMEGA_WINDOWS.bat","sha256": "7e4b9289d4741a0f1dc0170ff5b191de73cd36ce5ca60ec0485db5f0883f5181","bytes": 141},
-    {"path": "cloudflare/omega-genesis-worker/package.json","sha256": "6f7cd6ee5a792cc52feb94d31707f498a65585bfffea47f59d23a6b2c1214aa3","bytes": 246},
-    {"path": "cloudflare/omega-genesis-worker/src/api_ext.js","sha256": "2cdfcdd7df6e137c8091d19b91d3c954f36af400e12e10ccdd996dd559487eb8","bytes": 10276},
-    {"path": "cloudflare/omega-genesis-worker/src/catalog.js","sha256": "13972ec416393beedc0736d76415107c968ae8cc73414ec98c40072facc482dd","bytes": 2058},
-    {"path": "cloudflare/omega-genesis-worker/src/index.js","sha256": "62e924fc822b9f9f84037ac6dc6d204e6243919d11a86f484d980358630c3ccd","bytes": 12941},
-    {"path": "cloudflare/omega-genesis-worker/src/kernel.js","sha256": "86e2c472a55b5925e030abe4e8f201ed98181221102f86b7e635436d085809ae","bytes": 7215},
-    {"path": "cloudflare/omega-genesis-worker/src/system.js","sha256": "a2c5e4bfca7e73685dc83ea9bdbb993eb252e37dc3cceeaacdacb143bf57e997","bytes": 3516},
-    {"path": "cloudflare/omega-genesis-worker/wrangler.toml","sha256": "0ac9469034cd1d5c9949a90948170eccebce0fa7e95264744b58b5643e3370f5","bytes": 440},
-    {"path": "config/corpus_authorities.json","sha256": "196325e5fdcd2d666d6b1024644df8bbf84eec418628968ec353face6750052f","bytes": 1539},
-    {"path": "config/dewey_bal_contract.json","sha256": "cd38f02f56250c5a3a6edffb6a2258ae7a92817e7ed3e27860a8aaac3fe699a2","bytes": 412},
-    {"path": "config/software_systems.json","sha256": "af7ec3d2c28dd77e7481383d0245126a6d1ffcfbde883e59dbb1ee9016430fd0","bytes": 3186},
-    {"path": "config/source_classes.json","sha256": "207833de17d42e813e97a0232c51f08f8871b6647804e88d151582c083e6276a","bytes": 495},
-    {"path": "docs/ACCEPTANCE.md","sha256": "e306d727908c2a01f5216653f070f6f2a8f030d639e4194ef8004f5251e713c8","bytes": 1879},
-    {"path": "docs/ARCHITECTURE.md","sha256": "ccb5ad6a94712a4ab0a1c583d1e26a55137262dbb16a67316a7b05156969e1fd","bytes": 4974},
-    {"path": "docs/CAPABILITY_MATRIX.md","sha256": "6deaa9f62e3a190179441fa7c8237e26affe5ad07c3af5a6e68881e04661fa42","bytes": 2627},
-    {"path": "docs/CORPUS_REVIEW.md","sha256": "d5226a13513e1701afc222bee3fa2d9b210bc12526f8136aacb1b69373872a03","bytes": 1040},
-    {"path": "docs/DEPLOYMENT.md","sha256": "37dbbf688c88438b81b2ca4d376d307ae0dc8e750f291783c5e540358b760c28","bytes": 2024},
-    {"path": "docs/MIGRATION.md","sha256": "0998c9c70d0589b899b39e814e4f329013b06285321b88f045087cd50838bb85","bytes": 659},
-    {"path": "omega_genesis/__init__.py","sha256": "94a8b170933acf40b70ebfc3819e09ecb37a7c222fa13a33b5f16a7dfd5cc6ca","bytes": 278},
-    {"path": "omega_genesis/acceptance.py","sha256": "3aaa5870ba1551d087ec1ad5345a787efdade71b6ff704c9ca3c67d1c222406e","bytes": 5621},
-    {"path": "omega_genesis/adapters/biology.py","sha256": "7e73ac4a5604bef310393792b9b0a627984f9f151fd94a58f4ff52453ef24258","bytes": 3585},
-    {"path": "omega_genesis/adapters/earth.py","sha256": "46472705cfc0f7b985cb7d43b83e28ff964449c18c6a976d5ed338e948b7aff1","bytes": 1626},
-    {"path": "omega_genesis/adapters/hybrid.py","sha256": "e8329a149b544916efaba25e124358ee21228e1dc12748048518d62f44fccd76","bytes": 6341},
-    {"path": "omega_genesis/adapters/workbook.py","sha256": "549b6db38aa29a3042db506e62685397f638c506327f93d14d51ec9dbbceaa3c","bytes": 6235},
-    {"path": "omega_genesis/calculus.py","sha256": "a9d0ccf468b448ce70337f09fd9c356879e349b22346e42cb5ca0ce08b1b4853","bytes": 5880},
-    {"path": "omega_genesis/capabilities.py","sha256": "43014cd8b075119bcab9d1109194523c97ea8983d6eae6dd025f63f26c5879fd","bytes": 3582},
-    {"path": "omega_genesis/capacity.py","sha256": "b1974cf6658a5415beef813e49b464c489606da1843ed7b4f6de897ad3a6e081","bytes": 4175},
-    {"path": "omega_genesis/corpus.py","sha256": "af5f8ccd2f77422576ebbfadfbd7135d4fd7da567cc9200b299f277ebea60f0e","bytes": 3489},
-    {"path": "omega_genesis/forecast.py","sha256": "38b750d0511610de1acbe042fd2e004dcb409b47360562c257032a18b3d4bccb","bytes": 1075},
-    {"path": "omega_genesis/host.py","sha256": "dba2658964b7a94a3552e45c0e7c655bd62fa17c35c0b925a39cc6a5fb0fa56b","bytes": 2718},
-    {"path": "omega_genesis/intelligence.py","sha256": "008b1679850badc6811bb0dea8cc6fd15b8e08a150d5c7a4cf950baceb261fdf","bytes": 2879},
-    {"path": "omega_genesis/journal.py","sha256": "9db6666d61fb36ffa843885d7f210dca7c0cc67879a12aad193cb267e3d4b755","bytes": 3245},
-    {"path": "omega_genesis/language.py","sha256": "93b6716b222dec279a7de4eb9110a759c8283fc3ee27f65d29391084718e5b81","bytes": 1786},
-    {"path": "omega_genesis/modes.py","sha256": "79ad028720a9a956124fdda743861c2d19bbe2b556f05681ba436559ae60e9e2","bytes": 15319},
-    {"path": "omega_genesis/orchestrator.py","sha256": "9f421b05c231114bdab66612b21c31798a056011edff20a0d1721f3d9739ca9f","bytes": 1535},
-    {"path": "omega_genesis/plugins.py","sha256": "2be1d39615b3a29caf562728a9e4accc8a60e6e01cf58ac307bef10fc026832a","bytes": 2837},
-    {"path": "omega_genesis/projection.py","sha256": "820c817e405a5cf68d38ffb98e56a83abe451156b63e483d911de7aea0089f50","bytes": 1147},
-    {"path": "omega_genesis/proof.py","sha256": "50a1488c8029676ea729fc230835ed83f597cca61ae7802ac869082f119b6a5b","bytes": 2665},
-    {"path": "omega_genesis/release.py","sha256": "48ed90f4219a16acc2be03ba0317abd89d1c9e4a17fbe90386d639044523e077","bytes": 4044},
-    {"path": "omega_genesis/runtime.py","sha256": "cad844698a58f67b86c76f8c8a8d68bc96e59442ef2effdb03251b90e80cbf07","bytes": 14342},
-    {"path": "omega_genesis/schema.py","sha256": "92499562796561ed950be9675f6ef4c1fd77a7ea946b5136bf872c30131c9924","bytes": 5934},
-    {"path": "omega_genesis/server.py","sha256": "2376752a34295bcbfafca3d12dea072eb17d0ef4fa92bc42b7a0197a0538b75d","bytes": 19098},
-    {"path": "omega_genesis/shell.py","sha256": "916ef0fa6c80d7481ac3c88fef18c84a334f4cdfb30e009a22f5e97e7160813c","bytes": 1710},
-    {"path": "omega_genesis/stream.py","sha256": "49c6b58bc921108af4dc16d3f851055f9885729f766b79c2b190c4b8bd59d87b","bytes": 2307},
-    {"path": "omega_genesis/systems.py","sha256": "cbea488334f5c052887737b07ab0e35713ed50a61b328623a471982225e90e02","bytes": 1030},
-    {"path": "plugins/samples/atlas_echo/main.py","sha256": "302f7ad5fc484ecdd93bf6e532865ef1dfb2ae70011cfeac552ee73931f045b4","bytes": 198},
-    {"path": "plugins/samples/atlas_echo/plugin.json","sha256": "1bfa5fdb6e0baceb42f5b9a5992e6d907c3f4ac36ca095ef22a002dbdc8fd5a5","bytes": 270},
-    {"path": "pyproject.toml","sha256": "0d73c8fa40c332b1783cb6c2a99e0e95341e031231e69fd8a6e277b8ab67c287","bytes": 594},
-    {"path": "scripts/build_manifest.py","sha256": "2999f0c3b71296729f3b8f98d913fcb457670b4b0491784a4f5c1854d8d37c79","bytes": 2209},
-    {"path": "scripts/build_release.py","sha256": "81e07791acae91e8542d6205c16a0910010c648ffa3f5392dd9a68282ea5f9a3","bytes": 1238},
-    {"path": "scripts/index_corpus.py","sha256": "294f492230b3e91828879db23a6cfa7e2da3d6871df56555aada410152ddf314","bytes": 178},
-    {"path": "scripts/run_omega.py","sha256": "fb7b149ca164fadeb9ce057e2935569fa6dbcd9ef829b6eb5a89c7ec8ca0830e","bytes": 178},
-    {"path": "scripts/verify_release.py","sha256": "e03a02fe6e069925b00628e23d94f65abccc1b0a56680b4eb9989aa639184d72","bytes": 3904},
-    {"path": "tests/test_genesis.py","sha256": "dbc6ea7f74a78a2a75246b677cc7567df3055cf7790e38ead7e8cf3751935a7d","bytes": 13517},
-    {"path": "web/advanced.js","sha256": "4a57963141b74b4e0eafa7ea6b24c0869d89293de9b71becf906174cea7c5aa5","bytes": 9811},
-    {"path": "web/app.js","sha256": "de929adc7e3e7edee4e7f2a01b16fd45a134699deac461de6c7a70c58b6e41d0","bytes": 13776},
-    {"path": "web/field3d.js","sha256": "3c4288fc0479a9dfbcef886d8dfb78d73ffe40729388615c2504be8d9f2647d5","bytes": 4754},
-    {"path": "web/index.html","sha256": "b9478d9acd3948516d996d71225f1486c963b6c5b8808a72e30528c7cd2479f0","bytes": 17026},
-    {"path": "web/styles.css","sha256": "06ddff2f4741ddb946c070e2f2fdc5f5bf81aa2a49fff410c524241284673236","bytes": 13190}
+    {
+      "path": ".env.example",
+      "sha256": "01437e65b1d0fe7599b645ebec66f57b4c50933f6cdc113b8d1fdd3a5275152a",
+      "bytes": 492
+    },
+    {
+      "path": ".github/workflows/deploy-genesis-cloudflare.yml",
+      "sha256": "f1480f01c66693fcf5fb10d5be8b037c6a602107237e96c16718a912eac629df",
+      "bytes": 1654
+    },
+    {
+      "path": ".github/workflows/verify.yml",
+      "sha256": "8f49e94ba03e5ca93b03e2a1cf5617c3041a4b532bc016fb477a12cb688d90a3",
+      "bytes": 1942
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "88c3f2ff019e930c47c84f13ae38bd19367e8ed30eb21791e253243116b4fa62",
+      "bytes": 143
+    },
+    {
+      "path": "INSTALL_OMEGA_WINDOWS.bat",
+      "sha256": "cf338601ffaa85b639bf8dcc4291ef31ccd1f19ba735f36764cdec67f4d943ea",
+      "bytes": 222
+    },
+    {
+      "path": "INSTALL_OMEGA_WINDOWS.ps1",
+      "sha256": "d4e5d7a4bed9b033acf8a045304d596132fcbdb45ce0404ff41db2403a4c57df",
+      "bytes": 1907
+    },
+    {
+      "path": "README.md",
+      "sha256": "114c29a823f9cb8296ab18d36288692e4894144f73e7e3f196e257cb5e8b1cb5",
+      "bytes": 6316
+    },
+    {
+      "path": "START_OMEGA.py",
+      "sha256": "d545d3d3ee5ed1f76f4d97d64b7a57171913b9e464c8dd8c3e4e270dd5d6f809",
+      "bytes": 456
+    },
+    {
+      "path": "START_OMEGA_WINDOWS.bat",
+      "sha256": "7e4b9289d4741a0f1dc0170ff5b191de73cd36ce5ca60ec0485db5f0883f5181",
+      "bytes": 141
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/package.json",
+      "sha256": "6f7cd6ee5a792cc52feb94d31707f498a65585bfffea47f59d23a6b2c1214aa3",
+      "bytes": 246
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/api_ext.js",
+      "sha256": "2cdfcdd7df6e137c8091d19b91d3c954f36af400e12e10ccdd996dd559487eb8",
+      "bytes": 10276
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/catalog.js",
+      "sha256": "13972ec416393beedc0736d76415107c968ae8cc73414ec98c40072facc482dd",
+      "bytes": 2058
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/index.js",
+      "sha256": "62e924fc822b9f9f84037ac6dc6d204e6243919d11a86f484d980358630c3ccd",
+      "bytes": 12941
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/kernel.js",
+      "sha256": "86e2c472a55b5925e030abe4e8f201ed98181221102f86b7e635436d085809ae",
+      "bytes": 7215
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/system.js",
+      "sha256": "a2c5e4bfca7e73685dc83ea9bdbb993eb252e37dc3cceeaacdacb143bf57e997",
+      "bytes": 3516
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/wrangler.toml",
+      "sha256": "0ac9469034cd1d5c9949a90948170eccebce0fa7e95264744b58b5643e3370f5",
+      "bytes": 440
+    },
+    {
+      "path": "config/corpus_authorities.json",
+      "sha256": "196325e5fdcd2d666d6b1024644df8bbf84eec418628968ec353face6750052f",
+      "bytes": 1539
+    },
+    {
+      "path": "config/dewey_bal_contract.json",
+      "sha256": "cd38f02f56250c5a3a6edffb6a2258ae7a92817e7ed3e27860a8aaac3fe699a2",
+      "bytes": 412
+    },
+    {
+      "path": "config/software_systems.json",
+      "sha256": "af7ec3d2c28dd77e7481383d0245126a6d1ffcfbde883e59dbb1ee9016430fd0",
+      "bytes": 3186
+    },
+    {
+      "path": "config/source_classes.json",
+      "sha256": "207833de17d42e813e97a0232c51f08f8871b6647804e88d151582c083e6276a",
+      "bytes": 495
+    },
+    {
+      "path": "docs/ACCEPTANCE.md",
+      "sha256": "e306d727908c2a01f5216653f070f6f2a8f030d639e4194ef8004f5251e713c8",
+      "bytes": 1879
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "ccb5ad6a94712a4ab0a1c583d1e26a55137262dbb16a67316a7b05156969e1fd",
+      "bytes": 4974
+    },
+    {
+      "path": "docs/CAPABILITY_MATRIX.md",
+      "sha256": "6deaa9f62e3a190179441fa7c8237e26affe5ad07c3af5a6e68881e04661fa42",
+      "bytes": 2627
+    },
+    {
+      "path": "docs/CORPUS_REVIEW.md",
+      "sha256": "d5226a13513e1701afc222bee3fa2d9b210bc12526f8136aacb1b69373872a03",
+      "bytes": 1040
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "sha256": "37dbbf688c88438b81b2ca4d376d307ae0dc8e750f291783c5e540358b760c28",
+      "bytes": 2024
+    },
+    {
+      "path": "docs/MIGRATION.md",
+      "sha256": "0998c9c70d0589b899b39e814e4f329013b06285321b88f045087cd50838bb85",
+      "bytes": 659
+    },
+    {
+      "path": "omega_genesis/__init__.py",
+      "sha256": "94a8b170933acf40b70ebfc3819e09ecb37a7c222fa13a33b5f16a7dfd5cc6ca",
+      "bytes": 278
+    },
+    {
+      "path": "omega_genesis/acceptance.py",
+      "sha256": "3aaa5870ba1551d087ec1ad5345a787efdade71b6ff704c9ca3c67d1c222406e",
+      "bytes": 5621
+    },
+    {
+      "path": "omega_genesis/adapters/biology.py",
+      "sha256": "7e73ac4a5604bef310393792b9b0a627984f9f151fd94a58f4ff52453ef24258",
+      "bytes": 3585
+    },
+    {
+      "path": "omega_genesis/adapters/earth.py",
+      "sha256": "46472705cfc0f7b985cb7d43b83e28ff964449c18c6a976d5ed338e948b7aff1",
+      "bytes": 1626
+    },
+    {
+      "path": "omega_genesis/adapters/hybrid.py",
+      "sha256": "e8329a149b544916efaba25e124358ee21228e1dc12748048518d62f44fccd76",
+      "bytes": 6341
+    },
+    {
+      "path": "omega_genesis/adapters/workbook.py",
+      "sha256": "549b6db38aa29a3042db506e62685397f638c506327f93d14d51ec9dbbceaa3c",
+      "bytes": 6235
+    },
+    {
+      "path": "omega_genesis/calculus.py",
+      "sha256": "a9d0ccf468b448ce70337f09fd9c356879e349b22346e42cb5ca0ce08b1b4853",
+      "bytes": 5880
+    },
+    {
+      "path": "omega_genesis/capabilities.py",
+      "sha256": "43014cd8b075119bcab9d1109194523c97ea8983d6eae6dd025f63f26c5879fd",
+      "bytes": 3582
+    },
+    {
+      "path": "omega_genesis/capacity.py",
+      "sha256": "b1974cf6658a5415beef813e49b464c489606da1843ed7b4f6de897ad3a6e081",
+      "bytes": 4175
+    },
+    {
+      "path": "omega_genesis/corpus.py",
+      "sha256": "af5f8ccd2f77422576ebbfadfbd7135d4fd7da567cc9200b299f277ebea60f0e",
+      "bytes": 3489
+    },
+    {
+      "path": "omega_genesis/forecast.py",
+      "sha256": "38b750d0511610de1acbe042fd2e004dcb409b47360562c257032a18b3d4bccb",
+      "bytes": 1075
+    },
+    {
+      "path": "omega_genesis/host.py",
+      "sha256": "dba2658964b7a94a3552e45c0e7c655bd62fa17c35c0b925a39cc6a5fb0fa56b",
+      "bytes": 2718
+    },
+    {
+      "path": "omega_genesis/intelligence.py",
+      "sha256": "008b1679850badc6811bb0dea8cc6fd15b8e08a150d5c7a4cf950baceb261fdf",
+      "bytes": 2879
+    },
+    {
+      "path": "omega_genesis/journal.py",
+      "sha256": "9db6666d61fb36ffa843885d7f210dca7c0cc67879a12aad193cb267e3d4b755",
+      "bytes": 3245
+    },
+    {
+      "path": "omega_genesis/language.py",
+      "sha256": "93b6716b222dec279a7de4eb9110a759c8283fc3ee27f65d29391084718e5b81",
+      "bytes": 1786
+    },
+    {
+      "path": "omega_genesis/modes.py",
+      "sha256": "79ad028720a9a956124fdda743861c2d19bbe2b556f05681ba436559ae60e9e2",
+      "bytes": 15319
+    },
+    {
+      "path": "omega_genesis/orchestrator.py",
+      "sha256": "9f421b05c231114bdab66612b21c31798a056011edff20a0d1721f3d9739ca9f",
+      "bytes": 1535
+    },
+    {
+      "path": "omega_genesis/plugins.py",
+      "sha256": "2be1d39615b3a29caf562728a9e4accc8a60e6e01cf58ac307bef10fc026832a",
+      "bytes": 2837
+    },
+    {
+      "path": "omega_genesis/projection.py",
+      "sha256": "820c817e405a5cf68d38ffb98e56a83abe451156b63e483d911de7aea0089f50",
+      "bytes": 1147
+    },
+    {
+      "path": "omega_genesis/proof.py",
+      "sha256": "50a1488c8029676ea729fc230835ed83f597cca61ae7802ac869082f119b6a5b",
+      "bytes": 2665
+    },
+    {
+      "path": "omega_genesis/release.py",
+      "sha256": "48ed90f4219a16acc2be03ba0317abd89d1c9e4a17fbe90386d639044523e077",
+      "bytes": 4044
+    },
+    {
+      "path": "omega_genesis/runtime.py",
+      "sha256": "cad844698a58f67b86c76f8c8a8d68bc96e59442ef2effdb03251b90e80cbf07",
+      "bytes": 14342
+    },
+    {
+      "path": "omega_genesis/schema.py",
+      "sha256": "92499562796561ed950be9675f6ef4c1fd77a7ea946b5136bf872c30131c9924",
+      "bytes": 5934
+    },
+    {
+      "path": "omega_genesis/server.py",
+      "sha256": "2376752a34295bcbfafca3d12dea072eb17d0ef4fa92bc42b7a0197a0538b75d",
+      "bytes": 19098
+    },
+    {
+      "path": "omega_genesis/shell.py",
+      "sha256": "916ef0fa6c80d7481ac3c88fef18c84a334f4cdfb30e009a22f5e97e7160813c",
+      "bytes": 1710
+    },
+    {
+      "path": "omega_genesis/stream.py",
+      "sha256": "49c6b58bc921108af4dc16d3f851055f9885729f766b79c2b190c4b8bd59d87b",
+      "bytes": 2307
+    },
+    {
+      "path": "omega_genesis/systems.py",
+      "sha256": "cbea488334f5c052887737b07ab0e35713ed50a61b328623a471982225e90e02",
+      "bytes": 1030
+    },
+    {
+      "path": "plugins/samples/atlas_echo/main.py",
+      "sha256": "302f7ad5fc484ecdd93bf6e532865ef1dfb2ae70011cfeac552ee73931f045b4",
+      "bytes": 198
+    },
+    {
+      "path": "plugins/samples/atlas_echo/plugin.json",
+      "sha256": "1bfa5fdb6e0baceb42f5b9a5992e6d907c3f4ac36ca095ef22a002dbdc8fd5a5",
+      "bytes": 270
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "0d73c8fa40c332b1783cb6c2a99e0e95341e031231e69fd8a6e277b8ab67c287",
+      "bytes": 594
+    },
+    {
+      "path": "scripts/build_manifest.py",
+      "sha256": "2999f0c3b71296729f3b8f98d913fcb457670b4b0491784a4f5c1854d8d37c79",
+      "bytes": 2209
+    },
+    {
+      "path": "scripts/build_release.py",
+      "sha256": "81e07791acae91e8542d6205c16a0910010c648ffa3f5392dd9a68282ea5f9a3",
+      "bytes": 1238
+    },
+    {
+      "path": "scripts/index_corpus.py",
+      "sha256": "294f492230b3e91828879db23a6cfa7e2da3d6871df56555aada410152ddf314",
+      "bytes": 178
+    },
+    {
+      "path": "scripts/run_omega.py",
+      "sha256": "fb7b149ca164fadeb9ce057e2935569fa6dbcd9ef829b6eb5a89c7ec8ca0830e",
+      "bytes": 178
+    },
+    {
+      "path": "scripts/verify_release.py",
+      "sha256": "e03a02fe6e069925b00628e23d94f65abccc1b0a56680b4eb9989aa639184d72",
+      "bytes": 3904
+    },
+    {
+      "path": "tests/test_genesis.py",
+      "sha256": "dbc6ea7f74a78a2a75246b677cc7567df3055cf7790e38ead7e8cf3751935a7d",
+      "bytes": 13517
+    },
+    {
+      "path": "web/advanced.js",
+      "sha256": "4a57963141b74b4e0eafa7ea6b24c0869d89293de9b71becf906174cea7c5aa5",
+      "bytes": 9811
+    },
+    {
+      "path": "web/app.js",
+      "sha256": "de929adc7e3e7edee4e7f2a01b16fd45a134699deac461de6c7a70c58b6e41d0",
+      "bytes": 13776
+    },
+    {
+      "path": "web/field3d.js",
+      "sha256": "3c4288fc0479a9dfbcef886d8dfb78d73ffe40729388615c2504be8d9f2647d5",
+      "bytes": 4754
+    },
+    {
+      "path": "web/index.html",
+      "sha256": "b9478d9acd3948516d996d71225f1486c963b6c5b8808a72e30528c7cd2479f0",
+      "bytes": 17026
+    },
+    {
+      "path": "web/styles.css",
+      "sha256": "06ddff2f4741ddb946c070e2f2fdc5f5bf81aa2a49fff410c524241284673236",
+      "bytes": 13190
+    }
   ]
 }
