@@ -16,6 +16,12 @@ dev = ["pytest>=8.0"]
 canonforge-omega = "omega_runtime.cli:main"
 omega-v6 = "omega_runtime.cli:main"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "omega_runtime*", "omega_144d_core*", "omega_fusion_core*"]
+exclude = ["web*", "cloudflare*", "desktop_ui*", "tests*", "examples*"]
+namespaces = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
