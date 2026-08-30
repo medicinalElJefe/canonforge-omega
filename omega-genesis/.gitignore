@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+.omega/
+runtime-data/
+*.log
+*.tmp
+.DS_Store
+node_modules/
+dist/
+build/
