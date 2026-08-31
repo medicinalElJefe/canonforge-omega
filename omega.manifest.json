@@ -18,6 +18,8 @@
   "self_build": "governed deterministic self-build with ledger repair, reproducibility gates, cloud-container publication, quarantine, and promotion",
   "self_build_policy_version": 1,
   "provenance_schema_version": 1,
+  "autodeploy_policy_version": 1,
+  "autodeploy": "host pull-based governed promotion ledger -> immutable digest deploy -> live proof/replay/provenance gate -> rollback",
   "lineage_provenance": "sanitized Drive-derived contracts + capability lineage + evidence boundaries; validated before cloud promotion",
   "private_corpus_policy": "names/hashes/contracts only; no private Drive identifiers/content published",
   "truth_boundary": "high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",
@@ -39,8 +41,8 @@
     },
     {
       "path": ".github/workflows/self-build.yml",
-      "sha256": "4bbe02f4a0277192794b548d1a1c63352ef1baa9db6d0a825f31b0d3a70ef819",
-      "bytes": 5850
+      "sha256": "c858ee1bd55a3b76c8c95c7b507d9c654e009455a03f8452f0f6702751ef00d4",
+      "bytes": 8548
     },
     {
       "path": ".github/workflows/verify.yml",
@@ -104,8 +106,13 @@
     },
     {
       "path": "cloud/omega-cloud/docker-compose.yml",
-      "sha256": "eb749a305aa7091117342efeaa2758508aab34d996403a722c6b474a0e68ccbb",
-      "bytes": 1647
+      "sha256": "5d26cd37f43a5594afcee766f7a1be373c120cc922aef0f9d98d958461fc26b6",
+      "bytes": 1688
+    },
+    {
+      "path": "cloud/omega-cloud/systemd/omega-cloud-watch.service",
+      "sha256": "340cc8a5380d7b88168767b5d7dc7ca2e50dcbccd965bf1c96980e5e6864e7a1",
+      "bytes": 458
     },
     {
       "path": "cloudflare/omega-genesis-worker/package.json",
@@ -148,6 +155,11 @@
       "bytes": 440
     },
     {
+      "path": "config/cloud_autodeploy_policy.json",
+      "sha256": "fe21316edee4aeed8b2069abea786c9401b4fb75c40f50657232159a9774e4ad",
+      "bytes": 597
+    },
+    {
       "path": "config/corpus_authorities.json",
       "sha256": "196325e5fdcd2d666d6b1024644df8bbf84eec418628968ec353face6750052f",
       "bytes": 1539
@@ -164,8 +176,8 @@
     },
     {
       "path": "config/self_build_policy.json",
-      "sha256": "0c3a724700d2f773c575cc5f665b6ec2b7536fb8c5912d5e8e7eee4773489fcd",
-      "bytes": 538
+      "sha256": "7e59a6ce20c99a61a44f0d70dfeb09620db66416f99eba7ea7851ac74fa9cb4d",
+      "bytes": 578
     },
     {
       "path": "config/software_systems.json",
@@ -196,6 +208,11 @@
       "path": "docs/CLOUD.md",
       "sha256": "c4d6f293e80e301d31f153cf064e521de858d9216134186548544acf07580350",
       "bytes": 2637
+    },
+    {
+      "path": "docs/CLOUD_AUTODEPLOY.md",
+      "sha256": "8afc1417ef23e2cf9d166dace89eac9b5224cc7a08abc901a93fd422c46b16c3",
+      "bytes": 2857
     },
     {
       "path": "docs/CLOUD_DEPLOYMENT.md",
@@ -263,6 +280,11 @@
       "bytes": 6235
     },
     {
+      "path": "omega_genesis/autodeploy.py",
+      "sha256": "fc41591e5afc41494980048e2de1d45b07e6d840deb567100e81f606d0355e93",
+      "bytes": 5104
+    },
+    {
       "path": "omega_genesis/calculus.py",
       "sha256": "a9d0ccf468b448ce70337f09fd9c356879e349b22346e42cb5ca0ce08b1b4853",
       "bytes": 5880
@@ -294,8 +316,8 @@
     },
     {
       "path": "omega_genesis/deployment.py",
-      "sha256": "7a3acf1a16d0739a29b343b3b86c3815325c40d4efa05062c5516c272593ffb6",
-      "bytes": 3738
+      "sha256": "097e32e04a1334468bf05ceb7bf416fe9fc7ceb9bdaa77110c507929c0c174a7",
+      "bytes": 4037
     },
     {
       "path": "omega_genesis/desktop_link.py",
@@ -434,8 +456,8 @@
     },
     {
       "path": "scripts/build_manifest.py",
-      "sha256": "0ba2ebe50a89b2a5dc57061b6627900948d9b5c555e9756a9e76285b8c2d70c5",
-      "bytes": 2686
+      "sha256": "100975413d0ec869c8fde904a2ebb61b2e4662d01d4ed3f53eeae36c1b1052a3",
+      "bytes": 2894
     },
     {
       "path": "scripts/build_release.py",
@@ -454,13 +476,18 @@
     },
     {
       "path": "scripts/cloud_deploy.py",
-      "sha256": "79173939937990fdaed505c4959affaf3dc04ab842c83429a5288f99df3200f7",
-      "bytes": 6048
+      "sha256": "a920312f7cf2b22fed79f441ac28d4cc56047378d36faebf79302708a1cd80b1",
+      "bytes": 5921
     },
     {
       "path": "scripts/cloud_self_loop.py",
       "sha256": "2ecef9bcda20ce4a2dc6ae785f2f3cce5f8991163827ea15221cdf8f19bcad52",
       "bytes": 105
+    },
+    {
+      "path": "scripts/cloud_watch.py",
+      "sha256": "4ddce065d9005c8fdec06912cb1e1590f138ed1e414b24955691136c6bfb9c79",
+      "bytes": 6220
     },
     {
       "path": "scripts/index_corpus.py",
@@ -479,8 +506,13 @@
     },
     {
       "path": "scripts/verify_release.py",
-      "sha256": "7ce98bb6c5175ac94e74ba221c6ec9b6a1e7a63074137515405bf4166775e3a8",
-      "bytes": 5963
+      "sha256": "61086c47abb43e214f460610e56d79d77ed765e7dcd4d1b1f28b1080f81298aa",
+      "bytes": 7160
+    },
+    {
+      "path": "tests/test_autodeploy.py",
+      "sha256": "206dd84c3c74b1192b615e9b329788d2baefa2ea73cac7698a173880b6042dd3",
+      "bytes": 2225
     },
     {
       "path": "tests/test_cloud_self_loop.py",
@@ -489,8 +521,8 @@
     },
     {
       "path": "tests/test_deployment.py",
-      "sha256": "bf1be969ba323c3c3a20023a38a54ed1439210393403ade4c6392423250ca40f",
-      "bytes": 2231
+      "sha256": "50181744b6d814ca1d6f76b2247c3f0ffada995771259937886b7c11c6c5b189",
+      "bytes": 2500
     },
     {
       "path": "tests/test_genesis.py",
@@ -504,8 +536,8 @@
     },
     {
       "path": "tests/test_selfbuild.py",
-      "sha256": "de6fd70d98fcdd344423943f4b36238cc1bc70631ad9b05d13b38037d5449d0c",
-      "bytes": 2552
+      "sha256": "7d6acc0192e7cd9753b2c4ea1aff27c741247c0698debcc980052961ac8591f9",
+      "bytes": 2669
     },
     {
       "path": "web/advanced.js",
