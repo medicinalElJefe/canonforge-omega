@@ -41,6 +41,10 @@ Cloud release:
 - manifest SHA-256: `885a4324b7c9cd74ca05407792e67caaa010dddc084f0c7c918c77af12f64334`
 - checksum ledger SHA-256: `3abc6c5ce8c817223c104bb5b4dfa114e8865e0fb1bf2da1e7f4faf91ef72df0`
 
+## Clean branch verification
+
+Final branch-only verification trigger: actual `omega-genesis-v1-full` tree, with the temporary CI pull request closed and its base branch reset to `main`.
+
 ## Internet hosting boundary
 
 The own-cloud runtime is fully implemented and boot-tested. A permanent public Internet URL still requires authorization to a real external cloud account/VM or an authenticated AppDeploy connection. No public URL is fabricated in this record.
