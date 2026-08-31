@@ -238,7 +238,7 @@ def execute_plan(root:Path,steps:list[HybridStep])->dict[str,Any]:
                 if path is None: raise ValueError("APPLY_PATCH requires path")
                 result=_apply_patch(root,path,args)
             else:
-                raise ValueError(&"unsupported op {op}")
+                raise ValueError(f"unsupported op {op}")
             results.append({"step":i,"op":op,"status":"PASS","result":result})
     except Exception as exc:
         results.append({"step":len(results),"op":steps[len(results)].op if len(results)<len(steps) else "UNKNOWN","status":"FAIL","error":type(exc).__name__,"detail":str(exc)})
