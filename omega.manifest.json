@@ -485,6 +485,11 @@
       "bytes": 1710
     },
     {
+      "path": "omega_genesis/sovereign_status.py",
+      "sha256": "7cb6a80b5d2aa7bb653e0e859809993463820bc8468ba29650d59f1cd4326dff",
+      "bytes": 4415
+    },
+    {
       "path": "omega_genesis/stream.py",
       "sha256": "deecbf082ea54cb06142c485e63cf71f8a3ff2e2b29ba4c83dfd89016714296e",
       "bytes": 2798
@@ -566,8 +571,8 @@
     },
     {
       "path": "scripts/evolution_cycle.py",
-      "sha256": "566bd341147d2389053d6fbc374a7530086f83cbc7575c9adb76d2c9a2e540e7",
-      "bytes": 2624
+      "sha256": "7168b945a6206f6051b3783f004d70bc0a47d860f81a838feee10d8420fce544",
+      "bytes": 5334
     },
     {
       "path": "scripts/index_corpus.py",
@@ -648,6 +653,11 @@
       "path": "tests/test_selfbuild.py",
       "sha256": "7d6acc0192e7cd9753b2c4ea1aff27c741247c0698debcc980052961ac8591f9",
       "bytes": 2669
+    },
+    {
+      "path": "tests/test_sovereign_status.py",
+      "sha256": "cdd9cf50fb45217d01c04a070425721d4d143e7e300463aa59447e786ee882f2",
+      "bytes": 1899
     },
     {
       "path": "tests/test_world.py",
