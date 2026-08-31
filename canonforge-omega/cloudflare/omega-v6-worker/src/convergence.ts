@@ -1,4 +1,5 @@
 import base, { type Env } from "./index";
+export { OmegaRuntime } from "./omegaRuntime";
 
 const GENESIS = "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev";
 

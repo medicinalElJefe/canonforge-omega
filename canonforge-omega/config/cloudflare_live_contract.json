@@ -3,7 +3,9 @@
   "canonical_worker": "omegav6",
   "observed_at": "2026-08-31T05:34:34Z",
   "observation_source": "Cloudflare deploy API compatibility error 10064 during exact-head promotion",
-  "required_exports": ["OmegaRuntime"],
+  "required_exports": [
+    "OmegaRuntime"
+  ],
   "durable_object_contract": {
     "OmegaRuntime": {
       "required": true,
@@ -13,5 +15,23 @@
     }
   },
   "promotion_policy": "HOLD deployment when the candidate does not preserve every required live Durable Object export. Never infer that a class can be deleted merely because current repository source omits it.",
-  "truth_boundary": "This contract records an observed live-platform requirement only. It does not claim the recovered implementation of OmegaRuntime is known yet."
+  "truth_boundary": "The live-platform requirement was observed directly. The implementation and migration identity were subsequently recovered from the public historical OMEGAv6 R32/R33 lineage; promotion still requires exact-head tests and Cloudflare compatibility proof.",
+  "recovery": {
+    "status": "BEHAVIOR_SOURCE_RECOVERED",
+    "source_repo": "medicinalElJefe/OMEGAv6",
+    "r32_commit": "d7cbbfe166baf04a42dc7a50d13776ac33ef742b",
+    "r33_commit": "ca0660a128f8df88375a9f8e27931c94208c159b",
+    "migration_tag": "r32-enacted-runtime",
+    "binding_name": "OMEGA_RUNTIME",
+    "behavior_markers": [
+      "OMEGA_LIVING_RUNTIME_R33",
+      "PAIR_AUTH_FAILED",
+      "DEVICE_NOT_REGISTERED",
+      "OMEGA_HYBRID_RETURN_PACKET_R32",
+      "HOST_PROOF_REQUIRED",
+      "HOLD_REPAIR_REQUIRED",
+      "DURABLE_MESSAGE_MEMORY",
+      "LAST_48_DURABLE_TURNS"
+    ]
+  }
 }
