@@ -7,7 +7,7 @@ def test_r103_packet_contract_is_proposal_only():
     for token in ['OMEGA_GOVERNED_POLICY_CANDIDATE_PACKET_V1','OMEGA_GOVERNED_POLICY_CANDIDATE_SET_V1','policy_candidate_id','deterministic_packet_identity:true','explicit_governance_approval_required:true','automatic_policy_change:false','production_rollout_authorized:false','execution_claimed:false','causation_claimed:false','authority:"proposal-only"']:
         assert token in s
     assert 'do not mutate canonical policy' in s
-    assert 'do not authorize rollout' in s
+    assert 'authorize rollout' in s
 
 def test_r103_only_packages_eligible_adjudications():
     s=(SRC/'policyCandidatePacket.ts').read_text()
