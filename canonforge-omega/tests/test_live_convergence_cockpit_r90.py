@@ -54,9 +54,10 @@ def test_r90_does_not_rebrand_or_weaken_existing_promotion_verifier():
     assert "manifest_digest" in verify
 
 
-def test_r90_reports_evidence_freshness_and_never_inferrs_pc_online_from_transport():
+def test_r90_reports_client_measured_freshness_and_does_not_infer_pc_online_from_transport():
     source = WRAPPER.read_text(encoding="utf-8")
-    assert "Evidence "+"'" not in source  # static guard against server-side invented freshness
     assert "Date.now()-t" in source
+    assert "Evidence '+age(d.timestamp)" in source
     assert "current authenticated heartbeat not proven" in source
     assert "pc.pc_online?'PC ONLINE'" in source
+    assert "genesis_transport||m.transport" in source
