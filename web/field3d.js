@@ -125,3 +125,4 @@
 })();
 
 import("/design-system.js").catch(()=>{document.documentElement.dataset.omegaDesign="BASE_FALLBACK"});
+import("/context-memory-ui.js").catch(()=>{document.documentElement.dataset.omegaContextMemory="LOCAL_BASE_FALLBACK"});
