@@ -23,33 +23,25 @@ if (-not (Test-Path $cycle)) {
     throw "Sovereign evolution host script not found: $cycle"
 }
 
+$now = Get-Date
+$firstRun = Get-Date -Hour $now.Hour -Minute 37 -Second 0
+if ($firstRun -le $now) {
+    $firstRun = $firstRun.AddHours(1)
+}
+
 $argument = ('"{0}" --once' -f $cycle)
 $action = New-ScheduledTaskAction -Execute $PythonPath -Argument $argument -WorkingDirectory $RepoPath
-$trigger = New-ScheduledTaskTrigger -Once -At ((Get-Date).Date.AddMinutes(37))
-$trigger.RepetitionInterval = New-TimeSpan -Hours 1
-$trigger.RepetitionDuration = [TimeSpan]::MaxValue
-
-$settings = New-ScheduledTaskSettingsSet \
-    -AllowStartIfOnBatteries \
-    -DontStopIfGoingOnBatteries \
-    -StartWhenAvailable \
-    -MultipleInstances IgnoreNew \
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 50)
-
+$trigger = New-ScheduledTaskTrigger -Once -At $firstRun -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 50)
 $description = "Runs OMEGA's proof-gated sovereign local AI evolution cycle every hour. Uses the local model host only; no paid external AI fallback is automatic."
 
-Register-ScheduledTask \
-    -TaskName $TaskName \
-    -Action $action \
-    -Trigger $trigger \
-    -Settings $settings \
-    -Description $description \
-    -Force | Out-Null
+Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Description $description -Force | Out-Null
 
 Write-Host "Installed scheduled task: $TaskName"
 Write-Host "Repository: $RepoPath"
 Write-Host "Python: $PythonPath"
 Write-Host "Cycle: $cycle"
-Write-Host "Cadence: hourly, starting at minute 37."
+Write-Host "First run: $firstRun"
+Write-Host "Cadence: hourly at minute 37."
 Write-Host "Local model endpoint defaults to http://127.0.0.1:11434 (Ollama-compatible)."
 Write-Host "No OPENAI_API_KEY is required."
