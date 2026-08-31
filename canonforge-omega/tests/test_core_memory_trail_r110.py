@@ -26,7 +26,7 @@ def test_memory_is_visual_and_evidence_typed():
 
 def test_memory_is_not_new_physical_primitive_or_authority():
     s=text(REPLAY)
-    assert 'Memory is historical model input, not a new physical primitive.' in s
+    assert 'remain historical model inputs, not a new physical primitive.' in s
     assert 'Nothing here mutates canonical state or executes an action.' in s
     core=text(CORE)
     assert 'canonical_state_mutation:false' in core
