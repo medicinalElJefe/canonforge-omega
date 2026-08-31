@@ -27,6 +27,29 @@ async function genesisFetch(env, request, pathname = null) {
   return env.GENESIS.fetch(new Request(url.toString(), request));
 }
 
+// Compatibility export required by the historical OMEGA V6 Durable Object lineage.
+// Existing OmegaRuntime storage is deliberately left untouched: this class never
+// reads, writes, deletes, or migrates state.storage. Requests reaching a legacy
+// instance are forwarded to Genesis, which is now the sole canonical authority.
+export class OmegaRuntime {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const response = await genesisFetch(this.env, request);
+    const headers = new Headers(response.headers);
+    headers.set("x-omega-legacy-runtime", "preserved-noncanonical-compatibility");
+    headers.set("x-omega-authority", "genesis-service-binding");
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+}
+
 async function compositeHealth(request, env) {
   const [healthResponse, apiResponse] = await Promise.all([
     genesisFetch(env, request, "/_omega/health"),
@@ -49,6 +72,8 @@ async function compositeHealth(request, env) {
     public_url: PUBLIC_URL,
     canonical_authority: "OMEGA_GENESIS_CLOUD",
     authority_transport: "cloudflare-service-binding",
+    legacy_runtime_class: "OmegaRuntime",
+    legacy_runtime_storage_policy: "PRESERVE_NO_MUTATION",
     canonical_digest: typeof digest === "string" ? digest : null,
     proof: api?.proof || null,
     replay: api?.replay || null,
@@ -70,17 +95,19 @@ export default {
     if (url.pathname === "/api/convergence/edge") {
       const health = await compositeHealth(request, env);
       return json({
-        schema: "OMEGA_V6_GENESIS_EDGE_V1",
+        schema: "OMEGA_V6_GENESIS_EDGE_V2",
         ok: health.ok,
         product: PRODUCT,
         role: "PUBLIC_PRODUCT_FACADE",
         public_url: PUBLIC_URL,
         canonical_runtime: "OMEGA_GENESIS_CLOUD",
         authority_transport: "cloudflare-service-binding",
+        legacy_runtime_class: "OmegaRuntime",
+        legacy_runtime_storage_policy: "PRESERVE_NO_MUTATION",
         canonical_digest: health.canonical_digest,
         proof_valid: health.proof?.valid === true,
         replay_valid: health.replay?.valid === true,
-        boundary: "V6 is the public product surface. Genesis owns canonical state. V6 does not maintain a second canonical state."
+        boundary: "V6 is the public product surface. Historical OmegaRuntime storage is preserved without mutation. Genesis owns the only forward canonical state."
       }, { status: health.ok ? 200 : 503 });
     }
 
