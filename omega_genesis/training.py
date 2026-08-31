@@ -112,7 +112,7 @@ def _model(chunks: list[dict[str, Any]], lessons: list[dict[str, Any]], parent_f
         docs.append((lid, "PROOF_LEDGER", raw))
     df: Counter[str] = Counter()
     tf: dict[str, Counter[str]] = {}
-    meta: dict[str, sts] = {}
+    meta: dict[str, str] = {}
     for doc_id, path, text in docs:
         counts = Counter(_terms(text))
         if not counts:
