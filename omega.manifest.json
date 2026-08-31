@@ -31,8 +31,8 @@
   "files": [
     {
       "path": ".dockerignore",
-      "sha256": "7b5d4e5c3a6bded9cb2fc60bf39f340ec15bbc0ac2c2afd1c711bb28d3009677",
-      "bytes": 189
+      "sha256": "c033bce893f7b46ac8f31e8271cd2825bc4f613c45140b95cec914461add4934",
+      "bytes": 330
     },
     {
       "path": ".env.example",
@@ -141,8 +141,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "294ab1788e98bfa3e646bf4ef2985645acb38e2f5dac42b699d72202ddbe268c",
-      "bytes": 5049
+      "sha256": "925bb66957e500b56cf49439922b6c45216743c2206af5b75792f72628bb25e3",
+      "bytes": 5230
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -290,6 +290,11 @@
       "bytes": 1498
     },
     {
+      "path": "docs/evolution/build-context-performance-v1.md",
+      "sha256": "ea5ffbf427fecc72b95620f5433a5178fb52b6ddc5a9836fccd0e0bafa1f3697",
+      "bytes": 839
+    },
+    {
       "path": "docs/evolution/release-aware-cloud-deploy-g1.md",
       "sha256": "6caf04d6f7558a3bf7ea3888d4959d10a83ac3b40f905f3aba01a0dd56f273d5",
       "bytes": 1029
@@ -341,8 +346,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "20456ee99a99d0b9ab307f017f5620c513413cff75aa5443e5dda1cd4cf19f91",
-      "bytes": 4671
+      "sha256": "2097d9126298526476996483eb3551e4b02fbcdfbdee8c01edf2a7d2ba47b51d",
+      "bytes": 4866
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -376,8 +381,8 @@
     },
     {
       "path": "omega_genesis/design_acceptance.py",
-      "sha256": "668a2d8f5be1751592c00953030d1a2e12616c44a3f99d04f9d6e1bd1c3966a8",
-      "bytes": 3205
+      "sha256": "0901ef3b29877678bd02172e3832a266117db5508622b47ffb4a41c041026317",
+      "bytes": 3198
     },
     {
       "path": "omega_genesis/desktop_link.py",
@@ -650,6 +655,16 @@
       "bytes": 2900
     },
     {
+      "path": "tests/test_build_context_performance.py",
+      "sha256": "9eb6aa7a410764ff86a88baf6caceb352209cfa953819f3acddcadc264238d65",
+      "bytes": 888
+    },
+    {
+      "path": "tests/test_capability_count_build_context.py",
+      "sha256": "19cd651d8e4b916f47afdcc612d97fcf898d2628a531743d4b8e65a011e7b233",
+      "bytes": 284
+    },
+    {
       "path": "tests/test_capability_count_release_deploy.py",
       "sha256": "a3b08c8bba47ea330b4452711a9f43b45861bc8a84d7e042c90b5c54d310caa6",
       "bytes": 278
@@ -671,7 +686,7 @@
     },
     {
       "path": "tests/test_design_acceptance.py",
-      "sha256": "2106d2b347a506d500227fb67dcb840e0513558aab4c9642d7cbbca20e23f9f7",
+      "sha256": "03e06eebab2b716209f74734c73e3add4a31326560504dc6aec5a16e0ca84ba2",
       "bytes": 989
     },
     {
@@ -681,7 +696,7 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "85e7f16c581629bffc5c75a3820493a2fb30b6784acc88c99709083572afc717",
+      "sha256": "d7733f0504dd42d4aa7a84e14bd22de33b3e4faeac2b3f98d11faf7812f5a49d",
       "bytes": 3904
     },
     {
