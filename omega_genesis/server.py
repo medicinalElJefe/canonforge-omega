@@ -45,6 +45,7 @@ from .training import retrieve as retrieve_training
 from .observations import earth_context
 from .cloud_auth import CloudAuth
 from .provenance import public_catalog as provenance_catalog, capability_sources as provenance_capability_sources, summary as provenance_summary
+from .learning import LearningMemory
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -52,6 +53,7 @@ DATA = Path(os.environ.get("OMEGA_DATA", ROOT / "runtime-data"))
 RUNTIME = OmegaRuntime(DATA)
 AUTH = CloudAuth.from_env()
 PLUGIN_ROOT = (ROOT / "plugins").resolve()
+LEARNING = LearningMemory(DATA / "learning")
 
 
 def _approved_hybrid_roots():
@@ -230,6 +232,14 @@ class Handler(BaseHTTPRequestHandler):
                         "backlog": [],
                     })
                 return self._json(200, json.loads(backlog_path.read_text(encoding="utf-8")))
+            if path == "/api/learning/status":
+                return self._json(200, LEARNING.status())
+            if path == "/api/learning/predict":
+                state_id = int(query.get("state_id", [RUNTIME.state.address.state_id])[0])
+                context_key = query.get("context", ["default"])[0]
+                max_seq_raw = query.get("max_seq", [None])[0]
+                max_seq = int(max_seq_raw) if max_seq_raw not in {None, ""} else None
+                return self._json(200, LEARNING.predict(state_id=state_id, context_key=context_key, max_seq=max_seq))
             if path in {"/api/state", "/host/current"}:
                 return self._json(200, RUNTIME.snapshot())
             if path == "/host/projection/current":
@@ -405,6 +415,28 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/recovery/rollback":
                 result = RUNTIME.rollback_to_digest(str(body["digest"]), reason=str(body.get("reason", "operator recovery")))
                 return self._json(200 if result.get("committed") else 422, result)
+            if path == "/api/learning/observe":
+                context_key = str(body.get("context_key", "default"))
+                action = str(body["action"])
+                reward = float(body["reward"])
+                evidence_class = body.get("evidence_class", "DERIVED")
+                event = LEARNING.record(
+                    state_id=RUNTIME.state.address.state_id,
+                    state_digest=RUNTIME.state.digest,
+                    context_key=context_key,
+                    action=action,
+                    reward=reward,
+                    evidence_class=evidence_class,
+                )
+                return self._json(200, {
+                    "status": "PASS",
+                    "event": event,
+                    "prediction": LEARNING.predict(
+                        state_id=RUNTIME.state.address.state_id,
+                        context_key=context_key,
+                    ),
+                    "canonical_mutation": False,
+                })
             if path == "/api/host/compile":
                 packet = compile_observation(
                     evidence_class=body["evidence_class"],

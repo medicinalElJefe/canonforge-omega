@@ -93,8 +93,9 @@
       "next_action": "Recover persistent learning and prediction as cloud-subordinate state without creating a second canonical authority.",
       "acceptance": [
         "adaptive state subordinate to canonical packet",
+        "append-only hash chain",
         "deterministic replay",
-        "tests prove persistence and rollback"
+        "tests prove persistence and historical view"
       ],
       "checks": [
         {
@@ -104,6 +105,10 @@
         {
           "type": "file",
           "path": "omega_genesis/learning.py"
+        },
+        {
+          "type": "file",
+          "path": "tests/test_learning.py"
         }
       ]
     },
