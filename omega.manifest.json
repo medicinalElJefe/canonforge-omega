@@ -49,8 +49,8 @@
     },
     {
       "path": ".github/workflows/self-build.yml",
-      "sha256": "c858ee1bd55a3b76c8c95c7b507d9c654e009455a03f8452f0f6702751ef00d4",
-      "bytes": 8548
+      "sha256": "cc43b6c41333101945d873a4d97f0ba7ef68e2c059ab982bcf9f922ef1587985",
+      "bytes": 9599
     },
     {
       "path": ".github/workflows/verify.yml",
