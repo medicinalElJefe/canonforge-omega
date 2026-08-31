@@ -31,7 +31,7 @@ def request_json(base: str, path: str, token: str, payload: dict | None = None) 
     if data is not None:
         req.add_header("content-type", "application/json")
     if token:
-        req.add_header("x-omega-gateway-token", token)
+        req.add_header("x-omega-agent-token", token)
     with urllib.request.urlopen(req, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -80,48 +80,72 @@ def execute_job(job: dict, root: Path) -> dict:
             "tests": run([sys.executable, "-m", "pytest", "-q"], root),
             "git": run(["git", "status", "--short", "--branch"], root, timeout=60),
         }
-    # These remain bounded placeholders until a browser/screenshot or worktree executor is installed.
     return {"kind": kind, "blocked": True, "reason": "executor capability not installed on this host yet"}
+
+
+def normalize_root(raw: str) -> Path:
+    cleaned = raw.strip().strip('"').strip("'")
+    if len(cleaned) == 2 and cleaned[1] == ":":
+        cleaned += "\\"
+    return Path(cleaned).expanduser().resolve()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="OMEGA sovereign heartbeat + bounded development agent")
-    parser.add_argument("--server", default=os.getenv("OMEGA_SERVER", "http://127.0.0.1:8000"))
-    parser.add_argument("--token", default=os.getenv("OMEGA_GATEWAY_TOKEN", ""))
+    parser.add_argument("--server", default=os.getenv("OMEGA_SERVER", "https://omegav6.jeffdeweyeljefe.workers.dev"))
+    parser.add_argument("--token", default=os.getenv("OMEGA_AGENT_TOKEN", ""))
     parser.add_argument("--root", default=os.getenv("OMEGA_APPROVED_ROOT", str(Path.cwd())))
     parser.add_argument("--agent-id", default=os.getenv("OMEGA_AGENT_ID", os.environ.get("COMPUTERNAME", "omega-pc")))
-    parser.add_argument("--interval", type=float, default=10.0)
+    parser.add_argument("--interval", type=float, default=8.0)
     args = parser.parse_args()
 
-    root = Path(args.root).expanduser().resolve()
+    if not args.token:
+        print("PAIRING REQUIRED: no OMEGA agent credential was supplied.", file=sys.stderr)
+        return 3
+
+    try:
+        root = normalize_root(args.root)
+    except OSError as exc:
+        print(f"ROOT PATH INVALID: {args.root!r}: {exc}", file=sys.stderr)
+        return 2
     if not root.exists() or not root.is_dir():
         print(f"ROOT REJECTED: {root}", file=sys.stderr)
         return 2
 
     capabilities = ["heartbeat", "inspect_workspace", "inspect_runtime", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate"]
     last_job_id = None
-    print(f"OMEGA agent online candidate: {args.agent_id} root={root}")
+    sequence_seen = 0
+    print(f"OMEGA sovereign agent starting: {args.agent_id}")
+    print(f"Canonical server: {args.server}")
+    print(f"Approved root: {root}")
+    print("PC ONLINE will only be claimed after the server accepts a current authenticated heartbeat.")
+
     while True:
         try:
             hb = request_json(args.server, "/api/device/heartbeat", args.token, {
                 "agent_id": args.agent_id,
                 "approved_root": str(root),
                 "capabilities": capabilities,
-                "runtime_version": "r77-heartbeat-build-agent",
+                "runtime_version": "r78-live-heartbeat-agent",
                 "last_job_id": last_job_id,
             })
+            proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
+            sequence_seen = int(proof.get("sequence") or sequence_seen)
+            age = hb.get("heartbeat_age_seconds")
             state = hb.get("state", hb.get("device", {}).get("state", "UNKNOWN"))
-            print(f"heartbeat: {state}")
+            print(f"heartbeat #{sequence_seen}: {state} age={age}s")
 
             leased = request_json(args.server, "/api/development/lease", args.token, {"agent_id": args.agent_id})
             job = leased.get("job")
             if job:
                 last_job_id = job["id"]
                 request_json(args.server, f"/api/development/jobs/{last_job_id}/result", args.token, {
-                    "state": "RUNNING", "evidence": {"agent_id": args.agent_id, "root": str(root)}
+                    "state": "RUNNING", "evidence": {"agent_id": args.agent_id, "root": str(root), "heartbeat_sequence": sequence_seen}
                 })
                 try:
                     evidence = execute_job(job, root)
+                    evidence["agent_id"] = args.agent_id
+                    evidence["heartbeat_sequence"] = sequence_seen
                     blocked = bool(evidence.get("blocked"))
                     request_json(args.server, f"/api/development/jobs/{last_job_id}/result", args.token, {
                         "state": "BLOCKED" if blocked else "VERIFIED",
@@ -131,10 +155,15 @@ def main() -> int:
                     print(f"job {last_job_id} {job.get('kind')}: {'BLOCKED' if blocked else 'VERIFIED'}")
                 except Exception as exc:
                     request_json(args.server, f"/api/development/jobs/{last_job_id}/result", args.token, {
-                        "state": "FAILED", "evidence": {"agent_id": args.agent_id}, "error": str(exc)
+                        "state": "FAILED", "evidence": {"agent_id": args.agent_id, "heartbeat_sequence": sequence_seen}, "error": str(exc)
                     })
                     print(f"job {last_job_id} failed: {exc}", file=sys.stderr)
-        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, json.JSONDecodeError) as exc:
+        except urllib.error.HTTPError as exc:
+            if exc.code in {401, 403}:
+                print("AUTHENTICATION REJECTED: rotate pairing by downloading a fresh launcher.", file=sys.stderr)
+            else:
+                print(f"HTTP error: {exc.code} {exc.reason}", file=sys.stderr)
+        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
             print(f"connection error: {exc}", file=sys.stderr)
         time.sleep(max(3.0, args.interval))
 

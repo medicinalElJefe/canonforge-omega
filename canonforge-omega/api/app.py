@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -22,6 +23,8 @@ from omega_fusion_core.host.executor import MacroExecutor
 from omega_runtime import Address20736, EvidenceClass, StateEnvelope, StateMetrics, OmegaRuntime
 from omega_runtime.atlas import ping_next, ping_prev, opposite_address, phase_portal
 from omega_runtime.forecast import deterministic_local_forecast
+from omega_runtime.heartbeat import HeartbeatRegistry
+from omega_runtime.pairing import PairingRegistry
 from omega_runtime.proof import ProofLedger
 from omega_runtime.relativity import ObserverFrame, phase_transform, outverse_inverse, rotate_shell_axes
 from omega_runtime.render import living_glyph_scene
@@ -29,18 +32,18 @@ from omega_runtime.state_store import StateStore
 from omega_runtime.security import gateway_authorized
 from omega_runtime.system_manifest import manifest as software_manifest, summary as software_summary
 from omega_runtime.self_build import BuildMode, JobState, SovereignBuildController, SAFE_JOB_KINDS
-from omega_runtime.heartbeat import HeartbeatRegistry
 
-app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.2.0-heartbeat-proof-build-loop")
+app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.2.0-live-heartbeat-self-build")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["GET", "POST"], allow_headers=["*"])
 
 GATEWAY_TOKEN = os.environ.get("OMEGA_GATEWAY_TOKEN")
+PUBLIC_URL = os.environ.get("OMEGA_PUBLIC_URL", "https://omegav6.jeffdeweyeljefe.workers.dev").rstrip("/")
 
 
 @app.middleware("http")
 async def sovereign_ingress(request: Request, call_next):
-    """Keep localhost frictionless while requiring a secret for remote API ingress."""
+    """Keep localhost frictionless while requiring the Cloudflare sovereign gateway remotely."""
     if request.url.path.startswith("/api/"):
         client_host = request.client.host if request.client else None
         presented = request.headers.get("x-omega-gateway-token")
@@ -57,7 +60,8 @@ OMEGA_HOME = Path.home() / ".omega"
 LEDGER_PATH = OMEGA_HOME / "ledger" / "proof.jsonl"
 STATE_PATH = OMEGA_HOME / "state" / "canonical.json"
 BUILD_STATE_PATH = OMEGA_HOME / "development" / "self_build.json"
-HEARTBEAT_STATE_PATH = OMEGA_HOME / "device" / "heartbeat.json"
+HEARTBEAT_STATE_PATH = OMEGA_HOME / "hybrid" / "heartbeat.json"
+PAIRING_STATE_PATH = OMEGA_HOME / "hybrid" / "pairing.json"
 APPROVED_BUILD_ROOT = Path(os.environ.get("OMEGA_APPROVED_ROOT", str(Path.cwd())))
 _initial = StateEnvelope(
     address=Address20736(1, 1, 1, 1), evidence_class=EvidenceClass.DERIVED,
@@ -68,6 +72,19 @@ _initial = StateEnvelope(
 _runtime = OmegaRuntime(_initial, ProofLedger(LEDGER_PATH), StateStore(STATE_PATH))
 _builder = SovereignBuildController(BUILD_STATE_PATH, APPROVED_BUILD_ROOT)
 _heartbeat = HeartbeatRegistry(HEARTBEAT_STATE_PATH, ttl_seconds=45)
+_pairing = PairingRegistry(PAIRING_STATE_PATH)
+
+
+def _agent_authorized(request: Request) -> bool:
+    return _pairing.validate(request.headers.get("x-omega-agent-token"))
+
+
+def _require_agent(request: Request) -> None:
+    if not _agent_authorized(request):
+        raise HTTPException(status_code=401, detail={
+            "error": "hybrid_agent_authentication_required",
+            "action": "download and run a fresh canonical Windows launcher",
+        })
 
 
 class PatternInfo(BaseModel):
@@ -137,7 +154,7 @@ class BuildResultRequest(BaseModel):
 
 class HeartbeatRequest(BaseModel):
     agent_id: str = Field(min_length=1, max_length=120)
-    approved_root: str = Field(min_length=1, max_length=2048)
+    approved_root: str = Field(min_length=1, max_length=2000)
     capabilities: List[str] = Field(default_factory=list)
     runtime_version: str | None = None
     last_job_id: str | None = None
@@ -148,7 +165,7 @@ def health() -> Dict[str, Any]:
     return {"ok": True, "runtime": "OMEGA V6 Sovereign Runtime", "state_digest": _runtime.state.digest,
             "proof_records": len(_runtime.ledger.records), "persistent_state": str(STATE_PATH),
             "remote_ingress_secured": bool(GATEWAY_TOKEN), "software_families": software_summary(),
-            "development_mode": _builder.mode.value, "device": _heartbeat.status(),
+            "development_mode": _builder.mode.value, "hybrid": _heartbeat.status(),
             "representation_boundary": "144/1728/20736 are software state-space representations unless independently evidenced otherwise"}
 
 
@@ -164,38 +181,110 @@ def get_status() -> Dict[str, Any]:
     return {"timestamp": snap.timestamp.isoformat(), "uai": snap.uai, "life_coherence": snap.life_coherence,
             "system_coherence": snap.system_coherence, "evidence_count": snap.evidence_count,
             "truth": tic.truth, "integrity": tic.integrity, "courage": tic.courage,
-            "omega_effective": tic.omega_effective, "development": _builder.status(), "device": _heartbeat.status(),
+            "omega_effective": tic.omega_effective, "development": _builder.status(), "hybrid": _heartbeat.status(),
             "boundary": "Fusion/TIC is a compatibility-derived layer. With no explicit evidence it returns zero; canonical authority is StateEnvelope."}
 
 
-@app.get("/api/device/status")
-def device_status() -> Dict[str, Any]:
-    return _heartbeat.status()
+@app.get("/api/hybrid/status")
+def hybrid_status() -> Dict[str, Any]:
+    hb = _heartbeat.status()
+    proof = hb.get("proof") or {}
+    current = bool(hb.get("pc_online"))
+    stale = hb.get("state") == "HEARTBEAT_STALE"
+    seen = proof != {}
+    return {
+        "state": hb.get("state"),
+        "browserCredentialReady": _pairing.ready,
+        "pairingConfigured": _pairing.ready,
+        "pairingGeneration": _pairing.generation,
+        "agentRunning": seen and (current or stale),
+        "agentReachable": current,
+        "authenticated": bool(hb.get("authenticated_heartbeat")),
+        "agentAuthenticated": bool(hb.get("authenticated_heartbeat")),
+        "heartbeatCurrent": current,
+        "heartbeatStale": stale,
+        "heartbeatAgeSeconds": hb.get("heartbeat_age_seconds"),
+        "heartbeatTtlSeconds": hb.get("ttl_seconds", 45),
+        "nativeExecutionClaimed": current,
+        "pcOnline": current,
+        "proof": proof or None,
+        "development": _builder.status(),
+        "boundary": "browser credential readiness never implies PC ONLINE; current authenticated heartbeat proof is mandatory",
+    }
+
+
+@app.get("/api/hybrid/agent")
+def hybrid_agent_download() -> Response:
+    path = Path(__file__).resolve().parents[1] / "scripts" / "omega_sovereign_agent.py"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="canonical sovereign agent is missing from this runtime")
+    return Response(path.read_text(encoding="utf-8"), media_type="text/x-python",
+                    headers={"content-disposition": 'attachment; filename="omega_sovereign_agent.py"', "cache-control": "no-store"})
+
+
+@app.get("/api/hybrid/launcher")
+def hybrid_launcher() -> Response:
+    token = _pairing.issue(datetime.now(timezone.utc).isoformat())
+    cmd = f'''@echo off
+setlocal EnableExtensions
+chcp 65001 >nul
+set "OMEGA_SERVER={PUBLIC_URL}"
+set "OMEGA_TOKEN={token}"
+set "OMEGA_ROOT=%~dp0"
+set "OMEGA_HOME=%LOCALAPPDATA%\\OMEGA"
+set "OMEGA_AGENT=%OMEGA_HOME%\\omega_sovereign_agent.py"
+if not exist "%OMEGA_HOME%" mkdir "%OMEGA_HOME%"
+echo OMEGA Sovereign PC Link
+echo Canonical: %OMEGA_SERVER%
+echo Approved root: %OMEGA_ROOT%
+echo [1/5] Checking canonical runtime...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%OMEGA_SERVER%/api/health' -TimeoutSec 20 ^| Out-Null" || goto :network_error
+echo [2/5] Locating Python 3...
+where py >nul 2>nul && set "PY=py -3"
+if not defined PY where python >nul 2>nul && set "PY=python"
+if not defined PY goto :python_error
+echo [3/5] Downloading canonical sovereign agent...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%OMEGA_SERVER%/api/hybrid/agent' -OutFile '%OMEGA_AGENT%' -TimeoutSec 30" || goto :download_error
+findstr /C:"OMEGA sovereign heartbeat" "%OMEGA_AGENT%" >nul || goto :download_error
+echo [4/5] Starting authenticated heartbeat proof...
+echo [5/5] Starting governed development loop. Keep this window open.
+%PY% "%OMEGA_AGENT%" --server "%OMEGA_SERVER%" --token "%OMEGA_TOKEN%" --root "%OMEGA_ROOT%"
+set "RC=%ERRORLEVEL%"
+echo.
+echo OMEGA agent exited with code %RC%.
+echo Download a fresh launcher to rotate pairing if authentication was rejected.
+pause
+exit /b %RC%
+:network_error
+echo NETWORK ERROR: canonical OMEGA is unreachable. Check DNS, firewall, VPN, or internet access.
+pause
+exit /b 20
+:python_error
+echo PYTHON REQUIRED: Python 3 was not found. Install Python 3 and run this launcher again.
+pause
+exit /b 21
+:download_error
+echo AGENT DOWNLOAD ERROR: canonical agent could not be downloaded or validated.
+pause
+exit /b 22
+'''
+    return Response(cmd, media_type="application/octet-stream",
+                    headers={"content-disposition": 'attachment; filename="START_OMEGA_PC_LINK.cmd"', "cache-control": "no-store"})
 
 
 @app.post("/api/device/heartbeat")
-def device_heartbeat(req: HeartbeatRequest) -> Dict[str, Any]:
-    configured_root = APPROVED_BUILD_ROOT.resolve()
-    presented_root = Path(req.approved_root).expanduser().resolve()
-    if presented_root != configured_root:
-        raise HTTPException(status_code=403, detail={
-            "error": "ROOT_REJECTED",
-            "presented_root": str(presented_root),
-            "approved_root": str(configured_root),
-        })
-    status = _heartbeat.record(
-        agent_id=req.agent_id,
-        approved_root=str(presented_root),
-        capabilities=req.capabilities,
-        runtime_version=req.runtime_version,
-        last_job_id=req.last_job_id,
-        authenticated=True,
-    )
-    EVENT_LOG.append({"type": "HEARTBEAT_PROOF", "agent_id": req.agent_id,
-                      "sequence": status.get("proof", {}).get("sequence"),
-                      "received_at": status.get("proof", {}).get("received_at"),
-                      "evidence_class": "OBSERVED"})
-    return status
+def device_heartbeat(req: HeartbeatRequest, request: Request) -> Dict[str, Any]:
+    _require_agent(request)
+    root = Path(req.approved_root).expanduser()
+    expected = APPROVED_BUILD_ROOT.expanduser().resolve()
+    try:
+        resolved = root.resolve()
+    except OSError as exc:
+        raise HTTPException(status_code=422, detail=f"invalid approved root: {exc}") from exc
+    if resolved != expected:
+        raise HTTPException(status_code=403, detail={"error": "approved_root_mismatch", "expected": str(expected), "received": str(resolved)})
+    return _heartbeat.record(agent_id=req.agent_id, approved_root=str(resolved), capabilities=req.capabilities,
+                             runtime_version=req.runtime_version, last_job_id=req.last_job_id, authenticated=True)
 
 
 @app.get("/api/omega/state")
@@ -294,9 +383,7 @@ def get_events() -> List[Dict[str, Any]]:
 
 @app.get("/api/development/status")
 def development_status() -> Dict[str, Any]:
-    status = _builder.status()
-    status["device"] = _heartbeat.status()
-    return status
+    return _builder.status()
 
 
 @app.post("/api/development/mode")
@@ -315,28 +402,35 @@ def development_enqueue(req: BuildEnqueueRequest) -> Dict[str, Any]:
 
 
 @app.post("/api/development/lease")
-def development_lease(req: BuildLeaseRequest) -> Dict[str, Any]:
-    device = _heartbeat.status()
-    proof = device.get("proof") or {}
-    if not device.get("pc_online") or proof.get("agent_id") != req.agent_id:
+def development_lease(req: BuildLeaseRequest, request: Request) -> Dict[str, Any]:
+    _require_agent(request)
+    hb = _heartbeat.status()
+    proof = hb.get("proof") or {}
+    if not hb.get("pc_online") or proof.get("agent_id") != req.agent_id:
         raise HTTPException(status_code=409, detail={
-            "error": "CURRENT_AUTHENTICATED_HEARTBEAT_REQUIRED",
-            "device": device,
+            "error": "current_authenticated_heartbeat_required",
+            "heartbeat_state": hb.get("state"),
+            "requested_agent": req.agent_id,
         })
     job = _builder.lease_next(req.agent_id)
-    return {"job": None if job is None else asdict(job), "device": device,
+    return {"job": None if job is None else asdict(job),
+            "heartbeat_sequence": proof.get("sequence"),
             "boundary": "typed allow-listed jobs only; arbitrary shell text is never emitted"}
 
 
 @app.post("/api/development/jobs/{job_id}/result")
-def development_result(job_id: str, req: BuildResultRequest) -> Dict[str, Any]:
+def development_result(job_id: str, req: BuildResultRequest, request: Request) -> Dict[str, Any]:
+    _require_agent(request)
+    hb = _heartbeat.status()
+    if not hb.get("pc_online"):
+        raise HTTPException(status_code=409, detail={"error": "current_authenticated_heartbeat_required", "heartbeat_state": hb.get("state")})
     try:
         job = _builder.update_job(job_id, JobState(req.state), req.evidence, req.error)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"unknown build job: {job_id}") from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return {"job": asdict(job), "next": _builder.status().get("active_job"), "device": _heartbeat.status()}
+    return {"job": asdict(job), "next": _builder.status().get("active_job")}
 
 
 def fusion_log(packet: OmegaPacket) -> None:
