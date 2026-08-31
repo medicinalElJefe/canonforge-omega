@@ -110,40 +110,62 @@ jobs:
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
           GENESIS_URL: https://omega-genesis-v1.jeffdeweyeljefe.workers.dev
+          EXPECTED_BUILD: r87-semantic-edge-settle-proof
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json
-          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json
-          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-all-errors "$GENESIS_URL/api/convergence/manifest" -o /tmp/genesis-manifest.json
+          verified=false
+          for attempt in $(seq 1 30); do
+            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json || true
+            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json || true
+            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$GENESIS_URL/api/convergence/manifest" -o /tmp/genesis-manifest.json || true
+            if EXPECTED_BUILD="$EXPECTED_BUILD" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              health = json.loads(Path("/tmp/v6-health.json").read_text())
+              edge = json.loads(Path("/tmp/v6-convergence.json").read_text())
+              manifest = json.loads(Path("/tmp/genesis-manifest.json").read_text())
+          except Exception:
+              raise SystemExit(1)
+          if health.get("ok") is not True: raise SystemExit(1)
+          if health.get("authority") != "public-interface-only": raise SystemExit(1)
+          if health.get("build") != os.environ["EXPECTED_BUILD"]: raise SystemExit(1)
+          convergence = edge.get("convergence") or {}
+          peer_manifest = (edge.get("genesis") or {}).get("manifest") or {}
+          if convergence.get("reciprocal_manifest_ready") is not True: raise SystemExit(1)
+          if peer_manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2": raise SystemExit(1)
+          if not peer_manifest.get("digest"): raise SystemExit(1)
+          if manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2": raise SystemExit(1)
+          if manifest.get("manifest_digest") != peer_manifest.get("digest"): raise SystemExit(1)
+          genome = manifest.get("capability_genome") or {}
+          if int(genome.get("capability_count") or 0) < 29: raise SystemExit(1)
+          PY
+            then
+              verified=true
+              break
+            fi
+            echo "Edge not settled on expected semantic identity yet (attempt $attempt/30)."
+            sleep 2
+          done
+          if [ "$verified" != "true" ]; then
+            echo "LIVE_CONVERGENCE_VERIFY_FAILED after semantic edge-settle window."
+            echo "V6 health:"; cat /tmp/v6-health.json || true
+            echo "V6 convergence:"; cat /tmp/v6-convergence.json || true
+            echo "Genesis manifest:"; cat /tmp/genesis-manifest.json || true
+            exit 1
+          fi
           python - <<'PY'
           import json
           from pathlib import Path
-
-          health = json.loads(Path("/tmp/v6-health.json").read_text())
-          edge = json.loads(Path("/tmp/v6-convergence.json").read_text())
-          manifest = json.loads(Path("/tmp/genesis-manifest.json").read_text())
-
-          assert health.get("ok") is True, health
-          assert health.get("authority") == "public-interface-only", health
-          assert health.get("build") == "r86-live-convergence-proof", health
-
-          convergence = edge.get("convergence") or {}
-          genesis = edge.get("genesis") or {}
-          peer_manifest = genesis.get("manifest") or {}
-          assert convergence.get("reciprocal_manifest_ready") is True, edge
-          assert peer_manifest.get("schema") == "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2", edge
-          assert peer_manifest.get("digest"), edge
-
-          assert manifest.get("schema") == "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2", manifest
-          assert manifest.get("manifest_digest") == peer_manifest.get("digest"), (manifest, edge)
-          genome = manifest.get("capability_genome") or {}
-          assert int(genome.get("capability_count") or 0) >= 29, manifest
-
+          health=json.loads(Path("/tmp/v6-health.json").read_text())
+          edge=json.loads(Path("/tmp/v6-convergence.json").read_text())
+          manifest=json.loads(Path("/tmp/genesis-manifest.json").read_text())
           print(json.dumps({
-              "status": "LIVE_CONVERGENCE_VERIFIED",
-              "v6_build": health.get("build"),
-              "genesis_manifest_digest": manifest.get("manifest_digest"),
-              "genesis_capability_count": genome.get("capability_count"),
+            "status":"LIVE_CONVERGENCE_VERIFIED",
+            "v6_build":health.get("build"),
+            "genesis_manifest_digest":manifest.get("manifest_digest"),
+            "v6_observed_manifest_digest":((edge.get("genesis") or {}).get("manifest") or {}).get("digest"),
+            "genesis_capability_count":(manifest.get("capability_genome") or {}).get("capability_count")
           }, sort_keys=True))
           PY
       - name: Record promoted SHA
