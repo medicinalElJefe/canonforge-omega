@@ -7,6 +7,7 @@ from omega_genesis.autodeploy import (
     deployment_decision,
     load_policy,
     promotion_digest,
+    recovery_target,
     validate_promotion,
 )
 
@@ -70,3 +71,25 @@ def test_autodeploy_skips_current_and_backs_off_failed_candidate():
 
     decision, _ = deployment_decision(IMAGE_A, IMAGE_B, IMAGE_A, 600, 1000, 300)
     assert decision == "DEPLOY"
+
+
+def test_recovery_prefers_previous_immutable_generation():
+    target, mode = recovery_target(
+        {"active_image": IMAGE_A, "previous_image": IMAGE_B},
+        IMAGE_A,
+    )
+    assert target == IMAGE_B
+    assert mode == "ROLLBACK_PREVIOUS"
+
+
+def test_recovery_reconciles_current_when_no_distinct_previous_exists():
+    target, mode = recovery_target(
+        {"active_image": IMAGE_A, "previous_image": IMAGE_A},
+        IMAGE_A,
+    )
+    assert target == IMAGE_A
+    assert mode == "RECONCILE_CURRENT"
+
+    target, mode = recovery_target({"active_image": IMAGE_A}, IMAGE_A)
+    assert target == IMAGE_A
+    assert mode == "RECONCILE_CURRENT"
