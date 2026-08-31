@@ -1,0 +1,13 @@
+.git
+.github/workflows/omega-cloud-ci.yml
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+.venv
+.omega-venv
+node_modules
+runtime-data
+release
+cloud/omega-cloud/.env.cloud
+cloud/omega-cloud/workspace
