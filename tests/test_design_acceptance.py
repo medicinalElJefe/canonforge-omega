@@ -15,8 +15,8 @@ def test_ultra_ui_design_contract_passes():
     assert result["checks"]["reduced_motion"] is True
     assert result["checks"]["mobile_nav_scrim"] is True
     assert result["checks"]["worker_python_capability_parity"] is True
-    assert result["capability_count"] == 25
-    assert result["worker_capability_count"] == 25
+    assert result["capability_count"] == len(CAPABILITIES)
+    assert result["worker_capability_count"] == len(CAPABILITIES)
     assert "real devices remains external evidence" in result["boundary"]
 
 
