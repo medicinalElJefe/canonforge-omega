@@ -37,6 +37,15 @@ SAFE_JOB_KINDS = {
     "cleanup_candidate",
 }
 
+VALIDATION_SEQUENCE = [
+    "inspect_workspace",
+    "inspect_runtime",
+    "run_tests",
+    "build_vite",
+    "wrangler_dry_run",
+    "verify_candidate",
+]
+
 
 @dataclass
 class BuildJob:
@@ -56,9 +65,9 @@ class BuildJob:
 class SovereignBuildController:
     """Persistent, bounded orchestration state for post-Hybrid self-development.
 
-    This controller intentionally does not execute arbitrary shell text. It emits typed
-    jobs from SAFE_JOB_KINDS so the authenticated Windows agent can map them to an
-    allow-listed executor. Promotion/deployment authority remains outside this class.
+    Jobs are typed and allow-listed. The controller continuously advances a real
+    validation cycle after authenticated host execution returns proof. It never emits
+    arbitrary shell text and never grants release promotion by itself.
     """
 
     def __init__(self, state_path: Path, approved_root: Path) -> None:
@@ -112,15 +121,32 @@ class SovereignBuildController:
         self._save()
         return job
 
+    def _next_validation_kind(self) -> str:
+        verified = [j for j in self.jobs if j.state == JobState.VERIFIED.value and j.kind in VALIDATION_SEQUENCE]
+        if not verified:
+            return VALIDATION_SEQUENCE[0]
+        last = verified[-1].kind
+        index = VALIDATION_SEQUENCE.index(last)
+        return VALIDATION_SEQUENCE[(index + 1) % len(VALIDATION_SEQUENCE)]
+
     def ensure_next_job(self) -> Optional[BuildJob]:
         active = [j for j in self.jobs if j.state in {JobState.QUEUED.value, JobState.LEASED.value, JobState.RUNNING.value}]
         if active or self.mode == BuildMode.MANUAL:
             return active[0] if active else None
-        return self.enqueue(
-            "inspect_workspace",
-            "Development loop is online with no active job; inspect the approved OMEGA workspace and report the highest-impact bounded defect.",
-            {"acceptance": "material_user_visible_or_functional_delta", "no_promotion_without_proof": True},
-        )
+        kind = self._next_validation_kind()
+        reasons = {
+            "inspect_workspace": "Inspect the approved OMEGA workspace and report source/lineage/worktree state.",
+            "inspect_runtime": "Inspect the sovereign runtime/toolchain before changing or promoting anything.",
+            "run_tests": "Run the complete Python runtime test suite and return executable evidence.",
+            "build_vite": "Validate the Cloudflare/Vite interface toolchain and return build/type evidence.",
+            "wrangler_dry_run": "Dry-run the Worker package before any production deployment authority is considered.",
+            "verify_candidate": "Run the final bounded candidate verification and return proof for the next development decision.",
+        }
+        return self.enqueue(kind, reasons[kind], {
+            "acceptance": "material_user_visible_or_functional_delta",
+            "no_promotion_without_proof": True,
+            "cycle": VALIDATION_SEQUENCE,
+        })
 
     def lease_next(self, agent_id: str) -> Optional[BuildJob]:
         self.ensure_next_job()
@@ -140,6 +166,8 @@ class SovereignBuildController:
             raise KeyError(job_id)
         if state == JobState.VERIFIED and not evidence:
             raise ValueError("VERIFIED requires returned evidence")
+        if job.lease_owner is None and state in {JobState.RUNNING, JobState.VERIFIED}:
+            raise ValueError("host execution state requires a leased job")
         job.state = state.value
         job.updated_at = self._now()
         job.evidence = evidence or job.evidence
@@ -158,5 +186,6 @@ class SovereignBuildController:
             "active_job": None if active is None else asdict(active),
             "recent_jobs": [asdict(job) for job in self.jobs[-20:]],
             "safe_job_kinds": sorted(SAFE_JOB_KINDS),
+            "validation_sequence": VALIDATION_SEQUENCE,
             "promotion_boundary": "controller may inspect/build/test candidates; release promotion requires separate proof and deployment authority",
         }
