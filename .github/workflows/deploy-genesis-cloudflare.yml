@@ -24,6 +24,7 @@ jobs:
           python -m pip install -U pip pytest
           python -m pip install -e .
           python -m pytest -q
+          python scripts/build_manifest.py
           python scripts/verify_release.py
       - uses: actions/setup-node@v4
         with:
