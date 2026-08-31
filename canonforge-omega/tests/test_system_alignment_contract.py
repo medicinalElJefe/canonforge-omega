@@ -23,7 +23,9 @@ def test_system_contract_defines_complete_omega_machine():
         "CREATE_SIMULATE", "SOVEREIGN", "BUILD", "PROOF",
     }
     assert "governance_dashboard_becomes_primary_product" in contract["prohibitions"]
-    assert "physical-dimension" not in contract["representation_rule"].lower()
+    rule = contract["representation_rule"].lower()
+    assert "representational computational resolutions" in rule
+    assert "not physical-dimension claims" in rule
 
 
 def test_convergence_policy_is_bound_to_product_alignment():
