@@ -36,6 +36,55 @@ def test_learning_prediction_is_deterministic_and_replayable(tmp_path: Path):
     assert historical["replay"]["records"] == 1
 
 
+def test_learning_checkpoint_binds_verified_prefix_to_canonical_state(tmp_path: Path):
+    memory = LearningMemory(tmp_path)
+    first = memory.record(state_id=7, state_digest=DIGEST, context_key="route", action="TURN", reward=0.6)
+    memory.record(state_id=7, state_digest=DIGEST, context_key="route", action="STAY", reward=0.1)
+
+    checkpoint = memory.checkpoint(state_id=7, state_digest=DIGEST, max_seq=1)
+    assert checkpoint["schema"] == "omega.learning.checkpoint.v1"
+    assert checkpoint["learning_sequence"] == 1
+    assert checkpoint["learning_head"] == first["event_hash"]
+    assert checkpoint["canonical_mutation"] is False
+
+    verified = memory.verify_checkpoint(checkpoint)
+    assert verified["valid"] is True
+    assert verified["learning_sequence"] == 1
+    assert verified["replay"]["records"] == 1
+
+
+def test_learning_checkpoint_remains_historically_verifiable_after_append(tmp_path: Path):
+    memory = LearningMemory(tmp_path)
+    memory.record(state_id=7, state_digest=DIGEST, context_key="route", action="TURN", reward=0.6)
+    checkpoint = memory.checkpoint(state_id=7, state_digest=DIGEST)
+
+    memory.record(state_id=7, state_digest=DIGEST, context_key="route", action="STAY", reward=0.4)
+    verified = memory.verify_checkpoint(checkpoint)
+    assert verified["valid"] is True
+    assert verified["learning_sequence"] == 1
+    assert memory.verify()["records"] == 2
+
+
+def test_learning_checkpoint_detects_tampering_and_unavailable_history(tmp_path: Path):
+    memory = LearningMemory(tmp_path)
+    memory.record(state_id=7, state_digest=DIGEST, context_key="route", action="TURN", reward=0.6)
+    checkpoint = memory.checkpoint(state_id=7, state_digest=DIGEST)
+
+    tampered = dict(checkpoint)
+    tampered["state_digest"] = "b" * 64
+    assert memory.verify_checkpoint(tampered)["reason"] == "checkpoint_hash_mismatch"
+
+    unavailable = dict(checkpoint)
+    unavailable["learning_sequence"] = 2
+    unavailable.pop("checkpoint_hash")
+    from omega_genesis.learning import _checkpoint_hash
+    unavailable["checkpoint_hash"] = _checkpoint_hash(unavailable)
+    result = memory.verify_checkpoint(unavailable)
+    assert result["valid"] is False
+    assert result["reason"] == "learning_replay_failed"
+    assert result["replay"]["reason"] == "sequence_unavailable"
+
+
 def test_learning_refuses_invalid_reward_and_invalid_state(tmp_path: Path):
     memory = LearningMemory(tmp_path)
     with pytest.raises(ValueError):

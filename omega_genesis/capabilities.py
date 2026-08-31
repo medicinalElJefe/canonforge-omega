@@ -19,6 +19,7 @@ CAPABILITIES = [
     {"id":"CAP-016","name":"AI-assisted build planning","menu":"06 AI Orchestration","gate":"Human approval","status":"ADAPTER"},
     {"id":"CAP-017","name":"Reality compiler","menu":"09 World / Bio / Forecast","gate":"Source-class","status":"LIVE_CORE"},
     {"id":"CAP-018","name":"Media compiler","menu":"06 AI Orchestration","gate":"Boundary","status":"ADAPTER"},
+    {"id":"CAP-019","name":"Canonical-bound adaptive-memory checkpoints","menu":"02 Proof & Governance","gate":"Replay proof","status":"LIVE_CORE"},
 ]
 
 MENUS = [

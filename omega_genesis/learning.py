@@ -23,6 +23,20 @@ def _event_hash(event: dict[str, Any]) -> str:
     return sha256(_canonical(payload)).hexdigest()
 
 
+def _checkpoint_hash(checkpoint: dict[str, Any]) -> str:
+    payload = {k: v for k, v in checkpoint.items() if k != "checkpoint_hash"}
+    return sha256(_canonical(payload)).hexdigest()
+
+
+def _validate_state_binding(state_id: int, state_digest: str) -> tuple[int, str]:
+    if isinstance(state_id, bool) or not isinstance(state_id, int) or not 1 <= state_id <= 20_736:
+        raise ValueError("state_id must be an integer in 1..20736")
+    state_digest = str(state_digest).strip().lower()
+    if not _HEX64.fullmatch(state_digest):
+        raise ValueError("state_digest must be a 64-character lowercase SHA-256")
+    return state_id, state_digest
+
+
 class LearningMemory:
     """Append-only adaptive memory subordinate to canonical OMEGA state."""
 
@@ -46,6 +60,8 @@ class LearningMemory:
 
     @staticmethod
     def _verify_rows(rows: list[dict[str, Any]], max_seq: int | None = None) -> dict[str, Any]:
+        if max_seq is not None and (isinstance(max_seq, bool) or not isinstance(max_seq, int) or max_seq < 0):
+            return {"valid": False, "records": 0, "reason": "invalid_max_seq"}
         prev = None
         checked = 0
         for expected_seq, row in enumerate(rows, 1):
@@ -61,6 +77,8 @@ class LearningMemory:
                 return {"valid": False, "records": checked, "reason": "hash_mismatch", "failure_at": expected_seq}
             prev = actual
             checked += 1
+        if max_seq is not None and max_seq > len(rows):
+            return {"valid": False, "records": checked, "reason": "sequence_unavailable", "requested": max_seq, "available": len(rows)}
         return {"valid": True, "records": checked, "head": prev, "max_seq": max_seq}
 
     def verify(self, max_seq: int | None = None) -> dict[str, Any]:
@@ -81,11 +99,7 @@ class LearningMemory:
         reward: float,
         evidence_class: EvidenceClass | str = EvidenceClass.DERIVED,
     ) -> dict[str, Any]:
-        if isinstance(state_id, bool) or not isinstance(state_id, int) or not 1 <= state_id <= 20_736:
-            raise ValueError("state_id must be an integer in 1..20736")
-        state_digest = str(state_digest).strip().lower()
-        if not _HEX64.fullmatch(state_digest):
-            raise ValueError("state_digest must be a 64-character lowercase SHA-256")
+        state_id, state_digest = _validate_state_binding(state_id, state_digest)
         context_key = str(context_key).strip()
         action = str(action).strip()
         if not context_key or len(context_key) > 128:
@@ -120,6 +134,66 @@ class LearningMemory:
                 fh.flush()
                 os.fsync(fh.fileno())
             return dict(event)
+
+    def checkpoint(
+        self,
+        *,
+        state_id: int,
+        state_digest: str,
+        max_seq: int | None = None,
+    ) -> dict[str, Any]:
+        """Bind a verified learning prefix to a canonical state without mutating either authority."""
+        state_id, state_digest = _validate_state_binding(state_id, state_digest)
+        with self._lock:
+            verified = self.verify(max_seq=max_seq)
+        if not verified.get("valid"):
+            raise RuntimeError(f"learning journal verification failed: {verified.get('reason')}")
+        checkpoint = {
+            "schema": "omega.learning.checkpoint.v1",
+            "state_id": state_id,
+            "state_digest": state_digest,
+            "learning_sequence": int(verified.get("records", 0)),
+            "learning_head": verified.get("head"),
+            "evidence_class": EvidenceClass.DERIVED.value,
+            "canonical_mutation": False,
+            "boundary": "checkpoint proves a learning-history prefix is bound to an observed canonical state digest; it does not grant learning state canonical authority",
+        }
+        checkpoint["checkpoint_hash"] = _checkpoint_hash(checkpoint)
+        return checkpoint
+
+    def verify_checkpoint(self, checkpoint: dict[str, Any]) -> dict[str, Any]:
+        """Verify checkpoint integrity and replay its exact historical learning prefix."""
+        if not isinstance(checkpoint, dict):
+            return {"valid": False, "reason": "checkpoint_not_object"}
+        if checkpoint.get("schema") != "omega.learning.checkpoint.v1":
+            return {"valid": False, "reason": "checkpoint_schema_mismatch"}
+        if checkpoint.get("canonical_mutation") is not False:
+            return {"valid": False, "reason": "canonical_authority_violation"}
+        try:
+            _validate_state_binding(checkpoint.get("state_id"), checkpoint.get("state_digest"))
+        except ValueError as exc:
+            return {"valid": False, "reason": f"invalid_state_binding: {exc}"}
+        expected_hash = _checkpoint_hash(checkpoint)
+        if checkpoint.get("checkpoint_hash") != expected_hash:
+            return {"valid": False, "reason": "checkpoint_hash_mismatch"}
+        sequence = checkpoint.get("learning_sequence")
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 0:
+            return {"valid": False, "reason": "invalid_learning_sequence"}
+        replay = self.verify(max_seq=sequence)
+        if not replay.get("valid"):
+            return {"valid": False, "reason": "learning_replay_failed", "replay": replay}
+        if replay.get("head") != checkpoint.get("learning_head"):
+            return {"valid": False, "reason": "learning_head_mismatch", "replay": replay}
+        return {
+            "valid": True,
+            "state_id": checkpoint["state_id"],
+            "state_digest": checkpoint["state_digest"],
+            "learning_sequence": sequence,
+            "learning_head": checkpoint.get("learning_head"),
+            "checkpoint_hash": checkpoint["checkpoint_hash"],
+            "canonical_mutation": False,
+            "replay": replay,
+        }
 
     def _eligible(self, state_id: int, context_key: str, max_seq: int | None = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         rows = self._rows()
