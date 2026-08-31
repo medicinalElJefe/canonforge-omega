@@ -1,0 +1,62 @@
+name: OMEGA Genesis Hourly Evolution Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-genesis-hourly-evolution-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout canonical Genesis
+        uses: actions/checkout@v4
+        with:
+          ref: omega-genesis-v1-full
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install OMEGA
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+
+      - name: Reconstruct local verification ledger
+        run: python scripts/build_manifest.py
+
+      - name: Verify canonical Genesis
+        run: |
+          python -m pytest -q
+          python scripts/verify_release.py
+
+      - name: Compile governed improvement backlog
+        run: python scripts/evolution_cycle.py --once --data-dir release/evolution-hourly
+
+      - name: Upload hourly evolution evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: OMEGA-hourly-evolution-${{ github.run_id }}
+          path: |
+            release/evolution-hourly/evolution/status.json
+            release/evolution-hourly/evolution/backlog.json
+            release/evolution-hourly/evolution/journal.jsonl
+          if-no-files-found: error
+
+      - name: Record boundary
+        run: |
+          {
+            echo '## OMEGA hourly evolution audit'
+            echo
+            echo 'This scheduled default-branch controller observes and scores omega-genesis-v1-full.'
+            echo 'It does not mutate canonical source. Source improvements are routed through omega-evolve/* candidates and the trusted PR gate.'
+          } >> "$GITHUB_STEP_SUMMARY"
