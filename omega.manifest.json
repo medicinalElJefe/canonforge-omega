@@ -596,8 +596,8 @@
     },
     {
       "path": "scripts/sovereign_evolution_host.py",
-      "sha256": "e748a45fa67f657f8704f27e3475b2a9fa381d335fbc3dfa7b003633437c7560",
-      "bytes": 10187
+      "sha256": "80e11dc7c867ade7b84272b8a502ee725e61dbf8f40d5047a9f5a9070dd99811",
+      "bytes": 11280
     },
     {
       "path": "scripts/verify_release.py",
