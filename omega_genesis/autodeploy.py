@@ -74,6 +74,22 @@ def fetch_promotion(url: str, timeout: int = 15) -> dict[str, Any]:
     return payload
 
 
+def fetch_health(url: str, token: str = "", timeout: int = 10) -> dict[str, Any]:
+    if not str(url).startswith(("http://127.0.0.1", "http://localhost", "https://")):
+        raise ValueError("health URL must be loopback HTTP or HTTPS")
+    headers = {"Accept": "application/json", "User-Agent": "OMEGA-Cloud-Watcher/1"}
+    if token:
+        headers["X-Omega-Gateway-Token"] = token
+    request = Request(url, headers=headers)
+    with urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+        if response.status != 200:
+            raise RuntimeError(f"health fetch HTTP {response.status}")
+    if not isinstance(payload, dict):
+        raise ValueError("health payload must be an object")
+    return payload
+
+
 def validate_promotion(payload: dict[str, Any], expected_repository: str) -> dict[str, Any]:
     errors: list[str] = []
     if payload.get("schema") != "omega.cloud.promotion.v1":
@@ -110,12 +126,31 @@ def validate_promotion(payload: dict[str, Any], expected_repository: str) -> dic
     }
 
 
-def read_active_image(path: Path) -> str | None:
+def read_deployment_state(path: Path) -> dict[str, Any]:
     if not Path(path).is_file():
-        return None
+        return {}
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
-    image = raw.get("active_image")
-    return require_immutable_image(image) if image else None
+    if not isinstance(raw, dict):
+        raise ValueError("deployment state must be an object")
+    for field in ("active_image", "previous_image"):
+        image = raw.get(field)
+        if image:
+            raw[field] = require_immutable_image(image)
+    return raw
+
+
+def read_active_image(path: Path) -> str | None:
+    return read_deployment_state(path).get("active_image")
+
+
+def recovery_target(state: dict[str, Any], current: str) -> tuple[str, str]:
+    current = require_immutable_image(current)
+    previous = state.get("previous_image")
+    if previous:
+        previous = require_immutable_image(previous)
+        if previous != current:
+            return previous, "ROLLBACK_PREVIOUS"
+    return current, "RECONCILE_CURRENT"
 
 
 def deployment_decision(
