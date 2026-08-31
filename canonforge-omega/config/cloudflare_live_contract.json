@@ -1,0 +1,17 @@
+{
+  "schema": "omega.cloudflare.live-contract.v1",
+  "canonical_worker": "omegav6",
+  "observed_at": "2026-08-31T05:34:34Z",
+  "observation_source": "Cloudflare deploy API compatibility error 10064 during exact-head promotion",
+  "required_exports": ["OmegaRuntime"],
+  "durable_object_contract": {
+    "OmegaRuntime": {
+      "required": true,
+      "delete_class_allowed": false,
+      "rename_class_allowed": false,
+      "behavior_recovery_required_before_replacement": true
+    }
+  },
+  "promotion_policy": "HOLD deployment when the candidate does not preserve every required live Durable Object export. Never infer that a class can be deleted merely because current repository source omits it.",
+  "truth_boundary": "This contract records an observed live-platform requirement only. It does not claim the recovered implementation of OmegaRuntime is known yet."
+}
