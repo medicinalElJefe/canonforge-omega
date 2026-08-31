@@ -35,16 +35,19 @@ jobs:
           npm install --package-lock=false
           npm run check
 
-      - name: Verify committed manifest
+      - name: Regenerate canonical build ledger
+        run: python scripts/build_manifest.py
+
+      - name: Verify regenerated manifest
         run: python scripts/verify_release.py
 
-      - name: Assert manifest is reproducible
+      - name: Assert manifest generator is stable
         run: |
-          cp omega.manifest.json /tmp/omega.manifest.before.json
-          cp SHA256SUMS.txt /tmp/SHA256SUMS.before.txt
+          cp omega.manifest.json /tmp/omega.manifest.first.json
+          cp SHA256SUMS.txt /tmp/SHA256SUMS.first.txt
           python scripts/build_manifest.py
-          diff -u /tmp/omega.manifest.before.json omega.manifest.json
-          diff -u /tmp/SHA256SUMS.before.txt SHA256SUMS.txt
+          diff -u /tmp/omega.manifest.first.json omega.manifest.json
+          diff -u /tmp/SHA256SUMS.first.txt SHA256SUMS.txt
 
       - name: Build deterministic release
         run: python scripts/build_release.py

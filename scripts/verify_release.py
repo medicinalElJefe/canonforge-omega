@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT))
 from omega_genesis.capacity import CAPACITY_61917364224, CAPACITY_145152
 from omega_genesis.modes import catalog
 from omega_genesis.release import verify_manifest
+from omega_genesis.selfbuild import load_policy
 from omega_genesis.systems import coverage as system_coverage
 
 required = [
@@ -41,6 +42,7 @@ required = [
     "omega_genesis/language.py",
     "omega_genesis/acceptance.py",
     "omega_genesis/cloud_auth.py",
+    "omega_genesis/selfbuild.py",
     "omega_genesis/adapters/earth.py",
     "omega_genesis/adapters/hybrid.py",
     "omega_genesis/adapters/workbook.py",
@@ -60,6 +62,11 @@ required = [
     "web/field3d.js",
     "web/advanced.js",
     "web/cloud.js",
+    "scripts/self_build.py",
+    "config/self_build_policy.json",
+    "docs/SELF_BUILD.md",
+    ".github/workflows/self-build.yml",
+    "tests/test_selfbuild.py",
     "tests/test_genesis.py",
     "config/corpus_authorities.json",
     "config/dewey_bal_contract.json",
@@ -98,6 +105,17 @@ if "OMEGA Cloud canonical" not in str(manifest.get("cloud_runtime", "")):
     errors.append("cloud runtime contract mismatch")
 if "not required for canonical cloud survival" not in str(manifest.get("local_runtime", "")):
     errors.append("desktop/cloud authority contract mismatch")
+if manifest.get("self_build_policy_version") != 1:
+    errors.append("self-build policy version mismatch")
+if "governed deterministic self-build" not in str(manifest.get("self_build", "")):
+    errors.append("self-build contract mismatch")
+
+try:
+    policy = load_policy(ROOT)
+    if policy.authority != "OMEGA Cloud canonical self-build authority":
+        errors.append("self-build authority mismatch")
+except Exception as exc:
+    errors.append(f"self-build policy invalid: {exc}")
 
 integrity = verify_manifest(ROOT)
 if integrity.get("status") != "PASS":
@@ -112,6 +130,7 @@ result = {
     "canonical_states": 20_736,
     "capacity_145152": CAPACITY_145152,
     "design_capacity": CAPACITY_61917364224,
+    "self_build_policy": 1,
     "manifest_integrity": integrity,
     "errors": errors,
 }

@@ -1,0 +1,91 @@
+name: OMEGA Governed Self-Build
+
+on:
+  push:
+    branches: [omega-genesis-v1-full]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 8 * * *'
+
+concurrency:
+  group: omega-genesis-self-build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  self-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install OMEGA build runtime
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+
+      - name: Run governed self-build
+        run: python scripts/self_build.py --repair-ledger
+
+      - name: Commit repaired canonical build ledger
+        shell: bash
+        run: |
+          if git diff --quiet -- omega.manifest.json SHA256SUMS.txt; then
+            echo "Canonical build ledger already current." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -n "$(git diff --name-only -- . ':!omega.manifest.json' ':!SHA256SUMS.txt' ':!release/**')" ]; then
+            echo "QUARANTINE: self-builder detected an attempted write outside its ledger allowlist." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          git config user.name "OMEGA Self-Builder"
+          git config user.email "omega-self-builder@users.noreply.github.com"
+          git add omega.manifest.json SHA256SUMS.txt
+          git commit -m "OMEGA self-build: repair canonical release ledger [skip ci]"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+
+      - name: Upload verified self-build
+        uses: actions/upload-artifact@v4
+        with:
+          name: OMEGA-self-build-${{ github.sha }}
+          path: |
+            release/OMEGA_Genesis_v1_1_0_Full_Repository.zip
+            release/OMEGA_Genesis_v1_1_0_Full_Repository.zip.sha256
+            release/self-build-report.json
+          if-no-files-found: error
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish immutable canonical cloud image
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}/omega-cloud
+        run: |
+          IMAGE="$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')"
+          docker tag "omega-cloud:selfbuild-${GITHUB_SHA::12}" "$IMAGE:sha-$GITHUB_SHA"
+          docker push "$IMAGE:sha-$GITHUB_SHA"
+          docker tag "omega-cloud:selfbuild-${GITHUB_SHA::12}" "$IMAGE:genesis-latest"
+          docker push "$IMAGE:genesis-latest"
+          {
+            echo "### Published cloud image"
+            echo
+            echo "$IMAGE:sha-$GITHUB_SHA"
+            echo
+            echo "$IMAGE:genesis-latest"
+          } >> "$GITHUB_STEP_SUMMARY"

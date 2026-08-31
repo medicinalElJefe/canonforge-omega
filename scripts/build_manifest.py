@@ -43,6 +43,8 @@ manifest={
     "acceptance_gates":12,
     "local_runtime":"optional desktop/node runtime; not required for canonical cloud survival",
     "cloud_runtime":"OMEGA Cloud canonical Python host + persistent volume + authenticated HTTPS/WebSocket; Cloudflare Worker remains an optional edge adapter",
+    "self_build":"governed deterministic self-build with ledger repair, reproducibility gates, cloud-container publication, quarantine, and promotion",
+    "self_build_policy_version":1,
     "private_corpus_policy":"names/hashes/contracts only; no private Drive identifiers/content published",
     "truth_boundary":"high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",
     "files":files,

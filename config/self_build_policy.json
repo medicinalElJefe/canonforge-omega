@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "authority": "OMEGA Cloud canonical self-build authority",
+  "source_mutation_mode": "proposal_only",
+  "automatic_write_paths": [
+    "omega.manifest.json",
+    "SHA256SUMS.txt",
+    "release/**"
+  ],
+  "mandatory_gates": [
+    "python_compile",
+    "python_tests",
+    "manifest_rebuild",
+    "manifest_verify",
+    "release_build",
+    "release_reproducibility",
+    "worker_check",
+    "cloud_container_build"
+  ],
+  "publish_container": true,
+  "promote_latest": true,
+  "cloud_authority_required": true
+}
