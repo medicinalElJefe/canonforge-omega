@@ -20,3 +20,7 @@ The descriptor contains only a sanitized logical source identifier, dataset clas
 ## Reversibility
 
 The change is isolated to the Earth adapter, its tests, this evidence note, and the non-constitutional capability registry. No evolution/self-build judge or policy path is modified. Reverting the candidate removes CAP-024 and restores the prior Earth adapter without changing canonical state authority.
+
+## Candidate base
+
+The active candidate generation is based on canonical Genesis `cd88e1035abb60e078e343062acbd18ef4af6480`. This line is evidence only; promotion still depends on the trusted gate evaluating the current pull-request head against its current base.
