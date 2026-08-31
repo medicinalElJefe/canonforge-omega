@@ -320,6 +320,11 @@
       "bytes": 6235
     },
     {
+      "path": "omega_genesis/ai_engineer.py",
+      "sha256": "3088108087e2bace4a43cf70c465f0be2b7169289ab5f301b37e8445c3b22dfe",
+      "bytes": 8387
+    },
+    {
       "path": "omega_genesis/autodeploy.py",
       "sha256": "b81a67111e242f5bcda5ab80309fd8d63514791115bfa84da0e4bf534a178f30",
       "bytes": 6526
@@ -583,6 +588,11 @@
       "path": "scripts/verify_release.py",
       "sha256": "a6723135c9e7c49049db4cc4613d0d64b5af9b52d62b844f603ca089fa3faceb",
       "bytes": 8355
+    },
+    {
+      "path": "tests/test_ai_engineer.py",
+      "sha256": "050a594e30412fa21fc410b5c5237e8e25f66bd5c86fb24825f73b58e4a1395f",
+      "bytes": 1986
     },
     {
       "path": "tests/test_autodeploy.py",
