@@ -21,7 +21,7 @@ def test_evolution_snapshot_compiles_backlog(tmp_path):
     ids = {row["id"] for row in snapshot["objectives"]}
     assert "EV-004" in ids
     assert "EV-010" in ids
-    assert snapshot["quality_vector"]["capability_total"] == 23
+    assert snapshot["quality_vector"]["capability_total"] == 24
     assert any(row["status"] in {"GAP", "BLOCKED_EXTERNAL"} for row in snapshot["backlog"])
 
 

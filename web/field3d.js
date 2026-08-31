@@ -123,3 +123,5 @@
     };
   };
 })();
+
+import("/design-system.js").catch(()=>{document.documentElement.dataset.omegaDesign="BASE_FALLBACK"});

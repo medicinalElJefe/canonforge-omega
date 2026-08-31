@@ -24,6 +24,7 @@ CAPABILITIES = [
     {"id":"CAP-021","name":"Signed replay-protected Hybrid Link execution envelopes","menu":"05 Host Inputs","gate":"Authenticated node protocol","status":"LIVE_CORE"},
     {"id":"CAP-022","name":"Deterministic responsive cockpit performance guard","menu":"12 Operator Cockpit","gate":"Static layout + asset budget acceptance","status":"LIVE_CORE"},
     {"id":"CAP-023","name":"Adaptive state-bound WebGL render controller","menu":"04 Render Field","gate":"Deterministic state binding + performance contract","status":"LIVE_CORE"},
+    {"id":"CAP-024","name":"Progressive Ultra UI interaction and accessibility design system","menu":"12 Operator Cockpit","gate":"Touch, focus, reduced-motion and fail-open design contract","status":"LIVE_CORE"},
 ]
 
 MENUS = [
