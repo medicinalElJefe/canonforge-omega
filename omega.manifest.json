@@ -13,11 +13,16 @@
   "master_surfaces": 12,
   "capability_contracts": 18,
   "acceptance_gates": 12,
-  "local_runtime": "Python sovereign host + loopback WebSocket heartbeat",
-  "cloud_runtime": "Cloudflare Worker + SQLite Durable Object",
+  "local_runtime": "optional desktop/node runtime; not required for canonical cloud survival",
+  "cloud_runtime": "OMEGA Cloud canonical Python host + persistent volume + authenticated HTTPS/WebSocket; Cloudflare Worker remains an optional edge adapter",
   "private_corpus_policy": "names/hashes/contracts only; no private Drive identifiers/content published",
   "truth_boundary": "high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",
   "files": [
+    {
+      "path": ".dockerignore",
+      "sha256": "7b5d4e5c3a6bded9cb2fc60bf39f340ec15bbc0ac2c2afd1c711bb28d3009677",
+      "bytes": 189
+    },
     {
       "path": ".env.example",
       "sha256": "01437e65b1d0fe7599b645ebec66f57b4c50933f6cdc113b8d1fdd3a5275152a",
@@ -35,8 +40,8 @@
     },
     {
       "path": ".gitignore",
-      "sha256": "88c3f2ff019e930c47c84f13ae38bd19367e8ed30eb21791e253243116b4fa62",
-      "bytes": 143
+      "sha256": "cd32f1245b7543b321f788195f1fbfabd99ffb85ca9d034a5d89a5f7d85f20c3",
+      "bytes": 201
     },
     {
       "path": "INSTALL_OMEGA_WINDOWS.bat",
@@ -50,8 +55,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "114c29a823f9cb8296ab18d36288692e4894144f73e7e3f196e257cb5e8b1cb5",
-      "bytes": 6316
+      "sha256": "7f1e6a89332c837afcc49e508480d6fc8c6052d22152e82e4069b71f13aa8a75",
+      "bytes": 7321
     },
     {
       "path": "START_OMEGA.py",
@@ -59,9 +64,39 @@
       "bytes": 456
     },
     {
+      "path": "START_OMEGA_DESKTOP_LINK.bat",
+      "sha256": "5a32e1cf955cba8e6936c635b21a4e55cbb9f9f5b21bc1b936786bb4521345ce",
+      "bytes": 218
+    },
+    {
+      "path": "START_OMEGA_DESKTOP_LINK.ps1",
+      "sha256": "471762b12352c0d6f4cb8502f39bc5da07d5502fc693c3d446924d5ef8cbc64d",
+      "bytes": 743
+    },
+    {
       "path": "START_OMEGA_WINDOWS.bat",
       "sha256": "7e4b9289d4741a0f1dc0170ff5b191de73cd36ce5ca60ec0485db5f0883f5181",
       "bytes": 141
+    },
+    {
+      "path": "cloud/omega-cloud/.env.cloud.example",
+      "sha256": "c5c0cce77af2f39c3cdf304dc629252318211ca59d1b6e2edda597890c7330ee",
+      "bytes": 478
+    },
+    {
+      "path": "cloud/omega-cloud/Caddyfile",
+      "sha256": "9bd137de818854fb2191fe988c6a0ab4737f77b4cf89b23efcc04c24d76e9703",
+      "bytes": 347
+    },
+    {
+      "path": "cloud/omega-cloud/Dockerfile",
+      "sha256": "8044cb40bdea2e36f5d07a7666bf586d05eed173b66982737bb09185671b6fae",
+      "bytes": 814
+    },
+    {
+      "path": "cloud/omega-cloud/docker-compose.yml",
+      "sha256": "c7225b8454fdc71301039c6958387fb7a1ef78058da988ce35606077f54e5f4e",
+      "bytes": 1324
     },
     {
       "path": "cloudflare/omega-genesis-worker/package.json",
@@ -70,8 +105,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/api_ext.js",
-      "sha256": "2cdfcdd7df6e137c8091d19b91d3c954f36af400e12e10ccdd996dd559487eb8",
-      "bytes": 10276
+      "sha256": "eaccf9c9ca4e972ccec5bbde4c8474fdd2587abecd68fa81ebbdead54b634d4c",
+      "bytes": 18186
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
@@ -80,13 +115,18 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
-      "sha256": "62e924fc822b9f9f84037ac6dc6d204e6243919d11a86f484d980358630c3ccd",
-      "bytes": 12941
+      "sha256": "b2a5d53ab0f09f586a5d0647787fb16c270ca4b2d3b805d8cd4e9be516565642",
+      "bytes": 15103
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/kernel.js",
       "sha256": "86e2c472a55b5925e030abe4e8f201ed98181221102f86b7e635436d085809ae",
       "bytes": 7215
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/link.js",
+      "sha256": "ba9bfb77b5fbb1f452ba7d4e966935fb45e6fbad4fa03a79f16e80325252b7f0",
+      "bytes": 10328
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/system.js",
@@ -134,6 +174,11 @@
       "bytes": 2627
     },
     {
+      "path": "docs/CLOUD.md",
+      "sha256": "c4d6f293e80e301d31f153cf064e521de858d9216134186548544acf07580350",
+      "bytes": 2637
+    },
+    {
       "path": "docs/CORPUS_REVIEW.md",
       "sha256": "d5226a13513e1701afc222bee3fa2d9b210bc12526f8136aacb1b69373872a03",
       "bytes": 1040
@@ -170,8 +215,8 @@
     },
     {
       "path": "omega_genesis/adapters/hybrid.py",
-      "sha256": "e8329a149b544916efaba25e124358ee21228e1dc12748048518d62f44fccd76",
-      "bytes": 6341
+      "sha256": "7ce275ff301f7836011d10f02ed042f21dcda926bc9a617862afcd3e0f4e603f",
+      "bytes": 15368
     },
     {
       "path": "omega_genesis/adapters/workbook.py",
@@ -194,9 +239,19 @@
       "bytes": 4175
     },
     {
+      "path": "omega_genesis/cloud_auth.py",
+      "sha256": "6e7976588a03bcb4653f081074e29000bf3da30744ab6a485b7b6f4787674f6a",
+      "bytes": 3771
+    },
+    {
       "path": "omega_genesis/corpus.py",
       "sha256": "af5f8ccd2f77422576ebbfadfbd7135d4fd7da567cc9200b299f277ebea60f0e",
       "bytes": 3489
+    },
+    {
+      "path": "omega_genesis/desktop_link.py",
+      "sha256": "37b67d20a33ecb6dc79514fc501a28f86a7a359cf1b458b86c516734999bfae4",
+      "bytes": 7054
     },
     {
       "path": "omega_genesis/forecast.py",
@@ -224,9 +279,19 @@
       "bytes": 1786
     },
     {
+      "path": "omega_genesis/mission.py",
+      "sha256": "52faf00fb2117bbbc1065625ffe3456a12784d17cd0c67515d9de43388e231c6",
+      "bytes": 5979
+    },
+    {
       "path": "omega_genesis/modes.py",
       "sha256": "79ad028720a9a956124fdda743861c2d19bbe2b556f05681ba436559ae60e9e2",
       "bytes": 15319
+    },
+    {
+      "path": "omega_genesis/observations.py",
+      "sha256": "dd00e642bd218f08eb7c2fecd929e8619ca655a9cf1354722ba538ac179ffef7",
+      "bytes": 7876
     },
     {
       "path": "omega_genesis/orchestrator.py",
@@ -249,6 +314,11 @@
       "bytes": 2665
     },
     {
+      "path": "omega_genesis/reality.py",
+      "sha256": "5dfbbc83218113e9623195255831363e1885713aaf86eecac6092fc3e893b242",
+      "bytes": 11115
+    },
+    {
       "path": "omega_genesis/release.py",
       "sha256": "48ed90f4219a16acc2be03ba0317abd89d1c9e4a17fbe90386d639044523e077",
       "bytes": 4044
@@ -265,8 +335,8 @@
     },
     {
       "path": "omega_genesis/server.py",
-      "sha256": "2376752a34295bcbfafca3d12dea072eb17d0ef4fa92bc42b7a0197a0538b75d",
-      "bytes": 19098
+      "sha256": "88d421c15ac70c95344998448842683643cd7aa2aa125f356a44ae57308eeb0f",
+      "bytes": 23539
     },
     {
       "path": "omega_genesis/shell.py",
@@ -275,13 +345,18 @@
     },
     {
       "path": "omega_genesis/stream.py",
-      "sha256": "49c6b58bc921108af4dc16d3f851055f9885729f766b79c2b190c4b8bd59d87b",
-      "bytes": 2307
+      "sha256": "deecbf082ea54cb06142c485e63cf71f8a3ff2e2b29ba4c83dfd89016714296e",
+      "bytes": 2798
     },
     {
       "path": "omega_genesis/systems.py",
       "sha256": "cbea488334f5c052887737b07ab0e35713ed50a61b328623a471982225e90e02",
       "bytes": 1030
+    },
+    {
+      "path": "omega_genesis/training.py",
+      "sha256": "ef36d01810360da58fcd0738cad7c9ecd6ea1ca9f5e37c84a7640eac3d8b7629",
+      "bytes": 10900
     },
     {
       "path": "plugins/samples/atlas_echo/main.py",
@@ -300,13 +375,23 @@
     },
     {
       "path": "scripts/build_manifest.py",
-      "sha256": "2999f0c3b71296729f3b8f98d913fcb457670b4b0491784a4f5c1854d8d37c79",
-      "bytes": 2209
+      "sha256": "669d4a31223c44b5606ed95fbea774197f33917cbe369410578badcd40732257",
+      "bytes": 2325
     },
     {
       "path": "scripts/build_release.py",
       "sha256": "81e07791acae91e8542d6205c16a0910010c648ffa3f5392dd9a68282ea5f9a3",
       "bytes": 1238
+    },
+    {
+      "path": "scripts/cloud_backup.py",
+      "sha256": "ba2c125c84e49fc732e8899c999367ef916d3f2e34b5c8bca6f598f80d4da653",
+      "bytes": 1284
+    },
+    {
+      "path": "scripts/cloud_bootstrap.py",
+      "sha256": "a58cbf7edc2773545b4f67a66d70fe74d640d264b97e6508202fd836934d9399",
+      "bytes": 1344
     },
     {
       "path": "scripts/index_corpus.py",
@@ -320,13 +405,13 @@
     },
     {
       "path": "scripts/verify_release.py",
-      "sha256": "e03a02fe6e069925b00628e23d94f65abccc1b0a56680b4eb9989aa639184d72",
-      "bytes": 3904
+      "sha256": "bb178f801dc2f41c88f221f49d2b75d2cee3a01ea706c1c459cff83b9e897a5a",
+      "bytes": 4402
     },
     {
       "path": "tests/test_genesis.py",
-      "sha256": "dbc6ea7f74a78a2a75246b677cc7567df3055cf7790e38ead7e8cf3751935a7d",
-      "bytes": 13517
+      "sha256": "5567691d97d515cc90fa55736a885c847a4d3983d9a9f5ede5303bc870ea7e65",
+      "bytes": 14598
     },
     {
       "path": "web/advanced.js",
@@ -339,19 +424,24 @@
       "bytes": 13776
     },
     {
+      "path": "web/cloud.js",
+      "sha256": "97855d5c4c6b5827dd2a385671a6d325d5b98f825e7e8bb39fe48e3e21b9aa7e",
+      "bytes": 3255
+    },
+    {
       "path": "web/field3d.js",
       "sha256": "3c4288fc0479a9dfbcef886d8dfb78d73ffe40729388615c2504be8d9f2647d5",
       "bytes": 4754
     },
     {
       "path": "web/index.html",
-      "sha256": "b9478d9acd3948516d996d71225f1486c963b6c5b8808a72e30528c7cd2479f0",
-      "bytes": 17026
+      "sha256": "389f9c2c3708f63c0124122c5965330124aa1f6f6861647c5c9a5ac652b3db91",
+      "bytes": 17061
     },
     {
       "path": "web/styles.css",
-      "sha256": "06ddff2f4741ddb946c070e2f2fdc5f5bf81aa2a49fff410c524241284673236",
-      "bytes": 13190
+      "sha256": "61e578a89103258a57fa2143389fc0cf627596f20edff0003e2b061ee0e17d98",
+      "bytes": 14195
     }
   ]
 }
