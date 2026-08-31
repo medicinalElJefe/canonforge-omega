@@ -254,14 +254,14 @@
       "name": "Governed source-evolution candidate pipeline",
       "priority": 100,
       "source": "Continuous evolution constitution",
-      "next_action": "Use an authorized coding agent to implement the highest backlog item on a candidate branch, compare quality vectors, and promote only strict no-regression improvements.",
+      "next_action": "Route source improvements through a trusted-base PR gate that pins the evolution judge and requires strict no-regression improvement before canonical merge.",
       "acceptance": [
         "candidate branch only",
+        "baseline policy digest pinned",
+        "protected judge paths unchanged",
         "strict quality-vector improvement",
-        "full tests",
-        "deterministic release",
-        "deployment health",
-        "rollback"
+        "full tests and deterministic release",
+        "canonical merge requires separate authorized action"
       ],
       "checks": [
         {
@@ -269,13 +269,25 @@
           "path": "omega_genesis/evolution.py"
         },
         {
-          "type": "external_evidence",
-          "key": "candidate_source_pipeline",
-          "allowed": [
-            "PASS"
-          ]
+          "type": "file",
+          "path": "scripts/evolution_compare.py"
+        },
+        {
+          "type": "file",
+          "path": ".github/workflows/evolution-candidate.yml"
         }
       ]
     }
+  ],
+  "protected_paths": [
+    "config/evolution_policy.json",
+    "omega_genesis/evolution.py",
+    "scripts/evolution_compare.py",
+    ".github/workflows/evolution-candidate.yml",
+    "scripts/verify_release.py",
+    "scripts/self_build.py",
+    "omega_genesis/selfbuild.py",
+    "config/self_build_policy.json",
+    ".github/workflows/self-build.yml"
   ]
 }

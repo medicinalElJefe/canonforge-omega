@@ -80,6 +80,7 @@ required = [
     "scripts/cloud_watch.py",
     "scripts/cloud_host_bootstrap.py",
     "scripts/evolution_cycle.py",
+    "scripts/evolution_compare.py",
     "docs/CLOUD_SELF_BUILD.md",
     "docs/CLOUD_DEPLOYMENT.md",
     "docs/CLOUD_AUTODEPLOY.md",
@@ -107,6 +108,7 @@ required = [
     "config/cloud_autodeploy_policy.json",
     "config/evolution_policy.json",
     ".github/workflows/evolution.yml",
+    ".github/workflows/evolution-candidate.yml",
 ]
 
 missing = [p for p in required if not (ROOT / p).is_file()]

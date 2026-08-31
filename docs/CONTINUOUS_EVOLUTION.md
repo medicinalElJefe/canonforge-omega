@@ -38,3 +38,14 @@ Continuous development therefore means:
 observe -> find gap -> propose -> implement candidate -> test -> compare -> quarantine/promote -> deploy -> observe again
 
 not uncontrolled self-rewriting.
+
+
+## Trusted-baseline candidate judge
+
+Ordinary source evolution is evaluated by the target branch generation, not by candidate code. The pull-request candidate workflow uses pull_request_target with read-only repository permission, checks out the trusted baseline separately, and checks out the candidate with credentials disabled.
+
+Before candidate code executes, changed paths are compared with the baseline policy's protected constitutional paths. A normal improvement candidate is quarantined if it attempts to modify the evolution policy, comparator, candidate workflow, release verifier, self-build engine/policy, or self-build workflow.
+
+After the candidate completes the full governed self-build, the baseline checkout constructs its own quality snapshot and the candidate constructs its snapshot. The comparison is performed by baseline/scripts/evolution_compare.py with the baseline evolution policy. Policy digests must match and the candidate must show a strict measurable improvement without protected regressions.
+
+The candidate workflow has read-only repository permissions and does not merge source. Promotion to canonical source is a distinct authorized action after proof.

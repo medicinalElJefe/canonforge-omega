@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -22,11 +23,24 @@ class EvolutionPolicy:
     promotion_mode: str
     require_strict_improvement: bool
     interval_seconds: int
+    protected_paths: list[str]
     objectives: list[dict[str, Any]]
 
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def policy_digest(root: Path) -> str:
+    raw = json.loads((Path(root) / "config" / "evolution_policy.json").read_text(encoding="utf-8"))
+    encoded = json.dumps(raw, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return sha256(encoded).hexdigest()
+
+
+def protected_path_violations(changed_paths: list[str], policy: EvolutionPolicy) -> list[str]:
+    protected = {str(path).strip().replace("\\", "/") for path in policy.protected_paths}
+    changed = {str(path).strip().replace("\\", "/") for path in changed_paths if str(path).strip()}
+    return sorted(changed & protected)
 
 
 def load_policy(root: Path) -> EvolutionPolicy:
@@ -42,6 +56,14 @@ def load_policy(root: Path) -> EvolutionPolicy:
         raise ValueError("evolution promotion must be proof_gated")
     if policy.interval_seconds < 60:
         raise ValueError("evolution interval must be at least 60 seconds")
+    if not isinstance(policy.protected_paths, list) or not policy.protected_paths:
+        raise ValueError("evolution protected_paths are required")
+    if len(set(policy.protected_paths)) != len(policy.protected_paths):
+        raise ValueError("evolution protected_paths must be unique")
+    for protected in policy.protected_paths:
+        path = str(protected).strip()
+        if not path or path.startswith("/") or ".." in Path(path).parts:
+            raise ValueError("invalid protected evolution path")
     ids: set[str] = set()
     for objective in policy.objectives:
         objective_id = str(objective.get("id", "")).strip()
@@ -149,6 +171,7 @@ def build_snapshot(root: Path, data_dir: Path) -> dict[str, Any]:
     objective_rows: list[dict[str, Any]] = []
     total_weight = 0
     achieved_weight = 0
+    progress_weight = 0.0
     for objective in policy.objectives:
         checks = [_evaluate_check(root, data_dir, check, capability_map, provenance_caps) for check in objective["checks"]]
         passed = sum(1 for item in checks if item["status"] == "PASS")
@@ -157,6 +180,7 @@ def build_snapshot(root: Path, data_dir: Path) -> dict[str, Any]:
         fraction = passed / len(checks)
         priority = int(objective["priority"])
         total_weight += priority
+        progress_weight += priority * fraction
         if passed == len(checks):
             status = "ACHIEVED"
             achieved_weight += priority
@@ -191,6 +215,8 @@ def build_snapshot(root: Path, data_dir: Path) -> dict[str, Any]:
         "observed_at": utc_now(),
         "source_mutation_mode": policy.source_mutation_mode,
         "promotion_mode": policy.promotion_mode,
+        "policy_digest": policy_digest(root),
+        "protected_paths": list(policy.protected_paths),
         "quality_vector": {
             "manifest_integrity": 1 if manifest.get("status") == "PASS" else 0,
             "provenance_integrity": 1 if provenance.get("status") == "PASS" else 0,
@@ -200,8 +226,8 @@ def build_snapshot(root: Path, data_dir: Path) -> dict[str, Any]:
             "objective_total": len(objective_rows),
             "objectives_achieved": achieved,
             "objectives_blocked_external": blocked,
-            "weighted_progress": round(achieved_weight / total_weight, 6) if total_weight else 0.0,
-            "weighted_gap": round(1.0 - (achieved_weight / total_weight), 6) if total_weight else 1.0,
+            "weighted_progress": round(progress_weight / total_weight, 6) if total_weight else 0.0,
+            "weighted_gap": round(1.0 - (progress_weight / total_weight), 6) if total_weight else 1.0,
         },
         "objectives": objective_rows,
         "backlog": backlog,
@@ -216,12 +242,17 @@ def candidate_decision(baseline: dict[str, Any], candidate: dict[str, Any], *, r
     b = baseline.get("quality_vector") or {}
     c = candidate.get("quality_vector") or {}
 
+    baseline_policy = baseline.get("policy_digest")
+    candidate_policy = candidate.get("policy_digest")
+    if not baseline_policy or candidate_policy != baseline_policy:
+        errors.append("evolution_policy_changed")
+
     if c.get("manifest_integrity") != 1:
         errors.append("candidate_manifest_invalid")
     if c.get("provenance_integrity") != 1:
         errors.append("candidate_provenance_invalid")
 
-    for key in ("live_core_capabilities", "capability_total", "objectives_achieved", "weighted_progress"):
+    for key in ("live_core_capabilities", "capability_total", "objective_total", "objectives_achieved", "weighted_progress"):
         if c.get(key, 0) < b.get(key, 0):
             errors.append(f"regression:{key}")
 
@@ -243,5 +274,7 @@ def candidate_decision(baseline: dict[str, Any], candidate: dict[str, Any], *, r
         "errors": errors,
         "baseline": b,
         "candidate": c,
-        "boundary": "promotion decision supplements, never replaces, compile/test/release/deployment proof gates",
+        "baseline_policy_digest": baseline_policy,
+        "candidate_policy_digest": candidate_policy,
+        "boundary": "candidate is judged by a pinned baseline policy; promotion supplements, never replaces, compile/test/release/deployment proof gates",
     }

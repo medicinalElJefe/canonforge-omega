@@ -1,0 +1,129 @@
+name: OMEGA Evolution Candidate Gate
+
+on:
+  pull_request_target:
+    branches: [omega-genesis-v1-full]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-evolution-candidate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted baseline judge
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout untrusted candidate without credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: candidate
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Fetch changed-path list from GitHub API
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          page=1
+          : > changed-paths.txt
+          while :; do
+            response="$(curl --fail-with-body -sS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              "https://api.github.com/repos/$REPO/pulls/$PR/files?per_page=100&page=$page")"
+            count="$(python -c 'import json,sys; print(len(json.load(sys.stdin)))' <<<"$response")"
+            python -c 'import json,sys; [print(x["filename"]) for x in json.load(sys.stdin)]' <<<"$response" >> changed-paths.txt
+            [ "$count" -lt 100 ] && break
+            page=$((page+1))
+          done
+
+      - name: Constitutional path gate from trusted baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, str(Path('baseline').resolve()))
+          from omega_genesis.evolution import load_policy, protected_path_violations
+          policy = load_policy(Path('baseline'))
+          changed = Path('changed-paths.txt').read_text(encoding='utf-8').splitlines()
+          violations = protected_path_violations(changed, policy)
+          if violations:
+              raise SystemExit('QUARANTINE protected judge paths changed: ' + ', '.join(violations))
+          print('Protected judge paths unchanged.')
+          PY
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install candidate runtime dependencies
+        working-directory: candidate
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+
+      - name: Full candidate self-build proof
+        working-directory: candidate
+        run: python scripts/self_build.py --repair-ledger
+
+      - name: Candidate evolution snapshot
+        working-directory: candidate
+        run: python scripts/evolution_cycle.py --once --data-dir release/evolution-candidate
+
+      - name: Prepare trusted baseline snapshot
+        working-directory: baseline
+        run: |
+          python scripts/build_manifest.py
+          python scripts/evolution_cycle.py --once --data-dir release/evolution-baseline
+
+      - name: Compare using trusted baseline judge
+        shell: bash
+        run: |
+          python baseline/scripts/evolution_compare.py \
+            --baseline baseline/release/evolution-baseline/evolution/status.json \
+            --candidate candidate/release/evolution-candidate/evolution/status.json \
+            --changed-paths changed-paths.txt \
+            --policy-root baseline \
+            --out candidate/release/evolution-candidate/evolution/candidate-decision.json
+
+      - name: Upload candidate proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: OMEGA-evolution-candidate-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            candidate/release/evolution-candidate/evolution/status.json
+            candidate/release/evolution-candidate/evolution/backlog.json
+            candidate/release/evolution-candidate/evolution/candidate-decision.json
+            candidate/release/self-build-report.json
+          if-no-files-found: error
+
+      - name: Record non-merge boundary
+        run: |
+          {
+            echo '## OMEGA evolution candidate'
+            echo
+            echo 'Candidate passed only if the trusted baseline judge returned PROMOTE_CANDIDATE.'
+            echo 'This workflow has read-only repository permission and cannot merge or mutate canonical source.'
+          } >> "$GITHUB_STEP_SUMMARY"
