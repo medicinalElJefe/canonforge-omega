@@ -600,6 +600,11 @@
       "bytes": 11280
     },
     {
+      "path": "scripts/sovereign_link_agent.py",
+      "sha256": "af6e6a481735b29443598ea2e28d799dcec4ff9001345e318a537307b31f41d4",
+      "bytes": 8421
+    },
+    {
       "path": "scripts/verify_release.py",
       "sha256": "a6723135c9e7c49049db4cc4613d0d64b5af9b52d62b844f603ca089fa3faceb",
       "bytes": 8355
@@ -653,6 +658,11 @@
       "path": "tests/test_selfbuild.py",
       "sha256": "7d6acc0192e7cd9753b2c4ea1aff27c741247c0698debcc980052961ac8591f9",
       "bytes": 2669
+    },
+    {
+      "path": "tests/test_sovereign_link_agent.py",
+      "sha256": "9308311bb652347cad3e29dbb1b93de8aa7da65c9e492115cba55c4828f1d8ff",
+      "bytes": 1995
     },
     {
       "path": "tests/test_sovereign_status.py",
