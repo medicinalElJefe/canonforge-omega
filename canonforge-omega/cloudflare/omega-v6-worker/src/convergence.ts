@@ -1,4 +1,5 @@
 import base, { type Env } from "./index";
+import { enhanceHdLaunchNavigation } from "./launchHdNavigation";
 export { OmegaRuntime } from "./omegaRuntime";
 
 const GENESIS = "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev";
@@ -117,6 +118,6 @@ export default {
     if (url.pathname === "/api/convergence/edge") return Response.json(await convergenceSnapshot(request, env), { headers: { "cache-control": "no-store", "x-omega-authority": "convergence-observer" } });
     if (url.pathname === "/evolution" || url.pathname === "/evolution/") return new Response(page, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache", "x-omega-authority": "public-interface-only" } });
     const response = await base.fetch(request, env);
-    return injectEvolutionLink(response);
+    return enhanceHdLaunchNavigation(await injectEvolutionLink(response), url.pathname);
   }
 };
