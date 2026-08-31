@@ -7,7 +7,6 @@ from ctypes import wintypes
 import json
 import os
 from pathlib import Path
-import secrets
 import sys
 import time
 from typing import Any
@@ -15,10 +14,14 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .adapters.hybrid import HybridStep, execute_plan
+from .link_protocol import verify_job
 
 
 class DATA_BLOB(ctypes.Structure):
     _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.POINTER(ctypes.c_byte))]
+
+
+_SEEN_NONCES: set[str] = set()
 
 
 def _dpapi_protect(raw: bytes) -> str:
@@ -50,17 +53,22 @@ def _dpapi_unprotect(encoded: str) -> bytes:
 
 
 def _post(base: str, path: str, payload: dict[str, Any], token: str | None = None, timeout: int = 30) -> dict[str, Any]:
-    headers = {"Content-Type": "application/json", "User-Agent": "OMEGA-Desktop-Link/1.1"}
+    headers = {"Content-Type": "application/json", "User-Agent": "OMEGA-Desktop-Link/1.2"}
     if token:
         headers["Authorization"] = "Bearer " + token
-    req = Request(base.rstrip("/") + path, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+    req = Request(base.rstrip("/") + path, data=json.dumps(payload, separators=(",", ":")).encode("utf-8"), headers=headers, method="POST")
     try:
         with urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read().decode("utf-8"))
+            payload_out = json.loads(r.read().decode("utf-8"))
+            if not isinstance(payload_out, dict):
+                raise RuntimeError("OMEGA Link returned non-object JSON")
+            return payload_out
     except HTTPError as e:
         body = e.read().decode("utf-8", errors="replace")
-        try: detail = json.loads(body)
-        except Exception: detail = {"detail": body}
+        try:
+            detail = json.loads(body)
+        except Exception:
+            detail = {"detail": body}
         raise RuntimeError(f"HTTP {e.code}: {detail}") from e
     except URLError as e:
         raise RuntimeError(f"link transport unavailable: {e}") from e
@@ -75,11 +83,19 @@ def _config_path(root: Path) -> Path:
 def pair(root: Path, cloud: str, code: str, name: str) -> dict[str, Any]:
     if os.name != "nt":
         raise RuntimeError("Desktop Link pairing requires Windows so the device token can be DPAPI-protected")
-    response = _post(cloud, "/api/link/claim", {"code": code.strip(), "device_name": name})
+    response = _post(cloud, "/api/link/claim", {"code": code.strip().upper(), "device_name": name})
     token = str(response.pop("device_token"))
-    cfg = {"schema":"OMEGA_DESKTOP_LINK_CONFIG_V1","cloud_url":cloud.rstrip("/"),"device_id":response["device_id"],"device_name":name,"token_dpapi":_dpapi_protect(token.encode("utf-8")),"approved_root":str(root.resolve())}
-    _config_path(root).write_text(json.dumps(cfg, indent=2), encoding="utf-8")
-    return {**response, "approved_root": str(root.resolve()), "token_persisted": "WINDOWS_DPAPI_CURRENT_USER"}
+    cfg = {
+        "schema": "OMEGA_DESKTOP_LINK_CONFIG_V2",
+        "cloud_url": cloud.rstrip("/"),
+        "device_id": response["device_id"],
+        "device_name": name,
+        "token_dpapi": _dpapi_protect(token.encode("utf-8")),
+        "approved_root": str(root.resolve()),
+        "execution_protocol": "SIGNED_ENVELOPE_V1",
+    }
+    _config_path(root).write_text(json.dumps(cfg, indent=2, sort_keys=True), encoding="utf-8")
+    return {**response, "approved_root": str(root.resolve()), "token_persisted": "WINDOWS_DPAPI_CURRENT_USER", "execution_protocol": "SIGNED_ENVELOPE_V1"}
 
 
 def _load(root: Path) -> tuple[dict[str, Any], str]:
@@ -92,7 +108,7 @@ def _load(root: Path) -> tuple[dict[str, Any], str]:
 
 def _proof_packet(job: dict[str, Any], run: dict[str, Any]) -> dict[str, Any]:
     return {
-        "schema": "OMEGA_DESKTOP_LINK_RETURN_V1",
+        "schema": "OMEGA_DESKTOP_LINK_RETURN_V2",
         "job_id": job["job_id"],
         "device_id": job["device_id"],
         "status": run.get("status"),
@@ -102,6 +118,19 @@ def _proof_packet(job: dict[str, Any], run: dict[str, Any]) -> dict[str, Any]:
         "hostStateMutation": False,
         "canonicalCommitAuthority": False,
         "sourceUploaded": False,
+        "execution_protocol": "SIGNED_ENVELOPE_V1",
+    }
+
+
+def _heartbeat_payload(device_id: str) -> dict[str, Any]:
+    return {
+        "device_id": device_id,
+        "capabilities": [
+            "INDEX", "READ_TEXT", "SEARCH_TEXT", "HASH_TREE", "WORKBOOK_AUDIT",
+            "BUILD", "TEST", "PACKAGE", "SUPPORT_BUNDLE", "APPLY_PATCH", "TRAIN_LOCAL",
+        ],
+        "execution_protocol": "SIGNED_ENVELOPE_V1",
+        "canonical_mutation": False,
     }
 
 
@@ -111,21 +140,27 @@ def cycle(root: Path, *, once: bool = False, poll_seconds: int = 4) -> None:
     stop = root / ".omega" / "STOP_DESKTOP_LINK"
     print(f"OMEGA Desktop Link online: {cfg['device_name']} · {device_id}")
     print(f"Approved root: {root}")
-    print("No arbitrary shell endpoint is enabled. Ctrl+C stops the worker.")
+    print("Signed execution envelopes enabled. No arbitrary shell endpoint is enabled. Ctrl+C stops the worker.")
     while True:
         if stop.exists():
             print("Emergency stop file detected; exiting.")
             return
         try:
-            hb = _post(cloud, "/api/link/heartbeat", {"device_id":device_id,"capabilities":["INDEX","READ_TEXT","SEARCH_TEXT","HASH_TREE","WORKBOOK_AUDIT","BUILD","TEST","PACKAGE","SUPPORT_BUNDLE","APPLY_PATCH","TRAIN_LOCAL"]}, token)
-            nxt = _post(cloud, "/api/link/next", {"device_id":device_id}, token)
-            job = nxt.get("job")
-            if job:
+            hb = _post(cloud, "/api/link/heartbeat", _heartbeat_payload(device_id), token)
+            if hb.get("execution_protocol") != "SIGNED_ENVELOPE_V1":
+                raise RuntimeError("cloud did not confirm signed execution protocol")
+            nxt = _post(cloud, "/api/link/next", {"device_id": device_id}, token)
+            envelope = nxt.get("envelope")
+            if envelope is not None:
+                verified = verify_job(envelope, token, seen_nonces=_SEEN_NONCES)
+                if not verified.get("valid"):
+                    raise RuntimeError(f"signed job rejected before execution: {verified.get('reason')}")
+                job = verified["job"]
                 steps = [HybridStep(str(x["op"]), x.get("path"), x.get("output"), x.get("args")) for x in job.get("steps", [])]
                 run = execute_plan(root, steps)
                 proof = _proof_packet(job, run)
-                _post(cloud, "/api/link/complete", {"device_id":device_id,"job_id":job["job_id"],"result":proof}, token, timeout=60)
-                print(json.dumps({"job":job["job_id"],"status":run.get("status"),"run_fingerprint":run.get("run_fingerprint")}, indent=2))
+                receipt = _post(cloud, "/api/link/complete", {"device_id": device_id, "job_id": job["job_id"], "result": proof}, token, timeout=60)
+                print(json.dumps({"job": job["job_id"], "status": run.get("status"), "run_fingerprint": run.get("run_fingerprint"), "receipt": receipt.get("result_fingerprint")}, indent=2))
         except Exception as exc:
             print(f"Desktop Link cycle error: {exc}", file=sys.stderr)
         if once:
@@ -140,17 +175,19 @@ def main() -> None:
     ap.add_argument("--pair-code", help="One-time pairing code from Mission Control")
     ap.add_argument("--name", default=os.environ.get("COMPUTERNAME", "OMEGA Windows Host"))
     ap.add_argument("--once", action="store_true")
+    ap.add_argument("--poll-seconds", type=int, default=4)
     args = ap.parse_args()
     root = Path(args.root).expanduser().resolve()
     if not root.is_dir():
         raise SystemExit("approved root must be an existing directory")
     cfg_path = _config_path(root)
     if args.pair_code:
-        if not args.cloud: raise SystemExit("--cloud is required while pairing")
-        print(json.dumps(pair(root,args.cloud,args.pair_code,args.name),indent=2))
+        if not args.cloud:
+            raise SystemExit("--cloud is required while pairing")
+        print(json.dumps(pair(root, args.cloud, args.pair_code, args.name), indent=2))
     elif not cfg_path.is_file():
         raise SystemExit("not paired; supply --cloud and --pair-code")
-    cycle(root, once=args.once)
+    cycle(root, once=args.once, poll_seconds=args.poll_seconds)
 
 
 if __name__ == "__main__":
