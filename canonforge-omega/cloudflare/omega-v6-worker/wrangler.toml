@@ -1,10 +1,10 @@
 name = "omegav6"
-main = "src/heartbeatTruth.ts"
+main = "src/r123V3AuthorityGate.ts"
 compatibility_date = "2026-08-29"
 workers_dev = true
 
 [vars]
-BUILD_ID = "r87-semantic-edge-settle-proof"
+BUILD_ID = "r123-v3-authority-contract-gate"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
