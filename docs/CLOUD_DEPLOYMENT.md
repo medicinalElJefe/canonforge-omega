@@ -8,7 +8,7 @@ A production candidate is accepted only as a digest-pinned OCI reference:
 
 `registry/image@sha256:<64 hex>`
 
-Mutable tags such as `genesis-latest` are never used as the production authority. The promotion workflow resolves the successful self-build source tag to its immutable OCI digest before any deployment job can run.
+Mutable tags such as `genesis-latest` are never used as the production authority. The governed self-build publishes the source-SHA tag, pulls it back from the registry, resolves its immutable OCI digest, and exports that exact digest to the deployment job.
 
 ## Deployment transaction
 
@@ -26,17 +26,21 @@ If the candidate does not pass live health/proof/replay validation, the deployer
 
 The deployer never rewrites OMEGA canonical state to make a candidate pass. It changes only the container generation hosting the state and observes the existing proof/replay contract.
 
-## Automation boundary
+## Integrated autonomous path
 
-`.github/workflows/cloud-promote-deploy.yml` starts only after a successful `OMEGA Governed Self-Build` or an explicit manual dispatch. It resolves the published source-SHA image to an OCI digest on a GitHub-hosted runner.
+`.github/workflows/self-build.yml` now owns one continuous transaction:
 
-Actual production mutation is disabled unless repository variable `OMEGA_AUTODEPLOY_ENABLED=1` is configured. The deployment job additionally requires an authorized self-hosted runner carrying labels:
+`verify -> deterministic rebuild -> ledger repair -> publish source-SHA image -> resolve OCI digest -> deploy or declare boundary`
+
+The release-source SHA exported to deployment is the actual Git head after any permitted self-builder ledger repair, while the OCI digest identifies the exact built image. This avoids a race where the repository head and the verified container could silently diverge.
+
+Actual production mutation remains disabled unless repository variable `OMEGA_AUTODEPLOY_ENABLED=1` is configured. The deployment job additionally requires an authorized self-hosted runner carrying labels:
 
 - `self-hosted`
 - `linux`
 - `omega-cloud`
 
-That runner is the explicit infrastructure boundary. Until it exists and is authorized, the workflow reports the boundary and makes no production-deployment claim.
+That runner is the explicit infrastructure boundary. Until it exists and is authorized, the workflow completes a `deployment-boundary` job on GitHub-hosted infrastructure and makes no production-deployment claim.
 
 Recommended production variables/secrets:
 

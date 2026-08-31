@@ -18,6 +18,9 @@ permissions:
 jobs:
   self-build:
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.publish.outputs.image }}
+      source_sha: ${{ steps.release_head.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,6 +59,10 @@ jobs:
           git commit -m "OMEGA self-build: repair canonical release ledger [skip ci]"
           git push origin "HEAD:$GITHUB_REF_NAME"
 
+      - name: Record exact release-source head
+        id: release_head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Upload verified self-build
         uses: actions/upload-artifact@v4
         with:
@@ -74,18 +81,84 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish immutable canonical cloud image
+        id: publish
         env:
           IMAGE: ghcr.io/${{ github.repository }}/omega-cloud
         run: |
           IMAGE="$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')"
-          docker tag "omega-cloud:selfbuild-${GITHUB_SHA::12}" "$IMAGE:sha-$GITHUB_SHA"
-          docker push "$IMAGE:sha-$GITHUB_SHA"
+          TAG="$IMAGE:sha-$GITHUB_SHA"
+          docker tag "omega-cloud:selfbuild-${GITHUB_SHA::12}" "$TAG"
+          docker push "$TAG"
+          docker pull "$TAG"
+          DIGEST_REF="$(docker image inspect "$TAG" --format '{{index .RepoDigests 0}}')"
+          if ! [[ "$DIGEST_REF" =~ @sha256:[0-9a-f]{64}$ ]]; then
+            echo "QUARANTINE: published image did not resolve to an immutable digest" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "image=$DIGEST_REF" >> "$GITHUB_OUTPUT"
           docker tag "omega-cloud:selfbuild-${GITHUB_SHA::12}" "$IMAGE:genesis-latest"
           docker push "$IMAGE:genesis-latest"
           {
             echo "### Published cloud image"
             echo
-            echo "$IMAGE:sha-$GITHUB_SHA"
+            echo "$TAG"
+            echo
+            echo "$DIGEST_REF"
             echo
             echo "$IMAGE:genesis-latest"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: self-build
+    if: ${{ vars.OMEGA_AUTODEPLOY_ENABLED == '1' }}
+    runs-on: [self-hosted, linux, omega-cloud]
+    environment: omega-cloud-production
+    concurrency:
+      group: omega-cloud-production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.self-build.outputs.source_sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify deployment source before mutation
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+          python -m pytest -q
+          python scripts/verify_release.py
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy immutable image with proof/replay rollback gate
+        env:
+          OMEGA_GATEWAY_TOKEN: ${{ secrets.OMEGA_GATEWAY_TOKEN }}
+          OMEGA_DEPLOY_HEALTH_URL: ${{ vars.OMEGA_DEPLOY_HEALTH_URL }}
+          OMEGA_DEPLOY_STATE_DIR: ${{ vars.OMEGA_DEPLOY_STATE_DIR }}
+        run: python scripts/cloud_deploy.py --image '${{ needs.self-build.outputs.image }}'
+
+  deployment-boundary:
+    needs: self-build
+    if: ${{ vars.OMEGA_AUTODEPLOY_ENABLED != '1' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record exact deployment boundary
+        env:
+          IMAGE: ${{ needs.self-build.outputs.image }}
+          SOURCE_SHA: ${{ needs.self-build.outputs.source_sha }}
+        run: |
+          {
+            echo "## OMEGA production deployment boundary"
+            echo
+            echo "Verified immutable image: $IMAGE"
+            echo "Verified release-source head: $SOURCE_SHA"
+            echo
+            echo "Autonomous production deployment is disabled."
+            echo "Enable OMEGA_AUTODEPLOY_ENABLED=1 only after an authorized self-hosted runner labeled omega-cloud is installed on the canonical cloud host."
+            echo "No production deployment is claimed by this run."
           } >> "$GITHUB_STEP_SUMMARY"
