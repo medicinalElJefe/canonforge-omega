@@ -156,8 +156,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/link.js",
-      "sha256": "ba9bfb77b5fbb1f452ba7d4e966935fb45e6fbad4fa03a79f16e80325252b7f0",
-      "bytes": 10328
+      "sha256": "1fa8a3afd734f54f5d4cc1e8330e4749c803117de508fff0bb71d6693cb5bc62",
+      "bytes": 11892
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/system.js",
