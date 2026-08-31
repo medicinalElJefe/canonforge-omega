@@ -1,0 +1,106 @@
+name: OMEGA V6 Public Product deploy
+on:
+  push:
+    branches: [omega-genesis-v1-full]
+    paths:
+      - 'cloudflare/omegav6-worker/**'
+      - 'cloudflare/omega-genesis-worker/**'
+      - 'web/**'
+      - '.github/workflows/deploy-v6-cloudflare.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: omegav6-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  verify-and-deploy-v6:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: omega-genesis-v1-full
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify governed source before V6 publication
+        run: |
+          python -m pip install -U pip pytest
+          python -m pip install -e .
+          python -m pytest -q
+          python scripts/build_manifest.py
+          python scripts/verify_release.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and check V6 facade
+        working-directory: cloudflare/omegav6-worker
+        run: |
+          npm install
+          npm run check
+      - name: Deploy V6 facade and prove single-product identity
+        working-directory: cloudflare/omegav6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "BLOCKED_CREDENTIALS: V6 facade verified but Cloudflare credentials are unavailable." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          DEPLOY_LOG="$(mktemp)"
+          npx wrangler deploy 2>&1 | tee "$DEPLOY_LOG"
+          PUBLIC_URL="$(grep -Eo 'https://[A-Za-z0-9._-]+\.workers\.dev' "$DEPLOY_LOG" | tail -n 1 || true)"
+          if [ -z "$PUBLIC_URL" ]; then
+            echo "DEPLOY_UNVERIFIED: Wrangler did not expose a workers.dev URL." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          case "$PUBLIC_URL" in
+            https://omegav6.*.workers.dev) ;;
+            *) echo "QUARANTINE: deploy target is not the stable omegav6 Worker: $PUBLIC_URL" | tee -a "$GITHUB_STEP_SUMMARY"; exit 1 ;;
+          esac
+
+          V6_HEALTH="$(mktemp)"
+          V6_API="$(mktemp)"
+          V6_EDGE="$(mktemp)"
+          GENESIS_HEALTH="$(mktemp)"
+          GENESIS_API="$(mktemp)"
+          V6_HTML="$(mktemp)"
+
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/_omega/health" -o "$V6_HEALTH"
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/api/health" -o "$V6_API"
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/api/convergence/edge" -o "$V6_EDGE"
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev/_omega/health" -o "$GENESIS_HEALTH"
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev/api/health" -o "$GENESIS_API"
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/" -o "$V6_HTML"
+
+          python - "$V6_HEALTH" "$V6_API" "$V6_EDGE" "$GENESIS_HEALTH" "$GENESIS_API" "$V6_HTML" <<'PY'
+          import json, sys
+          vh, va, edge, gh, ga = [json.load(open(p, encoding='utf-8')) for p in sys.argv[1:6]]
+          html = open(sys.argv[6], encoding='utf-8').read()
+          assert vh.get('ok') is True, vh
+          assert vh.get('product') == 'OMEGA_V6', vh
+          assert vh.get('runtime') == 'OMEGA_V6_PUBLIC_FACADE', vh
+          assert vh.get('canonical_authority') == 'OMEGA_GENESIS_CLOUD', vh
+          assert vh.get('authority_transport') == 'cloudflare-service-binding', vh
+          assert va.get('ok') is True and va.get('product') == 'OMEGA_V6', va
+          assert edge.get('ok') is True and edge.get('role') == 'PUBLIC_PRODUCT_FACADE', edge
+          assert gh.get('ok') is True and gh.get('authority') == 'durable-object-canonical', gh
+          assert ga.get('status') == 'OK' and ga.get('runtime') == 'OMEGA_GENESIS_CLOUD', ga
+          digest = ga.get('canonical_digest')
+          assert isinstance(digest, str) and len(digest) == 64, ga
+          assert ga.get('proof', {}).get('valid') is True, ga
+          assert ga.get('replay', {}).get('valid') is True, ga
+          assert ga.get('replay', {}).get('current_digest') == digest, ga
+          assert vh.get('canonical_digest') == digest, (vh, ga)
+          assert va.get('canonical_digest') == digest, (va, ga)
+          assert edge.get('canonical_digest') == digest, (edge, ga)
+          assert 'OMEGA' in html.upper(), html[:500]
+          PY
+
+          echo "LIVE_VERIFIED_SINGLE_PRODUCT: $PUBLIC_URL serves OMEGA V6 while Genesis remains the single canonical state authority." | tee -a "$GITHUB_STEP_SUMMARY"
