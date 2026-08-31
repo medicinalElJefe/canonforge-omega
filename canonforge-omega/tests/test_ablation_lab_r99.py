@@ -21,5 +21,5 @@ def test_prior_governance_boundaries_remain():
     assert 'not causal proof' in s
     assert 'not automatic operator-weight mutation' in s
     r=(SRC/'capabilityRouter.ts').read_text()
-    for token in ['route_before_generation:true','execution:false','canonical_mutation:false','native_execution:false','capability_not_in_current_genome']:
+    for token in ['route_before_generation: true','execution: false','canonical_mutation:false','native_execution:false','capability_not_in_current_genome']:
         assert token in r
