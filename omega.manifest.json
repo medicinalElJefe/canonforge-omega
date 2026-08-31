@@ -575,6 +575,11 @@
       "bytes": 178
     },
     {
+      "path": "scripts/install_sovereign_evolution_task.ps1",
+      "sha256": "b12adf0d8c0f407046e3f6fee148f0c789860088323e12bb66cadd0b86c5ca49",
+      "bytes": 1986
+    },
+    {
       "path": "scripts/run_omega.py",
       "sha256": "fb7b149ca164fadeb9ce057e2935569fa6dbcd9ef829b6eb5a89c7ec8ca0830e",
       "bytes": 178
@@ -583,6 +588,11 @@
       "path": "scripts/self_build.py",
       "sha256": "4248bf3eb0c3ad86a79dd5658598431504ebf435d4ff9d6996c11e59a44d07b8",
       "bytes": 7546
+    },
+    {
+      "path": "scripts/sovereign_evolution_host.py",
+      "sha256": "e748a45fa67f657f8704f27e3475b2a9fa381d335fbc3dfa7b003633437c7560",
+      "bytes": 10187
     },
     {
       "path": "scripts/verify_release.py",
