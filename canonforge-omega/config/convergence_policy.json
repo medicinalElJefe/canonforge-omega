@@ -14,6 +14,14 @@
     "observation": "source-backed Earth/archive observations stay separate from derived interpretation",
     "proof": "exact-head tests, evidence, rollback parent and material delta are required for promotion"
   },
+  "unified_operational_core": {
+    "canonical_spine": ["STATE", "TYPED_RELATIONS", "MEMORY_SCAR", "FORECAST", "OBSERVATION", "EVIDENCE_PROOF", "GOVERNANCE"],
+    "single_packet_authority": true,
+    "single_dispatcher_authority": true,
+    "parallel_state_runtime_prohibited": true,
+    "duplicate_ui_shell_prohibited": true,
+    "mode_runtime_fork_prohibited": true
+  },
   "governance_layers": [
     "FULL_OVERALL_CANON",
     "UNIFIED_COHERENCE",
@@ -26,8 +34,21 @@
     "ALPHA",
     "CRIMSON",
     "NO_NOTHING_TRUTH",
-    "GUIDANCE_FIELD"
+    "GUIDANCE_FIELD",
+    "UNIFIED_RECURSION",
+    "RELATIONAL_SKIN",
+    "DEWEY_CALCULUS"
   ],
+  "all_modes_unification": {
+    "rule": "modes remain distinct source-backed operators, gates, weights, constraints, diagnostics or projections over the same Unified Operational Core packet; they are never separate applications or competing state engines",
+    "preserve_individual_mode_semantics": true,
+    "mode_output_requires_provenance": true,
+    "mode_output_requires_evidence_class": true,
+    "symbolic_mode_cannot_override_truth_boundary": true,
+    "stay_turn_escalate_are_dispatch_states": true,
+    "future_candidates_must_bind_to_existing_mode_operator_contracts": true,
+    "automatic_mode_collapse_or_aliasing_prohibited": true
+  },
   "mode_188_dispatch": {
     "purpose": "prune-before-build, contradiction preservation, STAY/TURN/ESCALATE routing",
     "promotion_rule": "candidate cannot be promoted from novelty alone; evidence and stability must dominate burden and contradiction"
@@ -38,6 +59,32 @@
     "CONSTRUCT": "expand/build",
     "PRUNE": "invert/remove/reject",
     "OMEGA": "integrate/cohere"
+  },
+  "temporal_calculus_directive": {
+    "purpose": "make the governed computation itself visible instead of decorating static telemetry",
+    "time_authority": "live UI time must expose its authority and remain distinct from observation time, replay time and simulated forecast horizon",
+    "required_visual_bindings": ["delta_t", "finite_difference_gradient", "finite_difference_laplacian", "advection", "memory_scar_history", "typed_relation_geometry", "forecast_corridor", "proof_boundary"],
+    "state_driven_motion_required": true,
+    "canned_decorative_animation_prohibited": true,
+    "shells_change_render_projection_resolution": true,
+    "shells_are_not_physical_dimensions": true,
+    "mode_preview_must_use_existing_backend_mode_vector": true,
+    "visual_projection_is_not_empirical_evidence": true,
+    "forecast_projection_evidence_class": "SIMULATED_CONTINUATION",
+    "mode_projection_evidence_class": "USER_DEFINED_MODEL"
+  },
+  "auto_update_directive": {
+    "inherit_exact_latest_promoted_v6_head": true,
+    "reconcile_active_candidate_before_new_work": true,
+    "preserve_temporal_calculus_field": true,
+    "preserve_all_mode_distinctions": true,
+    "preserve_route_before_generation": true,
+    "preserve_earth_truth_boundaries": true,
+    "preserve_hybrid_heartbeat_gate": true,
+    "preserve_rollback_and_exact_head_proof": true,
+    "no_regression_by_omission": true,
+    "candidate_conflict_rule": "stop stale candidate and reimplement useful capability on newest canonical head",
+    "visual_acceptance_rule": "a visual candidate is material only when geometry, motion, topology, time or evidence display changes from actual state/operator inputs rather than labels or cosmetic motion alone"
   },
   "candidate_loop": [
     "OBSERVE",
