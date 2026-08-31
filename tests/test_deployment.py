@@ -15,6 +15,11 @@ def healthy():
         "state_id": 7,
         "proof": {"valid": True},
         "replay": {"valid": True},
+        "provenance": {
+            "status": "PASS",
+            "catalog_digest": "c" * 64,
+            "privacy_pass": True,
+        },
     }
 
 
@@ -41,6 +46,7 @@ def test_promotion_state_retains_previous_and_observed_identity():
     assert state["previous_image"] == PREV
     assert state["canonical_digest"] == "state-digest"
     assert state["state_id"] == 7
+    assert state["provenance_catalog_digest"] == "c" * 64
 
 
 def test_unhealthy_state_cannot_be_promoted():
@@ -48,3 +54,15 @@ def test_unhealthy_state_cannot_be_promoted():
     broken["proof"] = {"valid": False}
     with pytest.raises(ValueError):
         deployment_state(IMAGE, None, broken)
+
+
+def test_health_rejects_invalid_or_private_provenance():
+    broken = healthy()
+    broken["provenance"]["status"] = "FAIL"
+    ok, errors = validate_health_payload(broken)
+    assert not ok and "provenance_invalid" in errors
+
+    private = healthy()
+    private["provenance"]["privacy_pass"] = False
+    ok, errors = validate_health_payload(private)
+    assert not ok and "provenance_privacy_invalid" in errors

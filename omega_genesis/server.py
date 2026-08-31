@@ -44,6 +44,7 @@ from .reality import RealityConfig, analyze_delimited
 from .training import retrieve as retrieve_training
 from .observations import earth_context
 from .cloud_auth import CloudAuth
+from .provenance import public_catalog as provenance_catalog, capability_sources as provenance_capability_sources, summary as provenance_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -179,6 +180,7 @@ class Handler(BaseHTTPRequestHandler):
                     "proof": RUNTIME.ledger.verify(),
                     "replay": RUNTIME.verify_replay(),
                     "stream": stream_status(),
+                    "provenance": provenance_summary(ROOT),
                 })
             if path == "/api/cloud/status":
                 return self._json(200, {
@@ -193,6 +195,7 @@ class Handler(BaseHTTPRequestHandler):
                     "proof": RUNTIME.ledger.verify(),
                     "replay": RUNTIME.verify_replay(),
                     "stream": stream_status(),
+                    "provenance": provenance_summary(ROOT),
                     "desktop_required": False,
                 })
             if path == "/api/self-build/status":
@@ -300,6 +303,11 @@ class Handler(BaseHTTPRequestHandler):
                     "opposite": tuple(((v + 5) % 12) + 1 for v in address.as_tuple()),
                     "phase_portal_size": 12 ** 3,
                 })
+            if path == "/api/provenance":
+                return self._json(200, provenance_catalog(ROOT))
+            if path == "/api/provenance/capability":
+                name = query.get("name", [""])[0]
+                return self._json(200, provenance_capability_sources(ROOT, name))
             if path == "/api/corpus/classify":
                 name = query.get("name", [""])[0]
                 disposition, authority, role, why = classify_name(name)

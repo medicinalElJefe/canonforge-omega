@@ -39,6 +39,14 @@ def validate_health_payload(payload: dict[str, Any]) -> tuple[bool, list[str]]:
     state_id = payload.get("state_id")
     if not isinstance(state_id, int) or state_id < 1:
         errors.append("state_id_invalid")
+    provenance = payload.get("provenance") or {}
+    if provenance.get("status") != "PASS":
+        errors.append("provenance_invalid")
+    catalog_digest = provenance.get("catalog_digest")
+    if not isinstance(catalog_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", catalog_digest):
+        errors.append("provenance_digest_invalid")
+    if provenance.get("privacy_pass") is not True:
+        errors.append("provenance_privacy_invalid")
     return (not errors, errors)
 
 
@@ -96,4 +104,5 @@ def deployment_state(candidate_image: str, previous_image: str | None, health: d
         "promoted_at": utc_now(),
         "canonical_digest": health["canonical_digest"],
         "state_id": health["state_id"],
+        "provenance_catalog_digest": health["provenance"]["catalog_digest"],
     }

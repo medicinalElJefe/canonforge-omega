@@ -12,6 +12,7 @@ from omega_genesis.modes import catalog
 from omega_genesis.release import verify_manifest
 from omega_genesis.selfbuild import load_policy
 from omega_genesis.systems import coverage as system_coverage
+from omega_genesis.provenance import summary as provenance_summary
 
 required = [
     "README.md",
@@ -44,6 +45,8 @@ required = [
     "omega_genesis/cloud_auth.py",
     "omega_genesis/cloud_selfbuild.py",
     "omega_genesis/selfbuild.py",
+    "omega_genesis/deployment.py",
+    "omega_genesis/provenance.py",
     "omega_genesis/adapters/earth.py",
     "omega_genesis/adapters/hybrid.py",
     "omega_genesis/adapters/workbook.py",
@@ -65,8 +68,13 @@ required = [
     "web/cloud.js",
     "scripts/self_build.py",
     "scripts/cloud_self_loop.py",
+    "scripts/cloud_deploy.py",
     "docs/CLOUD_SELF_BUILD.md",
+    "docs/CLOUD_DEPLOYMENT.md",
+    "docs/PROVENANCE.md",
     "tests/test_cloud_self_loop.py",
+    "tests/test_deployment.py",
+    "tests/test_provenance.py",
     "config/self_build_policy.json",
     "docs/SELF_BUILD.md",
     ".github/workflows/self-build.yml",
@@ -76,12 +84,14 @@ required = [
     "config/dewey_bal_contract.json",
     "config/source_classes.json",
     "config/software_systems.json",
+    "config/provenance_sources.json",
 ]
 
 missing = [p for p in required if not (ROOT / p).is_file()]
 manifest = json.loads((ROOT / "omega.manifest.json").read_text(encoding="utf-8"))
 errors = list(missing)
 systems = system_coverage()
+provenance = provenance_summary(ROOT)
 
 if manifest.get("name") != "OMEGA Genesis":
     errors.append("manifest name mismatch")
@@ -113,6 +123,10 @@ if manifest.get("self_build_policy_version") != 1:
     errors.append("self-build policy version mismatch")
 if "governed deterministic self-build" not in str(manifest.get("self_build", "")):
     errors.append("self-build contract mismatch")
+if manifest.get("provenance_schema_version") != 1:
+    errors.append("provenance schema version mismatch")
+if provenance.get("status") != "PASS":
+    errors.extend(["provenance:" + str(x) for x in provenance.get("errors", [])] or ["provenance validation failed"])
 
 try:
     policy = load_policy(ROOT)
@@ -135,6 +149,7 @@ result = {
     "capacity_145152": CAPACITY_145152,
     "design_capacity": CAPACITY_61917364224,
     "self_build_policy": 1,
+    "provenance": provenance,
     "manifest_integrity": integrity,
     "errors": errors,
 }

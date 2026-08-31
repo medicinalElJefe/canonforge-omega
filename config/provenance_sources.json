@@ -1,0 +1,115 @@
+{
+  "schema": "omega.provenance.catalog.v1",
+  "authority": "OMEGA Cloud lineage/provenance registry",
+  "privacy_boundary": "Publish source names, extracted contracts, capability relations, and contract digests only. Never publish private Drive identifiers, account metadata, access tokens, or raw private corpus content.",
+  "admission_rules": [
+    "A planning row is not implementation evidence.",
+    "A donor/reference package is not a merged capability.",
+    "An execution claim requires an execution report or descendant test/proof evidence.",
+    "Newer timestamps do not automatically supersede stronger evidence.",
+    "Rendered or generated output cannot become observation evidence without provenance.",
+    "Canonical source mutation remains proposal_only."
+  ],
+  "sources": [
+    {
+      "id": "drive-software-universe-v22",
+      "name": "OMEGA_ALL_SOFTWARE_61917364224D_FULL_BUILD_v22.xlsx",
+      "source_class": "DRIVE_LEDGER",
+      "disposition": "KEEP",
+      "authority": 98,
+      "evidence_tier": "LEDGER_CONTRACT",
+      "execution_claim": "MIXED_DESIGN_AND_STATUS",
+      "contract_digest_sha256": "87db0108718e2b8efa447b3230ecadb9862670681f3b8977517e8751a8b6c07e",
+      "contracts": {
+        "software_systems": 24,
+        "subsystems_per_system": 24,
+        "phases": 12,
+        "streams": 4,
+        "full_grid_rows": 27648,
+        "design_capacity": 61917364224,
+        "packet_space": 20736,
+        "invariant": "ONE FIELD / ONE PACKET / ONE CONTINUITY LAW"
+      },
+      "capabilities": [
+        "SYSTEM_REGISTRY",
+        "SOFTWARE_LINEAGE",
+        "HYBRID_LINK",
+        "EARTH_TRAVERSAL",
+        "BIO_TRAVERSAL",
+        "PROOF_LEDGER",
+        "WORKBOOK_CONTROL",
+        "RUNTIME_API",
+        "RENDERING",
+        "RECOVERY_PACKAGING"
+      ],
+      "boundary": "The workbook is authoritative for the recovered software-universe contract. Individual capability execution still requires descendant implementation/test evidence."
+    },
+    {
+      "id": "drive-implementation-canon-v2",
+      "name": "OMEGA_20736D_IMPLEMENTATION_CANON_INDEX.xlsx",
+      "source_class": "DRIVE_IMPLEMENTATION_CANON",
+      "disposition": "KEEP",
+      "authority": 99,
+      "evidence_tier": "IMPLEMENTATION_CANON",
+      "execution_claim": "PLANNED_CONTRACTS_WITH_LOCKED_INVARIANTS",
+      "contract_digest_sha256": "df78b2bedbb464547d9abbbbb40de75758a4f3ff783d58d90072fdd9583d9091",
+      "contracts": {
+        "canonical_rows": 675,
+        "master_fields": 62,
+        "modules": 94,
+        "symbols_functions_kernels": 408,
+        "shader_bindings": 31,
+        "runtime_events": 22,
+        "api_routes": 22,
+        "database_tables": 12,
+        "configuration_keys": 26,
+        "tests_benchmarks": 23,
+        "build_gates": 25,
+        "hard_invariants": 12
+      },
+      "capabilities": [
+        "SINGLE_WRITER",
+        "TIME_BINDING",
+        "SOURCE_BOUND_RENDER",
+        "UNITS_FRAMES",
+        "DETERMINISTIC_REPLAY",
+        "ADMISSION_GATES",
+        "WORLD_RECONSTRUCTION",
+        "GPU_RENDER",
+        "RUNTIME_HEALTH",
+        "RECOVERY",
+        "STORAGE_API"
+      ],
+      "boundary": "The canon locks governance requirements but many listed modules are explicitly PLANNED; planned rows are not promoted to implemented status."
+    },
+    {
+      "id": "drive-v31r1-integration-report",
+      "name": "v31r1__INTEGRATION_REPORT.txt",
+      "source_class": "DRIVE_EXECUTION_REPORT",
+      "disposition": "MERGE",
+      "authority": 92,
+      "evidence_tier": "EXECUTION_REPORT",
+      "execution_claim": "PARTIAL_EXECUTED_INTEGRATION",
+      "contract_digest_sha256": "1042b80cd51de326548ea84bc8ff186b9315cfb9f2c6c312a6dcb689966597c5",
+      "contracts": {
+        "execution_spine": "camera -> feature field -> canon state -> runtime atlas sample -> unified kernel -> adaptive learning -> renderer/panels",
+        "implemented_modules": [
+          "app/core/runtime_data.py",
+          "app/core/unified_kernel.py",
+          "app/core/adaptive_learning.py",
+          "app/core/package_report.py"
+        ],
+        "status": "first unified runtime pass, not final closure build"
+      },
+      "capabilities": [
+        "CAMERA_PIPELINE",
+        "RUNTIME_ATLAS",
+        "UNIFIED_KERNEL",
+        "ADAPTIVE_LEARNING",
+        "RENDERER_PANELS",
+        "DONOR_MAP"
+      ],
+      "boundary": "The report explicitly states several packages remained architectural references rather than full code-level merges."
+    }
+  ]
+}
