@@ -3,3 +3,26 @@ export const BOUNDARY=new Set(["BRAIN_MAP","LIVING_DNA","BIO_LONG_SCALE","EARTH_
 export const MENUS=[["01","Runtime Core","One canonical state owner; health and transport."],["02","Proof & Governance","Admission, replay, evidence and shadow-state controls."],["03","Traversal","Stay/Turn/Escalate, addresses, Dewey/RSC motion logic."],["04","Render Field","Living membrane, skins, graph and state-bound projection."],["05","Host Inputs","Camera, text, workbook and external observation adapters."],["06","AI Orchestration","Operator-safe planning, translation and media mapping."],["07","Data / Excel Atlas","Corpus registry, workbook seed, round-trip and address maps."],["08","Audio / Signal","Deterministic sonification and bounded signal layers."],["09","World / Bio / Forecast","Earth, ground, bio, multiscale and frozen-prior forecast."],["10","Recovery / Packaging","Install, health, patch, rollback and release evidence."],["11","Archive Merge","KEEP/MERGE/DONOR/QUARANTINE donor governance."],["12","Operator Cockpit","Responsive human control surface with no covered render view."]];
 export const GATES=["Install/package root","Health endpoint","Canonical identity","188 admission","Replay drift","Render truth","Menu coverage","Host evidence labels","Excel roundtrip","Package checksum","Panel layout","Donor quarantine"];
 export const ER={ASSUMED:0,SYMBOLIC:1,USER_ASSERTED:1,FORECAST:2,INFERRED:2,DERIVED:3,IMPORTED:4,OBSERVED:5};
+export const CAPABILITIES=[
+{id:"CAP-001",name:"Host-centered runtime authority",menu:"01 Runtime Core",gate:"Canonical identity",status:"LIVE_CORE"},
+{id:"CAP-002",name:"188 admissibility",menu:"02 Proof & Governance",gate:"Admission",status:"LIVE_CORE"},
+{id:"CAP-003",name:"Stay/Turn/Escalate routing",menu:"03 Traversal",gate:"Decision proof",status:"LIVE_CORE"},
+{id:"CAP-004",name:"Reversible trajectory addressing",menu:"03 Traversal",gate:"Replay",status:"LIVE_CORE"},
+{id:"CAP-005",name:"Living visual membrane",menu:"04 Render Field",gate:"Render truth",status:"LIVE_CORE"},
+{id:"CAP-006",name:"Camera as reality pressure",menu:"05 Host Inputs",gate:"Evidence",status:"ADAPTER"},
+{id:"CAP-007",name:"Excel as atlas controller",menu:"07 Data / Excel Atlas",gate:"Roundtrip",status:"ADAPTER"},
+{id:"CAP-008",name:"GPU / 3D field rendering",menu:"04 Render Field",gate:"Performance",status:"ADAPTER"},
+{id:"CAP-009",name:"Forecast topology",menu:"09 World / Bio / Forecast",gate:"Forecast boundary",status:"LIVE_CORE"},
+{id:"CAP-010",name:"Bio atlas mode",menu:"09 World / Bio / Forecast",gate:"Health boundary",status:"ADAPTER"},
+{id:"CAP-011",name:"Audio sonification",menu:"08 Audio / Signal",gate:"Claim boundary",status:"ADAPTER"},
+{id:"CAP-012",name:"One-click packaging",menu:"10 Recovery / Packaging",gate:"Package",status:"LIVE_CORE"},
+{id:"CAP-013",name:"Patch and repair",menu:"10 Recovery / Packaging",gate:"Checksum",status:"LIVE_CORE"},
+{id:"CAP-014",name:"Archive donor merge",menu:"11 Archive Merge",gate:"Quarantine",status:"LIVE_CORE"},
+{id:"CAP-015",name:"Operator cockpit",menu:"12 Operator Cockpit",gate:"UX",status:"LIVE_CORE"},
+{id:"CAP-016",name:"AI-assisted build planning",menu:"06 AI Orchestration",gate:"Human approval",status:"ADAPTER"},
+{id:"CAP-017",name:"Reality compiler",menu:"09 World / Bio / Forecast",gate:"Source-class",status:"LIVE_CORE"},
+{id:"CAP-018",name:"Media compiler",menu:"06 AI Orchestration",gate:"Boundary",status:"ADAPTER"},
+{id:"CAP-019",name:"Canonical-bound adaptive-memory checkpoints",menu:"02 Proof & Governance",gate:"Replay proof",status:"LIVE_CORE"},
+{id:"CAP-020",name:"Release-aware canonical cloud deployment orchestration",menu:"10 Recovery / Packaging",gate:"Canonical self-build completion + live proof",status:"LIVE_CORE"},
+{id:"CAP-021",name:"Signed replay-protected Hybrid Link execution envelopes",menu:"05 Host Inputs",gate:"Signed node identity + replay rejection",status:"LIVE_CORE"}
+];
