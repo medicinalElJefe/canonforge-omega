@@ -26,7 +26,7 @@ def test_r103_truth_layers_do_not_promote_genesis_declarations_to_observation():
 
 def test_r103_routes_only_after_current_manifest_and_hybrid_gate_when_required():
     s=ROUTER.read_text(encoding='utf-8')
-    for token in ['ready_for_route_preview:Boolean(index.manifest_agreed&&hybridReady)','capability_route_not_currently_admissible','hybrid_required:hybridRequired','heartbeat_current','route_before_generation:true']:
+    for token in ['ready_for_route_preview:Boolean(index.manifest_agreed&&hybridReady)','capability_route_not_currently_admissible','hybrid_required:hybridRequired','heartbeat_current','route_before_generation: true']:
         assert token in s
 
 
