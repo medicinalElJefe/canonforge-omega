@@ -40,6 +40,7 @@ required = [
     "omega_genesis/intelligence.py",
     "omega_genesis/language.py",
     "omega_genesis/acceptance.py",
+    "omega_genesis/cloud_auth.py",
     "omega_genesis/adapters/earth.py",
     "omega_genesis/adapters/hybrid.py",
     "omega_genesis/adapters/workbook.py",
@@ -49,11 +50,16 @@ required = [
     "cloudflare/omega-genesis-worker/src/catalog.js",
     "cloudflare/omega-genesis-worker/src/system.js",
     "cloudflare/omega-genesis-worker/src/api_ext.js",
+    "cloud/omega-cloud/Dockerfile",
+    "cloud/omega-cloud/docker-compose.yml",
+    "cloud/omega-cloud/Caddyfile",
+    "cloud/omega-cloud/.env.cloud.example",
     "web/index.html",
     "web/styles.css",
     "web/app.js",
     "web/field3d.js",
     "web/advanced.js",
+    "web/cloud.js",
     "tests/test_genesis.py",
     "config/corpus_authorities.json",
     "config/dewey_bal_contract.json",
@@ -88,6 +94,10 @@ if manifest.get("capability_contracts") != 18:
     errors.append("capability contract count mismatch")
 if manifest.get("acceptance_gates") != 12:
     errors.append("acceptance gate count mismatch")
+if "OMEGA Cloud canonical" not in str(manifest.get("cloud_runtime", "")):
+    errors.append("cloud runtime contract mismatch")
+if "not required for canonical cloud survival" not in str(manifest.get("local_runtime", "")):
+    errors.append("desktop/cloud authority contract mismatch")
 
 integrity = verify_manifest(ROOT)
 if integrity.get("status") != "PASS":
