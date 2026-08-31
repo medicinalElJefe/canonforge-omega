@@ -13,13 +13,16 @@ sys.path.insert(0, str(ROOT))
 
 from omega_genesis.autodeploy import (
     deployment_decision,
+    fetch_health,
     fetch_promotion,
     load_policy,
     read_active_image,
+    read_deployment_state,
+    recovery_target,
     utc_epoch,
     validate_promotion,
 )
-from omega_genesis.deployment import append_jsonl, atomic_json
+from omega_genesis.deployment import append_jsonl, atomic_json, validate_health_payload
 
 
 def _read_json(path: Path) -> dict:
@@ -51,6 +54,89 @@ def _run_deployer(script: Path, candidate: str, state_dir: Path, health_url: str
     )
 
 
+def _record_base(candidate: str, current: str | None, validation: dict, detail: str) -> dict:
+    return {
+        "schema": "omega.cloud.autodeploy-watch.v1",
+        "candidate_image": candidate,
+        "active_image": current,
+        "promotion_digest": validation["promotion_digest"],
+        "source_sha": validation["source_sha"],
+        "observed_at_epoch": utc_epoch(),
+        "detail": detail,
+    }
+
+
+def _recover_active(
+    candidate: str,
+    current: str,
+    validation: dict,
+    state_dir: Path,
+    health_url: str,
+    deploy_script: Path,
+    health_errors: list[str],
+) -> dict:
+    state = read_deployment_state(state_dir / "current.json")
+    target, recovery_mode = recovery_target(state, current)
+    result = _run_deployer(deploy_script, target, state_dir, health_url)
+    if result.stdout:
+        print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
+
+    if result.returncode:
+        record = _record_base(
+            candidate,
+            current,
+            validation,
+            "active cloud health failed (" + ",".join(health_errors) + ") and recovery transaction failed",
+        )
+        record.update({
+            "status": "QUARANTINE",
+            "recovery_mode": recovery_mode,
+            "recovery_target": target,
+            "failed_candidate": current,
+            "failed_at_epoch": utc_epoch(),
+        })
+        return record
+
+    active = read_active_image(state_dir / "current.json")
+    if active != target:
+        raise RuntimeError("recovery deployer returned success without activating recovery target")
+
+    post_health = fetch_health(health_url, os.environ.get("OMEGA_GATEWAY_TOKEN", ""))
+    post_ok, post_errors = validate_health_payload(post_health)
+    if not post_ok:
+        record = _record_base(
+            candidate,
+            active,
+            validation,
+            "recovery target activated but post-recovery proof/replay health failed: " + ",".join(post_errors),
+        )
+        record.update({
+            "status": "QUARANTINE",
+            "recovery_mode": recovery_mode,
+            "recovery_target": target,
+            "failed_candidate": active,
+            "failed_at_epoch": utc_epoch(),
+        })
+        return record
+
+    status = "RECOVERED_PREVIOUS" if recovery_mode == "ROLLBACK_PREVIOUS" else "RECONCILED_CURRENT"
+    record = _record_base(
+        candidate,
+        active,
+        validation,
+        "active cloud health failed (" + ",".join(health_errors) + ") and bounded recovery passed live proof/replay health",
+    )
+    record.update({
+        "status": status,
+        "recovery_mode": recovery_mode,
+        "recovery_target": target,
+        "health": post_health,
+        "failed_candidate": current if recovery_mode == "ROLLBACK_PREVIOUS" else None,
+        "failed_at_epoch": utc_epoch() if recovery_mode == "ROLLBACK_PREVIOUS" else None,
+    })
+    return record
+
+
 def run_cycle() -> dict:
     policy = load_policy(ROOT)
     state_dir = Path(os.environ.get("OMEGA_DEPLOY_STATE_DIR", policy.state_dir)).expanduser().resolve()
@@ -77,60 +163,79 @@ def run_cycle() -> dict:
             policy.failure_backoff_seconds,
         )
 
-        if decision != "DEPLOY":
-            record = {
-                "schema": "omega.cloud.autodeploy-watch.v1",
-                "status": decision,
-                "candidate_image": candidate,
-                "active_image": current,
-                "promotion_digest": validation["promotion_digest"],
-                "source_sha": validation["source_sha"],
-                "observed_at_epoch": utc_epoch(),
-                "detail": detail,
-                "failed_candidate": previous_watch.get("failed_candidate"),
-                "failed_at_epoch": previous_watch.get("failed_at_epoch"),
-            }
+        deploy_script = (ROOT / policy.deployment_script).resolve()
+        if ROOT not in deploy_script.parents or not deploy_script.is_file():
+            raise RuntimeError("deployment script is missing or outside repository root")
+
+        if decision == "SKIP_CURRENT" and current:
+            try:
+                observed_health = fetch_health(health_url, os.environ.get("OMEGA_GATEWAY_TOKEN", ""))
+                health_ok, health_errors = validate_health_payload(observed_health)
+            except Exception as exc:
+                observed_health = {"status": "UNREACHABLE", "error": f"{type(exc).__name__}: {exc}"}
+                health_ok, health_errors = False, ["health_unreachable"]
+
+            if health_ok:
+                record = _record_base(candidate, current, validation, "active immutable generation re-verified live")
+                record.update({
+                    "status": "VERIFIED_CURRENT",
+                    "health": observed_health,
+                    "failed_candidate": None,
+                    "failed_at_epoch": None,
+                })
+            else:
+                record = _recover_active(
+                    candidate,
+                    current,
+                    validation,
+                    state_dir,
+                    health_url,
+                    deploy_script,
+                    health_errors,
+                )
+
             atomic_json(watch_status, record)
             append_jsonl(watch_journal, record)
             print(json.dumps(record, indent=2))
             return record
 
-        deploy_script = (ROOT / policy.deployment_script).resolve()
-        if ROOT not in deploy_script.parents or not deploy_script.is_file():
-            raise RuntimeError("deployment script is missing or outside repository root")
+        if decision != "DEPLOY":
+            record = _record_base(candidate, current, validation, detail)
+            record.update({
+                "status": decision,
+                "failed_candidate": previous_watch.get("failed_candidate"),
+                "failed_at_epoch": previous_watch.get("failed_at_epoch"),
+            })
+            atomic_json(watch_status, record)
+            append_jsonl(watch_journal, record)
+            print(json.dumps(record, indent=2))
+            return record
 
         result = _run_deployer(deploy_script, candidate, state_dir, health_url)
         if result.stdout:
             print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
         if result.returncode:
-            record = {
-                "schema": "omega.cloud.autodeploy-watch.v1",
+            record = _record_base(candidate, current, validation, f"immutable deploy transaction failed with exit {result.returncode}")
+            record.update({
                 "status": "QUARANTINE",
-                "candidate_image": candidate,
-                "active_image": current,
-                "promotion_digest": validation["promotion_digest"],
-                "source_sha": validation["source_sha"],
-                "observed_at_epoch": utc_epoch(),
                 "failed_candidate": candidate,
                 "failed_at_epoch": utc_epoch(),
-                "detail": f"immutable deploy transaction failed with exit {result.returncode}",
-            }
+            })
         else:
             active = read_active_image(state_dir / "current.json")
             if active != candidate:
                 raise RuntimeError("deployer returned success without activating candidate digest")
-            record = {
-                "schema": "omega.cloud.autodeploy-watch.v1",
+            record = _record_base(
+                candidate,
+                active,
+                validation,
+                "governed promotion deployed and live health/proof/replay/provenance gate passed",
+            )
+            record.update({
                 "status": "PROMOTED",
-                "candidate_image": candidate,
-                "active_image": active,
-                "promotion_digest": validation["promotion_digest"],
-                "source_sha": validation["source_sha"],
-                "observed_at_epoch": utc_epoch(),
                 "failed_candidate": None,
                 "failed_at_epoch": None,
-                "detail": "governed promotion deployed and live health/proof/replay/provenance gate passed",
-            }
+            })
 
         atomic_json(watch_status, record)
         append_jsonl(watch_journal, record)
@@ -150,7 +255,7 @@ def run_cycle() -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="OMEGA host pull-based governed cloud deployment watcher")
+    parser = argparse.ArgumentParser(description="OMEGA host pull-based governed cloud deployment and recovery watcher")
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--watch", action="store_true")
     parser.add_argument("--interval", type=int, default=None)
@@ -160,7 +265,13 @@ def main() -> int:
     interval = max(60, args.interval or policy.poll_seconds)
     if args.once or not args.watch:
         record = run_cycle()
-        return 0 if record.get("status") in {"PROMOTED", "SKIP_CURRENT", "BACKOFF"} else 1
+        return 0 if record.get("status") in {
+            "PROMOTED",
+            "VERIFIED_CURRENT",
+            "RECOVERED_PREVIOUS",
+            "RECONCILED_CURRENT",
+            "BACKOFF",
+        } else 1
 
     while True:
         run_cycle()
