@@ -1,6 +1,7 @@
 import { evaluateForecastObservationBinding, FORECAST_OBSERVATION_BINDING_BOUNDARY } from "./forecastObservationBinding";
 import { evaluateModeOperatorPreview, modeOperatorPreviewSchema, MODE_OPERATOR_PREVIEW_BOUNDARY } from "./modeOperatorPreview";
 import { evaluatePreviewTrialDraft, PREVIEW_TRIAL_DRAFT_BOUNDARY } from "./operatorTrialPlanner";
+import { evaluateTrialObservationBinding, trialObservationBindingSchema, TRIAL_OBSERVATION_BINDING_BOUNDARY } from "./trialObservationBinding";
 
 export const MODE_OPERATOR_ATTRIBUTION_BOUNDARY = "Mode/operator evidence attribution groups authenticated forecast-observation performance by declared domain, operator IDs, and mode IDs. It measures association on submitted evidence only; it does not prove causal operator effect, does not convert symbolic modes into physical claims, does not mutate canonical weights, does not execute actions, and does not authorize production policy changes.";
 
@@ -21,13 +22,14 @@ export function modeOperatorEvidenceAttributionSchema(){return{
   causal_attribution:false,
   minimum_authenticated_sample:5,
   required:["records"],
-  supported_operations:{ATTRIBUTION:"existing authenticated evidence grouping",PREVIEW:modeOperatorPreviewSchema(),TRIAL_DRAFT:{schema:"OMEGA_MODE_OPERATOR_PREREGISTERED_TRIAL_DRAFT_V1",authority:"planning-only",required:["packet","mode_id","intensity"],boundary:PREVIEW_TRIAL_DRAFT_BOUNDARY}},
+  supported_operations:{ATTRIBUTION:"existing authenticated evidence grouping",PREVIEW:modeOperatorPreviewSchema(),TRIAL_DRAFT:{schema:"OMEGA_MODE_OPERATOR_PREREGISTERED_TRIAL_DRAFT_V1",authority:"planning-only",required:["packet","mode_id","intensity"],boundary:PREVIEW_TRIAL_DRAFT_BOUNDARY},TRIAL_OBSERVATION:trialObservationBindingSchema()},
   boundary:MODE_OPERATOR_ATTRIBUTION_BOUNDARY
 }}
 
 export function evaluateModeOperatorEvidenceAttribution(body:any){
   if(body&&typeof body==="object"&&body.operation==="PREVIEW")return evaluateModeOperatorPreview(body);
   if(body&&typeof body==="object"&&body.operation==="TRIAL_DRAFT"){const preview=evaluateModeOperatorPreview({...body,operation:"PREVIEW"});if(preview.status!==200)return preview;return evaluatePreviewTrialDraft(preview.body,body)}
+  if(body&&typeof body==="object"&&body.operation==="TRIAL_OBSERVATION")return evaluateTrialObservationBinding(body);
   if(!body||typeof body!=="object")return{status:400,body:{ok:false,error:"attribution_object_required",boundary:MODE_OPERATOR_ATTRIBUTION_BOUNDARY}};
   const records=Array.isArray(body.records)?body.records:[];
   if(!records.length)return{status:400,body:{ok:false,error:"records_required",boundary:MODE_OPERATOR_ATTRIBUTION_BOUNDARY}};
@@ -72,6 +74,7 @@ export function evaluateModeOperatorEvidenceAttribution(body:any){
     binding_boundary:FORECAST_OBSERVATION_BINDING_BOUNDARY,
     preview_boundary:MODE_OPERATOR_PREVIEW_BOUNDARY,
     trial_draft_boundary:PREVIEW_TRIAL_DRAFT_BOUNDARY,
+    trial_observation_boundary:TRIAL_OBSERVATION_BINDING_BOUNDARY,
     boundary:MODE_OPERATOR_ATTRIBUTION_BOUNDARY
   }}
 }
