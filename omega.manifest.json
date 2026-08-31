@@ -23,7 +23,8 @@
   "cloud_host_bootstrap": "provider-neutral one-time Linux host initialization with secret minimization, first governed deploy, and persistent systemd watcher",
   "lineage_provenance": "sanitized Drive-derived contracts + capability lineage + evidence boundaries; validated before cloud promotion",
   "evolution_policy_version": 1,
-  "continuous_evolution": "observe -> diagnose -> candidate-only development -> strict no-regression comparison -> proof-gated promotion -> deploy -> observe",
+  "continuous_evolution": "observe -> diagnose -> candidate-only development -> trusted-baseline strict no-regression comparison -> proof-gated promotion -> deploy -> observe",
+  "evolution_judge": "baseline-pinned policy digest + protected constitutional paths; candidate cannot redefine its own acceptance function",
   "adaptive_learning": "append-only hash-chained outcome memory with deterministic replay/recommendation; subordinate to canonical state",
   "private_corpus_policy": "names/hashes/contracts only; no private Drive identifiers/content published",
   "truth_boundary": "high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",
@@ -42,6 +43,11 @@
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
       "sha256": "e31b850508843ee88ea3ff64d060bf658846c0327beda968c4a0ca3bbb75780c",
       "bytes": 4987
+    },
+    {
+      "path": ".github/workflows/evolution-candidate.yml",
+      "sha256": "11c77499df8b5b22f82206ddafb327db964afd516e25c18b36e02646f42606cf",
+      "bytes": 4835
     },
     {
       "path": ".github/workflows/evolution.yml",
@@ -180,8 +186,8 @@
     },
     {
       "path": "config/evolution_policy.json",
-      "sha256": "4effcc75f11bb5d0831bcc0b5848ba2b92eb15bf9ccd0ef6b1d64bb3f7a58ad0",
-      "bytes": 7956
+      "sha256": "c689daa7ec22de55ba5bc4fc8bf2dffd3f1d86d59e71143ca33a1bddb8a330db",
+      "bytes": 8435
     },
     {
       "path": "config/provenance_sources.json",
@@ -250,8 +256,8 @@
     },
     {
       "path": "docs/CONTINUOUS_EVOLUTION.md",
-      "sha256": "f4f93ed68f1c4cc813bd164f15ccfdfb82f7a0bf1c8c5b84fdc1ad02ca89441d",
-      "bytes": 2378
+      "sha256": "7cf969d741e9262c758cb146ffaf267ec0613201089e5126b901519bf5f961b4",
+      "bytes": 3570
     },
     {
       "path": "docs/CORPUS_REVIEW.md",
@@ -355,8 +361,8 @@
     },
     {
       "path": "omega_genesis/evolution.py",
-      "sha256": "6764f1e3f3016ef18f9ea195b8da61bc5dac2683145b624510d1357a29549efd",
-      "bytes": 10534
+      "sha256": "d2a4fc50250772dc30d8a725d2b9f983b9863920f5b1c33f5f4fc7f65d35d237",
+      "bytes": 12277
     },
     {
       "path": "omega_genesis/forecast.py",
@@ -500,8 +506,8 @@
     },
     {
       "path": "scripts/build_manifest.py",
-      "sha256": "727b785814eca36103a4b7d387de05f7b5ec32cecf21c491eaf969d625f775a3",
-      "bytes": 3391
+      "sha256": "1f6cddd02a0682ceee92e5d76339948877aacdf53a1091ba4dfba5d97e02e3c7",
+      "bytes": 3551
     },
     {
       "path": "scripts/build_release.py",
@@ -539,6 +545,11 @@
       "bytes": 9927
     },
     {
+      "path": "scripts/evolution_compare.py",
+      "sha256": "59dc375eab56fb7f3d178819166b2d1b4ef7077c1d9f78103ac5331ba13c2833",
+      "bytes": 2119
+    },
+    {
       "path": "scripts/evolution_cycle.py",
       "sha256": "566bd341147d2389053d6fbc374a7530086f83cbc7575c9adb76d2c9a2e540e7",
       "bytes": 2624
@@ -560,8 +571,8 @@
     },
     {
       "path": "scripts/verify_release.py",
-      "sha256": "877ffa6cbfb48a9b8d44dd06bd8c5fc83a2df4ae4110848b9409f842df4f578a",
-      "bytes": 8270
+      "sha256": "a6723135c9e7c49049db4cc4613d0d64b5af9b52d62b844f603ca089fa3faceb",
+      "bytes": 8355
     },
     {
       "path": "tests/test_autodeploy.py",
@@ -580,8 +591,8 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "03c76ff02bd2b81526f8365d8e970ceb3a88ec7947a51151409b4f55a65c4237",
-      "bytes": 2367
+      "sha256": "b2d93277b5645ce6abd4777a41d675b0f304a803b55639198ff893c1b3ae8b5d",
+      "bytes": 3904
     },
     {
       "path": "tests/test_genesis.py",
