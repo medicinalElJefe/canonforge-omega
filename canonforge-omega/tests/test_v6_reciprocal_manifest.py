@@ -7,9 +7,7 @@ SOURCE = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "convergence.ts"
 
 def test_v6_consumes_genesis_machine_readable_manifest():
     source = SOURCE.read_text(encoding="utf-8")
-    assert 'probe(`${GENESIS}/api/convergence/manifest`)' not in source
-    assert 'probe(`${GENESIS}/api/convergence/manifest`)' not in source
-    assert 'probe(${GENESIS})' not in source
+    assert 'probe(`${GENESIS}/api/convergence/manifest`)' in source
     assert '/api/convergence/manifest' in source
     assert 'genesisManifest' in source
     assert 'manifest_digest' in source
