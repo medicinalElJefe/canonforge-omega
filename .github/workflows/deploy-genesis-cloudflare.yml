@@ -9,6 +9,11 @@ on:
       - 'release/**'
   workflow_dispatch:
 
+# Never allow two canonical Genesis edge deployments to race each other.
+concurrency:
+  group: omega-genesis-cloudflare-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   verify-and-deploy:
     runs-on: ubuntu-latest
