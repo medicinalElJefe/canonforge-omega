@@ -44,9 +44,41 @@ jobs:
           npm install
           npm run typecheck
 
-  promote-canonical-worker:
+  promotion-compatibility:
     if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
     needs: [sovereign-core, cloudflare-interface]
+    runs-on: ubuntu-latest
+    outputs:
+      compatible: ${{ steps.contract.outputs.compatible }}
+      status: ${{ steps.contract.outputs.status }}
+    steps:
+      - name: Checkout exact verified head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - id: contract
+        name: Preserve observed live Durable Object contract
+        working-directory: canonforge-omega
+        shell: bash
+        run: |
+          result="$(python scripts/check_cloudflare_contract.py)"
+          echo "$result"
+          RESULT="$result" python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          value = json.loads(os.environ["RESULT"])
+          print("compatible=" + str(bool(value["compatible"])).lower())
+          print("status=" + value["status"])
+          PY
+      - name: Explain promotion hold
+        if: steps.contract.outputs.compatible != 'true'
+        run: echo "PROMOTION HOLD - candidate does not yet preserve the observed live OmegaRuntime Durable Object export. Canonical Worker is left untouched."
+
+  promote-canonical-worker:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence' && needs.promotion-compatibility.outputs.compatible == 'true'
+    needs: [sovereign-core, cloudflare-interface, promotion-compatibility]
     runs-on: ubuntu-latest
     concurrency:
       group: omega-v6-production
