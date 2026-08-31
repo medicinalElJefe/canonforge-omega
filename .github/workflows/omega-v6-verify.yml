@@ -105,5 +105,46 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run deploy
+      - name: Verify canonical public convergence
+        shell: bash
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+          GENESIS_URL: https://omega-genesis-v1.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json
+          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json
+          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-all-errors "$GENESIS_URL/api/convergence/manifest" -o /tmp/genesis-manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          health = json.loads(Path("/tmp/v6-health.json").read_text())
+          edge = json.loads(Path("/tmp/v6-convergence.json").read_text())
+          manifest = json.loads(Path("/tmp/genesis-manifest.json").read_text())
+
+          assert health.get("ok") is True, health
+          assert health.get("authority") == "public-interface-only", health
+          assert health.get("build") == "r86-live-convergence-proof", health
+
+          convergence = edge.get("convergence") or {}
+          genesis = edge.get("genesis") or {}
+          peer_manifest = genesis.get("manifest") or {}
+          assert convergence.get("reciprocal_manifest_ready") is True, edge
+          assert peer_manifest.get("schema") == "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2", edge
+          assert peer_manifest.get("digest"), edge
+
+          assert manifest.get("schema") == "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2", manifest
+          assert manifest.get("manifest_digest") == peer_manifest.get("digest"), (manifest, edge)
+          genome = manifest.get("capability_genome") or {}
+          assert int(genome.get("capability_count") or 0) >= 29, manifest
+
+          print(json.dumps({
+              "status": "LIVE_CONVERGENCE_VERIFIED",
+              "v6_build": health.get("build"),
+              "genesis_manifest_digest": manifest.get("manifest_digest"),
+              "genesis_capability_count": genome.get("capability_count"),
+          }, sort_keys=True))
+          PY
       - name: Record promoted SHA
         run: echo "OMEGA V6 promoted exact verified SHA $GITHUB_SHA"
