@@ -141,8 +141,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "44c686ac4571799e4c0eb587720c3e85d55e514b02430f3303970410a7b25623",
-      "bytes": 5442
+      "sha256": "45c0d3523489014ebe38573a8aed78588617510fbf99d2d36b7e2d774dda0096",
+      "bytes": 5688
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -156,8 +156,13 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/link.js",
-      "sha256": "962526442e4f24876c32a7d2c72369d7330d3e9befe7f134d61405acfb4b884b",
-      "bytes": 13217
+      "sha256": "b74fc3128110103a16243a99bd36cf7da822bfc63f2a500333dd2c5e1d9ff299",
+      "bytes": 13903
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/memory.js",
+      "sha256": "9ee3429212af61169560d72452b1b593464b25f7afa8b08ba79528816e670505",
+      "bytes": 7164
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/system.js",
@@ -295,6 +300,11 @@
       "bytes": 839
     },
     {
+      "path": "docs/evolution/cloud-conversation-memory-v2.md",
+      "sha256": "0414aa083b7f3f3f6fe3325641c1ce8547c070f00ec0717cc043d55fa0d05e53",
+      "bytes": 1827
+    },
+    {
       "path": "docs/evolution/contextual-conversation-memory-v1.md",
       "sha256": "cf8347f4ae2e01f24491c53708ceb9b4781d71faab12aa7de01332232a463659",
       "bytes": 1312
@@ -351,8 +361,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "414bc46f25aff4628d61d9f79b27469eab02c2e214810d3f298ed1542f5d3751",
-      "bytes": 5092
+      "sha256": "331650f0e8d94b48d680f785ae6c365b3be9f071e9435c5104c41fc7d35c5d2c",
+      "bytes": 5352
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -680,6 +690,16 @@
       "bytes": 278
     },
     {
+      "path": "tests/test_cloud_conversation_memory_contract.py",
+      "sha256": "a74be43c3645d5d608e70ea9d915e18c6bfc35ca2e64ab5a2cb1faca3b175356",
+      "bytes": 3976
+    },
+    {
+      "path": "tests/test_cloud_memory_controller_route.py",
+      "sha256": "9cbece03830f9a80160c4b9a2b4b257f0b2713b9e4fa85ba68954e1c4bb68038",
+      "bytes": 2716
+    },
+    {
       "path": "tests/test_cloud_self_loop.py",
       "sha256": "aae17647724295d7b651a277fb3d77ddf9f9f5f5065c1df78525fd3b757aad61",
       "bytes": 828
@@ -706,8 +726,8 @@
     },
     {
       "path": "tests/test_design_acceptance.py",
-      "sha256": "143418b94d6909ecf7766dd9f398353f1e04af23214ee3ebcaa6342b4a2f1226",
-      "bytes": 1217
+      "sha256": "cc21a47f13c1f5424282acadd0646741af77261df59387ee7c724e1c55fe2045",
+      "bytes": 1446
     },
     {
       "path": "tests/test_desktop_link_signed_contract.py",
@@ -716,7 +736,7 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "623beb45c82aded07913eb7a15376ae9faeab1eef0be0c9d7ad86330cf7b491c",
+      "sha256": "42ca2693305db7515adc223ec5da1f17a438129ad88777e4b31980f391bf7864",
       "bytes": 3709
     },
     {
