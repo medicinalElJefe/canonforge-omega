@@ -13,3 +13,5 @@ dist/
 build/
 .omega-venv/
 release/
+cloud/omega-cloud/.env.cloud
+cloud/omega-cloud/workspace/
