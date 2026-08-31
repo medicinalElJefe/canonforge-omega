@@ -37,8 +37,8 @@
     },
     {
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
-      "sha256": "f1480f01c66693fcf5fb10d5be8b037c6a602107237e96c16718a912eac629df",
-      "bytes": 1654
+      "sha256": "e32350cca1f2c12716cc92e8b066113a8664c77473b7b5e211613c930487925a",
+      "bytes": 4944
     },
     {
       "path": ".github/workflows/self-build.yml",
