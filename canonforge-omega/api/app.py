@@ -28,8 +28,9 @@ from omega_runtime.render import living_glyph_scene
 from omega_runtime.state_store import StateStore
 from omega_runtime.security import gateway_authorized
 from omega_runtime.system_manifest import manifest as software_manifest, summary as software_summary
+from omega_runtime.self_build import BuildMode, JobState, SovereignBuildController, SAFE_JOB_KINDS
 
-app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.0.0-convergence")
+app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.1.0-self-build-loop")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["GET", "POST"], allow_headers=["*"])
 
@@ -54,6 +55,8 @@ EVENT_LOG: List[Dict[str, Any]] = []
 OMEGA_HOME = Path.home() / ".omega"
 LEDGER_PATH = OMEGA_HOME / "ledger" / "proof.jsonl"
 STATE_PATH = OMEGA_HOME / "state" / "canonical.json"
+BUILD_STATE_PATH = OMEGA_HOME / "development" / "self_build.json"
+APPROVED_BUILD_ROOT = Path(os.environ.get("OMEGA_APPROVED_ROOT", str(Path.cwd())))
 _initial = StateEnvelope(
     address=Address20736(1, 1, 1, 1), evidence_class=EvidenceClass.DERIVED,
     metrics=StateMetrics(continuity=1.0, burden=0.20, contradiction=0.10, future_plasticity=0.50),
@@ -61,6 +64,7 @@ _initial = StateEnvelope(
     payload={"boundary": "runtime initialization record; not an empirical observation"},
 )
 _runtime = OmegaRuntime(_initial, ProofLedger(LEDGER_PATH), StateStore(STATE_PATH))
+_builder = SovereignBuildController(BUILD_STATE_PATH, APPROVED_BUILD_ROOT)
 
 
 class PatternInfo(BaseModel):
@@ -108,11 +112,32 @@ class ObserverRequest(BaseModel):
     shell_axes: List[float] = Field(default_factory=lambda: [0.0, 0.0, 0.0], min_length=3, max_length=3)
 
 
+class BuildModeRequest(BaseModel):
+    mode: Literal["MANUAL", "DEVELOPMENT_LOOP", "CONTINUOUS_SOVEREIGN_BUILD"]
+
+
+class BuildEnqueueRequest(BaseModel):
+    kind: str
+    reason: str
+    payload: Dict[str, Any] = Field(default_factory=dict)
+
+
+class BuildLeaseRequest(BaseModel):
+    agent_id: str = Field(min_length=1, max_length=120)
+
+
+class BuildResultRequest(BaseModel):
+    state: Literal["RUNNING", "BLOCKED", "FAILED", "VERIFIED", "CANCELLED"]
+    evidence: Dict[str, Any] = Field(default_factory=dict)
+    error: str | None = None
+
+
 @app.get("/api/health")
 def health() -> Dict[str, Any]:
     return {"ok": True, "runtime": "OMEGA V6 Sovereign Runtime", "state_digest": _runtime.state.digest,
             "proof_records": len(_runtime.ledger.records), "persistent_state": str(STATE_PATH),
             "remote_ingress_secured": bool(GATEWAY_TOKEN), "software_families": software_summary(),
+            "development_mode": _builder.mode.value,
             "representation_boundary": "144/1728/20736 are software state-space representations unless independently evidenced otherwise"}
 
 
@@ -128,7 +153,7 @@ def get_status() -> Dict[str, Any]:
     return {"timestamp": snap.timestamp.isoformat(), "uai": snap.uai, "life_coherence": snap.life_coherence,
             "system_coherence": snap.system_coherence, "evidence_count": snap.evidence_count,
             "truth": tic.truth, "integrity": tic.integrity, "courage": tic.courage,
-            "omega_effective": tic.omega_effective,
+            "omega_effective": tic.omega_effective, "development": _builder.status(),
             "boundary": "Fusion/TIC is a compatibility-derived layer. With no explicit evidence it returns zero; canonical authority is StateEnvelope."}
 
 
@@ -224,6 +249,46 @@ def list_patterns() -> List[PatternInfo]:
 @app.get("/api/events")
 def get_events() -> List[Dict[str, Any]]:
     return EVENT_LOG[-50:]
+
+
+@app.get("/api/development/status")
+def development_status() -> Dict[str, Any]:
+    """Expose what OMEGA is doing after Hybrid connectivity is established."""
+    return _builder.status()
+
+
+@app.post("/api/development/mode")
+def development_mode(req: BuildModeRequest) -> Dict[str, Any]:
+    return _builder.set_mode(BuildMode(req.mode))
+
+
+@app.post("/api/development/enqueue")
+def development_enqueue(req: BuildEnqueueRequest) -> Dict[str, Any]:
+    if req.kind not in SAFE_JOB_KINDS:
+        raise HTTPException(status_code=422, detail={"unsupported_kind": req.kind, "allowed": sorted(SAFE_JOB_KINDS)})
+    try:
+        return asdict(_builder.enqueue(req.kind, req.reason, req.payload))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/api/development/lease")
+def development_lease(req: BuildLeaseRequest) -> Dict[str, Any]:
+    """Authenticated host agents call this after heartbeat to receive the next bounded job."""
+    job = _builder.lease_next(req.agent_id)
+    return {"job": None if job is None else asdict(job),
+            "boundary": "typed allow-listed jobs only; arbitrary shell text is never emitted"}
+
+
+@app.post("/api/development/jobs/{job_id}/result")
+def development_result(job_id: str, req: BuildResultRequest) -> Dict[str, Any]:
+    try:
+        job = _builder.update_job(job_id, JobState(req.state), req.evidence, req.error)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"unknown build job: {job_id}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"job": asdict(job), "next": _builder.status().get("active_job")}
 
 
 def fusion_log(packet: OmegaPacket) -> None:
