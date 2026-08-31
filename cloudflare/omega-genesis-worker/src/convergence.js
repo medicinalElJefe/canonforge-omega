@@ -31,19 +31,20 @@ async function probe(url){
 }
 async function manifest(env){
   const core={
-    schema:"OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2",
+    schema:"OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3",
     runtime:{
-      role:"GENESIS_DISCOVERY_EVOLUTION",
+      role:"GENESIS_CANONICAL_AUTHORITY",
       canonical_branch:"omega-genesis-v1-full",
       public_url:"https://omega-genesis-v1.jeffdeweyeljefe.workers.dev/",
       build:env.BUILD_ID||"omega-genesis-v1",
       authority:"durable-object-canonical-for-genesis-state",
       private_corpus_embedded:false
     },
-    peer_contract:{
-      role:"V6_CANONICAL_OPERATIONAL_RUNTIME",
+    public_product:{
+      role:"V6_PUBLIC_PRODUCT_FACADE",
       public_url:V6_URL+"/",
-      boundary:"manifest publication is observation metadata only and cannot mutate V6 or Genesis canonical state"
+      authority_transport:"cloudflare-service-binding",
+      state_rule:"V6 holds no second canonical state; API/state authority resolves to Genesis"
     },
     capability_genome:{
       capability_count:CAPABILITIES.length,
@@ -58,7 +59,7 @@ async function manifest(env){
     recursive_law:LAW,
     operator_roles:OPERATOR_ROLES,
     donor_dispositions:DONOR_DISPOSITIONS,
-    promotion_boundary:"Genesis discovers, recovers, evaluates and proposes bounded descendants. V6 operational promotion remains separately proof-gated.",
+    promotion_boundary:"Genesis owns canonical state and governed evolution. V6 is the stable human-facing product surface and must prove canonical-digest parity before deployment acceptance.",
     dimensional_boundary:"144/1728/20736 are software/model/interface representation shells unless independently evidenced otherwise"
   };
   return{...core,manifest_digest:await digest(core)};
@@ -70,15 +71,15 @@ async function reciprocalSnapshot(env){
     probe(V6_URL+"/api/convergence/edge")
   ]);
   return{
-    schema:"OMEGA_RECIPROCAL_CONVERGENCE_SNAPSHOT_V2",
+    schema:"OMEGA_RECIPROCAL_CONVERGENCE_SNAPSHOT_V3",
     observed_at:new Date().toISOString(),
-    ok:Boolean(v6Health.reachable),
+    ok:Boolean(v6Health.reachable&&v6Convergence.reachable),
     genesis_manifest:ownManifest,
     peer:{
-      role:"V6_CANONICAL_OPERATIONAL_RUNTIME",
+      role:"V6_PUBLIC_PRODUCT_FACADE",
       health:v6Health,
       convergence:v6Convergence,
-      boundary:"peer reachability is observation only; no remote canonical mutation is authorized"
+      boundary:"peer observation cannot mutate either canonical state or deployment governance"
     }
   };
 }
