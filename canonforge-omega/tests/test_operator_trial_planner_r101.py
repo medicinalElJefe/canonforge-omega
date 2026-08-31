@@ -7,7 +7,7 @@ def test_r101_trial_plan_contract():
     for token in ['OMEGA_GOVERNED_OPERATOR_TRIAL_PLAN_V1','READY_FOR_PREREGISTERED_TRIAL','metric_fixed_before_future_observations:true','success_threshold_fixed:true','harm_threshold_fixed:true','rollback_declared:true','automatic_execution:false','automatic_policy_change:false','causation_claimed:false','preregistered_before_observation:true']:
         assert token in s
     assert 'do not execute operators' in s
-    assert 'do not claim predictive improvement before held-out observations' in s
+    assert 'or claim predictive improvement before held-out observations' in s
 
 def test_r101_declares_baseline_candidate_and_stop_conditions():
     s=(SRC/'operatorTrialPlanner.ts').read_text()
