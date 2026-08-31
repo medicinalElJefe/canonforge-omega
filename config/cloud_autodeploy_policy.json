@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "authority": "OMEGA Cloud host autonomous deployment authority",
+  "promotion_url": "https://raw.githubusercontent.com/medicinalElJefe/canonforge-omega/omega-genesis-v1-full/cloud/omega-cloud/promotion.json",
+  "expected_image_repository": "ghcr.io/medicinaleljefe/canonforge-omega/omega-cloud",
+  "poll_seconds": 300,
+  "failure_backoff_seconds": 1800,
+  "state_dir": "/var/lib/omega-deploy",
+  "health_url": "http://127.0.0.1:8127/api/health",
+  "deployment_script": "scripts/cloud_deploy.py",
+  "require_governed_promotion": true,
+  "require_immutable_image": true
+}

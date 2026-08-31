@@ -23,6 +23,19 @@ def require_immutable_image(image: str) -> str:
     return image
 
 
+def compose_image_override(image: str) -> str:
+    image = require_immutable_image(image)
+    return (
+        "services:\n"
+        "  omega:\n"
+        f"    image: {image}\n"
+        "  selfbuilder:\n"
+        f"    image: {image}\n"
+        "  backup:\n"
+        f"    image: {image}\n"
+    )
+
+
 def validate_health_payload(payload: dict[str, Any]) -> tuple[bool, list[str]]:
     errors: list[str] = []
     if payload.get("status") != "OK":

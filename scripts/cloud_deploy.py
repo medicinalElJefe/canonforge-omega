@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 from omega_genesis.deployment import (
     DeploymentRecord,
+    compose_image_override,
     append_jsonl,
     atomic_json,
     deployment_state,
@@ -64,14 +65,7 @@ def health(url: str, token: str, attempts: int, delay: float) -> dict:
 
 
 def override_file(image: str, directory: Path) -> Path:
-    image = require_immutable_image(image)
-    text = (
-        "services:\n"
-        "  omega:\n"
-        f"    image: {image}\n"
-        "  selfbuilder:\n"
-        f"    image: {image}\n"
-    )
+    text = compose_image_override(image)
     fd, name = tempfile.mkstemp(prefix="omega-deploy-", suffix=".yml", dir=directory)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
         fh.write(text)

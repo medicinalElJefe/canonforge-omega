@@ -18,7 +18,7 @@ def policy() -> SelfBuildPolicy:
         schema_version=1,
         authority="OMEGA Cloud canonical self-build authority",
         source_mutation_mode="proposal_only",
-        automatic_write_paths=("omega.manifest.json", "SHA256SUMS.txt", "release/**"),
+        automatic_write_paths=("omega.manifest.json", "SHA256SUMS.txt", "release/**", "cloud/omega-cloud/promotion.json"),
         mandatory_gates=(
             "python_compile",
             "python_tests",
@@ -40,6 +40,7 @@ def test_policy_is_bounded_and_cloud_authoritative():
     validate_policy(p)
     assert path_is_automatically_writable("omega.manifest.json", p)
     assert path_is_automatically_writable("release/self-build-report.json", p)
+    assert path_is_automatically_writable("cloud/omega-cloud/promotion.json", p)
     assert not path_is_automatically_writable("omega_genesis/runtime.py", p)
     with pytest.raises(PermissionError):
         assert_automatic_write("omega_genesis/runtime.py", p)

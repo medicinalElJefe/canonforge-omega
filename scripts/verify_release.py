@@ -13,6 +13,7 @@ from omega_genesis.release import verify_manifest
 from omega_genesis.selfbuild import load_policy
 from omega_genesis.systems import coverage as system_coverage
 from omega_genesis.provenance import summary as provenance_summary
+from omega_genesis.autodeploy import load_policy as load_autodeploy_policy, validate_promotion
 
 required = [
     "README.md",
@@ -47,6 +48,7 @@ required = [
     "omega_genesis/selfbuild.py",
     "omega_genesis/deployment.py",
     "omega_genesis/provenance.py",
+    "omega_genesis/autodeploy.py",
     "omega_genesis/adapters/earth.py",
     "omega_genesis/adapters/hybrid.py",
     "omega_genesis/adapters/workbook.py",
@@ -60,6 +62,8 @@ required = [
     "cloud/omega-cloud/docker-compose.yml",
     "cloud/omega-cloud/Caddyfile",
     "cloud/omega-cloud/.env.cloud.example",
+    "cloud/omega-cloud/promotion.json",
+    "cloud/omega-cloud/systemd/omega-cloud-watch.service",
     "web/index.html",
     "web/styles.css",
     "web/app.js",
@@ -69,11 +73,14 @@ required = [
     "scripts/self_build.py",
     "scripts/cloud_self_loop.py",
     "scripts/cloud_deploy.py",
+    "scripts/cloud_watch.py",
     "docs/CLOUD_SELF_BUILD.md",
     "docs/CLOUD_DEPLOYMENT.md",
+    "docs/CLOUD_AUTODEPLOY.md",
     "docs/PROVENANCE.md",
     "tests/test_cloud_self_loop.py",
     "tests/test_deployment.py",
+    "tests/test_autodeploy.py",
     "tests/test_provenance.py",
     "config/self_build_policy.json",
     "docs/SELF_BUILD.md",
@@ -85,6 +92,7 @@ required = [
     "config/source_classes.json",
     "config/software_systems.json",
     "config/provenance_sources.json",
+    "config/cloud_autodeploy_policy.json",
 ]
 
 missing = [p for p in required if not (ROOT / p).is_file()]
@@ -92,6 +100,13 @@ manifest = json.loads((ROOT / "omega.manifest.json").read_text(encoding="utf-8")
 errors = list(missing)
 systems = system_coverage()
 provenance = provenance_summary(ROOT)
+try:
+    autodeploy_policy = load_autodeploy_policy(ROOT)
+    promotion_payload = json.loads((ROOT / "cloud/omega-cloud/promotion.json").read_text(encoding="utf-8"))
+    promotion_validation = validate_promotion(promotion_payload, autodeploy_policy.expected_image_repository)
+except Exception as exc:
+    autodeploy_policy = None
+    promotion_validation = {"status": "FAIL", "errors": [f"{type(exc).__name__}: {exc}"]}
 
 if manifest.get("name") != "OMEGA Genesis":
     errors.append("manifest name mismatch")
@@ -127,6 +142,10 @@ if manifest.get("provenance_schema_version") != 1:
     errors.append("provenance schema version mismatch")
 if provenance.get("status") != "PASS":
     errors.extend(["provenance:" + str(x) for x in provenance.get("errors", [])] or ["provenance validation failed"])
+if manifest.get("autodeploy_policy_version") != 1:
+    errors.append("autodeploy policy version mismatch")
+if promotion_validation.get("status") != "PASS":
+    errors.extend(["promotion:" + str(x) for x in promotion_validation.get("errors", [])] or ["promotion validation failed"])
 
 try:
     policy = load_policy(ROOT)
@@ -150,6 +169,8 @@ result = {
     "design_capacity": CAPACITY_61917364224,
     "self_build_policy": 1,
     "provenance": provenance,
+    "autodeploy_policy": autodeploy_policy.schema_version if autodeploy_policy else None,
+    "promotion": promotion_validation,
     "manifest_integrity": integrity,
     "errors": errors,
 }

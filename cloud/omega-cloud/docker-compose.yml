@@ -6,6 +6,8 @@ services:
     env_file:
       - .env.cloud
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:8127:8127"
     expose:
       - "8127"
       - "8128"

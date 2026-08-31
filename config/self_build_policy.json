@@ -5,7 +5,8 @@
   "automatic_write_paths": [
     "omega.manifest.json",
     "SHA256SUMS.txt",
-    "release/**"
+    "release/**",
+    "cloud/omega-cloud/promotion.json"
   ],
   "mandatory_gates": [
     "python_compile",

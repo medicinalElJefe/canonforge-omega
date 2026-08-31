@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 import pytest
 
-from omega_genesis.deployment import deployment_state, require_immutable_image, validate_health_payload
+from omega_genesis.deployment import compose_image_override, deployment_state, require_immutable_image, validate_health_payload
 
 IMAGE = "ghcr.io/medicinaleljefe/canonforge-omega/omega-cloud@sha256:" + "a" * 64
 PREV = "ghcr.io/medicinaleljefe/canonforge-omega/omega-cloud@sha256:" + "b" * 64
@@ -66,3 +66,11 @@ def test_health_rejects_invalid_or_private_provenance():
     private["provenance"]["privacy_pass"] = False
     ok, errors = validate_health_payload(private)
     assert not ok and "provenance_privacy_invalid" in errors
+
+
+def test_compose_override_pins_every_omega_code_service():
+    text = compose_image_override(IMAGE)
+    assert text.count(f"image: {IMAGE}") == 3
+    assert "  omega:" in text
+    assert "  selfbuilder:" in text
+    assert "  backup:" in text

@@ -108,6 +108,59 @@ jobs:
             echo "$IMAGE:genesis-latest"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Publish governed cloud promotion ledger
+        env:
+          DIGEST_REF: ${{ steps.publish.outputs.image }}
+          RELEASE_SOURCE_SHA: ${{ steps.release_head.outputs.sha }}
+        shell: bash
+        run: |
+          REMOTE_HEAD="$(git ls-remote origin "refs/heads/$GITHUB_REF_NAME" | awk '{print $1}')"
+          LOCAL_HEAD="$(git rev-parse HEAD)"
+          if [ "$REMOTE_HEAD" != "$LOCAL_HEAD" ]; then
+            echo "QUARANTINE: branch advanced during image publication; refusing stale promotion ledger." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path("release/self-build-report.json").read_text(encoding="utf-8"))
+          payload = {
+              "schema": "omega.cloud.promotion.v1",
+              "decision": "PROMOTE",
+              "image": os.environ["DIGEST_REF"],
+              "source_sha": os.environ["RELEASE_SOURCE_SHA"],
+              "trigger_sha": os.environ["GITHUB_SHA"],
+              "manifest_sha256": report["manifest_sha256"],
+              "release_sha256": report["release_sha256"],
+              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
+              "provenance": "Drive-derived contracts validated; private Drive identifiers/content excluded",
+              "boundary": "This ledger identifies a verified immutable build candidate. It is not proof that a production host deployed it.",
+          }
+          Path("cloud/omega-cloud/promotion.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+          PY
+          if [ -n "$(git diff --name-only -- . ':!cloud/omega-cloud/promotion.json' ':!release/**')" ]; then
+            echo "QUARANTINE: unexpected worktree mutation before promotion-ledger commit." | tee -a "$GITHUB_STEP_SUMMARY"
+            git diff --name-only
+            exit 1
+          fi
+          if git diff --quiet -- cloud/omega-cloud/promotion.json; then
+            echo "Governed promotion ledger already matches published image." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            git config user.name "OMEGA Self-Builder"
+            git config user.email "omega-self-builder@users.noreply.github.com"
+            git add cloud/omega-cloud/promotion.json
+            git commit -m "OMEGA self-build: publish governed cloud promotion [skip ci]"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+          {
+            echo "### Governed promotion ledger"
+            echo
+            echo "Image: $DIGEST_REF"
+            echo "Release-source head: $RELEASE_SOURCE_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   deploy:
     needs: self-build
     if: ${{ vars.OMEGA_AUTODEPLOY_ENABLED == '1' }}

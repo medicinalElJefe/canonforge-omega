@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 EXCLUDE_DIRS={".git",".pytest_cache","__pycache__","node_modules","runtime-data","release",".venv",".omega-venv"}
-EXCLUDE_FILES={"omega.manifest.json","SHA256SUMS.txt"}
+EXCLUDE_FILES={"omega.manifest.json","SHA256SUMS.txt","cloud/omega-cloud/promotion.json"}
 
 
 def selected_files():
@@ -46,6 +46,8 @@ manifest={
     "self_build":"governed deterministic self-build with ledger repair, reproducibility gates, cloud-container publication, quarantine, and promotion",
     "self_build_policy_version":1,
     "provenance_schema_version":1,
+    "autodeploy_policy_version":1,
+    "autodeploy":"host pull-based governed promotion ledger -> immutable digest deploy -> live proof/replay/provenance gate -> rollback",
     "lineage_provenance":"sanitized Drive-derived contracts + capability lineage + evidence boundaries; validated before cloud promotion",
     "private_corpus_policy":"names/hashes/contracts only; no private Drive identifiers/content published",
     "truth_boundary":"high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",

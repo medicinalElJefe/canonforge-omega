@@ -1,0 +1,19 @@
+[Unit]
+Description=OMEGA governed cloud promotion watcher
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/omega
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/omega/omega-cloud-watch.env
+ExecStart=/usr/bin/python3 /opt/omega/scripts/cloud_watch.py --watch
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
