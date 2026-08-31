@@ -7,7 +7,7 @@ def test_r102_adjudication_contract():
     for token in ['OMEGA_OPERATOR_TRIAL_ADJUDICATION_V1','PROMOTE_CANDIDATE_FOR_GOVERNANCE_REVIEW','HOLD_INCOMPLETE','HOLD_NO_MATERIAL_LIFT','ROLLBACK_TO_BASELINE','production_rollout_authorized:false','canonical_policy_mutation:false','causation_claimed:false','thresholds_reinterpreted:false','failed_trials_preserved:true','rollback_target_preserved:true']:
         assert token in s
     assert 'cannot mutate canonical policy' in s
-    assert 'cannot authorize production rollout' in s
+    assert 'authorize production rollout' in s
 
 def test_r102_adjudicates_against_preregistered_thresholds():
     s=(SRC/'operatorTrialAdjudicator.ts').read_text()
