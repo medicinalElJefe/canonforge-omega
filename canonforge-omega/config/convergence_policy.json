@@ -1,0 +1,75 @@
+{
+  "version": "R80",
+  "canonical_runtime": "https://omegav6.jeffdeweyeljefe.workers.dev/",
+  "genesis_runtime": "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev/",
+  "canonical_ref": "omega-v6-full-convergence",
+  "genesis_ref": "omega-genesis-v1-full",
+  "architecture": {
+    "state": "canonical V6 state remains release authority",
+    "intelligence": "Genesis discovers and proposes bounded candidate improvements",
+    "memory": "proof, development, capability and strategy memories remain distinct",
+    "relation": "capabilities are linked across donor lineage rather than copied wholesale",
+    "computation": "sovereign PC may execute approved convergence/test jobs after heartbeat proof",
+    "action": "typed allow-listed jobs only; arbitrary shell is prohibited",
+    "observation": "source-backed Earth/archive observations stay separate from derived interpretation",
+    "proof": "exact-head tests, evidence, rollback parent and material delta are required for promotion"
+  },
+  "governance_layers": [
+    "FULL_OVERALL_CANON",
+    "UNIFIED_COHERENCE",
+    "MODE_188",
+    "DEEP_MOTHER",
+    "HIGH_FATHER",
+    "FORECAST",
+    "FULL_SPHERE",
+    "HEAVY_PRUNE",
+    "ALPHA",
+    "CRIMSON",
+    "NO_NOTHING_TRUTH",
+    "GUIDANCE_FIELD"
+  ],
+  "mode_188_dispatch": {
+    "purpose": "prune-before-build, contradiction preservation, STAY/TURN/ESCALATE routing",
+    "promotion_rule": "candidate cannot be promoted from novelty alone; evidence and stability must dominate burden and contradiction"
+  },
+  "operator_semantics": {
+    "ALPHA": "seed/initiate",
+    "BASE": "substrate/context",
+    "CONSTRUCT": "expand/build",
+    "PRUNE": "invert/remove/reject",
+    "OMEGA": "integrate/cohere"
+  },
+  "candidate_loop": [
+    "OBSERVE",
+    "INVENTORY",
+    "RELATE",
+    "PRUNE",
+    "TRANSLATE",
+    "PROVE",
+    "PLAN",
+    "BUILD",
+    "TEST",
+    "VISUAL_ACCEPTANCE",
+    "ADVERSARIAL_VERIFY",
+    "PROMOTE_OR_REJECT",
+    "OBSERVE_RESULT",
+    "UPDATE_STRATEGY_MEMORY"
+  ],
+  "promotion_requirements": {
+    "green_tests": true,
+    "exact_head": true,
+    "rollback_parent": true,
+    "material_visible_or_functional_delta": true,
+    "no_regression_by_omission": true,
+    "canonical_verification": true,
+    "production_mutation_from_unproved_candidate": false
+  },
+  "archive_rules": {
+    "private_connector_ids_must_not_be_published": true,
+    "nested_archives_are_untrusted_until_inventoried": true,
+    "duplicate_state_authorities_are_pruned": true,
+    "synthetic_truth_is_quarantined": true,
+    "capability_recovery_is_preferred_over_wholesale_donor_merge": true
+  },
+  "representation_boundary": "144/1728/20736 and larger values are software/model/interface state-space representations unless independently evidenced otherwise"
+}
