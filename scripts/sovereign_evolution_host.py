@@ -8,26 +8,22 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from omega_genesis.sovereign_status import write_status as write_host_status
+
 DEFAULT_BRANCH = "omega-genesis-v1-full"
 STATUS_DIR = ROOT / "release" / "sovereign-host"
 STATUS_PATH = STATUS_DIR / "status.json"
 LOCK_PATH = STATUS_DIR / "host.lock"
 
 
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def write_status(payload: dict) -> None:
-    STATUS_DIR.mkdir(parents=True, exist_ok=True)
-    payload = {"observed_at": now_iso(), **payload}
-    tmp = STATUS_PATH.with_suffix(".tmp")
-    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    tmp.replace(STATUS_PATH)
+def status(value: str, **fields) -> dict:
+    payload = write_host_status(STATUS_PATH, value, **fields)
     print(json.dumps(payload, indent=2, sort_keys=True))
+    return payload
 
 
 def run(cmd: list[str], cwd: Path, *, check: bool = True, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -51,7 +47,7 @@ def acquire_lock(force: bool = False) -> None:
     except FileExistsError as exc:
         raise RuntimeError(f"sovereign evolution already locked: {LOCK_PATH}") from exc
     with os.fdopen(fd, "w", encoding="utf-8") as handle:
-        handle.write(f"pid={os.getpid()}\nstarted={now_iso()}\n")
+        handle.write(f"pid={os.getpid()}\n")
 
 
 def release_lock() -> None:
@@ -80,11 +76,13 @@ def main() -> int:
 
     acquire_lock(args.force_unlock)
     worktree: Path | None = None
+    baseline_sha: str | None = None
     try:
         if not shutil.which("git"):
-            write_status({"status": "BLOCKED_LOCAL_TOOLING", "reason": "git_not_found"})
+            status("BLOCKED_LOCAL_TOOLING", reason="git_not_found")
             return 2
 
+        status("VERIFYING_BASELINE", branch=args.branch, phase="fetch_and_verify")
         origin = capture(["git", "remote", "get-url", "origin"], ROOT)
         run(["git", "fetch", "origin", args.branch], ROOT)
         baseline_sha = capture(["git", "rev-parse", f"origin/{args.branch}"], ROOT)
@@ -92,9 +90,16 @@ def main() -> int:
         temp_root = Path(tempfile.mkdtemp(prefix="omega-sovereign-evolution-"))
         worktree = temp_root / "candidate"
         run(["git", "worktree", "add", "--detach", str(worktree), baseline_sha], ROOT)
-
         verify_tree(worktree, "release/sovereign-baseline")
 
+        status(
+            "AUTHORING",
+            branch=args.branch,
+            baseline_sha=baseline_sha,
+            provider="local-ollama",
+            model=args.model or "auto-discover",
+            phase="bounded_candidate_author",
+        )
         author_env = {
             "OMEGA_AI_PROVIDER": "local",
             "OMEGA_LOCAL_MODEL_URL": args.local_model_url,
@@ -118,14 +123,17 @@ def main() -> int:
         )
         author_meta = json.loads((worktree / "release/sovereign-candidate/author.json").read_text(encoding="utf-8"))
         if author.returncode != 0:
-            write_status({
-                "status": author_meta.get("status", "LOCAL_MODEL_UNAVAILABLE"),
-                "branch": args.branch,
-                "baseline_sha": baseline_sha,
-                "provider": author_meta.get("provider", "local-ollama"),
-                "model": author_meta.get("model", args.model or "auto-discover"),
-                "boundary": "no external paid AI fallback; repository audit remains authoritative",
-            })
+            final = str(author_meta.get("status", "LOCAL_MODEL_UNAVAILABLE")).upper()
+            if final not in {"LOCAL_MODEL_UNAVAILABLE", "QUARANTINE", "BLOCKED_LOCAL_TOOLING"}:
+                final = "QUARANTINE"
+            status(
+                final,
+                branch=args.branch,
+                baseline_sha=baseline_sha,
+                provider=author_meta.get("provider", "local-ollama"),
+                model=author_meta.get("model", args.model or "auto-discover"),
+                boundary="no external paid AI fallback; repository audit remains authoritative",
+            )
             return 0
 
         patch = worktree / "release/sovereign-candidate/candidate.patch"
@@ -135,7 +143,24 @@ def main() -> int:
         changed_path = worktree / "release/sovereign-candidate/changed-paths.txt"
         changed_path.write_text("\n".join(changed) + "\n", encoding="utf-8")
 
+        status(
+            "TESTING_CANDIDATE",
+            branch=args.branch,
+            baseline_sha=baseline_sha,
+            changed_paths=changed,
+            provider=author_meta.get("provider", "local-ollama"),
+            model=author_meta.get("model", args.model or "auto-discover"),
+            phase="full_regression_and_release_proof",
+        )
         verify_tree(worktree, "release/sovereign-candidate-state")
+
+        status(
+            "JUDGING",
+            branch=args.branch,
+            baseline_sha=baseline_sha,
+            changed_paths=changed,
+            phase="pinned_baseline_constitution",
+        )
         decision_path = worktree / "release/sovereign-candidate/decision.json"
         judge = run(
             [
@@ -157,13 +182,13 @@ def main() -> int:
         )
         decision = json.loads(decision_path.read_text(encoding="utf-8"))
         if judge.returncode != 0:
-            write_status({
-                "status": "CANDIDATE_REJECTED",
-                "branch": args.branch,
-                "baseline_sha": baseline_sha,
-                "changed_paths": changed,
-                "decision": decision,
-            })
+            status(
+                "CANDIDATE_REJECTED",
+                branch=args.branch,
+                baseline_sha=baseline_sha,
+                changed_paths=changed,
+                decision=decision,
+            )
             return 0
 
         promotion_patch = worktree.parent / "promotion.patch"
@@ -176,19 +201,26 @@ def main() -> int:
                 check=True,
             )
         if not promotion_patch.exists() or promotion_patch.stat().st_size == 0:
-            write_status({"status": "CANDIDATE_REJECTED", "reason": "empty_promotion_patch", "baseline_sha": baseline_sha})
+            status("CANDIDATE_REJECTED", reason="empty_promotion_patch", baseline_sha=baseline_sha)
             return 0
 
+        status(
+            "PROMOTING",
+            branch=args.branch,
+            baseline_sha=baseline_sha,
+            changed_paths=changed,
+            phase="freshness_recheck_and_final_proof",
+        )
         run(["git", "fetch", "origin", args.branch], worktree)
         fresh_sha = capture(["git", "rev-parse", "FETCH_HEAD"], worktree)
         if fresh_sha != baseline_sha:
-            write_status({
-                "status": "SUPERSEDED",
-                "branch": args.branch,
-                "baseline_sha": baseline_sha,
-                "current_sha": fresh_sha,
-                "boundary": "newer Genesis source won; stale autonomous candidate was not promoted",
-            })
+            status(
+                "SUPERSEDED",
+                branch=args.branch,
+                baseline_sha=baseline_sha,
+                current_sha=fresh_sha,
+                boundary="newer Genesis source won; stale autonomous candidate was not promoted",
+            )
             return 0
 
         run(["git", "reset", "--hard", baseline_sha], worktree)
@@ -206,32 +238,44 @@ def main() -> int:
         promoted_sha = capture(["git", "rev-parse", "HEAD"], worktree)
         push = run(["git", "push", origin, f"HEAD:{args.branch}"], worktree, check=False)
         if push.returncode != 0:
-            write_status({
-                "status": "PROMOTION_PUSH_BLOCKED",
-                "branch": args.branch,
-                "baseline_sha": baseline_sha,
-                "candidate_sha": promoted_sha,
-                "changed_paths": changed,
-                "boundary": "candidate passed local proof but was not claimed promoted because git push failed",
-            })
+            status(
+                "PROMOTION_PUSH_BLOCKED",
+                branch=args.branch,
+                baseline_sha=baseline_sha,
+                candidate_sha=promoted_sha,
+                changed_paths=changed,
+                boundary="candidate passed local proof but was not claimed promoted because git push failed",
+            )
             return 1
 
-        write_status({
-            "status": "PROMOTED",
-            "branch": args.branch,
-            "baseline_sha": baseline_sha,
-            "promoted_sha": promoted_sha,
-            "changed_paths": changed,
-            "provider": author_meta.get("provider", "local-ollama"),
-            "model": author_meta.get("model", args.model or "auto-discover"),
-            "boundary": "local model authored only; trusted proof gate admitted the source change before push",
-        })
+        status(
+            "PROMOTED",
+            branch=args.branch,
+            baseline_sha=baseline_sha,
+            promoted_sha=promoted_sha,
+            changed_paths=changed,
+            provider=author_meta.get("provider", "local-ollama"),
+            model=author_meta.get("model", args.model or "auto-discover"),
+            boundary="local model authored only; trusted proof gate admitted the source change before push",
+        )
         return 0
     except subprocess.CalledProcessError as exc:
-        write_status({"status": "QUARANTINE", "reason": "subprocess_failed", "command": exc.cmd, "returncode": exc.returncode})
+        status(
+            "QUARANTINE",
+            branch=args.branch,
+            baseline_sha=baseline_sha,
+            reason="subprocess_failed",
+            command=exc.cmd,
+            returncode=exc.returncode,
+        )
         return 1
     except Exception as exc:
-        write_status({"status": "QUARANTINE", "reason": f"{type(exc).__name__}: {exc}"})
+        status(
+            "QUARANTINE",
+            branch=args.branch,
+            baseline_sha=baseline_sha,
+            reason=f"{type(exc).__name__}: {exc}",
+        )
         return 1
     finally:
         if worktree is not None:
