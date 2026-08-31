@@ -96,8 +96,8 @@
     },
     {
       "path": "START_OMEGA_DESKTOP_LINK.ps1",
-      "sha256": "471762b12352c0d6f4cb8502f39bc5da07d5502fc693c3d446924d5ef8cbc64d",
-      "bytes": 743
+      "sha256": "31d4a515bfeb7680fa393db2671031d4dc8f19062f6192b68a7196a8d0c8f12d",
+      "bytes": 1522
     },
     {
       "path": "START_OMEGA_WINDOWS.bat",
@@ -141,13 +141,13 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "13972ec416393beedc0736d76415107c968ae8cc73414ec98c40072facc482dd",
-      "bytes": 2058
+      "sha256": "50032ceb8958b67880c44c5186e4c2faebb351220adaae92a4a96f96cb75371e",
+      "bytes": 4526
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
-      "sha256": "b2a5d53ab0f09f586a5d0647787fb16c270ca4b2d3b805d8cd4e9be516565642",
-      "bytes": 15103
+      "sha256": "31d0652a82d3941d569f3de329291844283049e398253ebd8bc184e2addc9c9f",
+      "bytes": 15064
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/kernel.js",
@@ -156,8 +156,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/link.js",
-      "sha256": "1fa8a3afd734f54f5d4cc1e8330e4749c803117de508fff0bb71d6693cb5bc62",
-      "bytes": 11892
+      "sha256": "962526442e4f24876c32a7d2c72369d7330d3e9befe7f134d61405acfb4b884b",
+      "bytes": 13217
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/system.js",
@@ -341,8 +341,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "76f52647bcf1f44a3d87e3beb9c4e301fa0771ab3568b3f51933916556029e24",
-      "bytes": 3925
+      "sha256": "eba9dab00d093d8d496b7a296019fb8d9d504cb9664e7403e3f17b61f0310172",
+      "bytes": 4094
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -376,8 +376,8 @@
     },
     {
       "path": "omega_genesis/desktop_link.py",
-      "sha256": "37b67d20a33ecb6dc79514fc501a28f86a7a359cf1b458b86c516734999bfae4",
-      "bytes": 7054
+      "sha256": "0bd56e77c644aed0596c347024906617aa91d1d7cb6948d86ae63bb84ff4eab0",
+      "bytes": 8481
     },
     {
       "path": "omega_genesis/evolution.py",
@@ -418,6 +418,11 @@
       "path": "omega_genesis/learning.py",
       "sha256": "d0e69c947cd897404238e71028dfac5c290e53c55431cba36e161696f14a5f73",
       "bytes": 11960
+    },
+    {
+      "path": "omega_genesis/link_protocol.py",
+      "sha256": "19d52f116f5edae54d369af2c9d576b8541481c97c03119cdef2fd69304323af",
+      "bytes": 2952
     },
     {
       "path": "omega_genesis/mission.py",
@@ -611,8 +616,8 @@
     },
     {
       "path": "scripts/sovereign_link_agent.py",
-      "sha256": "af6e6a481735b29443598ea2e28d799dcec4ff9001345e318a537307b31f41d4",
-      "bytes": 8421
+      "sha256": "5f0576d29cc814d7eddd4e20277e240abb06eac2606c2122c5f8417c6fad02a8",
+      "bytes": 8036
     },
     {
       "path": "scripts/verify_release.py",
@@ -650,8 +655,13 @@
       "bytes": 1683
     },
     {
+      "path": "tests/test_desktop_link_signed_contract.py",
+      "sha256": "6f583c5f4c0fa1251f53388f7a06c586a3d2c8c7f02de13d56a5822e7d924731",
+      "bytes": 712
+    },
+    {
       "path": "tests/test_evolution.py",
-      "sha256": "5f6f00b919cfc36fc3887252ff1b2d6df4445439cd5b8682ef7c6f7a378bb1b7",
+      "sha256": "e2e02bb9c6ec2d42b84fa99eeb3ec1b92823137a138f85fc9740c251cadc8a09",
       "bytes": 3904
     },
     {
@@ -665,9 +675,19 @@
       "bytes": 2593
     },
     {
+      "path": "tests/test_hybrid_link_ui_contract.py",
+      "sha256": "7d6ecaf84414b48907d6004758cb8bbdfccff0213ec92fc4d96fb43a6385ffdf",
+      "bytes": 1472
+    },
+    {
       "path": "tests/test_learning.py",
       "sha256": "224196803c10b0c45d6801b71221c905463280ff4332b166cb9d59f02c0d3761",
       "bytes": 4660
+    },
+    {
+      "path": "tests/test_link_protocol.py",
+      "sha256": "080549c32340e640d303b16fdeaa7bdba0f92170b819fdf0b64f561b8afd987f",
+      "bytes": 1092
     },
     {
       "path": "tests/test_provenance.py",
@@ -690,6 +710,11 @@
       "bytes": 1899
     },
     {
+      "path": "tests/test_worker_capability_truth.py",
+      "sha256": "5e2dcbe981ca2fd0f6416037dda7dbebf70669bec534f8d0afd6f902f05c1ba9",
+      "bytes": 551
+    },
+    {
       "path": "tests/test_world.py",
       "sha256": "8107b6c966b0eda91b3330c840286779781042a5af2e3cc5f87a148c0797cc9e",
       "bytes": 2577
@@ -706,8 +731,8 @@
     },
     {
       "path": "web/cloud.js",
-      "sha256": "97855d5c4c6b5827dd2a385671a6d325d5b98f825e7e8bb39fe48e3e21b9aa7e",
-      "bytes": 3255
+      "sha256": "cb167a159a5c67879beae2a16706fb9275d619761172c2707f63177378e36edd",
+      "bytes": 17295
     },
     {
       "path": "web/field3d.js",
