@@ -30,10 +30,11 @@ CAPABILITIES = [
     {"id":"CAP-027","name":"Authenticated controller-scoped cloud conversation memory sync","menu":"06 AI Orchestration","gate":"Controller isolation + durable save/search/archive + integrity verification","status":"LIVE_CORE"},
     {"id":"CAP-028","name":"Adaptive cloud-first contextual interaction memory","menu":"06 AI Orchestration","gate":"Cloud-first/local-fallback + explicit save suggestion + selected-context provenance","status":"LIVE_CORE"},
     {"id":"CAP-029","name":"Reciprocal V6↔Genesis convergence manifest","menu":"11 Archive Merge","gate":"Non-recursive peer observation + canonical authority separation","status":"LIVE_CORE"},
+    {"id":"CAP-030","name":"Single-product OMEGA V6 facade over Genesis canonical authority","menu":"01 Runtime Core","gate":"V6/Genesis digest parity + service binding + no shadow state","status":"LIVE_CORE"},
 ]
 
 MENUS = [
-    ("01","Runtime Core","One canonical state owner; health and transport."),
+    ("01","Runtime Core","One canonical state owner behind the stable OMEGA V6 public product surface; health and transport."),
     ("02","Proof & Governance","Admission, replay, evidence and shadow-state controls."),
     ("03","Traversal","Stay/Turn/Escalate, addresses, Dewey/RSC motion logic."),
     ("04","Render Field","Living membrane, skins, graph and state-bound projection."),
