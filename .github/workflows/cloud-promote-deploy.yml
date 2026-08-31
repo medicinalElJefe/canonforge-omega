@@ -1,0 +1,110 @@
+name: OMEGA Cloud Promote Deploy
+
+on:
+  workflow_run:
+    workflows: ["OMEGA Governed Self-Build"]
+    types: [completed]
+    branches: [omega-genesis-v1-full]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "Verified Genesis source SHA to deploy"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  resolve-immutable-image:
+    if: ${{ (github.event_name == 'workflow_dispatch') || (github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+      source_sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Resolve verified source SHA
+        id: source
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_SHA: ${{ inputs.source_sha }}
+          BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            SHA="$DISPATCH_SHA"
+          else
+            SHA="$BUILD_SHA"
+          fi
+          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "invalid source SHA" >&2
+            exit 1
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve immutable OCI digest
+        id: resolve
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          IMAGE_BASE: ghcr.io/${{ github.repository }}/omega-cloud
+        run: |
+          IMAGE_BASE="$(echo "$IMAGE_BASE" | tr '[:upper:]' '[:lower:]')"
+          TAG="$IMAGE_BASE:sha-$SOURCE_SHA"
+          docker pull "$TAG"
+          DIGEST="$(docker image inspect "$TAG" --format '{{index .RepoDigests 0}}')"
+          if ! [[ "$DIGEST" =~ @sha256:[0-9a-f]{64}$ ]]; then
+            echo "could not resolve immutable image digest" >&2
+            exit 1
+          fi
+          echo "image=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Resolved immutable image: $DIGEST" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: resolve-immutable-image
+    if: ${{ vars.OMEGA_AUTODEPLOY_ENABLED == '1' }}
+    runs-on: [self-hosted, linux, omega-cloud]
+    environment: omega-cloud-production
+    concurrency:
+      group: omega-cloud-production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-immutable-image.outputs.source_sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify deployment source before mutation
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+          python -m pytest -q
+          python scripts/verify_release.py
+      - name: Deploy immutable image with proof/replay rollback gate
+        env:
+          OMEGA_GATEWAY_TOKEN: ${{ secrets.OMEGA_GATEWAY_TOKEN }}
+          OMEGA_DEPLOY_HEALTH_URL: ${{ vars.OMEGA_DEPLOY_HEALTH_URL }}
+          OMEGA_DEPLOY_STATE_DIR: ${{ vars.OMEGA_DEPLOY_STATE_DIR }}
+        run: python scripts/cloud_deploy.py --image '${{ needs.resolve-immutable-image.outputs.image }}'
+
+  boundary:
+    needs: resolve-immutable-image
+    if: ${{ vars.OMEGA_AUTODEPLOY_ENABLED != '1' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record deployment boundary
+        run: |
+          {
+            echo "## OMEGA deployment boundary"
+            echo
+            echo "The verified immutable image was resolved, but autonomous production deployment is disabled."
+            echo "Set repository variable OMEGA_AUTODEPLOY_ENABLED=1 only after an authorized self-hosted runner labeled omega-cloud is installed on the canonical cloud host."
+            echo "No production deployment is claimed by this run."
+          } >> "$GITHUB_STEP_SUMMARY"
