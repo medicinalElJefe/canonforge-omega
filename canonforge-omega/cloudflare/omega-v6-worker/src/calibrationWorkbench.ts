@@ -1,0 +1,36 @@
+import { evaluateForecastLedger, forecastLedgerSchema, FORECAST_LEDGER_BOUNDARY } from "./forecastProofLedger";
+
+export const CALIBRATION_BOUNDARY = "Calibration recommendations summarize observed forecast error. They are advisory evidence, not causal proof, not automatic operator-weight mutation, and not permission to rewrite historical predictions.";
+
+type Evidence = { domain:string; operator:string; observations:number; brier:number; mae:number; bias:number; evidence_strength:string; trust_update_allowed:boolean };
+
+export function evaluateCalibration(body:any){
+  const ledger=evaluateForecastLedger(body);
+  if(ledger.status!==200) return ledger;
+  const data:any=ledger.body;
+  const rows:Evidence[]=Array.isArray(data.operator_evidence)?data.operator_evidence:[];
+  const byDomain=new Map<string,Evidence[]>();
+  for(const row of rows){const a=byDomain.get(row.domain)||[];a.push(row);byDomain.set(row.domain,a)}
+  const recommendations=rows.map(row=>{
+    const peers=(byDomain.get(row.domain)||[]).filter(x=>x.observations>=5);
+    const peerBriers=peers.map(x=>x.brier).sort((a,b)=>a-b);
+    const median=peerBriers.length?peerBriers[Math.floor(peerBriers.length/2)]:null;
+    let action="HOLD_EVIDENCE"; let reason="Insufficient observations for a bounded trust recommendation.";
+    if(row.observations>=5&&median!==null){
+      if(row.brier<median){action="RETAIN_FOR_TESTING";reason="Observed Brier error is below the current same-domain median; preserve for further held-out testing."}
+      else if(row.brier>median){action="ABLATION_CANDIDATE";reason="Observed Brier error is above the current same-domain median; test removal or replacement on held-out data."}
+      else{action="HOLD_COMPARISON";reason="Observed Brier error matches the current same-domain median; more evidence is required."}
+    }
+    return {...row,domain_peer_median_brier:median,advisory_action:action,reason,causation_claimed:false,automatic_weight_change:false};
+  });
+  return {status:200,body:{ok:true,schema:"OMEGA_CALIBRATION_LEARNING_WORKBENCH_V1",authority:"computation-only",mutation:false,ledger_schema:forecastLedgerSchema().schema,counts:data.counts,aggregate:data.aggregate,recommendations,pending:data.pending,proof:{historical_predictions_rewritten:false,causation_claimed:false,automatic_canonical_weight_mutation:false,comparison_basis:"same-domain observed Brier error with minimum sample gate",held_out_retest_required:true},boundary:CALIBRATION_BOUNDARY,ledger_boundary:FORECAST_LEDGER_BOUNDARY}};
+}
+
+const page=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OMEGA V6 · Calibration Learning</title><style>:root{color-scheme:dark;font:15px/1.45 system-ui;background:#05070b;color:#f4f7ff}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#261d42,#05070b 52%);min-height:100vh}.top,.actions{display:flex;gap:9px;flex-wrap:wrap}.top{padding:14px 18px;border-bottom:1px solid #293950;justify-content:space-between}.wrap{max-width:1500px;margin:auto;padding:18px}.grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:14px}.card{background:#0c121cee;border:1px solid #293950;border-radius:18px;padding:16px}textarea,button,a{background:#101927;color:#f4f7ff;border:1px solid #3a4b68;border-radius:10px;padding:10px;text-decoration:none}textarea{width:100%;min-height:430px;font:12px/1.5 ui-monospace,monospace}.rows{display:grid;gap:9px}.row{border:1px solid #334967;border-radius:14px;padding:12px}.tag{font:12px ui-monospace,monospace;color:#b6c2d7}.good{color:#55d88b}.warn{color:#f0c95b}.bad{color:#ff8b8b}.muted{color:#9aa8bd}.mono{white-space:pre-wrap;word-break:break-word;font:12px/1.5 ui-monospace,monospace}@media(max-width:900px){.grid{grid-template-columns:1fr}}</style></head><body><header class="top"><b>OMEGA V6 · CALIBRATION / LEARNING</b><div class="actions"><a href="/timeline">Timeline</a><a href="/memory">Memory</a><a href="/relations">Relations</a><a href="/workbench">State</a></div></header><main class="wrap"><h1>Let operators earn trust from prediction error.</h1><p class="muted">This workbench compares prior forecasts to later observations, groups error by domain/operator, and produces bounded ablation or retention recommendations. Recommendations never rewrite canonical weights automatically.</p><div class="grid"><section class="card"><h2>Forecast ledger sample</h2><textarea id="input">{"forecasts":[
+{"id":"f1","predicted":0.72,"observed":0.69,"operator":"PRUNE","domain":"demo","issued_at":1,"observed_at":2,"provenance":"example"},
+{"id":"f2","predicted":0.66,"observed":0.61,"operator":"PRUNE","domain":"demo","issued_at":2,"observed_at":3,"provenance":"example"},
+{"id":"f3","predicted":0.80,"observed":0.58,"operator":"TRANSLATE","domain":"demo","issued_at":1,"observed_at":2,"provenance":"example"},
+{"id":"f4","predicted":0.77,"observed":0.60,"operator":"TRANSLATE","domain":"demo","issued_at":2,"observed_at":3,"provenance":"example"}
+]}</textarea><button id="run">Evaluate calibration</button></section><section class="card"><h2>Evidence-gated recommendations</h2><div id="rows" class="rows"></div><h3>Proof packet</h3><pre id="proof" class="mono"></pre></section></div></main><script>const q=s=>document.querySelector(s);q('#run').onclick=async()=>{let body;try{body=JSON.parse(q('#input').value)}catch{q('#proof').textContent='INVALID JSON';return}const r=await fetch('/api/calibration/evaluate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}),d=await r.json();q('#proof').textContent=JSON.stringify(d,null,2);const rows=q('#rows');rows.innerHTML='';for(const x of d.recommendations||[]){const e=document.createElement('article');e.className='row';const c=x.advisory_action==='RETAIN_FOR_TESTING'?'good':x.advisory_action==='ABLATION_CANDIDATE'?'bad':'warn';e.innerHTML='<b></b><p></p><div class="tag"></div>';e.querySelector('b').textContent=x.domain+' · '+x.operator;e.querySelector('p').textContent=x.reason;e.querySelector('.tag').className='tag '+c;e.querySelector('.tag').textContent=x.advisory_action+' · n='+x.observations+' · Brier='+x.brier+' · peer median='+x.domain_peer_median_brier;rows.append(e)}};</script></body></html>`;
+
+export async function handleCalibrationWorkbenchRequest(request:Request):Promise<Response|null>{const u=new URL(request.url);if(u.pathname==="/calibration"&&request.method==="GET")return new Response(page,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","x-omega-authority":"computation-only"}});if(u.pathname==="/api/calibration/schema"&&request.method==="GET")return Response.json({schema:"OMEGA_CALIBRATION_LEARNING_WORKBENCH_V1",authority:"computation-only",mutation:false,ledger_schema:forecastLedgerSchema().schema,boundary:CALIBRATION_BOUNDARY},{headers:{"cache-control":"no-store","x-omega-authority":"computation-only"}});if(u.pathname==="/api/calibration/evaluate"&&request.method==="POST"){let body:any;try{body=await request.json()}catch{return Response.json({ok:false,error:"valid_json_required",boundary:CALIBRATION_BOUNDARY},{status:400})}const r=evaluateCalibration(body);return Response.json(r.body,{status:r.status,headers:{"cache-control":"no-store","x-omega-authority":"computation-only"}})}return null}
