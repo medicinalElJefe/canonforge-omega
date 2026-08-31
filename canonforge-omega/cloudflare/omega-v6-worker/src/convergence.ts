@@ -18,6 +18,20 @@ async function probe(url: string): Promise<any> {
   }
 }
 
+async function genesisProbe(env: Env, path: string): Promise<any> {
+  if (env.GENESIS) {
+    try {
+      const response = await env.GENESIS.fetch(new Request("https://omega-genesis.internal" + path, { headers: { accept: "application/json" } }));
+      const body = await jsonFrom(response);
+      return { reachable: response.ok, status: response.status, body, transport: "SERVICE_BINDING" };
+    } catch (error) {
+      return { reachable: false, status: 0, error: String(error), transport: "SERVICE_BINDING" };
+    }
+  }
+  const fallback = await probe(GENESIS + path);
+  return { ...fallback, transport: "PUBLIC_FETCH_FALLBACK" };
+}
+
 async function baseProbe(request: Request, env: Env, path: string): Promise<any> {
   try {
     const u = new URL(request.url); u.pathname = path; u.search = "";
@@ -34,11 +48,11 @@ async function convergenceSnapshot(request: Request, env: Env) {
     baseProbe(request, env, "/_omega/health"),
     baseProbe(request, env, "/api/hybrid/status"),
     baseProbe(request, env, "/api/development/status"),
-    probe(`${GENESIS}/_omega/health`),
-    probe(`${GENESIS}/api/health`),
-    probe(`${GENESIS}/api/convergence/manifest`),
-    probe(`${GENESIS}/api/capabilities`),
-    probe(`${GENESIS}/api/mode?id=ALL_MODES`),
+    genesisProbe(env, "/_omega/health"),
+    genesisProbe(env, "/api/health"),
+    genesisProbe(env, "/api/convergence/manifest"),
+    genesisProbe(env, "/api/capabilities"),
+    genesisProbe(env, "/api/mode?id=ALL_MODES"),
   ]);
   const hb = v6Hybrid.body || {};
   const dev = v6Development.body || {};
