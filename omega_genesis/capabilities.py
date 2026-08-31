@@ -21,6 +21,7 @@ CAPABILITIES = [
     {"id":"CAP-018","name":"Media compiler","menu":"06 AI Orchestration","gate":"Boundary","status":"ADAPTER"},
     {"id":"CAP-019","name":"Canonical-bound adaptive-memory checkpoints","menu":"02 Proof & Governance","gate":"Replay proof","status":"LIVE_CORE"},
     {"id":"CAP-020","name":"Release-aware canonical cloud deployment orchestration","menu":"10 Recovery / Packaging","gate":"Canonical self-build completion + live proof","status":"LIVE_CORE"},
+    {"id":"CAP-021","name":"Signed replay-protected Hybrid Link execution envelopes","menu":"05 Host Inputs","gate":"Authenticated node protocol","status":"LIVE_CORE"},
 ]
 
 MENUS = [
