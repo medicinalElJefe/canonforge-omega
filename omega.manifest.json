@@ -146,8 +146,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "aa90146a915c37166ca5d28737ccc2c52c269bc8d7c48a0f488e17d9b3776daf",
-      "bytes": 6332
+      "sha256": "43570223c95fd0886b29ddf1bc5c04635e9cebfcc7bf3be1852cabf2c6b1758d",
+      "bytes": 6605
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/convergence.js",
@@ -191,8 +191,8 @@
     },
     {
       "path": "cloudflare/omegav6-worker/src/index.js",
-      "sha256": "858cbfb07d0c81a89bf15463cc6ba51fc08fbdd5b0d32eeb7c4f3e52ab02a0c5",
-      "bytes": 3995
+      "sha256": "c383993375090070e65f99b58ee03c02869467c50dbd2f4996b9aef31da214d2",
+      "bytes": 5095
     },
     {
       "path": "cloudflare/omegav6-worker/wrangler.toml",
@@ -401,8 +401,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "ca2bac4064e2882786ee4b0d14c3033c5be9218df50340558cf6d8c3c22424b8",
-      "bytes": 6038
+      "sha256": "6e486ba6f3ecf10f7e9edc24227dc80a023c1773ddf74533f900fd35ac3d4625",
+      "bytes": 6325
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -846,8 +846,8 @@
     },
     {
       "path": "tests/test_v6_single_product_facade.py",
-      "sha256": "b88f87bc6b609b1eb53499b09026c7ba5a803cfbb2f988cf649061e830c560d7",
-      "bytes": 1760
+      "sha256": "8296df28d42fcafd0f164b282fd85dca2413f719b4821fddef5d134696123d83",
+      "bytes": 2478
     },
     {
       "path": "tests/test_worker_capability_truth.py",
