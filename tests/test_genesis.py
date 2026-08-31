@@ -315,3 +315,27 @@ def test_earth_motion_executes_on_quantized_heading():
     p10 = destination(a, ten_degrees, 5000)
     assert abs(p12.lat - p10.lat) < 1e-12
     assert abs(p12.lon - p10.lon) < 1e-12
+
+
+def test_cloud_auth_session_roundtrip():
+    from omega_genesis.cloud_auth import CloudAuth
+    auth = CloudAuth("operator-secret", "session-secret", ttl_seconds=60, secure_cookie=False, cloud_mode=True)
+    assert auth.enabled
+    assert auth.verify_admin_token("operator-secret")
+    assert not auth.verify_admin_token("wrong")
+    token = auth.issue_session(now=1000)
+    assert auth.verify_session(token, now=1001)
+    assert auth.verify_session(token, now=1059)
+    assert not auth.verify_session(token, now=1060)
+    assert "HttpOnly" in auth.session_cookie(token)
+    assert "Secure" not in auth.session_cookie(token)
+
+
+def test_cloud_auth_rejects_tampered_session():
+    from omega_genesis.cloud_auth import CloudAuth
+    auth = CloudAuth("operator-secret", "session-secret", ttl_seconds=60, secure_cookie=True, cloud_mode=True)
+    token = auth.issue_session(now=2000)
+    body, sig = token.split(".", 1)
+    bad = body + "." + ("A" if sig[0] != "A" else "B") + sig[1:]
+    assert not auth.verify_session(bad, now=2001)
+    assert "Secure" in auth.session_cookie(token)
