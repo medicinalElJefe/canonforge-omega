@@ -10,6 +10,7 @@ from typing import Any
 from .capabilities import CAPABILITIES
 from .provenance import load_catalog, validate_catalog
 from .release import verify_manifest
+from .visual_quality import evaluate_visual_quality
 
 SCHEMA = "omega.evolution.policy.v1"
 ALLOWED_CHECKS = {"file", "capability", "provenance", "selfbuild", "external_evidence"}
@@ -165,6 +166,7 @@ def build_snapshot(root: Path, data_dir: Path) -> dict[str, Any]:
     catalog = load_catalog(root)
     provenance = validate_catalog(catalog)
     manifest = verify_manifest(root)
+    visual_quality = evaluate_visual_quality(root)
     capability_map = _capability_map()
     provenance_caps = _provenance_capabilities(catalog)
 
@@ -220,6 +222,7 @@ def build_snapshot(root: Path, data_dir: Path) -> dict[str, Any]:
         "quality_vector": {
             "manifest_integrity": 1 if manifest.get("status") == "PASS" else 0,
             "provenance_integrity": 1 if provenance.get("status") == "PASS" else 0,
+            "visual_quality": visual_quality["score"],
             "live_core_capabilities": core_caps,
             "adapter_capabilities": adapter_caps,
             "capability_total": len(capability_map),
@@ -229,6 +232,7 @@ def build_snapshot(root: Path, data_dir: Path) -> dict[str, Any]:
             "weighted_progress": round(progress_weight / total_weight, 6) if total_weight else 0.0,
             "weighted_gap": round(1.0 - (progress_weight / total_weight), 6) if total_weight else 1.0,
         },
+        "visual_quality": visual_quality,
         "objectives": objective_rows,
         "backlog": backlog,
         "manifest": {"status": manifest.get("status"), "errors": list(manifest.get("errors") or [])},
@@ -252,7 +256,7 @@ def candidate_decision(baseline: dict[str, Any], candidate: dict[str, Any], *, r
     if c.get("provenance_integrity") != 1:
         errors.append("candidate_provenance_invalid")
 
-    for key in ("live_core_capabilities", "capability_total", "objective_total", "objectives_achieved", "weighted_progress"):
+    for key in ("visual_quality", "live_core_capabilities", "capability_total", "objective_total", "objectives_achieved", "weighted_progress"):
         if c.get(key, 0) < b.get(key, 0):
             errors.append(f"regression:{key}")
 
@@ -260,7 +264,8 @@ def candidate_decision(baseline: dict[str, Any], candidate: dict[str, Any], *, r
         errors.append("regression:weighted_gap")
 
     strict = (
-        c.get("live_core_capabilities", 0) > b.get("live_core_capabilities", 0)
+        c.get("visual_quality", 0.0) > b.get("visual_quality", 0.0)
+        or c.get("live_core_capabilities", 0) > b.get("live_core_capabilities", 0)
         or c.get("objectives_achieved", 0) > b.get("objectives_achieved", 0)
         or c.get("weighted_progress", 0.0) > b.get("weighted_progress", 0.0)
         or c.get("weighted_gap", 1.0) < b.get("weighted_gap", 1.0)
