@@ -304,10 +304,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, earth_context(lat, lon))
             if path == "/api/link/status":
                 return self._json(200, {
-                    "status": "LOCAL_HOST_BOUNDARY",
-                    "authority": "sovereign local executor",
-                    "cloud_pairing": "requires deployed Genesis Worker Mission Control",
+                    "status": "OPTIONAL_NODE_LINK",
+                    "authority": "OMEGA Cloud canonical host" if AUTH.cloud_mode else "local node/development host",
+                    "cloud_pairing": "desktop and mobile nodes are optional; cloud state survives independently",
                     "canonical_mutation": False,
+                    "desktop_required": False,
                 })
             if path == "/api/host/status":
                 import platform
