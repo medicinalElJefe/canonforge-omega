@@ -28,6 +28,7 @@ DEFAULT_REFS = (
 
 IGNORED_PARTS = {".git", "node_modules", "__pycache__", ".pytest_cache", ".venv", "dist", "build"}
 TEXT_SUFFIXES = {".py", ".js", ".ts", ".tsx", ".jsx", ".json", ".toml", ".yml", ".yaml", ".md", ".html", ".css", ".txt", ".ps1", ".bat", ".cmd"}
+DEFAULT_POLICY_PATH = Path(__file__).resolve().parents[1] / "config" / "convergence_policy.json"
 
 
 def git(*args: str) -> str:
@@ -140,23 +141,57 @@ def load_sanitized_archive_manifest(path: Path | None) -> List[DonorArtifact]:
     return artifacts
 
 
+def load_governance_policy(path: Path) -> dict:
+    """Load the repository-governed convergence directive consumed by recursive scans.
+
+    Fail closed rather than silently reverting to a weaker/default policy: an unreadable,
+    missing, or malformed policy means the convergence cycle is not authorized to emit a
+    strategy snapshot.
+    """
+    if not path.exists() or not path.is_file():
+        raise RuntimeError(f"governance policy missing: {path}")
+    try:
+        policy = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"governance policy invalid: {path}: {exc}") from exc
+    if not isinstance(policy, dict):
+        raise RuntimeError("governance policy must be a JSON object")
+    required = ("canonical_ref", "genesis_ref", "promotion_requirements", "candidate_loop", "auto_update_directive")
+    missing = [key for key in required if key not in policy]
+    if missing:
+        raise RuntimeError("governance policy missing required keys: " + ",".join(missing))
+    auto = policy.get("auto_update_directive") or {}
+    if auto.get("no_regression_by_omission") is not True:
+        raise RuntimeError("governance policy must require no_regression_by_omission")
+    if auto.get("preserve_all_mode_distinctions") is not True:
+        raise RuntimeError("governance policy must preserve all mode distinctions")
+    if auto.get("preserve_temporal_calculus_field") is not True:
+        raise RuntimeError("governance policy must preserve the temporal calculus field")
+    return policy
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build OMEGA governed cross-lineage convergence snapshot")
     parser.add_argument("--canonical-ref", default="omega-v6-full-convergence")
     parser.add_argument("--genesis-ref", default="omega-genesis-v1-full")
     parser.add_argument("--output", default="convergence/latest.json")
     parser.add_argument("--archive-manifest", default="")
+    parser.add_argument("--policy", default=str(DEFAULT_POLICY_PATH))
     parser.add_argument("--refs", nargs="*", default=list(DEFAULT_REFS))
     args = parser.parse_args()
+
+    policy = load_governance_policy(Path(args.policy))
+    if policy.get("canonical_ref") != args.canonical_ref or policy.get("genesis_ref") != args.genesis_ref:
+        raise RuntimeError("requested convergence refs do not match governed policy refs")
 
     available = set(git("for-each-ref", "--format=%(refname:short)", "refs/remotes/origin", "refs/heads").replace("origin/", "").splitlines())
     refs = []
     for ref in args.refs:
         if ref in available and ref not in refs:
             refs.append(ref)
-    for required in (args.canonical_ref, args.genesis_ref):
-        if required in available and required not in refs:
-            refs.insert(0, required)
+    for required_ref in (args.canonical_ref, args.genesis_ref):
+        if required_ref in available and required_ref not in refs:
+            refs.insert(0, required_ref)
 
     artifacts: List[DonorArtifact] = []
     for ref in refs:
@@ -164,7 +199,7 @@ def main() -> int:
     archive_path = Path(args.archive_manifest) if args.archive_manifest else None
     artifacts.extend(load_sanitized_archive_manifest(archive_path))
 
-    snapshot = build_snapshot(artifacts, args.canonical_ref, args.genesis_ref)
+    snapshot = build_snapshot(artifacts, args.canonical_ref, args.genesis_ref, policy=policy)
     write_snapshot(snapshot, Path(args.output))
     print(json.dumps({
         "canonical_ref": args.canonical_ref,
@@ -177,6 +212,10 @@ def main() -> int:
         "unresolved": len(snapshot.unresolved),
         "next_objectives": snapshot.next_objectives[:8],
         "policy_digest": snapshot.policy_digest,
+        "policy_path": str(Path(args.policy)),
+        "auto_update_directive_loaded": True,
+        "preserve_all_mode_distinctions": bool((policy.get("auto_update_directive") or {}).get("preserve_all_mode_distinctions")),
+        "preserve_temporal_calculus_field": bool((policy.get("auto_update_directive") or {}).get("preserve_temporal_calculus_field")),
     }, indent=2))
     return 0
 
