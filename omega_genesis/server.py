@@ -8,6 +8,7 @@ import json
 import mimetypes
 import os
 import math
+import hmac
 
 from .runtime import OmegaRuntime
 from .schema import Address20736, CanonicalMetrics, EvidenceClass
@@ -42,11 +43,13 @@ from .mission import plan_prompt, validate_mission
 from .reality import RealityConfig, analyze_delimited
 from .training import retrieve as retrieve_training
 from .observations import earth_context
+from .cloud_auth import CloudAuth
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 DATA = Path(os.environ.get("OMEGA_DATA", ROOT / "runtime-data"))
 RUNTIME = OmegaRuntime(DATA)
+AUTH = CloudAuth.from_env()
 PLUGIN_ROOT = (ROOT / "plugins").resolve()
 
 
@@ -108,12 +111,14 @@ def _json_safe(value):
 class Handler(BaseHTTPRequestHandler):
     server_version = "OmegaGenesis/1.1"
 
-    def _json(self, status, obj, head_only=False):
+    def _json(self, status, obj, head_only=False, extra_headers=None):
         raw = json.dumps(_json_safe(obj), ensure_ascii=False, default=str, allow_nan=False, separators=(",", ":")).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(raw)))
         self.send_header("Cache-Control", "no-store")
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, value)
         self.end_headers()
         if not head_only:
             self.wfile.write(raw)
@@ -125,9 +130,15 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(length) or b"{}")
 
     def _auth(self):
-        token = os.environ.get("OMEGA_GATEWAY_TOKEN")
         host = self.client_address[0]
-        return host in {"127.0.0.1", "::1"} or bool(token and self.headers.get("X-Omega-Gateway-Token") == token)
+        if host in {"127.0.0.1", "::1"}:
+            return True
+        cookie = AUTH.cookie_value(self.headers.get("Cookie", ""))
+        if AUTH.verify_session(cookie):
+            return True
+        supplied = self.headers.get("X-Omega-Gateway-Token", "")
+        gateway = os.environ.get("OMEGA_GATEWAY_TOKEN", "")
+        return bool((gateway and hmac.compare_digest(supplied, gateway)) or AUTH.verify_admin_token(supplied))
 
     def _governed_path(self, path: str) -> bool:
         return path.startswith("/api/") or path.startswith("/host/")
@@ -146,6 +157,14 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         query = parse_qs(parsed.query)
+        if path == "/api/auth/status":
+            authenticated = self._auth() if AUTH.enabled else True
+            return self._json(200, {
+                "auth_enabled": AUTH.enabled,
+                "authenticated": authenticated,
+                "cloud_mode": AUTH.cloud_mode,
+                "public_url": os.environ.get("OMEGA_PUBLIC_URL"),
+            })
         if self._governed_path(path) and not self._auth():
             return self._json(401, {"error": "unauthorized_sovereign_ingress"})
 
@@ -160,6 +179,21 @@ class Handler(BaseHTTPRequestHandler):
                     "proof": RUNTIME.ledger.verify(),
                     "replay": RUNTIME.verify_replay(),
                     "stream": stream_status(),
+                })
+            if path == "/api/cloud/status":
+                return self._json(200, {
+                    "status": "PASS",
+                    "authority": "OMEGA_CLOUD" if AUTH.cloud_mode else "LOCAL_HOST",
+                    "cloud_mode": AUTH.cloud_mode,
+                    "auth_enabled": AUTH.enabled,
+                    "public_url": os.environ.get("OMEGA_PUBLIC_URL"),
+                    "data_root": str(DATA),
+                    "canonical_digest": RUNTIME.state.digest,
+                    "state_id": RUNTIME.state.address.state_id,
+                    "proof": RUNTIME.ledger.verify(),
+                    "replay": RUNTIME.verify_replay(),
+                    "stream": stream_status(),
+                    "desktop_required": False,
                 })
             if path in {"/api/state", "/host/current"}:
                 return self._json(200, RUNTIME.snapshot())
@@ -294,6 +328,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/api/auth/login":
+            try:
+                body = self._body()
+            except Exception as exc:
+                return self._json(400, {"error": "invalid_json", "detail": str(exc)})
+            if not AUTH.enabled:
+                return self._json(503, {"error": "cloud_auth_not_configured"})
+            if not AUTH.verify_admin_token(str(body.get("token", ""))):
+                return self._json(401, {"error": "invalid_operator_token"})
+            session = AUTH.issue_session()
+            return self._json(200, {"status": "PASS", "authenticated": True}, extra_headers={"Set-Cookie": AUTH.session_cookie(session)})
+        if path == "/api/auth/logout":
+            return self._json(200, {"status": "PASS", "authenticated": False}, extra_headers={"Set-Cookie": AUTH.clear_cookie()})
         if self._governed_path(path) and not self._auth():
             return self._json(401, {"error": "unauthorized_sovereign_ingress"})
         try:
@@ -420,12 +467,14 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    if AUTH.cloud_mode and not AUTH.enabled:
+        raise RuntimeError("OMEGA_CLOUD_MODE requires OMEGA_CLOUD_ADMIN_TOKEN (or OMEGA_GATEWAY_TOKEN) and OMEGA_SESSION_SECRET")
     host = os.environ.get("OMEGA_HOST", "127.0.0.1")
     port = int(os.environ.get("OMEGA_PORT", "8127"))
     if os.environ.get("OMEGA_STREAM_ENABLED", "1").lower() not in {"0", "false", "off", "no"}:
         stream_host = os.environ.get("OMEGA_STREAM_HOST", "127.0.0.1")
         stream_port = int(os.environ.get("OMEGA_STREAM_PORT", "8128"))
-        start_state_stream(RUNTIME, stream_host, stream_port)
+        start_state_stream(RUNTIME, stream_host, stream_port, auth=AUTH if AUTH.cloud_mode else None)
     print(f"OMEGA Genesis → http://{host}:{port}")
     print(f"Canonical capacity namespace → {CAPACITY_61917364224:,} software addresses")
     ThreadingHTTPServer((host, port), Handler).serve_forever()
