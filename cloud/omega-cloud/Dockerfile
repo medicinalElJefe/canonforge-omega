@@ -10,15 +10,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     OMEGA_STREAM_PORT=8128 \
     OMEGA_DATA=/data \
     OMEGA_HYBRID_ROOTS=/workspace \
-    OMEGA_COOKIE_SECURE=1
+    OMEGA_COOKIE_SECURE=1 \
+    OMEGA_SELF_BUILD_INTERVAL_SECONDS=600
 
 WORKDIR /opt/omega
 COPY . /opt/omega
 RUN python -m pip install --no-cache-dir --upgrade pip && \
-    python -m pip install --no-cache-dir . && \
+    python -m pip install --no-cache-dir . pytest && \
     python scripts/verify_release.py
 
-RUN mkdir -p /data /workspace /backups
+RUN mkdir -p /data /workspace /backups /data/self-build
 EXPOSE 8127 8128
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8127/api/health', timeout=3).read()" || exit 1

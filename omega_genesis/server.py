@@ -195,6 +195,20 @@ class Handler(BaseHTTPRequestHandler):
                     "stream": stream_status(),
                     "desktop_required": False,
                 })
+            if path == "/api/self-build/status":
+                status_path = DATA / "self-build" / "status.json"
+                if not status_path.is_file():
+                    return self._json(200, {
+                        "status": "PENDING",
+                        "authority": "OMEGA_CLOUD" if AUTH.cloud_mode else "LOCAL_HOST",
+                        "detail": "cloud self-build supervisor has not published a cycle yet",
+                    })
+                report = json.loads(status_path.read_text(encoding="utf-8"))
+                return self._json(200, {
+                    "status": "PASS" if report.get("decision") == "PASS" else "QUARANTINE",
+                    "authority": report.get("authority", "OMEGA_CLOUD"),
+                    "report": report,
+                })
             if path in {"/api/state", "/host/current"}:
                 return self._json(200, RUNTIME.snapshot())
             if path == "/host/projection/current":
