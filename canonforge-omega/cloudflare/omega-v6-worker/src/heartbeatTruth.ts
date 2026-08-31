@@ -1,5 +1,11 @@
 import convergence, { OmegaRuntime } from "./convergence";
 import type { Env } from "./index";
+import {
+  handleCapabilityRequest,
+  injectCapabilityLink,
+  injectSpecialistActivation,
+  specialistFromPath,
+} from "./capabilityRouter";
 
 export { OmegaRuntime };
 
@@ -85,6 +91,14 @@ async function enforceHeartbeatTruth(response: Response, env: BoundEnv): Promise
   return Response.json(body, { status: response.status, headers: response.headers });
 }
 
+async function provenEdgeSnapshot(request: Request, env: BoundEnv): Promise<any> {
+  const url = new URL(request.url);
+  url.pathname = "/api/convergence/edge";
+  url.search = "";
+  const response = await convergence.fetch(new Request(url.toString(), { method: "GET", headers: { accept: "application/json" } }), env);
+  return jsonFrom(await enforceHeartbeatTruth(response, env));
+}
+
 async function injectCockpitLink(response: Response): Promise<Response> {
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
@@ -97,10 +111,26 @@ async function injectCockpitLink(response: Response): Promise<Response> {
 export default {
   async fetch(request: Request, env: BoundEnv): Promise<Response> {
     const url = new URL(request.url);
+
+    const capabilityResponse = await handleCapabilityRequest(request, env, () => provenEdgeSnapshot(request, env));
+    if (capabilityResponse) return capabilityResponse;
+
+    const specialist = specialistFromPath(url.pathname);
+    if (specialist.matched) {
+      if (!specialist.view) return Response.json({ ok: false, error: "unknown_specialist", allowed: ["Field", "Earth", "Assistant", "Hybrid", "Proof"] }, { status: 404 });
+      const root = new URL(request.url);
+      root.pathname = "/";
+      root.search = "";
+      const response = await convergence.fetch(new Request(root.toString(), { method: "GET", headers: request.headers }), env);
+      const withCockpit = await injectCockpitLink(response);
+      const withCapabilities = await injectCapabilityLink(withCockpit);
+      return injectSpecialistActivation(withCapabilities, specialist.view);
+    }
+
     if (url.pathname === "/convergence") return new Response(convergenceCockpit, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-omega-authority": "observation-only" } });
     const response = await convergence.fetch(request, env);
     if (url.pathname !== "/api/convergence/edge") {
-      if (url.pathname === "/") return injectCockpitLink(response);
+      if (url.pathname === "/") return injectCapabilityLink(await injectCockpitLink(response));
       return response;
     }
     return enforceHeartbeatTruth(response, env);
