@@ -26,6 +26,7 @@ class JobState(str, Enum):
 
 
 SAFE_JOB_KINDS = {
+    "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
     "run_tests",
@@ -38,6 +39,7 @@ SAFE_JOB_KINDS = {
 }
 
 VALIDATION_SEQUENCE = [
+    "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
     "run_tests",
@@ -66,8 +68,8 @@ class SovereignBuildController:
     """Persistent, bounded orchestration state for post-Hybrid self-development.
 
     Jobs are typed and allow-listed. The controller continuously advances a real
-    validation cycle after authenticated host execution returns proof. It never emits
-    arbitrary shell text and never grants release promotion by itself.
+    convergence + validation cycle after authenticated host execution returns proof.
+    It never emits arbitrary shell text and never grants release promotion by itself.
     """
 
     def __init__(self, state_path: Path, approved_root: Path) -> None:
@@ -135,6 +137,7 @@ class SovereignBuildController:
             return active[0] if active else None
         kind = self._next_validation_kind()
         reasons = {
+            "convergence_scan": "Inventory V6, Genesis, evolution and accepted donor branches; rebuild the governed capability genome before selecting the next repair.",
             "inspect_workspace": "Inspect the approved OMEGA workspace and report source/lineage/worktree state.",
             "inspect_runtime": "Inspect the sovereign runtime/toolchain before changing or promoting anything.",
             "run_tests": "Run the complete Python runtime test suite and return executable evidence.",
@@ -145,6 +148,8 @@ class SovereignBuildController:
         return self.enqueue(kind, reasons[kind], {
             "acceptance": "material_user_visible_or_functional_delta",
             "no_promotion_without_proof": True,
+            "canonical_ref": "omega-v6-full-convergence",
+            "genesis_ref": "omega-genesis-v1-full",
             "cycle": VALIDATION_SEQUENCE,
         })
 
@@ -187,5 +192,11 @@ class SovereignBuildController:
             "recent_jobs": [asdict(job) for job in self.jobs[-20:]],
             "safe_job_kinds": sorted(SAFE_JOB_KINDS),
             "validation_sequence": VALIDATION_SEQUENCE,
-            "promotion_boundary": "controller may inspect/build/test candidates; release promotion requires separate proof and deployment authority",
+            "recursive_convergence": {
+                "enabled": self.mode != BuildMode.MANUAL,
+                "canonical_ref": "omega-v6-full-convergence",
+                "genesis_ref": "omega-genesis-v1-full",
+                "rule": "discover -> prune -> prove -> build -> verify; never silently mutate production",
+            },
+            "promotion_boundary": "controller may converge/inspect/build/test candidates; release promotion requires separate proof and deployment authority",
         }

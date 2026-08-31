@@ -11,6 +11,7 @@ import urllib.error
 import urllib.request
 
 SAFE_KINDS = {
+    "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
     "run_tests",
@@ -60,10 +61,40 @@ def inspect_workspace(root: Path) -> dict:
     }
 
 
+def convergence_scan(root: Path) -> dict:
+    tool = root / "tools" / "omega_convergence_cycle.py"
+    if not tool.exists():
+        return {"kind": "convergence_scan", "blocked": True, "reason": f"missing convergence tool: {tool}"}
+    fetch = run(["git", "fetch", "origin", "--prune"], root, timeout=180)
+    result = run([
+        sys.executable,
+        str(tool),
+        "--canonical-ref", "omega-v6-full-convergence",
+        "--genesis-ref", "omega-genesis-v1-full",
+        "--output", str(root / "convergence" / "latest.json"),
+    ], root, timeout=300)
+    snapshot_path = root / "convergence" / "latest.json"
+    snapshot = None
+    if snapshot_path.exists():
+        try:
+            snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            snapshot = None
+    return {
+        "kind": "convergence_scan",
+        "fetch": fetch,
+        "result": result,
+        "snapshot": snapshot,
+        "snapshot_path": str(snapshot_path),
+    }
+
+
 def execute_job(job: dict, root: Path) -> dict:
     kind = job.get("kind")
     if kind not in SAFE_KINDS:
         raise RuntimeError(f"unsupported governed job kind: {kind}")
+    if kind == "convergence_scan":
+        return convergence_scan(root)
     if kind in {"inspect_workspace", "inspect_runtime"}:
         return {"kind": kind, "inspection": inspect_workspace(root)}
     if kind == "run_tests":
@@ -75,10 +106,18 @@ def execute_job(job: dict, root: Path) -> dict:
         web = root / "cloudflare" / "omega-v6-worker"
         return {"kind": kind, "result": run(["npx", "wrangler", "deploy", "--dry-run"], web)}
     if kind == "verify_candidate":
+        convergence_path = root / "convergence" / "latest.json"
+        convergence = None
+        if convergence_path.exists():
+            try:
+                convergence = json.loads(convergence_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                convergence = None
         return {
             "kind": kind,
             "tests": run([sys.executable, "-m", "pytest", "-q"], root),
             "git": run(["git", "status", "--short", "--branch"], root, timeout=60),
+            "convergence": convergence,
         }
     return {"kind": kind, "blocked": True, "reason": "executor capability not installed on this host yet"}
 
@@ -91,7 +130,7 @@ def normalize_root(raw: str) -> Path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="OMEGA sovereign heartbeat + bounded development agent")
+    parser = argparse.ArgumentParser(description="OMEGA sovereign heartbeat + bounded recursive development agent")
     parser.add_argument("--server", default=os.getenv("OMEGA_SERVER", "https://omegav6.jeffdeweyeljefe.workers.dev"))
     parser.add_argument("--token", default=os.getenv("OMEGA_AGENT_TOKEN", ""))
     parser.add_argument("--root", default=os.getenv("OMEGA_APPROVED_ROOT", str(Path.cwd())))
@@ -112,12 +151,13 @@ def main() -> int:
         print(f"ROOT REJECTED: {root}", file=sys.stderr)
         return 2
 
-    capabilities = ["heartbeat", "inspect_workspace", "inspect_runtime", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate"]
+    capabilities = ["heartbeat", "convergence_scan", "inspect_workspace", "inspect_runtime", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate"]
     last_job_id = None
     sequence_seen = 0
     print(f"OMEGA sovereign agent starting: {args.agent_id}")
     print(f"Canonical server: {args.server}")
     print(f"Approved root: {root}")
+    print("Recursive convergence is bounded: archive/branch discovery may propose candidates but cannot silently promote production.")
     print("PC ONLINE will only be claimed after the server accepts a current authenticated heartbeat.")
 
     while True:
@@ -126,7 +166,7 @@ def main() -> int:
                 "agent_id": args.agent_id,
                 "approved_root": str(root),
                 "capabilities": capabilities,
-                "runtime_version": "r78-live-heartbeat-agent",
+                "runtime_version": "r80-recursive-convergence-agent",
                 "last_job_id": last_job_id,
             })
             proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
