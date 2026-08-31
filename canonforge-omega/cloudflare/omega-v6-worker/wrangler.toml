@@ -6,6 +6,7 @@ workers_dev = true
 [vars]
 BUILD_ID = "r87-semantic-edge-settle-proof"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
+CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 # Configure SOVEREIGN_ORIGIN in the deployment environment.
 # It must point at the authenticated ingress of the sovereign runtime/bridge.
 
@@ -16,3 +17,7 @@ class_name = "OmegaRuntime"
 [[migrations]]
 tag = "r32-enacted-runtime"
 new_sqlite_classes = ["OmegaRuntime"]
+
+[[services]]
+binding = "GENESIS"
+service = "omega-genesis-v1"
