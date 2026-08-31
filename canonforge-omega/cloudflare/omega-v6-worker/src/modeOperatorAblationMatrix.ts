@@ -39,7 +39,9 @@ export function evaluateModeOperatorAblationMatrix(body:any){
     if(!authenticated){invalid.push({index,case_id:caseId,kind,id,domain,error:"authenticated_observed_measured_required_for_ablation",evidence_class:txt(raw?.evidence_class,80)||"NO_EVIDENCE",authenticated_source:Boolean(raw?.authenticated_source),preserved:true});continue}
     const withB=sq(withP,observed),withoutB=sq(withoutP,observed),baseB=sq(baselineP,observed);
     const row:CaseRow={case_id:caseId,kind,id,domain,observed,with_probability:withP,without_probability:withoutP,baseline_probability:baselineP,with_brier:Number(withB.toFixed(6)),without_brier:Number(withoutB.toFixed(6)),baseline_brier:Number(baseB.toFixed(6)),paired_lift:Number((withoutB-withB).toFixed(6)),with_vs_baseline_lift:Number((baseB-withB).toFixed(6)),without_vs_baseline_lift:Number((baseB-withoutB).toFixed(6)),evidence_class:"OBSERVED/MEASURED",authenticated_source:true,provenance:txt(raw?.provenance,360),preserved:true};
-    const key=kind+"\u0000"+domain+"\u0000"+id,b=buckets.get(key)||{kind,id,domain,rows:[]};b.rows.push(row);buckets.set(key,b);
+    const key=kind+"\u0000"+domain+"\u0000"+id;
+    const bucket:Bucket=buckets.get(key)||{kind,id,domain,rows:[]};
+    bucket.rows.push(row);buckets.set(key,bucket);
   }
   const groups=[...buckets.values()].map(g=>{
     const paired=mean(g.rows.map(r=>r.paired_lift)),withB=mean(g.rows.map(r=>r.with_brier)),withoutB=mean(g.rows.map(r=>r.without_brier)),baseB=mean(g.rows.map(r=>r.baseline_brier)),withBase=mean(g.rows.map(r=>r.with_vs_baseline_lift));
