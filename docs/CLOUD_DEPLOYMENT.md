@@ -16,9 +16,9 @@ On an authorized canonical cloud host, `scripts/cloud_deploy.py` performs:
 
 1. read the previously promoted immutable image from the host deployment ledger;
 2. pull the candidate digest;
-3. launch the candidate for the `omega` and `selfbuilder` services with Docker Compose and `--no-build`;
+3. launch the candidate for the `omega`, `selfbuilder`, and `backup` OMEGA-code services with Docker Compose and `--no-build`;
 4. query `/api/health` repeatedly;
-5. require runtime `OK`, proof `valid`, replay `valid`, a canonical digest, and a valid state id;
+5. require runtime `OK`, proof `valid`, replay `valid`, a canonical digest, valid state id, and a validated privacy-safe provenance catalog;
 6. atomically record the candidate as active only after those checks pass;
 7. append the result to a deployment journal.
 
@@ -52,3 +52,8 @@ Recommended production variables/secrets:
 ## Truth boundary
 
 Passing repository tests proves the deployment logic and invariants. It does **not** prove a production deployment occurred. Production evidence exists only when the authorized host runner executes the deployment transaction and the live proof/replay health gate passes.
+
+
+## Pull-based host path
+
+Production no longer requires the VM to act as a GitHub Actions self-hosted runner. The preferred host path is documented in `docs/CLOUD_HOST_BOOTSTRAP.md`: a one-time bootstrap installs a host-level watcher which consumes only the governed digest-pinned promotion ledger. The older self-hosted-runner deployment job remains an optional push-based deployment path.

@@ -48,6 +48,7 @@ manifest={
     "provenance_schema_version":1,
     "autodeploy_policy_version":1,
     "autodeploy":"host pull-based governed promotion ledger -> immutable digest deploy -> live proof/replay/provenance gate -> rollback",
+    "cloud_host_bootstrap":"provider-neutral one-time Linux host initialization with secret minimization, first governed deploy, and persistent systemd watcher",
     "lineage_provenance":"sanitized Drive-derived contracts + capability lineage + evidence boundaries; validated before cloud promotion",
     "private_corpus_policy":"names/hashes/contracts only; no private Drive identifiers/content published",
     "truth_boundary":"high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",

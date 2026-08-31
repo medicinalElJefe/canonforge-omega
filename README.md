@@ -37,13 +37,25 @@ It preserves useful OMEGA concepts while removing the architectural failure mode
 
 ## Start the canonical cloud
 
+For a prepared persistent Linux VM, the governed host bootstrap is now the preferred production path:
+
+```bash
+sudo git clone --branch omega-genesis-v1-full https://github.com/medicinalElJefe/canonforge-omega.git /opt/omega
+cd /opt/omega
+sudo python3 scripts/cloud_host_bootstrap.py --domain omega.example.com
+```
+
+It generates the cloud secrets, deploys the current governed immutable promotion, verifies live proof/replay/provenance on loopback, records host deployment state, and enables the continuous promotion/recovery watcher. See `docs/CLOUD_HOST_BOOTSTRAP.md`.
+
+For development-only direct Compose startup:
+
 ```bash
 python scripts/cloud_bootstrap.py --domain omega.example.com
 cd cloud/omega-cloud
 docker compose up -d --build
 ```
 
-Point the selected domain to the cloud VM, open the HTTPS URL, and enter the generated operator token. The application remains live without a PC attached.
+Point the selected domain to the cloud VM, open the HTTPS URL, and enter the generated operator token. Public DNS/TLS reachability remains a separate live acceptance gate; local bootstrap success alone does not claim public deployment.
 
 ## Start an optional local/node runtime
 
