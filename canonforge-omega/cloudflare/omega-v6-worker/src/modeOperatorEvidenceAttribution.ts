@@ -3,7 +3,7 @@ import { evaluateForecastObservationBinding, FORECAST_OBSERVATION_BINDING_BOUNDA
 export const MODE_OPERATOR_ATTRIBUTION_BOUNDARY = "Mode/operator evidence attribution groups authenticated forecast-observation performance by declared domain, operator IDs, and mode IDs. It measures association on submitted evidence only; it does not prove causal operator effect, does not convert symbolic modes into physical claims, does not mutate canonical weights, does not execute actions, and does not authorize production policy changes.";
 
 function txt(v:any,max=120){return typeof v==="string"&&v.trim()?v.trim().slice(0,max):null}
-function list(v:any,max=24){return Array.isArray(v)?[...new Set(v.map((x:any)=>txt(x,120)).filter(Boolean))].slice(0,max):[]}
+function list(v:any,max=24):string[]{if(!Array.isArray(v))return[];const values=v.map((x:any)=>txt(x,120)).filter((x:string|null):x is string=>x!==null);return[...new Set(values)].slice(0,max)}
 function mean(xs:number[]){return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null}
 function round(v:number|null){return v===null?null:Number(v.toFixed(6))}
 
@@ -42,8 +42,8 @@ export function evaluateModeOperatorEvidenceAttribution(body:any){
     const baseline=typeof b.comparison?.baseline_brier==="number"?b.comparison.baseline_brier:null;
     if(authenticated&&lift!==null&&candidate!==null&&baseline!==null){
       const add=(kind:"operator"|"mode",id:string)=>{const key=kind+"\u0000"+domain+"\u0000"+id,g=buckets.get(key)||{id,domain,kind,n:0,lifts:[],candidate:[],baseline:[],degrading:0,improving:0};g.n++;g.lifts.push(lift);g.candidate.push(candidate);g.baseline.push(baseline);if(lift>0)g.improving++;if(lift<0)g.degrading++;buckets.set(key,g)};
-      operatorIds.forEach((id:string)=>add("operator",id));
-      modeIds.forEach((id:string)=>add("mode",id));
+      operatorIds.forEach(id=>add("operator",id));
+      modeIds.forEach(id=>add("mode",id));
     }
     return{index,ok:true,domain,operator_ids:operatorIds,mode_ids:modeIds,authenticated_observation:authenticated,brier_lift:lift,candidate_brier:candidate,baseline_brier:baseline,performance:b.comparison?.performance||null,preserved:true};
   });
