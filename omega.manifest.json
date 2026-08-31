@@ -24,6 +24,7 @@
   "lineage_provenance": "sanitized Drive-derived contracts + capability lineage + evidence boundaries; validated before cloud promotion",
   "evolution_policy_version": 1,
   "continuous_evolution": "observe -> diagnose -> candidate-only development -> strict no-regression comparison -> proof-gated promotion -> deploy -> observe",
+  "adaptive_learning": "append-only hash-chained outcome memory with deterministic replay/recommendation; subordinate to canonical state",
   "private_corpus_policy": "names/hashes/contracts only; no private Drive identifiers/content published",
   "truth_boundary": "high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",
   "files": [
@@ -179,8 +180,8 @@
     },
     {
       "path": "config/evolution_policy.json",
-      "sha256": "9e1f4c39d499f4eb26d878459a6899ac38b6ebebc15596b73fa67ab8119ccc56",
-      "bytes": 7825
+      "sha256": "4effcc75f11bb5d0831bcc0b5848ba2b92eb15bf9ccd0ef6b1d64bb3f7a58ad0",
+      "bytes": 7956
     },
     {
       "path": "config/provenance_sources.json",
@@ -206,6 +207,11 @@
       "path": "docs/ACCEPTANCE.md",
       "sha256": "e306d727908c2a01f5216653f070f6f2a8f030d639e4194ef8004f5251e713c8",
       "bytes": 1879
+    },
+    {
+      "path": "docs/ADAPTIVE_LEARNING.md",
+      "sha256": "590c7aa2cb650727896d6195f14e6964a74d39288734bbde8a9da4b88e1ee260",
+      "bytes": 1974
     },
     {
       "path": "docs/ARCHITECTURE.md",
@@ -383,6 +389,11 @@
       "bytes": 1786
     },
     {
+      "path": "omega_genesis/learning.py",
+      "sha256": "4dcadfb0c29bb6897c83b90a2981b71be8359155be009fbc6321f0447051496d",
+      "bytes": 8081
+    },
+    {
       "path": "omega_genesis/mission.py",
       "sha256": "52faf00fb2117bbbc1065625ffe3456a12784d17cd0c67515d9de43388e231c6",
       "bytes": 5979
@@ -449,8 +460,8 @@
     },
     {
       "path": "omega_genesis/server.py",
-      "sha256": "84327081e436fe60bb1aba8d2f841740a99b925041ef54a68ab9618dc9859cdf",
-      "bytes": 25867
+      "sha256": "eaa136603e1252852a30dde5b696089ebc17156940a569891f2c8fb86ddc5ca4",
+      "bytes": 27520
     },
     {
       "path": "omega_genesis/shell.py",
@@ -489,8 +500,8 @@
     },
     {
       "path": "scripts/build_manifest.py",
-      "sha256": "0c1820cdbce05a25cf498863af06f268429075501d06feea3d61fb8c6bbf2132",
-      "bytes": 3251
+      "sha256": "727b785814eca36103a4b7d387de05f7b5ec32cecf21c491eaf969d625f775a3",
+      "bytes": 3391
     },
     {
       "path": "scripts/build_release.py",
@@ -549,8 +560,8 @@
     },
     {
       "path": "scripts/verify_release.py",
-      "sha256": "1d5da41e3a3b534ce8711220417ea8b91ad353f9645c2712656d28c08b049bf2",
-      "bytes": 8174
+      "sha256": "877ffa6cbfb48a9b8d44dd06bd8c5fc83a2df4ae4110848b9409f842df4f578a",
+      "bytes": 8270
     },
     {
       "path": "tests/test_autodeploy.py",
@@ -581,6 +592,11 @@
       "path": "tests/test_host_bootstrap.py",
       "sha256": "7de458a4083c90ff9471b52bc3cc8fbf0ccc7b3f08a7398d10d450480d6afbe4",
       "bytes": 2593
+    },
+    {
+      "path": "tests/test_learning.py",
+      "sha256": "45d2378245cfab32663f2398031791026ec7b681c451240e8efbf12beb43019b",
+      "bytes": 2360
     },
     {
       "path": "tests/test_provenance.py",
