@@ -141,8 +141,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "925bb66957e500b56cf49439922b6c45216743c2206af5b75792f72628bb25e3",
-      "bytes": 5230
+      "sha256": "44c686ac4571799e4c0eb587720c3e85d55e514b02430f3303970410a7b25623",
+      "bytes": 5442
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -295,6 +295,11 @@
       "bytes": 839
     },
     {
+      "path": "docs/evolution/contextual-conversation-memory-v1.md",
+      "sha256": "cf8347f4ae2e01f24491c53708ceb9b4781d71faab12aa7de01332232a463659",
+      "bytes": 1312
+    },
+    {
       "path": "docs/evolution/release-aware-cloud-deploy-g1.md",
       "sha256": "6caf04d6f7558a3bf7ea3888d4959d10a83ac3b40f905f3aba01a0dd56f273d5",
       "bytes": 1029
@@ -346,8 +351,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "2097d9126298526476996483eb3551e4b02fbcdfbdee8c01edf2a7d2ba47b51d",
-      "bytes": 4866
+      "sha256": "414bc46f25aff4628d61d9f79b27469eab02c2e214810d3f298ed1542f5d3751",
+      "bytes": 5092
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -363,6 +368,11 @@
       "path": "omega_genesis/cloud_selfbuild.py",
       "sha256": "927b899ef4b4c32889d1337122d0b86a725cd215f1e28b082f98735291f6f501",
       "bytes": 8287
+    },
+    {
+      "path": "omega_genesis/conversation_memory.py",
+      "sha256": "18424e71e65feeae8147066e07b10f138197b285724903354509b00f51b4fb43",
+      "bytes": 6833
     },
     {
       "path": "omega_genesis/corpus.py",
@@ -675,6 +685,16 @@
       "bytes": 828
     },
     {
+      "path": "tests/test_context_memory_ui.py",
+      "sha256": "0c28e5bd4007b94a1ee5c46e3ff0587cb70a439e04adc92c9f23d1bb169a3a61",
+      "bytes": 1094
+    },
+    {
+      "path": "tests/test_conversation_memory.py",
+      "sha256": "345e1ea32b394e8fddc3dd4dd042a826865c8a0e108a254f48b5d17ec19a94b5",
+      "bytes": 2973
+    },
+    {
       "path": "tests/test_deployment.py",
       "sha256": "2a24ce3e1f0749ca74e51aad59cebaf8172006e7f990d3fcccf06d830ac3a30a",
       "bytes": 2532
@@ -686,8 +706,8 @@
     },
     {
       "path": "tests/test_design_acceptance.py",
-      "sha256": "03e06eebab2b716209f74734c73e3add4a31326560504dc6aec5a16e0ca84ba2",
-      "bytes": 989
+      "sha256": "143418b94d6909ecf7766dd9f398353f1e04af23214ee3ebcaa6342b4a2f1226",
+      "bytes": 1217
     },
     {
       "path": "tests/test_desktop_link_signed_contract.py",
@@ -696,8 +716,8 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "d7733f0504dd42d4aa7a84e14bd22de33b3e4faeac2b3f98d11faf7812f5a49d",
-      "bytes": 3904
+      "sha256": "623beb45c82aded07913eb7a15376ae9faeab1eef0be0c9d7ad86330cf7b491c",
+      "bytes": 3709
     },
     {
       "path": "tests/test_genesis.py",
@@ -766,8 +786,8 @@
     },
     {
       "path": "web/advanced.js",
-      "sha256": "4a57963141b74b4e0eafa7ea6b24c0869d89293de9b71becf906174cea7c5aa5",
-      "bytes": 9811
+      "sha256": "b0dd0a138841a0e609cf8108b19aab5326c4260c896d15e70c79adc56c2e9bb9",
+      "bytes": 14715
     },
     {
       "path": "web/app.js",
