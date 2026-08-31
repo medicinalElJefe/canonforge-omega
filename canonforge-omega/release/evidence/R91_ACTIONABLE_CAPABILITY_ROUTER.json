@@ -1,0 +1,20 @@
+{
+  "schema": "OMEGA_V6_BOUNDED_CANDIDATE_EVIDENCE_V1",
+  "candidate": "r91-actionable-capability-router",
+  "parent_v6": "f7f3a4182ce3cec5e428f99192699aa0cb3183b8",
+  "material_delta": [
+    "user_visible_capability_browser",
+    "sanitized_genesis_capability_index",
+    "route_before_generation_capability_preview",
+    "allowlisted_v6_specialist_deep_links"
+  ],
+  "preserved_boundaries": [
+    "r88_current_authenticated_heartbeat_for_pc_online",
+    "r89_genesis_service_binding_with_public_probe_fallback",
+    "r90_observation_only_convergence_cockpit",
+    "genesis_discovery_authority_separate_from_v6_release_authority",
+    "no_native_execution_on_selection",
+    "no_candidate_promotion_from_capability_browser"
+  ],
+  "promotion_requirement": "exact_head_v6_verify_then_post_merge_exact_head_deploy_and_live_reciprocal_convergence"
+}
