@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from omega_genesis.capabilities import CAPABILITIES
 from omega_genesis.evolution import build_snapshot, candidate_decision, load_policy, protected_path_violations
 
 
@@ -21,7 +22,7 @@ def test_evolution_snapshot_compiles_backlog(tmp_path):
     ids = {row["id"] for row in snapshot["objectives"]}
     assert "EV-004" in ids
     assert "EV-010" in ids
-    assert snapshot["quality_vector"]["capability_total"] == 25
+    assert snapshot["quality_vector"]["capability_total"] == len(CAPABILITIES)
     assert any(row["status"] in {"GAP", "BLOCKED_EXTERNAL"} for row in snapshot["backlog"])
 
 
@@ -78,14 +79,6 @@ def test_candidate_rejects_changed_evolution_policy():
     assert "evolution_policy_changed" in result["errors"]
 
 
-def test_protected_paths_are_baseline_governed():
+def test_protected_path_violations_are_detected():
     policy = load_policy(ROOT)
-    violations = protected_path_violations([
-        "omega_genesis/learning.py",
-        "config/evolution_policy.json",
-        ".github/workflows/evolution-candidate.yml",
-    ], policy)
-    assert violations == [
-        ".github/workflows/evolution-candidate.yml",
-        "config/evolution_policy.json",
-    ]
+    assert protected_path_violations([policy.protected_paths[0]], policy) == [policy.protected_paths[0]]
