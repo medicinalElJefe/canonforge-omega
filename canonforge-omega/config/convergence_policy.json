@@ -1,9 +1,10 @@
 {
-  "version": "R80",
+  "version": "R123",
   "canonical_runtime": "https://omegav6.jeffdeweyeljefe.workers.dev/",
   "genesis_runtime": "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev/",
   "canonical_ref": "omega-v6-full-convergence",
   "genesis_ref": "omega-genesis-v1-full",
+  "system_contract": "config/omega_system_contract.json",
   "architecture": {
     "state": "canonical V6 state remains release authority",
     "intelligence": "Genesis discovers and proposes bounded candidate improvements",
@@ -15,30 +16,25 @@
     "proof": "exact-head tests, evidence, rollback parent and material delta are required for promotion"
   },
   "unified_operational_core": {
-    "canonical_spine": ["STATE", "TYPED_RELATIONS", "MEMORY_SCAR", "FORECAST", "OBSERVATION", "EVIDENCE_PROOF", "GOVERNANCE"],
+    "canonical_spine": ["STATE", "INTELLIGENCE", "MEMORY", "TYPED_RELATIONS", "COMPUTATION", "ACTION", "OBSERVATION", "EVIDENCE_PROOF", "GOVERNANCE"],
     "single_packet_authority": true,
     "single_dispatcher_authority": true,
     "parallel_state_runtime_prohibited": true,
     "duplicate_ui_shell_prohibited": true,
     "mode_runtime_fork_prohibited": true
   },
-  "governance_layers": [
-    "FULL_OVERALL_CANON",
-    "UNIFIED_COHERENCE",
-    "MODE_188",
-    "DEEP_MOTHER",
-    "HIGH_FATHER",
-    "FORECAST",
-    "FULL_SPHERE",
-    "HEAVY_PRUNE",
-    "ALPHA",
-    "CRIMSON",
-    "NO_NOTHING_TRUTH",
-    "GUIDANCE_FIELD",
-    "UNIFIED_RECURSION",
-    "RELATIONAL_SKIN",
-    "DEWEY_CALCULUS"
-  ],
+  "product_alignment_directive": {
+    "primary_identity": "OMEGA is a sovereign computational environment, not a governance dashboard",
+    "primary_surfaces": ["OMEGA", "CALCULUS", "EARTH", "MEMORY", "INTELLIGENCE", "CREATE_SIMULATE", "SOVEREIGN", "BUILD", "PROOF"],
+    "support_systems": ["CI", "DEPLOYMENT", "MANIFEST", "SHA", "HEARTBEAT", "RECOVERY", "CANDIDATE", "SELF_BUILD"],
+    "support_systems_must_not_dominate_primary_use": true,
+    "specialist_surfaces_require_direct_manipulation": true,
+    "raw_telemetry_requires_progressive_disclosure": true,
+    "shell_changes_must_change_computational_resolution": true,
+    "candidate_must_answer_acceptance_question": "Does this change measurably improve OMEGA at observing, understanding, relating, calculating, remembering, anticipating, acting, visualizing or proving?",
+    "priority_order": ["canonical_state_runtime_integrity", "temporal_calculus_and_state_evolution", "living_visual_computation", "direct_human_manipulation", "intelligence_and_contextual_memory", "earth_and_source_binding", "sovereign_pc_mobile_cloud_execution", "specialist_instruments", "proof_recovery_and_rollback", "recursive_self_development"]
+  },
+  "governance_layers": ["FULL_OVERALL_CANON", "UNIFIED_COHERENCE", "MODE_188", "DEEP_MOTHER", "HIGH_FATHER", "FORECAST", "FULL_SPHERE", "HEAVY_PRUNE", "ALPHA", "CRIMSON", "NO_NOTHING_TRUTH", "GUIDANCE_FIELD", "UNIFIED_RECURSION", "RELATIONAL_SKIN", "DEWEY_CALCULUS"],
   "all_modes_unification": {
     "rule": "modes remain distinct source-backed operators, gates, weights, constraints, diagnostics or projections over the same Unified Operational Core packet; they are never separate applications or competing state engines",
     "preserve_individual_mode_semantics": true,
@@ -49,17 +45,8 @@
     "future_candidates_must_bind_to_existing_mode_operator_contracts": true,
     "automatic_mode_collapse_or_aliasing_prohibited": true
   },
-  "mode_188_dispatch": {
-    "purpose": "prune-before-build, contradiction preservation, STAY/TURN/ESCALATE routing",
-    "promotion_rule": "candidate cannot be promoted from novelty alone; evidence and stability must dominate burden and contradiction"
-  },
-  "operator_semantics": {
-    "ALPHA": "seed/initiate",
-    "BASE": "substrate/context",
-    "CONSTRUCT": "expand/build",
-    "PRUNE": "invert/remove/reject",
-    "OMEGA": "integrate/cohere"
-  },
+  "mode_188_dispatch": {"purpose": "prune-before-build, contradiction preservation, STAY/TURN/ESCALATE routing", "promotion_rule": "candidate cannot be promoted from novelty alone; evidence and stability must dominate burden and contradiction"},
+  "operator_semantics": {"ALPHA": "seed/initiate", "BASE": "substrate/context", "CONSTRUCT": "expand/build", "PRUNE": "invert/remove/reject", "OMEGA": "integrate/cohere"},
   "temporal_calculus_directive": {
     "purpose": "make the governed computation itself visible instead of decorating static telemetry",
     "time_authority": "live UI time must expose its authority and remain distinct from observation time, replay time and simulated forecast horizon",
@@ -82,41 +69,14 @@
     "preserve_earth_truth_boundaries": true,
     "preserve_hybrid_heartbeat_gate": true,
     "preserve_rollback_and_exact_head_proof": true,
+    "preserve_system_contract": true,
+    "prefer_primary_capability_improvement_over_governance_surface_growth": true,
     "no_regression_by_omission": true,
     "candidate_conflict_rule": "stop stale candidate and reimplement useful capability on newest canonical head",
     "visual_acceptance_rule": "a visual candidate is material only when geometry, motion, topology, time or evidence display changes from actual state/operator inputs rather than labels or cosmetic motion alone"
   },
-  "candidate_loop": [
-    "OBSERVE",
-    "INVENTORY",
-    "RELATE",
-    "PRUNE",
-    "TRANSLATE",
-    "PROVE",
-    "PLAN",
-    "BUILD",
-    "TEST",
-    "VISUAL_ACCEPTANCE",
-    "ADVERSARIAL_VERIFY",
-    "PROMOTE_OR_REJECT",
-    "OBSERVE_RESULT",
-    "UPDATE_STRATEGY_MEMORY"
-  ],
-  "promotion_requirements": {
-    "green_tests": true,
-    "exact_head": true,
-    "rollback_parent": true,
-    "material_visible_or_functional_delta": true,
-    "no_regression_by_omission": true,
-    "canonical_verification": true,
-    "production_mutation_from_unproved_candidate": false
-  },
-  "archive_rules": {
-    "private_connector_ids_must_not_be_published": true,
-    "nested_archives_are_untrusted_until_inventoried": true,
-    "duplicate_state_authorities_are_pruned": true,
-    "synthetic_truth_is_quarantined": true,
-    "capability_recovery_is_preferred_over_wholesale_donor_merge": true
-  },
+  "candidate_loop": ["OBSERVE", "INVENTORY", "RELATE", "PRUNE", "TRANSLATE", "PROVE", "PLAN", "BUILD", "TEST", "VISUAL_ACCEPTANCE", "ADVERSARIAL_VERIFY", "PROMOTE_OR_REJECT", "OBSERVE_RESULT", "UPDATE_STRATEGY_MEMORY"],
+  "promotion_requirements": {"green_tests": true, "exact_head": true, "rollback_parent": true, "material_visible_or_functional_delta": true, "no_regression_by_omission": true, "canonical_verification": true, "production_mutation_from_unproved_candidate": false},
+  "archive_rules": {"private_connector_ids_must_not_be_published": true, "nested_archives_are_untrusted_until_inventoried": true, "duplicate_state_authorities_are_pruned": true, "synthetic_truth_is_quarantined": true, "capability_recovery_is_preferred_over_wholesale_donor_merge": true},
   "representation_boundary": "144/1728/20736 and larger values are software/model/interface state-space representations unless independently evidenced otherwise"
 }
