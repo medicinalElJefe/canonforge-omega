@@ -1,5 +1,11 @@
 # OMEGA Genesis
 
+## OMEGA Cloud is canonical
+
+The primary Genesis deployment is an **always-on cloud host**. Canonical state, proof history, replay journal, web cockpit, API and live heartbeat persist in cloud storage and continue operating when no desktop or phone is connected. Desktop Hybrid Link is an optional compute/IO node, not the owner of canonical state.
+
+The provider-neutral cloud stack is under `cloud/omega-cloud/`. It runs Genesis behind HTTPS with signed operator sessions, a persistent data volume, an authenticated WebSocket heartbeat and automatic backups. See `docs/CLOUD.md`.
+
 OMEGA Genesis is a clean-generation rebuild of the OMEGA / CanonForge system around one enforceable rule:
 
 > **ONE FIELD · ONE CANONICAL PACKET · ONE PROOF CHAIN · MANY MODES / VIEWS / ADAPTERS**
@@ -29,7 +35,18 @@ It preserves useful OMEGA concepts while removing the architectural failure mode
 - **Browser sonification, geodesic traversal and cockpit diagnostics** as state-bound derived interfaces.
 - **OpenPyXL 3.1+** is the only required Python package beyond the standard library, used for the workbook bridge.
 
-## Start locally
+## Start the canonical cloud
+
+```bash
+python scripts/cloud_bootstrap.py --domain omega.example.com
+cd cloud/omega-cloud
+docker compose up -d --build
+```
+
+Point the selected domain to the cloud VM, open the HTTPS URL, and enter the generated operator token. The application remains live without a PC attached.
+
+## Start an optional local/node runtime
+
 
 ```bash
 python -m omega_genesis.server
@@ -37,7 +54,7 @@ python -m omega_genesis.server
 
 Open `http://127.0.0.1:8127`.
 
-The local loopback interface is accepted automatically. For non-loopback API ingress, set `OMEGA_GATEWAY_TOKEN` and pass the same value in `X-Omega-Gateway-Token`.
+The local loopback interface is accepted automatically. Local operation is a node/development mode; cloud is the canonical always-on deployment. For non-loopback API ingress, set `OMEGA_GATEWAY_TOKEN` and pass the same value in `X-Omega-Gateway-Token`.
 
 ## Corpus indexing
 
