@@ -34,14 +34,75 @@ jobs:
       - name: Check Worker syntax
         working-directory: cloudflare/omega-genesis-worker
         run: npm run check
-      - name: Deploy Genesis Worker or report credential boundary
+      - name: Deploy, prove live health, or automatically roll back
+        id: deploy
         working-directory: cloudflare/omega-genesis-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          set -uo pipefail
+
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "BLOCKED_CREDENTIALS: core + Worker checks passed; add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository Actions secrets to deploy omega-genesis-v1." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "deployment_status=BLOCKED_CREDENTIALS" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          npm run deploy
+
+          DEPLOY_LOG="$(mktemp)"
+          if ! npx wrangler deploy 2>&1 | tee "$DEPLOY_LOG"; then
+            echo "DEPLOY_FAILED: Wrangler did not publish a candidate." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          PUBLIC_URL="$(grep -Eo 'https://[A-Za-z0-9._-]+\.workers\.dev' "$DEPLOY_LOG" | tail -n 1 || true)"
+          if [ -z "$PUBLIC_URL" ]; then
+            echo "DEPLOY_UNVERIFIED: Wrangler returned success but no workers.dev URL could be proven from deploy output." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "public_url=$PUBLIC_URL" >> "$GITHUB_OUTPUT"
+          echo "OMEGA public candidate: $PUBLIC_URL" | tee -a "$GITHUB_STEP_SUMMARY"
+
+          verify_live() {
+            local health_file api_file
+            health_file="$(mktemp)"
+            api_file="$(mktemp)"
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
+              "$PUBLIC_URL/_omega/health" -o "$health_file" || return 1
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
+              "$PUBLIC_URL/api/health" -o "$api_file" || return 1
+            python - "$health_file" "$api_file" <<'PY'
+          import json, sys
+          health = json.load(open(sys.argv[1], encoding="utf-8"))
+          api = json.load(open(sys.argv[2], encoding="utf-8"))
+          assert health.get("ok") is True, health
+          assert health.get("authority") == "durable-object-canonical", health
+          assert api.get("status") == "OK", api
+          assert api.get("runtime") == "OMEGA_GENESIS_CLOUD", api
+          assert isinstance(api.get("canonical_digest"), str) and len(api["canonical_digest"]) == 64, api
+          assert api.get("proof", {}).get("valid") is True, api
+          assert api.get("replay", {}).get("valid") is True, api
+          assert api.get("replay", {}).get("current_digest") == api.get("canonical_digest"), api
+          PY
+          }
+
+          if verify_live; then
+            echo "deployment_status=LIVE_VERIFIED" >> "$GITHUB_OUTPUT"
+            echo "LIVE_VERIFIED: $PUBLIC_URL passed edge health, canonical state, proof-chain, and replay checks." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "POST_DEPLOY_VERIFY_FAILED: attempting bounded rollback to the immediately previous Worker version." | tee -a "$GITHUB_STEP_SUMMARY"
+          if ! npx wrangler rollback --message "OMEGA automatic rollback: post-deploy canonical proof/replay verification failed"; then
+            echo "QUARANTINE: candidate failed verification and automatic rollback could not be completed." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          if verify_live; then
+            echo "deployment_status=ROLLBACK_VERIFIED" >> "$GITHUB_OUTPUT"
+            echo "ROLLBACK_VERIFIED: previous Worker version restored and passed canonical health/proof/replay checks." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "QUARANTINE: rollback completed but the restored Worker did not pass canonical health/proof/replay checks." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          exit 1
