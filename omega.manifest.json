@@ -41,8 +41,8 @@
     },
     {
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
-      "sha256": "e31b850508843ee88ea3ff64d060bf658846c0327beda968c4a0ca3bbb75780c",
-      "bytes": 4987
+      "sha256": "0a36229efbdc0477ebb6977b8daa65eda2f96f07fa26c6067587b41eb175571d",
+      "bytes": 5154
     },
     {
       "path": ".github/workflows/evolution-candidate.yml",
@@ -285,6 +285,11 @@
       "bytes": 1649
     },
     {
+      "path": "docs/WORLD_RECONSTRUCTION.md",
+      "sha256": "c0a4ddb525b5ce236b345eeac57eaf262670a9a65a32ccff9a77e43cc4be14ed",
+      "bytes": 1498
+    },
+    {
       "path": "omega_genesis/__init__.py",
       "sha256": "94a8b170933acf40b70ebfc3819e09ecb37a7c222fa13a33b5f16a7dfd5cc6ca",
       "bytes": 278
@@ -466,8 +471,8 @@
     },
     {
       "path": "omega_genesis/server.py",
-      "sha256": "eaa136603e1252852a30dde5b696089ebc17156940a569891f2c8fb86ddc5ca4",
-      "bytes": 27520
+      "sha256": "cc449dec27816ffdb83808302c1d14ba2a6f30c95d44182013ff976dfea14dc1",
+      "bytes": 28027
     },
     {
       "path": "omega_genesis/shell.py",
@@ -488,6 +493,11 @@
       "path": "omega_genesis/training.py",
       "sha256": "ef36d01810360da58fcd0738cad7c9ecd6ea1ca9f5e37c84a7640eac3d8b7629",
       "bytes": 10900
+    },
+    {
+      "path": "omega_genesis/world.py",
+      "sha256": "ebe57086a292ef0bddd4125e1a00b62f4c3d5687034bbca0db2458decde6d45c",
+      "bytes": 6201
     },
     {
       "path": "plugins/samples/atlas_echo/main.py",
@@ -618,6 +628,11 @@
       "path": "tests/test_selfbuild.py",
       "sha256": "7d6acc0192e7cd9753b2c4ea1aff27c741247c0698debcc980052961ac8591f9",
       "bytes": 2669
+    },
+    {
+      "path": "tests/test_world.py",
+      "sha256": "8107b6c966b0eda91b3330c840286779781042a5af2e3cc5f87a148c0797cc9e",
+      "bytes": 2577
     },
     {
       "path": "web/advanced.js",
