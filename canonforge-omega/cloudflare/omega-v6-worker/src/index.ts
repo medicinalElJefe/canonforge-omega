@@ -2,6 +2,7 @@ export interface Env {
   SOVEREIGN_ORIGIN?: string;
   SOVEREIGN_GATEWAY_TOKEN?: string;
   BUILD_ID?: string;
+  GENESIS?: { fetch(input: Request | string | URL, init?: RequestInit): Promise<Response> };
 }
 
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OMEGA V6 · Visual Runtime</title>
