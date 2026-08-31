@@ -22,7 +22,8 @@ def test_r87_worker_wraps_existing_convergence_without_replacing_runtime():
     assert "convergence.fetch(request, env)" in source
 
 
-def test_r87_is_the_configured_public_worker_entrypoint():
+def test_r87_is_the_configured_public_worker_entrypoint_without_erasing_r86_identity():
     wrangler = WRANGLER.read_text(encoding="utf-8")
     assert 'main = "src/heartbeatTruth.ts"' in wrangler
-    assert 'BUILD_ID = "r87-hybrid-heartbeat-truth"' in wrangler
+    assert 'BUILD_ID = "r86-live-convergence-proof"' in wrangler
+    assert 'TRUTH_BOUNDARY_ID = "r87-hybrid-heartbeat-truth"' in wrangler
