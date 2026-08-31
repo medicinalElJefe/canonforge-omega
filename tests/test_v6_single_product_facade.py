@@ -12,7 +12,7 @@ def test_v6_worker_javascript_parses():
     assert result.returncode == 0, result.stderr or result.stdout
 
 
-def test_v6_is_public_facade_not_second_canonical_state():
+def test_v6_is_public_facade_not_second_forward_canonical_state():
     wrangler = (V6 / "wrangler.toml").read_text(encoding="utf-8")
     source = (V6 / "src" / "index.js").read_text(encoding="utf-8")
     assert 'name = "omegav6"' in wrangler
@@ -21,7 +21,7 @@ def test_v6_is_public_facade_not_second_canonical_state():
     assert "durable_objects" not in wrangler
     assert "OMEGA_V6_PUBLIC_FACADE" in source
     assert "cloudflare-service-binding" in source
-    assert "V6 does not maintain a second canonical state" in source
+    assert "Genesis owns the only forward canonical state" in source
     assert "canonical_mutation: false" in source
 
 
