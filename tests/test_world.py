@@ -64,3 +64,10 @@ def test_world_observation_requires_provenance_and_time():
             "y": 0,
             "z": 0,
         })
+
+
+def test_world_reconstruction_is_input_order_invariant():
+    rows = [obs("b", 2.0), obs("a", 0.0)]
+    forward = reconstruct_points(rows, canonical_digest=CANON)
+    reverse = reconstruct_points(list(reversed(rows)), canonical_digest=CANON)
+    assert forward == reverse

@@ -75,6 +75,22 @@ def reconstruct_points(
     if len(canonical_digest) != 64 or any(ch not in "0123456789abcdef" for ch in canonical_digest):
         raise ValueError("canonical_digest must be a lowercase SHA-256")
 
+    observations = sorted(
+        observations,
+        key=lambda row: (
+            row.source_id,
+            row.observed_at,
+            row.authority,
+            row.evidence_class.value,
+            row.frame,
+            row.units,
+            row.x,
+            row.y,
+            row.z,
+            row.sigma,
+        ),
+    )
+
     frames = {row.frame for row in observations}
     units = {row.units for row in observations}
     if len(frames) != 1:
