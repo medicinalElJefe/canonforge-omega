@@ -19,7 +19,8 @@ concurrency:
 
 env:
   GENESIS_BRANCH: omega-genesis-v1-full
-  OPENAI_MODEL: gpt-5.6-terra
+  OMEGA_AI_PROVIDER: local
+  OMEGA_LOCAL_MODEL_URL: http://127.0.0.1:11434
 
 jobs:
   evolve:
@@ -70,12 +71,12 @@ jobs:
         run: |
           python -m pip install -e .
 
-      - name: Ask OpenAI for one bounded candidate
+      - name: Ask sovereign local model for one bounded candidate
         id: author
         working-directory: candidate
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ env.OPENAI_MODEL }}
+          OMEGA_AI_PROVIDER: ${{ env.OMEGA_AI_PROVIDER }}
+          OMEGA_LOCAL_MODEL_URL: ${{ env.OMEGA_LOCAL_MODEL_URL }}
         shell: bash
         run: |
           set +e
@@ -196,7 +197,7 @@ jobs:
           git config user.name "OMEGA AI Engineer"
           git config user.email "omega-ai-engineer@users.noreply.github.com"
           git add -A
-          git commit -m "OMEGA AI evolution: governed autonomous improvement"
+          git commit -m "OMEGA AI evolution: governed sovereign improvement"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           git push origin HEAD:"$GENESIS_BRANCH"
 
@@ -280,7 +281,9 @@ jobs:
             echo
             echo '- Schedule: hourly at minute 37 from the default branch.'
             echo '- Canonical source: omega-genesis-v1-full.'
-            echo '- AI role: candidate author only.'
+            echo '- Candidate author: sovereign local model only by default.'
+            echo '- External paid AI fallback: disabled.'
+            echo '- If the sovereign host is unavailable, deterministic audit continues and source is not mutated.'
             echo '- Judge: pinned trusted Genesis baseline.'
             echo '- Promotion: only strict no-regression improvement; superseded candidates do not overwrite newer Genesis.'
             echo '- Live web deployment: post-deploy health/proof/replay required; rollback on failure.'
