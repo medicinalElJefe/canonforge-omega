@@ -341,8 +341,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "eba9dab00d093d8d496b7a296019fb8d9d504cb9664e7403e3f17b61f0310172",
-      "bytes": 4094
+      "sha256": "584519e14885a2437f2ea2b3a1c585f79647acabaf2337917d0f0a1b42411b74",
+      "bytes": 4275
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -520,6 +520,11 @@
       "bytes": 10900
     },
     {
+      "path": "omega_genesis/ui_acceptance.py",
+      "sha256": "779ff345b8aeb65397c024d3248d68e5a94c57da44958a1bfbc76ea414ec69c5",
+      "bytes": 4276
+    },
+    {
       "path": "omega_genesis/world.py",
       "sha256": "ebe57086a292ef0bddd4125e1a00b62f4c3d5687034bbca0db2458decde6d45c",
       "bytes": 6201
@@ -661,7 +666,7 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "e2e02bb9c6ec2d42b84fa99eeb3ec1b92823137a138f85fc9740c251cadc8a09",
+      "sha256": "cb580594d1c77784f5e9e455ebd00c597a71c6ef16841c46adaab9ff2c3b02b2",
       "bytes": 3904
     },
     {
@@ -708,6 +713,11 @@
       "path": "tests/test_sovereign_status.py",
       "sha256": "cdd9cf50fb45217d01c04a070425721d4d143e7e300463aa59447e786ee882f2",
       "bytes": 1899
+    },
+    {
+      "path": "tests/test_ui_acceptance.py",
+      "sha256": "7056b65cc0a88f9b826341c88999004c91756bb470859be43e4689ed317ac5c1",
+      "bytes": 959
     },
     {
       "path": "tests/test_worker_capability_truth.py",
