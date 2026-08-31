@@ -83,7 +83,7 @@ def plan_prompt(prompt: str, *, project_path: str = ".") -> dict[str, Any]:
         "APPLY_PATCH": ("pre_hash", "post_hash", "backup_path", "rollback_path"),
         "TRAIN_LOCAL": ("corpus_fingerprint", "model_fingerprint", "training_receipt"),
     }[action]
-    rationale = f"Prompt mapped to governed {action}; execution remains local-host only and requires explicit confirmation."
+    rationale = f"Prompt mapped to governed {action}; execution remains on an explicitly authorized node and requires explicit confirmation; canonical authority remains cloud-hosted."
     draft = DraftPlan("OMEGA_HYBRID_DRAFT_V1", action, profile, path, rationale, expected, tuple(warnings))
     payload = asdict(draft)
     payload["plan_fingerprint"] = sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
@@ -102,7 +102,7 @@ def validate_mission(spec: dict[str, Any]) -> dict[str, Any]:
         errors.append("device_id required")
     unknown = sorted(set(operations) - ACTIONS)
     if unknown:
-        errors.append("unknown operations: " + ", ", ".join(unknown))
+        errors.append("unknown operations: " + ", ".join(unknown))
     if not 2 <= cycles <= 8:
         errors.append("cycle_budget must be 2..8")
     for d in domains:
