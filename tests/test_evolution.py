@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from omega_genesis.capabilities import CAPABILITIES
 from omega_genesis.evolution import build_snapshot, candidate_decision, load_policy, protected_path_violations
 
 
@@ -21,7 +22,7 @@ def test_evolution_snapshot_compiles_backlog(tmp_path):
     ids = {row["id"] for row in snapshot["objectives"]}
     assert "EV-004" in ids
     assert "EV-010" in ids
-    assert snapshot["quality_vector"]["capability_total"] == 28
+    assert snapshot["quality_vector"]["capability_total"] == len(CAPABILITIES)
     assert any(row["status"] in {"GAP", "BLOCKED_EXTERNAL"} for row in snapshot["backlog"])
 
 

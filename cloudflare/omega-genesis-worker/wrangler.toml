@@ -1,5 +1,5 @@
 name = "omega-genesis-v1"
-main = "src/index.js"
+main = "src/convergence.js"
 compatibility_date = "2026-08-30"
 workers_dev = true
 
@@ -18,4 +18,4 @@ not_found_handling = "single-page-application"
 run_worker_first = [ "/api/*", "/_omega/*" ]
 
 [vars]
-BUILD_ID = "omega-genesis-v1"
+BUILD_ID = "omega-genesis-v1-convergence-g2"

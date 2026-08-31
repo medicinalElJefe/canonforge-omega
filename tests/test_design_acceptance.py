@@ -15,8 +15,8 @@ def test_ultra_ui_design_contract_passes():
     assert result["checks"]["reduced_motion"] is True
     assert result["checks"]["mobile_nav_scrim"] is True
     assert result["checks"]["worker_python_capability_parity"] is True
-    assert result["capability_count"] == 28
-    assert result["worker_capability_count"] == 28
+    assert result["capability_count"] == len(CAPABILITIES)
+    assert result["worker_capability_count"] == len(CAPABILITIES)
     assert "real devices remains external evidence" in result["boundary"]
 
 
@@ -42,3 +42,9 @@ def test_adaptive_cloud_first_context_memory_is_live_core():
     rows = {row["id"]: row for row in CAPABILITIES}
     assert rows["CAP-028"]["status"] == "LIVE_CORE"
     assert "cloud-first" in rows["CAP-028"]["name"].lower()
+
+
+def test_reciprocal_convergence_capability_is_live_core():
+    rows = {row["id"]: row for row in CAPABILITIES}
+    assert rows["CAP-029"]["status"] == "LIVE_CORE"
+    assert "convergence" in rows["CAP-029"]["name"].lower()

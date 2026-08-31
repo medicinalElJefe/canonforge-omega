@@ -29,6 +29,7 @@ CAPABILITIES = [
     {"id":"CAP-026","name":"Contextual important-conversation memory","menu":"06 AI Orchestration","gate":"Importance + redaction + hash integrity + explainable retrieval","status":"LIVE_CORE"},
     {"id":"CAP-027","name":"Authenticated controller-scoped cloud conversation memory sync","menu":"06 AI Orchestration","gate":"Controller isolation + durable save/search/archive + integrity verification","status":"LIVE_CORE"},
     {"id":"CAP-028","name":"Adaptive cloud-first contextual interaction memory","menu":"06 AI Orchestration","gate":"Cloud-first/local-fallback + explicit save suggestion + selected-context provenance","status":"LIVE_CORE"},
+    {"id":"CAP-029","name":"Reciprocal V6↔Genesis convergence manifest","menu":"11 Archive Merge","gate":"Non-recursive peer observation + canonical authority separation","status":"LIVE_CORE"},
 ]
 
 MENUS = [
