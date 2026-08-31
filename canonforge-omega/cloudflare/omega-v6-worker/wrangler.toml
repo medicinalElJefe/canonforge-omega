@@ -1,5 +1,5 @@
 name = "omegav6"
-main = "src/relationWorkbench.ts"
+main = "src/heartbeatTruth.ts"
 compatibility_date = "2026-08-29"
 workers_dev = true
 
