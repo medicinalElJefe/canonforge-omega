@@ -1,0 +1,37 @@
+name: OMEGA Continuous Evolution Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  evolution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: omega-genesis-v1-full
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install OMEGA
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+      - name: Run full regression suite
+        run: python -m pytest -q
+      - name: Compile current improvement vector
+        run: python scripts/evolution_cycle.py --once --data-dir release/evolution-runtime
+      - name: Upload evolution evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: OMEGA-evolution-${{ github.sha }}
+          path: |
+            release/evolution-runtime/evolution/status.json
+            release/evolution-runtime/evolution/backlog.json
+            release/evolution-runtime/evolution/journal.jsonl
+          if-no-files-found: error

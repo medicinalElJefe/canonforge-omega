@@ -35,6 +35,20 @@ services:
       omega:
         condition: service_healthy
 
+  evolver:
+    build:
+      context: ../..
+      dockerfile: cloud/omega-cloud/Dockerfile
+    env_file:
+      - .env.cloud
+    restart: unless-stopped
+    command: ["python", "scripts/evolution_cycle.py", "--watch"]
+    volumes:
+      - omega_data:/data
+    depends_on:
+      omega:
+        condition: service_healthy
+
   caddy:
     image: caddy:2.10-alpine
     restart: unless-stopped

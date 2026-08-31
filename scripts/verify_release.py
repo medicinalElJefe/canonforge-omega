@@ -14,6 +14,7 @@ from omega_genesis.selfbuild import load_policy
 from omega_genesis.systems import coverage as system_coverage
 from omega_genesis.provenance import summary as provenance_summary
 from omega_genesis.autodeploy import load_policy as load_autodeploy_policy, validate_promotion
+from omega_genesis.evolution import load_policy as load_evolution_policy
 
 required = [
     "README.md",
@@ -50,6 +51,7 @@ required = [
     "omega_genesis/provenance.py",
     "omega_genesis/autodeploy.py",
     "omega_genesis/host_bootstrap.py",
+    "omega_genesis/evolution.py",
     "omega_genesis/adapters/earth.py",
     "omega_genesis/adapters/hybrid.py",
     "omega_genesis/adapters/workbook.py",
@@ -76,16 +78,19 @@ required = [
     "scripts/cloud_deploy.py",
     "scripts/cloud_watch.py",
     "scripts/cloud_host_bootstrap.py",
+    "scripts/evolution_cycle.py",
     "docs/CLOUD_SELF_BUILD.md",
     "docs/CLOUD_DEPLOYMENT.md",
     "docs/CLOUD_AUTODEPLOY.md",
     "docs/CLOUD_HOST_BOOTSTRAP.md",
     "docs/PROVENANCE.md",
+    "docs/CONTINUOUS_EVOLUTION.md",
     "tests/test_cloud_self_loop.py",
     "tests/test_deployment.py",
     "tests/test_autodeploy.py",
     "tests/test_host_bootstrap.py",
     "tests/test_provenance.py",
+    "tests/test_evolution.py",
     "config/self_build_policy.json",
     "docs/SELF_BUILD.md",
     ".github/workflows/self-build.yml",
@@ -97,6 +102,8 @@ required = [
     "config/software_systems.json",
     "config/provenance_sources.json",
     "config/cloud_autodeploy_policy.json",
+    "config/evolution_policy.json",
+    ".github/workflows/evolution.yml",
 ]
 
 missing = [p for p in required if not (ROOT / p).is_file()]
@@ -151,6 +158,18 @@ if manifest.get("autodeploy_policy_version") != 1:
 if promotion_validation.get("status") != "PASS":
     errors.extend(["promotion:" + str(x) for x in promotion_validation.get("errors", [])] or ["promotion validation failed"])
 
+if manifest.get("evolution_policy_version") != 1:
+    errors.append("evolution policy version mismatch")
+try:
+    evolution_policy = load_evolution_policy(ROOT)
+    if evolution_policy.source_mutation_mode != "candidate_only":
+        errors.append("evolution source mutation boundary mismatch")
+    if evolution_policy.promotion_mode != "proof_gated":
+        errors.append("evolution promotion boundary mismatch")
+except Exception as exc:
+    evolution_policy = None
+    errors.append(f"evolution policy invalid: {exc}")
+
 try:
     policy = load_policy(ROOT)
     if policy.authority != "OMEGA Cloud canonical self-build authority":
@@ -175,6 +194,7 @@ result = {
     "provenance": provenance,
     "autodeploy_policy": autodeploy_policy.schema_version if autodeploy_policy else None,
     "promotion": promotion_validation,
+    "evolution_policy": 1 if evolution_policy else None,
     "manifest_integrity": integrity,
     "errors": errors,
 }

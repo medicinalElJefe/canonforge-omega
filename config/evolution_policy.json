@@ -1,0 +1,276 @@
+{
+  "schema": "omega.evolution.policy.v1",
+  "authority": "OMEGA Cloud governed continuous-evolution authority",
+  "source_mutation_mode": "candidate_only",
+  "promotion_mode": "proof_gated",
+  "require_strict_improvement": true,
+  "interval_seconds": 900,
+  "objectives": [
+    {
+      "id": "EV-001",
+      "name": "Continuous cloud self-build",
+      "priority": 100,
+      "source": "Genesis self-build",
+      "next_action": "Keep cloud-resident compile/test/rebuild/proof loop passing.",
+      "acceptance": [
+        "self-build decision PASS",
+        "cloud self-build engine present"
+      ],
+      "checks": [
+        {
+          "type": "file",
+          "path": "omega_genesis/cloud_selfbuild.py"
+        },
+        {
+          "type": "selfbuild",
+          "allowed": [
+            "PASS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EV-002",
+      "name": "Permanent immutable cloud deployment",
+      "priority": 100,
+      "source": "Genesis cloud deployment",
+      "next_action": "Bootstrap the canonical host and require live digest-pinned promotion/rollback evidence.",
+      "acceptance": [
+        "immutable image active",
+        "live proof valid",
+        "live replay valid",
+        "rollback retained"
+      ],
+      "checks": [
+        {
+          "type": "file",
+          "path": "omega_genesis/autodeploy.py"
+        },
+        {
+          "type": "file",
+          "path": "scripts/cloud_watch.py"
+        },
+        {
+          "type": "external_evidence",
+          "key": "canonical_cloud_host",
+          "allowed": [
+            "PASS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EV-003",
+      "name": "Drive-backed lineage recovery",
+      "priority": 98,
+      "source": "Drive software universe + implementation canon + v31r1 report",
+      "next_action": "Continue admitting high-authority Drive artifacts into provenance without treating plans as implementations.",
+      "acceptance": [
+        "provenance catalog valid",
+        "software lineage represented",
+        "donor boundary retained"
+      ],
+      "checks": [
+        {
+          "type": "provenance",
+          "capability": "SOFTWARE_LINEAGE"
+        },
+        {
+          "type": "provenance",
+          "capability": "DONOR_MAP"
+        },
+        {
+          "type": "file",
+          "path": "omega_genesis/provenance.py"
+        }
+      ]
+    },
+    {
+      "id": "EV-004",
+      "name": "Restore governed adaptive learning",
+      "priority": 96,
+      "source": "Drive v31r1 executed integration report",
+      "next_action": "Recover persistent learning and prediction as cloud-subordinate state without creating a second canonical authority.",
+      "acceptance": [
+        "adaptive state subordinate to canonical packet",
+        "deterministic replay",
+        "tests prove persistence and rollback"
+      ],
+      "checks": [
+        {
+          "type": "provenance",
+          "capability": "ADAPTIVE_LEARNING"
+        },
+        {
+          "type": "file",
+          "path": "omega_genesis/learning.py"
+        }
+      ]
+    },
+    {
+      "id": "EV-005",
+      "name": "Hybrid Link real device orchestration",
+      "priority": 95,
+      "source": "Drive software universe v22 + historical Hybrid Link builds",
+      "next_action": "Advance from bounded filesystem execution to authenticated optional-node pairing and typed device-control contracts.",
+      "acceptance": [
+        "signed node identity",
+        "typed commands",
+        "replay protection",
+        "real device execution evidence"
+      ],
+      "checks": [
+        {
+          "type": "provenance",
+          "capability": "HYBRID_LINK"
+        },
+        {
+          "type": "file",
+          "path": "omega_genesis/adapters/hybrid.py"
+        },
+        {
+          "type": "external_evidence",
+          "key": "hybrid_live_device",
+          "allowed": [
+            "PASS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EV-006",
+      "name": "Mobile and cockpit visual acceptance",
+      "priority": 92,
+      "source": "Operator cockpit requirements and prior mobile regressions",
+      "next_action": "Run screenshot and resize acceptance against real mobile and desktop browsers and repair covered controls or render surfaces.",
+      "acceptance": [
+        "no covered render view",
+        "all controls reachable",
+        "no fake functions",
+        "mobile screenshot QA PASS"
+      ],
+      "checks": [
+        {
+          "type": "capability",
+          "id": "CAP-015",
+          "allowed_statuses": [
+            "LIVE_CORE"
+          ]
+        },
+        {
+          "type": "external_evidence",
+          "key": "responsive_visual_qa",
+          "allowed": [
+            "PASS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EV-007",
+      "name": "Intrinsic GPU render execution",
+      "priority": 88,
+      "source": "Drive implementation canon",
+      "next_action": "Promote GPU rendering only after target execution and state-bound output proof.",
+      "acceptance": [
+        "GPU renderer executes",
+        "frame output bound to canonical state",
+        "target performance evidence"
+      ],
+      "checks": [
+        {
+          "type": "provenance",
+          "capability": "GPU_RENDER"
+        },
+        {
+          "type": "capability",
+          "id": "CAP-008",
+          "allowed_statuses": [
+            "LIVE_CORE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EV-008",
+      "name": "Source-bound Earth traversal",
+      "priority": 86,
+      "source": "Drive software universe v22",
+      "next_action": "Bind authoritative GIS/DEM/OSM sources while preserving evidence labels and offline deterministic math.",
+      "acceptance": [
+        "dataset provenance",
+        "geodesic validation",
+        "source-class boundary",
+        "no synthetic-as-observed claims"
+      ],
+      "checks": [
+        {
+          "type": "provenance",
+          "capability": "EARTH_TRAVERSAL"
+        },
+        {
+          "type": "file",
+          "path": "omega_genesis/adapters/earth.py"
+        },
+        {
+          "type": "external_evidence",
+          "key": "earth_dataset_bound",
+          "allowed": [
+            "PASS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EV-009",
+      "name": "World reconstruction runtime",
+      "priority": 82,
+      "source": "Drive implementation canon (planned contract)",
+      "next_action": "Implement only the source-calibrated subset justified by available observations; retain PLANNED provenance until execution evidence exists.",
+      "acceptance": [
+        "source registry",
+        "frame/time binding",
+        "residual diagnostics",
+        "proof-bound reconstruction"
+      ],
+      "checks": [
+        {
+          "type": "provenance",
+          "capability": "WORLD_RECONSTRUCTION"
+        },
+        {
+          "type": "file",
+          "path": "omega_genesis/world.py"
+        }
+      ]
+    },
+    {
+      "id": "EV-010",
+      "name": "Governed source-evolution candidate pipeline",
+      "priority": 100,
+      "source": "Continuous evolution constitution",
+      "next_action": "Use an authorized coding agent to implement the highest backlog item on a candidate branch, compare quality vectors, and promote only strict no-regression improvements.",
+      "acceptance": [
+        "candidate branch only",
+        "strict quality-vector improvement",
+        "full tests",
+        "deterministic release",
+        "deployment health",
+        "rollback"
+      ],
+      "checks": [
+        {
+          "type": "file",
+          "path": "omega_genesis/evolution.py"
+        },
+        {
+          "type": "external_evidence",
+          "key": "candidate_source_pipeline",
+          "allowed": [
+            "PASS"
+          ]
+        }
+      ]
+    }
+  ]
+}

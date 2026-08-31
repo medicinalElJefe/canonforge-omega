@@ -70,7 +70,8 @@ def test_health_rejects_invalid_or_private_provenance():
 
 def test_compose_override_pins_every_omega_code_service():
     text = compose_image_override(IMAGE)
-    assert text.count(f"image: {IMAGE}") == 3
+    assert text.count(f"image: {IMAGE}") == 4
     assert "  omega:" in text
     assert "  selfbuilder:" in text
+    assert "  evolver:" in text
     assert "  backup:" in text

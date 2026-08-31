@@ -212,6 +212,24 @@ class Handler(BaseHTTPRequestHandler):
                     "authority": report.get("authority", "OMEGA_CLOUD"),
                     "report": report,
                 })
+            if path == "/api/evolution/status":
+                status_path = DATA / "evolution" / "status.json"
+                if not status_path.is_file():
+                    return self._json(200, {
+                        "status": "PENDING",
+                        "authority": "OMEGA_CLOUD",
+                        "detail": "continuous-evolution observer has not published a cycle yet",
+                    })
+                return self._json(200, json.loads(status_path.read_text(encoding="utf-8")))
+            if path == "/api/evolution/backlog":
+                backlog_path = DATA / "evolution" / "backlog.json"
+                if not backlog_path.is_file():
+                    return self._json(200, {
+                        "status": "PENDING",
+                        "authority": "OMEGA_CLOUD",
+                        "backlog": [],
+                    })
+                return self._json(200, json.loads(backlog_path.read_text(encoding="utf-8")))
             if path in {"/api/state", "/host/current"}:
                 return self._json(200, RUNTIME.snapshot())
             if path == "/host/projection/current":

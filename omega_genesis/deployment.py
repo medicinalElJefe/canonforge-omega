@@ -31,6 +31,8 @@ def compose_image_override(image: str) -> str:
         f"    image: {image}\n"
         "  selfbuilder:\n"
         f"    image: {image}\n"
+        "  evolver:\n"
+        f"    image: {image}\n"
         "  backup:\n"
         f"    image: {image}\n"
     )

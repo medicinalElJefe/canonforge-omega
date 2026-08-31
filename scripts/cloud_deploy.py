@@ -78,7 +78,7 @@ def apply_image(image: str, compose_dir: Path) -> None:
         require(["docker", "pull", image], cwd=compose_dir)
         require([
             "docker", "compose", "-f", "docker-compose.yml", "-f", override.name,
-            "up", "-d", "--no-build", "omega", "selfbuilder", "caddy", "backup",
+            "up", "-d", "--no-build", "omega", "selfbuilder", "evolver", "caddy", "backup",
         ], cwd=compose_dir)
     finally:
         override.unlink(missing_ok=True)
