@@ -223,8 +223,29 @@ def execute_plan(root:Path,steps:list[HybridStep])->dict[str,Any]:
                 cfg=RealityConfig(**dict(args.get("config") or {}))
                 result=analyze_delimited(text,cfg)
             elif op in {"TRAIN_LOCAL_BOUNDED","TRAIN_LOCAL"}:
-                rel=_rel(root,path) if path else "."; result=train_local(root,rel,proof_lessons=list(args.get("proof_lessons",[])))
-                if result.get("status")!="PASS": raise ValueError(f"training held: {result.get('reason')}")
+                rel=_rel(root,path) if path else "."
+                result=train_local(root,rel,proof_lessons=list(args.get("proof_lessons",[])))
+                if result.get("status")!="PASS":
+                    raise ValueError(f"training held: {result.get('reason')}")
+                if output is not None:
+                    output.parent.mkdir(parents=True,exist_ok=True)
+                    profile={
+                        "schema":"OMEGA_LOCAL_TRAINING_PROFILE_V1",
+                        "status":"PASS",
+                        "corpus_fingerprint":result.get("corpus_fingerprint"),
+                        "model_fingerprint":result.get("model_fingerprint"),
+                        "training_receipt":result.get("fingerprint"),
+                        "release_id":result.get("release_id"),
+                        "source_files":result.get("source_files"),
+                        "source_bytes":result.get("source_bytes"),
+                        "foundationWeightsChanged":False,
+                        "sourceUploaded":False,
+                    }
+                    tmp=output.with_suffix(output.suffix+".tmp")
+                    tmp.write_text(json.dumps(profile,indent=2),encoding="utf-8")
+                    tmp.replace(output)
+                    result["profile_output"]=_rel(root,output)
+                    result["profile_sha256"]=sha256_file(output)
             elif op in {"BUILD","TEST"}:
                 if path is None or not path.is_dir(): raise ValueError(f"{op} requires a project directory")
                 result=_run_profile(path,op,str(args.get("profile","AUTO_BUILD")))
