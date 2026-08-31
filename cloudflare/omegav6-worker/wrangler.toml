@@ -1,0 +1,17 @@
+name = "omegav6"
+main = "src/index.js"
+compatibility_date = "2026-08-30"
+workers_dev = true
+
+[[services]]
+binding = "GENESIS"
+service = "omega-genesis-v1"
+
+[assets]
+directory = "../../web"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = [ "/api/*", "/_omega/*", "/stream" ]
+
+[vars]
+BUILD_ID = "omegav6-single-product-facade-g1"
