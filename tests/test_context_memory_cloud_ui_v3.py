@@ -33,11 +33,11 @@ def test_cloud_first_memory_has_explicit_fallback_and_no_silent_autosave():
         'data-suggestion-save',
         'data-suggestion-dismiss',
         'explicit_user_save',
-        'canonical_mutation:false',
         'SAVED_CONVERSATION_CONTEXT',
     ]
     for marker in required:
         assert marker in source, marker
+    assert re.search(r'canonical_mutation\s*:\s*false', source)
 
 
 def test_cloud_save_requires_current_canonical_digest():
@@ -45,7 +45,7 @@ def test_cloud_save_requires_current_canonical_digest():
     assert 'fetch("/api/state"' in source
     assert '/^[0-9a-f]{64}$/' in source
     assert 'canonical_digest_unavailable' in source
-    assert 'data.canonical_digest = await canonicalDigest()' in source
+    assert re.search(r'data\.canonical_digest\s*=\s*await\s+canonicalDigest\(\)', source)
 
 
 def test_context_reuse_is_explicit_and_truth_labeled():
