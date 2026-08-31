@@ -1,0 +1,44 @@
+{
+  "schema": "omega.ai.engineering.policy.v1",
+  "authority": "OMEGA governed AI candidate author",
+  "model": "gpt-5.6-terra",
+  "reasoning_effort": "medium",
+  "max_files_per_candidate": 2,
+  "max_total_output_bytes": 90000,
+  "preferred_objectives": ["EV-006", "EV-004", "EV-008", "EV-005", "EV-009"],
+  "allowed_context": {
+    "EV-006": ["web/index.html", "web/styles.css", "web/app.js", "web/field3d.js", "web/advanced.js"],
+    "EV-004": ["omega_genesis/learning.py", "tests/test_learning.py"],
+    "EV-008": ["omega_genesis/adapters/earth.py", "tests/test_earth.py"],
+    "EV-005": ["omega_genesis/adapters/hybrid.py", "tests/test_hybrid.py"],
+    "EV-009": ["omega_genesis/world.py", "tests/test_world.py"]
+  },
+  "allowed_write_paths": [
+    "web/index.html",
+    "web/styles.css",
+    "web/app.js",
+    "web/field3d.js",
+    "web/advanced.js",
+    "omega_genesis/learning.py",
+    "tests/test_learning.py",
+    "omega_genesis/adapters/earth.py",
+    "tests/test_earth.py",
+    "omega_genesis/adapters/hybrid.py",
+    "tests/test_hybrid.py",
+    "omega_genesis/world.py",
+    "tests/test_world.py"
+  ],
+  "forbidden_substrings": [
+    ".github/workflows/",
+    "config/evolution_policy.json",
+    "omega_genesis/evolution.py",
+    "omega_genesis/visual_quality.py",
+    "scripts/evolution_compare.py",
+    "scripts/verify_release.py",
+    "scripts/self_build.py"
+  ],
+  "candidate_branch_prefix": "omega-ai/",
+  "production_branch": "omega-genesis-v1-full",
+  "auto_merge": true,
+  "boundary": "The model authors candidate source only. Trusted baseline judges, release gates, deployment proof and rollback remain outside model authority."
+}
