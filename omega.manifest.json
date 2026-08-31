@@ -45,6 +45,11 @@
       "bytes": 6413
     },
     {
+      "path": ".github/workflows/deploy-v6-cloudflare.yml",
+      "sha256": "e55d0d0c455f9cd99a3e038a2c10b8b4c1ead18e1eeb25e2ed565bdcc6305fc7",
+      "bytes": 5103
+    },
+    {
       "path": ".github/workflows/evolution-candidate.yml",
       "sha256": "11c77499df8b5b22f82206ddafb327db964afd516e25c18b36e02646f42606cf",
       "bytes": 4835
@@ -141,13 +146,13 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "2e6017a60a82ad9b0dd0a0369ec6a3808b838a3ce9b433a8be670eb1bd80379d",
-      "bytes": 6085
+      "sha256": "aa90146a915c37166ca5d28737ccc2c52c269bc8d7c48a0f488e17d9b3776daf",
+      "bytes": 6332
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/convergence.js",
-      "sha256": "3e953a693067f4d81194313a7dd0b090805a651c2aa4042d13eeb41bcf5860d1",
-      "bytes": 4027
+      "sha256": "bc393b69a9aa5ebabaf659eb6697b645e310648c24b0a1961a255e496dfc2a90",
+      "bytes": 4108
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -178,6 +183,21 @@
       "path": "cloudflare/omega-genesis-worker/wrangler.toml",
       "sha256": "54148d1d331eb4396df2a4f381b21bc014d128186e4c4ea5a26588b8e95ac986",
       "bytes": 461
+    },
+    {
+      "path": "cloudflare/omegav6-worker/package.json",
+      "sha256": "1f11bdd769c54d8568ab48d3ee079245cbb39d7782daba4a2fc513eabbfe598d",
+      "bytes": 240
+    },
+    {
+      "path": "cloudflare/omegav6-worker/src/index.js",
+      "sha256": "858cbfb07d0c81a89bf15463cc6ba51fc08fbdd5b0d32eeb7c4f3e52ab02a0c5",
+      "bytes": 3995
+    },
+    {
+      "path": "cloudflare/omegav6-worker/wrangler.toml",
+      "sha256": "ca1b29c6a3dbe68081b8118fd91ddcbc6458a6362fe2eb52ffa052e4d6293ed2",
+      "bytes": 365
     },
     {
       "path": "config/cloud_autodeploy_policy.json",
@@ -330,6 +350,11 @@
       "bytes": 1029
     },
     {
+      "path": "docs/evolution/v6-single-product-facade-g1.md",
+      "sha256": "9ddef4aaeeeb29ac7a1bf46d09d93fc00875582ff6c5c0d4c0b8d1adc8d31440",
+      "bytes": 1714
+    },
+    {
       "path": "omega_genesis/__init__.py",
       "sha256": "94a8b170933acf40b70ebfc3819e09ecb37a7c222fa13a33b5f16a7dfd5cc6ca",
       "bytes": 278
@@ -376,8 +401,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "1411ac565126a1138dfb3eab23a6665e1173cbd223bec380d8f4e434c324b172",
-      "bytes": 5777
+      "sha256": "ca2bac4064e2882786ee4b0d14c3033c5be9218df50340558cf6d8c3c22424b8",
+      "bytes": 6038
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -818,6 +843,11 @@
       "path": "tests/test_ui_acceptance.py",
       "sha256": "7056b65cc0a88f9b826341c88999004c91756bb470859be43e4689ed317ac5c1",
       "bytes": 959
+    },
+    {
+      "path": "tests/test_v6_single_product_facade.py",
+      "sha256": "b88f87bc6b609b1eb53499b09026c7ba5a803cfbb2f988cf649061e830c560d7",
+      "bytes": 1760
     },
     {
       "path": "tests/test_worker_capability_truth.py",
