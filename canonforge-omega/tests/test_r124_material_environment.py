@@ -2,14 +2,19 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SURFACE = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "sovereignEnvironment.ts"
+HEARTBEAT = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "heartbeatTruth.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
 
-def test_r124_is_the_canonical_worker_entrypoint():
-    text = WRANGLER.read_text(encoding="utf-8")
-    assert 'main = "src/sovereignEnvironment.ts"' in text
-    assert 'class_name = "OmegaRuntime"' in text
-    assert 'binding = "GENESIS"' in text
+def test_r124_is_bound_beneath_canonical_heartbeat_entrypoint():
+    wrangler = WRANGLER.read_text(encoding="utf-8")
+    heartbeat = HEARTBEAT.read_text(encoding="utf-8")
+    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    assert 'class_name = "OmegaRuntime"' in wrangler
+    assert 'binding = "GENESIS"' in wrangler
+    assert 'import sovereignEnvironment from "./sovereignEnvironment"' in heartbeat
+    assert 'url.pathname === "/"' in heartbeat
+    assert "sovereignEnvironment.fetch(request, env)" in heartbeat
 
 
 def test_material_primary_workspaces_exist():
