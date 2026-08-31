@@ -1,25 +1,48 @@
-# OMEGA Genesis deployment status
+# OMEGA Genesis cloud status
 
 This record intentionally lives under `release/`, which is excluded from the canonical source manifest and reproducible release payload.
 
-## Verified release
+## Canonical deployment model
 
-- OMEGA Genesis v1.1.0
-- Canonical manifest files: 67
-- Python acceptance suite: 30/30 PASS
-- Cloudflare Worker syntax/dependency gate: PASS
-- Deterministic release rebuild comparison: PASS
-- Release SHA-256: `bd2e7414479b174550d9eed6c353319428f341ea2d65cee2c3fe482a6e4a8fc7`
-- Normal branch verification run: `33341163427` — PASS
-- Isolated deployment check run: `33341268848` — verification PASS
+OMEGA Cloud is the canonical always-on host.
 
-## Deployment boundary
+- Canonical state, proof ledger and append-only journal live in persistent cloud storage.
+- The web cockpit and REST API run from the cloud host.
+- Browser access uses an authenticated signed HttpOnly session.
+- The canonical heartbeat is available through an authenticated WebSocket.
+- Desktop and mobile systems are optional authorized nodes; no desktop is required for canonical state survival.
+- Hybrid Link remains a bounded node/IO mechanism, not the owner of canonical state.
+- Cloud backups are generated independently of the desktop runtime.
+- Cloudflare Worker remains an optional edge adapter and is not required for the provider-neutral OMEGA Cloud runtime.
 
-`BLOCKED_CREDENTIALS`
+## Full cloud verification
 
-The deployment check found both GitHub Actions environment values empty:
+OMEGA Cloud Full Verification run: `33343790941`
 
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
+PASS:
+- Python compile and complete Genesis test suite
+- browser and edge JavaScript syntax
+- committed canonical release manifest
+- exact manifest regeneration
+- OCI/Docker image build
+- Docker Compose topology
+- authenticated canonical cloud boot
+- proof and journal replay verification
+- authenticated WebSocket canonical heartbeat
+- persistent-volume application restart with unchanged canonical digest
+- cloud backup creation
+- deterministic release rebuilt twice byte-identically
+- artifact publication
 
-No permanent Genesis Cloudflare deployment was claimed or synthesized. Once those repository secrets exist, the checked Worker is deploy-ready. Hosted canonical writes should additionally use `OMEGA_WRITE_TOKEN`.
+Cloud release:
+- manifest-governed source files: 85
+- packaged files including manifest/checksum ledger: 87
+- release SHA-256: `a07e236816c9d80915524223f10aafce713222ff64ecb816bb20023b6fddfa80`
+- manifest SHA-256: `885a4324b7c9cd74ca05407792e67caaa010dddc084f0c7c918c77af12f64334`
+- checksum ledger SHA-256: `3abc6c5ce8c817223c104bb5b4dfa114e8865e0fb1bf2da1e7f4faf91ef72df0`
+
+## Internet hosting boundary
+
+The own-cloud runtime is fully implemented and boot-tested. A permanent public Internet URL still requires authorization to a real external cloud account/VM or an authenticated AppDeploy connection. No public URL is fabricated in this record.
+
+The previous Cloudflare deployment path remains separately blocked when `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` are absent; that does not prevent the provider-neutral OMEGA Cloud stack from operating on another authorized cloud host.
