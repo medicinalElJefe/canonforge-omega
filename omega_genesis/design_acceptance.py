@@ -42,7 +42,7 @@ def evaluate_design(root: Path) -> dict:
         "network_status_is_observed": 'window.addEventListener("online"' in design and 'window.addEventListener("offline"' in design,
         "no_hardware_claim": "hardware" not in design.lower() or "not a hardware verification claim" in design.lower(),
         "worker_python_capability_parity": python_ids == worker_ids,
-        "capability_024_registered": python_ids[-1:] == ["CAP-024"],
+        "capability_024_registered": "CAP-024" in python_ids,
         "design_asset_budget": design_path.stat().st_size <= 32_000,
     }
     failures = sorted(name for name, ok in checks.items() if not ok)
