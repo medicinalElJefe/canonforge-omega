@@ -29,8 +29,9 @@ from omega_runtime.state_store import StateStore
 from omega_runtime.security import gateway_authorized
 from omega_runtime.system_manifest import manifest as software_manifest, summary as software_summary
 from omega_runtime.self_build import BuildMode, JobState, SovereignBuildController, SAFE_JOB_KINDS
+from omega_runtime.heartbeat import HeartbeatRegistry
 
-app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.1.0-self-build-loop")
+app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.2.0-heartbeat-proof-build-loop")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["GET", "POST"], allow_headers=["*"])
 
@@ -56,6 +57,7 @@ OMEGA_HOME = Path.home() / ".omega"
 LEDGER_PATH = OMEGA_HOME / "ledger" / "proof.jsonl"
 STATE_PATH = OMEGA_HOME / "state" / "canonical.json"
 BUILD_STATE_PATH = OMEGA_HOME / "development" / "self_build.json"
+HEARTBEAT_STATE_PATH = OMEGA_HOME / "device" / "heartbeat.json"
 APPROVED_BUILD_ROOT = Path(os.environ.get("OMEGA_APPROVED_ROOT", str(Path.cwd())))
 _initial = StateEnvelope(
     address=Address20736(1, 1, 1, 1), evidence_class=EvidenceClass.DERIVED,
@@ -65,6 +67,7 @@ _initial = StateEnvelope(
 )
 _runtime = OmegaRuntime(_initial, ProofLedger(LEDGER_PATH), StateStore(STATE_PATH))
 _builder = SovereignBuildController(BUILD_STATE_PATH, APPROVED_BUILD_ROOT)
+_heartbeat = HeartbeatRegistry(HEARTBEAT_STATE_PATH, ttl_seconds=45)
 
 
 class PatternInfo(BaseModel):
@@ -132,12 +135,20 @@ class BuildResultRequest(BaseModel):
     error: str | None = None
 
 
+class HeartbeatRequest(BaseModel):
+    agent_id: str = Field(min_length=1, max_length=120)
+    approved_root: str = Field(min_length=1, max_length=2048)
+    capabilities: List[str] = Field(default_factory=list)
+    runtime_version: str | None = None
+    last_job_id: str | None = None
+
+
 @app.get("/api/health")
 def health() -> Dict[str, Any]:
     return {"ok": True, "runtime": "OMEGA V6 Sovereign Runtime", "state_digest": _runtime.state.digest,
             "proof_records": len(_runtime.ledger.records), "persistent_state": str(STATE_PATH),
             "remote_ingress_secured": bool(GATEWAY_TOKEN), "software_families": software_summary(),
-            "development_mode": _builder.mode.value,
+            "development_mode": _builder.mode.value, "device": _heartbeat.status(),
             "representation_boundary": "144/1728/20736 are software state-space representations unless independently evidenced otherwise"}
 
 
@@ -153,8 +164,38 @@ def get_status() -> Dict[str, Any]:
     return {"timestamp": snap.timestamp.isoformat(), "uai": snap.uai, "life_coherence": snap.life_coherence,
             "system_coherence": snap.system_coherence, "evidence_count": snap.evidence_count,
             "truth": tic.truth, "integrity": tic.integrity, "courage": tic.courage,
-            "omega_effective": tic.omega_effective, "development": _builder.status(),
+            "omega_effective": tic.omega_effective, "development": _builder.status(), "device": _heartbeat.status(),
             "boundary": "Fusion/TIC is a compatibility-derived layer. With no explicit evidence it returns zero; canonical authority is StateEnvelope."}
+
+
+@app.get("/api/device/status")
+def device_status() -> Dict[str, Any]:
+    return _heartbeat.status()
+
+
+@app.post("/api/device/heartbeat")
+def device_heartbeat(req: HeartbeatRequest) -> Dict[str, Any]:
+    configured_root = APPROVED_BUILD_ROOT.resolve()
+    presented_root = Path(req.approved_root).expanduser().resolve()
+    if presented_root != configured_root:
+        raise HTTPException(status_code=403, detail={
+            "error": "ROOT_REJECTED",
+            "presented_root": str(presented_root),
+            "approved_root": str(configured_root),
+        })
+    status = _heartbeat.record(
+        agent_id=req.agent_id,
+        approved_root=str(presented_root),
+        capabilities=req.capabilities,
+        runtime_version=req.runtime_version,
+        last_job_id=req.last_job_id,
+        authenticated=True,
+    )
+    EVENT_LOG.append({"type": "HEARTBEAT_PROOF", "agent_id": req.agent_id,
+                      "sequence": status.get("proof", {}).get("sequence"),
+                      "received_at": status.get("proof", {}).get("received_at"),
+                      "evidence_class": "OBSERVED"})
+    return status
 
 
 @app.get("/api/omega/state")
@@ -253,8 +294,9 @@ def get_events() -> List[Dict[str, Any]]:
 
 @app.get("/api/development/status")
 def development_status() -> Dict[str, Any]:
-    """Expose what OMEGA is doing after Hybrid connectivity is established."""
-    return _builder.status()
+    status = _builder.status()
+    status["device"] = _heartbeat.status()
+    return status
 
 
 @app.post("/api/development/mode")
@@ -274,9 +316,15 @@ def development_enqueue(req: BuildEnqueueRequest) -> Dict[str, Any]:
 
 @app.post("/api/development/lease")
 def development_lease(req: BuildLeaseRequest) -> Dict[str, Any]:
-    """Authenticated host agents call this after heartbeat to receive the next bounded job."""
+    device = _heartbeat.status()
+    proof = device.get("proof") or {}
+    if not device.get("pc_online") or proof.get("agent_id") != req.agent_id:
+        raise HTTPException(status_code=409, detail={
+            "error": "CURRENT_AUTHENTICATED_HEARTBEAT_REQUIRED",
+            "device": device,
+        })
     job = _builder.lease_next(req.agent_id)
-    return {"job": None if job is None else asdict(job),
+    return {"job": None if job is None else asdict(job), "device": device,
             "boundary": "typed allow-listed jobs only; arbitrary shell text is never emitted"}
 
 
@@ -288,7 +336,7 @@ def development_result(job_id: str, req: BuildResultRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail=f"unknown build job: {job_id}") from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return {"job": asdict(job), "next": _builder.status().get("active_job")}
+    return {"job": asdict(job), "next": _builder.status().get("active_job"), "device": _heartbeat.status()}
 
 
 def fusion_log(packet: OmegaPacket) -> None:
