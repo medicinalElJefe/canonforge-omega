@@ -42,6 +42,7 @@ required = [
     "omega_genesis/language.py",
     "omega_genesis/acceptance.py",
     "omega_genesis/cloud_auth.py",
+    "omega_genesis/cloud_selfbuild.py",
     "omega_genesis/selfbuild.py",
     "omega_genesis/adapters/earth.py",
     "omega_genesis/adapters/hybrid.py",

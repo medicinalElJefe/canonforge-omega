@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.cloud_self_loop import Gate, atomic_json, sha256_file
+from omega_genesis.cloud_selfbuild import Gate, atomic_json, sha256_file
 
 
 def test_cloud_selfbuild_gate_public_shape():
