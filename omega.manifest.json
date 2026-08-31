@@ -141,8 +141,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "45c0d3523489014ebe38573a8aed78588617510fbf99d2d36b7e2d774dda0096",
-      "bytes": 5688
+      "sha256": "39a12012f8cd26e16b993321cae5709e008f1f94aee6844eaee8c01725e9c4e7",
+      "bytes": 5903
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -305,6 +305,11 @@
       "bytes": 1827
     },
     {
+      "path": "docs/evolution/context-memory-cloud-ui-v3.md",
+      "sha256": "4f7fce9b8de26133aef7be8bcbd9d200ca16a0e9b9a007d94d9d45f086bed98d",
+      "bytes": 2545
+    },
+    {
       "path": "docs/evolution/contextual-conversation-memory-v1.md",
       "sha256": "cf8347f4ae2e01f24491c53708ceb9b4781d71faab12aa7de01332232a463659",
       "bytes": 1312
@@ -361,8 +366,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "331650f0e8d94b48d680f785ae6c365b3be9f071e9435c5104c41fc7d35c5d2c",
-      "bytes": 5352
+      "sha256": "a2915fbc279871baeb5988464587b9a5a1f59916fb3a1abd1e79408286cde23f",
+      "bytes": 5581
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -705,6 +710,11 @@
       "bytes": 828
     },
     {
+      "path": "tests/test_context_memory_cloud_ui_v3.py",
+      "sha256": "9ed884b8e8842dd9d0cda833a004c85d7505fc7cb3b7f6fd3dc3374fcd6b74a3",
+      "bytes": 3157
+    },
+    {
       "path": "tests/test_context_memory_ui.py",
       "sha256": "0c28e5bd4007b94a1ee5c46e3ff0587cb70a439e04adc92c9f23d1bb169a3a61",
       "bytes": 1094
@@ -726,8 +736,8 @@
     },
     {
       "path": "tests/test_design_acceptance.py",
-      "sha256": "cc21a47f13c1f5424282acadd0646741af77261df59387ee7c724e1c55fe2045",
-      "bytes": 1446
+      "sha256": "f5bf43929f75935a67460ed7cede296a44ded57a2e5b9e30ad79c2e532a41ad3",
+      "bytes": 1673
     },
     {
       "path": "tests/test_desktop_link_signed_contract.py",
@@ -736,7 +746,7 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "42ca2693305db7515adc223ec5da1f17a438129ad88777e4b31980f391bf7864",
+      "sha256": "983c7a3e3b2f260a57db1c828422f56f88837b7f8e3a0fbce37210c96a3c0e95",
       "bytes": 3709
     },
     {
@@ -820,14 +830,19 @@
       "bytes": 17295
     },
     {
+      "path": "web/context-memory-ui.js",
+      "sha256": "0d6d326d615b2d3d26c8d5658328ff03fc6aa1d2a60a97300efac32fbd797151",
+      "bytes": 22906
+    },
+    {
       "path": "web/design-system.js",
       "sha256": "ec457638e39c4ed517ec124ee017ada17451b1e1c50eb81e2c99b9e0a39c828d",
       "bytes": 13020
     },
     {
       "path": "web/field3d.js",
-      "sha256": "56c2429c4d2afbf360489ba9380dfce4ea872e57b70c622dd22d66e359122fd4",
-      "bytes": 8489
+      "sha256": "d2e00ee1c56680aaee7dc204beb6a16cdbbe19bc50e5dabbd2e38909d290180d",
+      "bytes": 8609
     },
     {
       "path": "web/index.html",
