@@ -26,6 +26,7 @@ CAPABILITIES = [
     {"id":"CAP-023","name":"Adaptive state-bound WebGL render controller","menu":"04 Render Field","gate":"Deterministic state binding + performance contract","status":"LIVE_CORE"},
     {"id":"CAP-024","name":"Progressive Ultra UI interaction and accessibility design system","menu":"12 Operator Cockpit","gate":"Touch, focus, reduced-motion and fail-open design contract","status":"LIVE_CORE"},
     {"id":"CAP-025","name":"Recursive build-context exclusion guard","menu":"10 Recovery / Packaging","gate":"Generated dependency and runtime artifact exclusion contract","status":"LIVE_CORE"},
+    {"id":"CAP-026","name":"Reciprocal V6↔Genesis convergence manifest","menu":"11 Archive Merge","gate":"Peer observation + canonical authority separation","status":"LIVE_CORE"},
 ]
 
 MENUS = [
