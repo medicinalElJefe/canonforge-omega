@@ -4,6 +4,14 @@ compatibility_date = "2026-08-29"
 workers_dev = true
 
 [vars]
-BUILD_ID = "r81-evolution-mesh"
+BUILD_ID = "r85-omega-runtime-do-recovery"
 # Configure SOVEREIGN_ORIGIN in the deployment environment.
 # It must point at the authenticated ingress of the sovereign runtime/bridge.
+
+[[durable_objects.bindings]]
+name = "OMEGA_RUNTIME"
+class_name = "OmegaRuntime"
+
+[[migrations]]
+tag = "r32-enacted-runtime"
+new_sqlite_classes = ["OmegaRuntime"]
