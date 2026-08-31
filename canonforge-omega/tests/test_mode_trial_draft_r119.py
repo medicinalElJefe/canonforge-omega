@@ -39,7 +39,7 @@ def test_trial_draft_preregisters_failure_and_rollback_before_observation():
 def test_living_core_exposes_trial_draft_without_second_shell():
     preview = (SRC / "coreStudioModePreview.ts").read_text()
     assert "Preregister trial draft" in preview
-    assert "operation:'TRIAL_DRAFT'" in preview
+    assert "requestBase('TRIAL_DRAFT')" in preview
     assert "/api/core/mode-attribution" in preview
     assert "Open observation / trial governance" in preview
     assert "same browser packet" in preview
