@@ -1,0 +1,283 @@
+name: OMEGA Autonomous AI Evolution
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 * * * *'
+
+permissions:
+  contents: write
+  packages: read
+
+concurrency:
+  group: omega-autonomous-ai-evolution
+  cancel-in-progress: false
+
+env:
+  GENESIS_BRANCH: omega-genesis-v1-full
+  OPENAI_MODEL: gpt-5.6-terra
+
+jobs:
+  evolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout trusted Genesis baseline
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.GENESIS_BRANCH }}
+          path: baseline
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout untrusted candidate workspace
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.GENESIS_BRANCH }}
+          path: candidate
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Capture pinned baseline identity
+        id: baseline
+        working-directory: baseline
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Install and verify trusted baseline
+        working-directory: baseline
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+          python -m pytest -q
+          python scripts/build_manifest.py
+          python scripts/verify_release.py
+          python scripts/evolution_cycle.py --once --data-dir release/ai-evolution-baseline
+
+      - name: Install candidate dependencies
+        working-directory: candidate
+        run: |
+          python -m pip install -e .
+
+      - name: Ask OpenAI for one bounded candidate
+        id: author
+        working-directory: candidate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ env.OPENAI_MODEL }}
+        shell: bash
+        run: |
+          set +e
+          python -m omega_genesis.ai_engineer \
+            --snapshot ../baseline/release/ai-evolution-baseline/evolution/status.json \
+            --out-patch release/ai-evolution/candidate.patch \
+            --out-meta release/ai-evolution/author.json
+          rc=$?
+          set -e
+          cat release/ai-evolution/author.json
+          if [ "$rc" -eq 0 ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply candidate and enforce trusted path boundary
+        if: steps.author.outputs.ready == 'true'
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check release/ai-evolution/candidate.patch
+          git apply release/ai-evolution/candidate.patch
+          git diff --name-only > release/ai-evolution/changed-paths.txt
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, str(Path('../baseline').resolve()))
+          from omega_genesis.evolution import load_policy, protected_path_violations
+          baseline = Path('../baseline').resolve()
+          policy = load_policy(baseline)
+          changed = Path('release/ai-evolution/changed-paths.txt').read_text(encoding='utf-8').splitlines()
+          violations = protected_path_violations(changed, policy)
+          if violations:
+              raise SystemExit('QUARANTINE protected judge paths changed: ' + ', '.join(violations))
+          print('Candidate paths admitted:', changed)
+          PY
+
+      - name: Full candidate regression and deterministic manifest proof
+        if: steps.author.outputs.ready == 'true'
+        working-directory: candidate
+        run: |
+          python -m compileall -q omega_genesis
+          python -m pytest -q
+          python scripts/build_manifest.py
+          python scripts/verify_release.py
+          python scripts/evolution_cycle.py --once --data-dir release/ai-evolution-candidate
+
+      - name: Judge candidate with pinned baseline constitution
+        if: steps.author.outputs.ready == 'true'
+        id: judge
+        shell: bash
+        run: |
+          set +e
+          python baseline/scripts/evolution_compare.py \
+            --baseline baseline/release/ai-evolution-baseline/evolution/status.json \
+            --candidate candidate/release/ai-evolution-candidate/evolution/status.json \
+            --changed-paths candidate/release/ai-evolution/changed-paths.txt \
+            --policy-root baseline \
+            --out candidate/release/ai-evolution/candidate-decision.json
+          rc=$?
+          set -e
+          cat candidate/release/ai-evolution/candidate-decision.json
+          if [ "$rc" -eq 0 ]; then
+            echo "promote=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "promote=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build promotion patch
+        if: steps.judge.outputs.promote == 'true'
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --binary -- . ':!release/' > ../promotion.patch
+          test -s ../promotion.patch
+
+      - name: Re-check Genesis head before promotion
+        if: steps.judge.outputs.promote == 'true'
+        id: fresh
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "$GENESIS_BRANCH"
+          now="$(git rev-parse FETCH_HEAD)"
+          if [ "$now" != "${{ steps.baseline.outputs.sha }}" ]; then
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "SUPERSEDED: Genesis moved from ${{ steps.baseline.outputs.sha }} to $now; candidate will not overwrite newer source."
+          else
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply admitted candidate to fresh Genesis and reverify
+        if: steps.judge.outputs.promote == 'true' && steps.fresh.outputs.fresh == 'true'
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard "${{ steps.baseline.outputs.sha }}"
+          git clean -fdx
+          git apply --check ../promotion.patch
+          git apply ../promotion.patch
+          python -m pytest -q
+          python scripts/build_manifest.py
+          python scripts/verify_release.py
+          git status --short
+
+      - name: Commit verified autonomous improvement
+        if: steps.judge.outputs.promote == 'true' && steps.fresh.outputs.fresh == 'true'
+        id: commit
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "OMEGA AI Engineer"
+          git config user.email "omega-ai-engineer@users.noreply.github.com"
+          git add -A
+          git commit -m "OMEGA AI evolution: governed autonomous improvement"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:"$GENESIS_BRANCH"
+
+      - name: Self-build promoted source before live deployment
+        if: steps.commit.outputs.sha != ''
+        working-directory: candidate
+        env:
+          GITHUB_SHA: ${{ steps.commit.outputs.sha }}
+        run: python scripts/self_build.py --repair-ledger
+
+      - name: Deploy changed web surface to canonical Cloudflare and prove live health
+        if: steps.commit.outputs.sha != ''
+        working-directory: candidate/cloudflare/omega-genesis-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git -C ../.. diff --name-only "${{ steps.baseline.outputs.sha }}" "${{ steps.commit.outputs.sha }}" | grep -q '^web/'; then
+            echo 'No web/ change; canonical Worker deployment is unchanged.'
+            exit 0
+          fi
+          npm install
+          npm run check
+          DEPLOY_LOG="$(mktemp)"
+          if ! npx wrangler deploy 2>&1 | tee "$DEPLOY_LOG"; then
+            echo 'DEPLOY_FAILED: Wrangler did not publish candidate.'
+            exit 1
+          fi
+          PUBLIC_URL="$(grep -Eo 'https://[A-Za-z0-9._-]+\.workers\.dev' "$DEPLOY_LOG" | tail -n 1 || true)"
+          test -n "$PUBLIC_URL"
+          verify_live() {
+            local h a
+            h="$(mktemp)"; a="$(mktemp)"
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/_omega/health" -o "$h" || return 1
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/api/health" -o "$a" || return 1
+            python - "$h" "$a" <<'PY'
+          import json,sys
+          h=json.load(open(sys.argv[1],encoding='utf-8'))
+          a=json.load(open(sys.argv[2],encoding='utf-8'))
+          assert h.get('ok') is True
+          assert h.get('authority') == 'durable-object-canonical'
+          assert a.get('status') == 'OK'
+          assert a.get('runtime') == 'OMEGA_GENESIS_CLOUD'
+          assert isinstance(a.get('canonical_digest'),str) and len(a['canonical_digest']) == 64
+          assert a.get('proof',{}).get('valid') is True
+          assert a.get('replay',{}).get('valid') is True
+          assert a.get('replay',{}).get('current_digest') == a.get('canonical_digest')
+          PY
+          }
+          if verify_live; then
+            echo "LIVE_VERIFIED: $PUBLIC_URL"
+            exit 0
+          fi
+          echo 'POST_DEPLOY_VERIFY_FAILED: rolling back immediately.'
+          npx wrangler rollback --message 'OMEGA AI automatic rollback: live proof/replay verification failed'
+          verify_live
+          echo 'ROLLBACK_VERIFIED: previous canonical Worker restored.'
+          exit 1
+
+      - name: Persist evolution evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OMEGA-autonomous-ai-evolution-${{ github.run_id }}
+          path: |
+            baseline/release/ai-evolution-baseline/evolution/status.json
+            baseline/release/ai-evolution-baseline/evolution/backlog.json
+            candidate/release/ai-evolution/author.json
+            candidate/release/ai-evolution/changed-paths.txt
+            candidate/release/ai-evolution/candidate-decision.json
+          if-no-files-found: ignore
+
+      - name: Record truth boundary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA autonomous AI evolution'
+            echo
+            echo '- Schedule: hourly at minute 37 from the default branch.'
+            echo '- Canonical source: omega-genesis-v1-full.'
+            echo '- AI role: candidate author only.'
+            echo '- Judge: pinned trusted Genesis baseline.'
+            echo '- Promotion: only strict no-regression improvement; superseded candidates do not overwrite newer Genesis.'
+            echo '- Live web deployment: post-deploy health/proof/replay required; rollback on failure.'
+          } >> "$GITHUB_STEP_SUMMARY"
