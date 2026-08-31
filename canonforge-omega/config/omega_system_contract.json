@@ -1,0 +1,54 @@
+{
+  "version": "R123",
+  "identity": "OMEGA Sovereign Computational Environment",
+  "equation": ["STATE", "INTELLIGENCE", "MEMORY", "RELATION", "COMPUTATION", "ACTION", "OBSERVATION", "PROOF"],
+  "product_priority": [
+    "canonical_state_runtime_integrity",
+    "temporal_calculus_and_state_evolution",
+    "living_visual_computation",
+    "direct_human_manipulation",
+    "intelligence_and_contextual_memory",
+    "earth_and_source_binding",
+    "sovereign_pc_mobile_cloud_execution",
+    "specialist_instruments",
+    "proof_recovery_and_rollback",
+    "recursive_self_development"
+  ],
+  "primary_surfaces": {
+    "OMEGA": "persistent living projection of canonical state, active operators, relations, time, observations, forecast branches and available actions",
+    "CALCULUS": "direct manipulation of C_Omega, Phi, q, Lambda, observer, phase, time, relation geometry, derivatives, integrals and trajectories",
+    "EARTH": "source-backed geospatial and temporal observation with explicit derived-model and forecast boundaries",
+    "MEMORY": "navigable continuity graph of events, scars, relationships, contradictions, recoveries, branches and retained context",
+    "INTELLIGENCE": "route-before-generation conversation, mode orchestration, competing interpretations, forecast and action planning",
+    "CREATE_SIMULATE": "bounded model construction, state-space exploration, trajectory simulation and representational rendering",
+    "SOVEREIGN": "one canonical machine with cloud, PC and mobile acting as execution and observation locations rather than competing products",
+    "BUILD": "governed recursive development, archive recovery, candidate comparison, tests, visual acceptance, promotion and rollback",
+    "PROOF": "provenance, contradiction, admissibility, replay, evidence and release proof with progressive expert disclosure"
+  },
+  "support_surfaces": ["CI", "DEPLOYMENT", "MANIFEST", "SHA", "HEARTBEAT", "RECOVERY", "CANDIDATE", "SELF_BUILD"],
+  "support_visibility_rule": "support systems must remain available for truth and expert control but may not dominate ordinary operation",
+  "mode_rule": "all established modes remain distinct operators, gates, constraints, diagnostics or projections over one canonical packet; they may cooperate but may not collapse into generic blended semantics or fork independent state engines",
+  "operator_roles": {
+    "ALPHA": "seed/initiate",
+    "BASE": "substrate/context",
+    "CONSTRUCT": "expand/build",
+    "PRUNE": "invert/remove/reject",
+    "OMEGA": "integrate/cohere"
+  },
+  "representation_rule": "144, 1728, 20736 and larger shells are representational computational resolutions; shell changes must alter resolution, relation density, trajectory detail, aggregation or projection and are not physical-dimension claims",
+  "self_build_rule": "self-development is candidate-only recursive improvement: observe -> diagnose -> recover -> prune -> compose -> test -> compare -> visually verify -> prove -> promote_or_reject -> observe_result -> update_strategy_memory",
+  "archive_rule": "recover strongest verified capabilities from historical software without accumulating duplicate launchers, renderers, state authorities, dead experiments, obsolete menus or synthetic truth",
+  "acceptance_question": "Does this change measurably improve OMEGA at observing, understanding, relating, calculating, remembering, anticipating, acting, visualizing or proving?",
+  "prohibitions": [
+    "governance_dashboard_becomes_primary_product",
+    "duplicate_canonical_state_authority",
+    "duplicate_ui_shell",
+    "mode_runtime_fork",
+    "decorative_motion_without_state_binding",
+    "telemetry_card_stack_as_default_specialist_interface",
+    "raw_proof_noise_in_primary_workflow",
+    "newer_candidate_wins_without_comparative_evidence",
+    "wholesale_archive_merge_without_capability_inventory",
+    "physical_dimension_claim_from_interface_shell"
+  ]
+}
