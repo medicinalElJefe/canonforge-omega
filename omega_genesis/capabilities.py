@@ -32,6 +32,7 @@ CAPABILITIES = [
     {"id":"CAP-029","name":"Reciprocal V6↔Genesis convergence manifest","menu":"11 Archive Merge","gate":"Non-recursive peer observation + canonical authority separation","status":"LIVE_CORE"},
     {"id":"CAP-030","name":"Single-product OMEGA V6 facade over Genesis canonical authority","menu":"01 Runtime Core","gate":"V6/Genesis digest parity + service binding + no shadow state","status":"LIVE_CORE"},
     {"id":"CAP-031","name":"Legacy OmegaRuntime Durable Object preservation bridge","menu":"10 Recovery / Packaging","gate":"Preserve historical V6 Durable Object lineage without storage mutation while forwarding authority to Genesis","status":"LIVE_CORE"},
+    {"id":"CAP-032","name":"Live OMEGA V6 visible product coherence and truth surface","menu":"12 Operator Cockpit","gate":"V6 identity + live capability count + authority/proof visibility + direct functional navigation","status":"LIVE_CORE"},
 ]
 
 MENUS = [
@@ -46,7 +47,7 @@ MENUS = [
     ("09","World / Bio / Forecast","Earth, ground, bio, multiscale and frozen-prior forecast."),
     ("10","Recovery / Packaging","Install, health, patch, rollback, legacy-runtime preservation and release evidence."),
     ("11","Archive Merge","KEEP/MERGE/DONOR/QUARANTINE donor governance."),
-    ("12","Operator Cockpit","Responsive human control surface with no covered render view."),
+    ("12","Operator Cockpit","Responsive V6 human control surface with live product identity, proof visibility and no covered render view."),
 ]
 
 GATES = [
