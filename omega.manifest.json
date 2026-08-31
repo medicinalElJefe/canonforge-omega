@@ -131,8 +131,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/package.json",
-      "sha256": "6f7cd6ee5a792cc52feb94d31707f498a65585bfffea47f59d23a6b2c1214aa3",
-      "bytes": 246
+      "sha256": "5427e5bda8befee8d7900f01ab1daed2076ac957dd28bf24b317a19d94e126ea",
+      "bytes": 281
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/api_ext.js",
@@ -141,8 +141,13 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "39a12012f8cd26e16b993321cae5709e008f1f94aee6844eaee8c01725e9c4e7",
-      "bytes": 5903
+      "sha256": "2e6017a60a82ad9b0dd0a0369ec6a3808b838a3ce9b433a8be670eb1bd80379d",
+      "bytes": 6085
+    },
+    {
+      "path": "cloudflare/omega-genesis-worker/src/convergence.js",
+      "sha256": "3e953a693067f4d81194313a7dd0b090805a651c2aa4042d13eeb41bcf5860d1",
+      "bytes": 4027
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -171,8 +176,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/wrangler.toml",
-      "sha256": "0ac9469034cd1d5c9949a90948170eccebce0fa7e95264744b58b5643e3370f5",
-      "bytes": 440
+      "sha256": "54148d1d331eb4396df2a4f381b21bc014d128186e4c4ea5a26588b8e95ac986",
+      "bytes": 461
     },
     {
       "path": "config/cloud_autodeploy_policy.json",
@@ -315,6 +320,11 @@
       "bytes": 1312
     },
     {
+      "path": "docs/evolution/reciprocal-convergence-manifest-g2.md",
+      "sha256": "6e935a62734db79963ba3dcfddaadad18ef8b55f8a64b6a7cd324df2ea4a8726",
+      "bytes": 1254
+    },
+    {
       "path": "docs/evolution/release-aware-cloud-deploy-g1.md",
       "sha256": "6caf04d6f7558a3bf7ea3888d4959d10a83ac3b40f905f3aba01a0dd56f273d5",
       "bytes": 1029
@@ -366,8 +376,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "a2915fbc279871baeb5988464587b9a5a1f59916fb3a1abd1e79408286cde23f",
-      "bytes": 5581
+      "sha256": "1411ac565126a1138dfb3eab23a6665e1173cbd223bec380d8f4e434c324b172",
+      "bytes": 5777
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -736,8 +746,8 @@
     },
     {
       "path": "tests/test_design_acceptance.py",
-      "sha256": "f5bf43929f75935a67460ed7cede296a44ded57a2e5b9e30ad79c2e532a41ad3",
-      "bytes": 1673
+      "sha256": "a35ee6ba975ffbe742ec1f8cd17c6997a428adc0d449df05492ec9f69c1196a9",
+      "bytes": 1928
     },
     {
       "path": "tests/test_desktop_link_signed_contract.py",
@@ -746,8 +756,8 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "983c7a3e3b2f260a57db1c828422f56f88837b7f8e3a0fbce37210c96a3c0e95",
-      "bytes": 3709
+      "sha256": "529fd7093de1996e88f7541c1c3de241012240f0c5b8b8d03af04cb376b90f09",
+      "bytes": 3776
     },
     {
       "path": "tests/test_genesis.py",
@@ -778,6 +788,11 @@
       "path": "tests/test_provenance.py",
       "sha256": "8253928f66e04456c49b88d4adc668ec5b56fe57c4e326a7397f0286fb70844a",
       "bytes": 1763
+    },
+    {
+      "path": "tests/test_reciprocal_convergence_capability_v2.py",
+      "sha256": "0710791af8ec9e1e38aca1fb7caab96309c72332c6edbcfb959b3435b5fe76a0",
+      "bytes": 2059
     },
     {
       "path": "tests/test_render_acceptance.py",
