@@ -41,8 +41,8 @@
     },
     {
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
-      "sha256": "0a36229efbdc0477ebb6977b8daa65eda2f96f07fa26c6067587b41eb175571d",
-      "bytes": 5154
+      "sha256": "a02233efc124c271feb919e1a9d4d452c99de5b47a6daefabfd770c5091e71e9",
+      "bytes": 6413
     },
     {
       "path": ".github/workflows/evolution-candidate.yml",
@@ -290,6 +290,11 @@
       "bytes": 1498
     },
     {
+      "path": "docs/evolution/release-aware-cloud-deploy-g1.md",
+      "sha256": "6caf04d6f7558a3bf7ea3888d4959d10a83ac3b40f905f3aba01a0dd56f273d5",
+      "bytes": 1029
+    },
+    {
       "path": "omega_genesis/__init__.py",
       "sha256": "94a8b170933acf40b70ebfc3819e09ecb37a7c222fa13a33b5f16a7dfd5cc6ca",
       "bytes": 278
@@ -336,8 +341,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "0bd2d27bc417b89d3914a4c999e94dbce4c6c0fa8b42fdaaea32019bc6bdfb95",
-      "bytes": 3731
+      "sha256": "76f52647bcf1f44a3d87e3beb9c4e301fa0771ab3568b3f51933916556029e24",
+      "bytes": 3925
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -363,6 +368,11 @@
       "path": "omega_genesis/deployment.py",
       "sha256": "370552e7974f95637e3f476f1c7790394a7f9c5d070a5e8a5a224aa4de064886",
       "bytes": 4092
+    },
+    {
+      "path": "omega_genesis/deployment_event.py",
+      "sha256": "289487169008f0654ab6d4fca52df7e900c8b360e5cfc1c7763aee3b4e64e889",
+      "bytes": 2400
     },
     {
       "path": "omega_genesis/desktop_link.py",
@@ -620,6 +630,11 @@
       "bytes": 2900
     },
     {
+      "path": "tests/test_capability_count_release_deploy.py",
+      "sha256": "a3b08c8bba47ea330b4452711a9f43b45861bc8a84d7e042c90b5c54d310caa6",
+      "bytes": 278
+    },
+    {
       "path": "tests/test_cloud_self_loop.py",
       "sha256": "aae17647724295d7b651a277fb3d77ddf9f9f5f5065c1df78525fd3b757aad61",
       "bytes": 828
@@ -630,8 +645,13 @@
       "bytes": 2532
     },
     {
+      "path": "tests/test_deployment_event.py",
+      "sha256": "cb0c44cad377591ef0a4813d5fd25f18fa09461da22bc23b496c1d3a1c0840ac",
+      "bytes": 1683
+    },
+    {
       "path": "tests/test_evolution.py",
-      "sha256": "c13721bb36ab0ae4260a9196c995b7d95e43323bfbd6e82de68865e27ddfd51b",
+      "sha256": "5f6f00b919cfc36fc3887252ff1b2d6df4445439cd5b8682ef7c6f7a378bb1b7",
       "bytes": 3904
     },
     {
