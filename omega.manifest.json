@@ -141,8 +141,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "50032ceb8958b67880c44c5186e4c2faebb351220adaae92a4a96f96cb75371e",
-      "bytes": 4526
+      "sha256": "294ab1788e98bfa3e646bf4ef2985645acb38e2f5dac42b699d72202ddbe268c",
+      "bytes": 5049
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -341,8 +341,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "df1289462d407c4e498d8a0ec83ad32adb7c99f881be9d89df10b237656834c1",
-      "bytes": 4457
+      "sha256": "20456ee99a99d0b9ab307f017f5620c513413cff75aa5443e5dda1cd4cf19f91",
+      "bytes": 4671
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -373,6 +373,11 @@
       "path": "omega_genesis/deployment_event.py",
       "sha256": "289487169008f0654ab6d4fca52df7e900c8b360e5cfc1c7763aee3b4e64e889",
       "bytes": 2400
+    },
+    {
+      "path": "omega_genesis/design_acceptance.py",
+      "sha256": "668a2d8f5be1751592c00953030d1a2e12616c44a3f99d04f9d6e1bd1c3966a8",
+      "bytes": 3205
     },
     {
       "path": "omega_genesis/desktop_link.py",
@@ -665,13 +670,18 @@
       "bytes": 1683
     },
     {
+      "path": "tests/test_design_acceptance.py",
+      "sha256": "2106d2b347a506d500227fb67dcb840e0513558aab4c9642d7cbbca20e23f9f7",
+      "bytes": 989
+    },
+    {
       "path": "tests/test_desktop_link_signed_contract.py",
       "sha256": "6f583c5f4c0fa1251f53388f7a06c586a3d2c8c7f02de13d56a5822e7d924731",
       "bytes": 712
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "96dce0289902180ef77156cc4f1c8c383af27d848c2f3ae486a865298dc372a0",
+      "sha256": "85e7f16c581629bffc5c75a3820493a2fb30b6784acc88c99709083572afc717",
       "bytes": 3904
     },
     {
@@ -755,9 +765,14 @@
       "bytes": 17295
     },
     {
+      "path": "web/design-system.js",
+      "sha256": "ec457638e39c4ed517ec124ee017ada17451b1e1c50eb81e2c99b9e0a39c828d",
+      "bytes": 13020
+    },
+    {
       "path": "web/field3d.js",
-      "sha256": "4aa07c99a97679df6152139098d9fdf833bd33a2a699ad49bda91904dbad5887",
-      "bytes": 8385
+      "sha256": "56c2429c4d2afbf360489ba9380dfce4ea872e57b70c622dd22d66e359122fd4",
+      "bytes": 8489
     },
     {
       "path": "web/index.html",
