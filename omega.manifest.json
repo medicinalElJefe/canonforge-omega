@@ -31,19 +31,14 @@
       "bytes": 492
     },
     {
-      "path": ".github/workflows/cloud-promote-deploy.yml",
-      "sha256": "399238a737eefb7a923429d6737a827d32105002a5809be78bcb497ab0562020",
-      "bytes": 3961
-    },
-    {
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
       "sha256": "f1480f01c66693fcf5fb10d5be8b037c6a602107237e96c16718a912eac629df",
       "bytes": 1654
     },
     {
       "path": ".github/workflows/self-build.yml",
-      "sha256": "35f551e9227893cd889227e0a674dd5c36f3111ec1cbbd8385554787b0774dd0",
-      "bytes": 2976
+      "sha256": "4bbe02f4a0277192794b548d1a1c63352ef1baa9db6d0a825f31b0d3a70ef819",
+      "bytes": 5850
     },
     {
       "path": ".github/workflows/verify.yml",
@@ -197,8 +192,8 @@
     },
     {
       "path": "docs/CLOUD_DEPLOYMENT.md",
-      "sha256": "a113663700c05de694a43f1474d454cfcaf76e9245476fac03fb0a0a0012fb2e",
-      "bytes": 2779
+      "sha256": "2a7c7fef4df42bbfcf91a8aa384690619984610f0de06bda279f64a25a28ed61",
+      "bytes": 3133
     },
     {
       "path": "docs/CLOUD_SELF_BUILD.md",
