@@ -25,6 +25,7 @@ CAPABILITIES = [
     {"id":"CAP-022","name":"Deterministic responsive cockpit performance guard","menu":"12 Operator Cockpit","gate":"Static layout + asset budget acceptance","status":"LIVE_CORE"},
     {"id":"CAP-023","name":"Adaptive state-bound WebGL render controller","menu":"04 Render Field","gate":"Deterministic state binding + performance contract","status":"LIVE_CORE"},
     {"id":"CAP-024","name":"Progressive Ultra UI interaction and accessibility design system","menu":"12 Operator Cockpit","gate":"Touch, focus, reduced-motion and fail-open design contract","status":"LIVE_CORE"},
+    {"id":"CAP-025","name":"Recursive build-context exclusion guard","menu":"10 Recovery / Packaging","gate":"Generated dependency and runtime artifact exclusion contract","status":"LIVE_CORE"},
 ]
 
 MENUS = [
