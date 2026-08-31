@@ -1,0 +1,57 @@
+services:
+  omega:
+    build:
+      context: ../..
+      dockerfile: cloud/omega-cloud/Dockerfile
+    env_file:
+      - .env.cloud
+    restart: unless-stopped
+    expose:
+      - "8127"
+      - "8128"
+    volumes:
+      - omega_data:/data
+      - ./workspace:/workspace
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8127/api/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      omega:
+        condition: service_healthy
+    env_file:
+      - .env.cloud
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  backup:
+    build:
+      context: ../..
+      dockerfile: cloud/omega-cloud/Dockerfile
+    env_file:
+      - .env.cloud
+    restart: unless-stopped
+    command: ["python", "scripts/cloud_backup.py", "--watch", "--data", "/data", "--out", "/backups", "--interval", "21600", "--keep", "56"]
+    volumes:
+      - omega_data:/data:ro
+      - omega_backups:/backups
+    depends_on:
+      omega:
+        condition: service_healthy
+
+volumes:
+  omega_data:
+  omega_backups:
+  caddy_data:
+  caddy_config:
