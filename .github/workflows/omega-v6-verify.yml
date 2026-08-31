@@ -43,3 +43,35 @@ jobs:
         run: |
           npm install
           npm run typecheck
+
+  promote-canonical-worker:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: [sovereign-core, cloudflare-interface]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: omega-v6-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact verified head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+      - name: Reconfirm interface type safety
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+      - name: Deploy exact verified canonical head
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy
+      - name: Record promoted SHA
+        run: echo "OMEGA V6 promoted exact verified SHA $GITHUB_SHA"
