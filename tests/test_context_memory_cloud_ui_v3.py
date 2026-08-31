@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,7 +45,7 @@ def test_cloud_save_requires_current_canonical_digest():
     assert 'fetch("/api/state"' in source
     assert '/^[0-9a-f]{64}$/' in source
     assert 'canonical_digest_unavailable' in source
-    assert 'data.canonical_digest=await canonicalDigest()' in source
+    assert 'data.canonical_digest = await canonicalDigest()' in source
 
 
 def test_context_reuse_is_explicit_and_truth_labeled():
@@ -58,11 +59,11 @@ def test_context_reuse_is_explicit_and_truth_labeled():
 
 def test_adaptation_is_bounded_transparent_and_user_driven():
     source = UI.read_text(encoding="utf-8")
-    assert 'const BASE_THRESHOLD=.48' in source
-    assert 'const MIN_THRESHOLD=.40' in source
-    assert 'const MAX_THRESHOLD=.70' in source
-    assert 'p.threshold=Math.max(MIN_THRESHOLD,p.threshold-.01)' in source
-    assert 'p.threshold=Math.min(MAX_THRESHOLD,p.threshold+.02)' in source
+    assert re.search(r'const\s+BASE_THRESHOLD\s*=\s*\.48\s*;', source)
+    assert re.search(r'const\s+MIN_THRESHOLD\s*=\s*\.40\s*;', source)
+    assert re.search(r'const\s+MAX_THRESHOLD\s*=\s*\.70\s*;', source)
+    assert re.search(r'pref\.threshold\s*=\s*Math\.max\(MIN_THRESHOLD,\s*pref\.threshold\s*-\s*\.01\)', source)
+    assert re.search(r'pref\.threshold\s*=\s*Math\.min\(MAX_THRESHOLD,\s*pref\.threshold\s*\+\s*\.02\)', source)
     assert 'accepted' in source and 'dismissed' in source
     assert 'transparent local preference only' in source
 
@@ -71,7 +72,7 @@ def test_planner_interaction_can_be_captured_without_automatic_save():
     source = UI.read_text(encoding="utf-8")
     assert 'data-memory-capture-planner' in source
     assert 'function capturePlanner()' in source
-    capture = source.split('function capturePlanner()', 1)[1].split('async function planWithContext', 1)[0]
+    capture = source.split('function capturePlanner()', 1)[1].split('async function plannerRequest', 1)[0]
     assert 'cloudMemory("SAVE"' not in capture
     assert 'localSave(' not in capture
     assert 'evaluateSuggestion()' in capture
