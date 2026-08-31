@@ -10,7 +10,7 @@ async function enforceHeartbeatTruth(response: Response): Promise<Response> {
   const type = response.headers.get("content-type") || "";
   if (!type.includes("application/json")) return response;
 
-  const body = await response.json<any>();
+  const body: any = await response.json();
   const node = body?.topology?.sovereign_pc;
   if (!node || typeof node !== "object") return Response.json(body, { status: response.status, headers: response.headers });
 
