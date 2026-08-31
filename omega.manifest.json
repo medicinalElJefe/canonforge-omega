@@ -31,6 +31,11 @@
       "bytes": 492
     },
     {
+      "path": ".github/workflows/cloud-promote-deploy.yml",
+      "sha256": "399238a737eefb7a923429d6737a827d32105002a5809be78bcb497ab0562020",
+      "bytes": 3961
+    },
+    {
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
       "sha256": "f1480f01c66693fcf5fb10d5be8b037c6a602107237e96c16718a912eac629df",
       "bytes": 1654
@@ -191,6 +196,11 @@
       "bytes": 2637
     },
     {
+      "path": "docs/CLOUD_DEPLOYMENT.md",
+      "sha256": "a113663700c05de694a43f1474d454cfcaf76e9245476fac03fb0a0a0012fb2e",
+      "bytes": 2779
+    },
+    {
       "path": "docs/CLOUD_SELF_BUILD.md",
       "sha256": "0012bdeb6656a328373e2d02fd5b88f8104113a50f79b41803a6d0692bae504b",
       "bytes": 1925
@@ -274,6 +284,11 @@
       "path": "omega_genesis/corpus.py",
       "sha256": "af5f8ccd2f77422576ebbfadfbd7135d4fd7da567cc9200b299f277ebea60f0e",
       "bytes": 3489
+    },
+    {
+      "path": "omega_genesis/deployment.py",
+      "sha256": "12d6a2c57017bdd9a4c247035e40a7bea9ed3b53bab500dded590b2217561df0",
+      "bytes": 3220
     },
     {
       "path": "omega_genesis/desktop_link.py",
@@ -426,6 +441,11 @@
       "bytes": 1344
     },
     {
+      "path": "scripts/cloud_deploy.py",
+      "sha256": "79173939937990fdaed505c4959affaf3dc04ab842c83429a5288f99df3200f7",
+      "bytes": 6048
+    },
+    {
       "path": "scripts/cloud_self_loop.py",
       "sha256": "2ecef9bcda20ce4a2dc6ae785f2f3cce5f8991163827ea15221cdf8f19bcad52",
       "bytes": 105
@@ -454,6 +474,11 @@
       "path": "tests/test_cloud_self_loop.py",
       "sha256": "aae17647724295d7b651a277fb3d77ddf9f9f5f5065c1df78525fd3b757aad61",
       "bytes": 828
+    },
+    {
+      "path": "tests/test_deployment.py",
+      "sha256": "70478607b2f2e147959aec36edad95f8c2d25c8f0da0f322b7c554f38284896c",
+      "bytes": 1620
     },
     {
       "path": "tests/test_genesis.py",
