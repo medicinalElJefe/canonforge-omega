@@ -26,6 +26,7 @@ CAPABILITIES = [
     {"id":"CAP-023","name":"Adaptive state-bound WebGL render controller","menu":"04 Render Field","gate":"Deterministic state binding + performance contract","status":"LIVE_CORE"},
     {"id":"CAP-024","name":"Progressive Ultra UI interaction and accessibility design system","menu":"12 Operator Cockpit","gate":"Touch, focus, reduced-motion and fail-open design contract","status":"LIVE_CORE"},
     {"id":"CAP-025","name":"Recursive build-context exclusion guard","menu":"10 Recovery / Packaging","gate":"Generated dependency and runtime artifact exclusion contract","status":"LIVE_CORE"},
+    {"id":"CAP-026","name":"Contextual important-conversation memory","menu":"06 AI Orchestration","gate":"Importance + redaction + hash integrity + explainable retrieval","status":"LIVE_CORE"},
 ]
 
 MENUS = [
@@ -34,7 +35,7 @@ MENUS = [
     ("03","Traversal","Stay/Turn/Escalate, addresses, Dewey/RSC motion logic."),
     ("04","Render Field","Living membrane, skins, graph and state-bound projection."),
     ("05","Host Inputs","Camera, text, workbook and external observation adapters."),
-    ("06","AI Orchestration","Operator-safe planning, translation and media mapping."),
+    ("06","AI Orchestration","Context-aware planning, saved important conversations, translation and media mapping."),
     ("07","Data / Excel Atlas","Corpus registry, workbook seed, round-trip and address maps."),
     ("08","Audio / Signal","Deterministic sonification and bounded signal layers."),
     ("09","World / Bio / Forecast","Earth, ground, bio, multiscale and frozen-prior forecast."),

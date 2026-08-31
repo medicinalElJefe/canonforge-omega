@@ -15,8 +15,8 @@ def test_ultra_ui_design_contract_passes():
     assert result["checks"]["reduced_motion"] is True
     assert result["checks"]["mobile_nav_scrim"] is True
     assert result["checks"]["worker_python_capability_parity"] is True
-    assert result["capability_count"] == 25
-    assert result["worker_capability_count"] == 25
+    assert result["capability_count"] == 26
+    assert result["worker_capability_count"] == 26
     assert "real devices remains external evidence" in result["boundary"]
 
 
@@ -24,3 +24,9 @@ def test_ultra_ui_capability_is_live_core():
     rows = {row["id"]: row for row in CAPABILITIES}
     assert rows["CAP-024"]["status"] == "LIVE_CORE"
     assert "Ultra UI" in rows["CAP-024"]["name"]
+
+
+def test_contextual_memory_capability_is_live_core():
+    rows = {row["id"]: row for row in CAPABILITIES}
+    assert rows["CAP-026"]["status"] == "LIVE_CORE"
+    assert "conversation memory" in rows["CAP-026"]["name"].lower()
