@@ -46,6 +46,7 @@ from .observations import earth_context
 from .cloud_auth import CloudAuth
 from .provenance import public_catalog as provenance_catalog, capability_sources as provenance_capability_sources, summary as provenance_summary
 from .learning import LearningMemory
+from .world import WorldObservation, reconstruct_points
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -415,6 +416,14 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/recovery/rollback":
                 result = RUNTIME.rollback_to_digest(str(body["digest"]), reason=str(body.get("reason", "operator recovery")))
                 return self._json(200 if result.get("committed") else 422, result)
+            if path == "/api/world/reconstruct":
+                observations = [WorldObservation.from_dict(row) for row in list(body.get("observations") or [])]
+                return self._json(200, reconstruct_points(
+                    observations,
+                    canonical_digest=RUNTIME.state.digest,
+                    target_frame=body.get("target_frame"),
+                    target_units=body.get("target_units"),
+                ))
             if path == "/api/learning/observe":
                 context_key = str(body.get("context_key", "default"))
                 action = str(body["action"])
