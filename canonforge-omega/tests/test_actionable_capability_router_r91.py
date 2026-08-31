@@ -8,12 +8,14 @@ WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
 
 
-def test_r91_wraps_r90_r89_r88_runtime_instead_of_replacing_it():
-    source = ROUTER.read_text(encoding="utf-8")
+def test_r91_binds_beneath_canonical_heartbeat_entrypoint_instead_of_replacing_it():
+    router = ROUTER.read_text(encoding="utf-8")
     heartbeat = HEARTBEAT.read_text(encoding="utf-8")
-    assert 'import runtime, { OmegaRuntime } from "./heartbeatTruth"' in source
-    assert "export { OmegaRuntime }" in source
-    assert "return runtime.fetch(request, env as any)" in source
+    wrangler = WRANGLER.read_text(encoding="utf-8")
+    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    assert 'import convergence, { OmegaRuntime } from "./convergence"' in heartbeat
+    assert 'from "./capabilityRouter"' in heartbeat
+    assert 'export type V6View = "Field" | "Earth" | "Assistant" | "Hybrid" | "Proof"' in router
     assert "node.pc_online = Boolean(upstreamOnline && heartbeatCurrent)" in heartbeat
     assert "env.GENESIS.fetch" in heartbeat
     assert 'url.pathname === "/convergence"' in heartbeat
@@ -43,13 +45,14 @@ def test_r91_requires_route_preview_before_specialist_open_and_never_executes_on
 
 
 def test_r91_specialist_routes_are_allowlisted_and_unknown_targets_fail_closed():
-    source = ROUTER.read_text(encoding="utf-8")
-    assert 'type V6View = "Field" | "Earth" | "Assistant" | "Hybrid" | "Proof"' in source
-    assert 'url.pathname.startsWith("/app/")' in source
-    assert "if (!isView(view))" in source
-    assert 'error: "unknown_specialist"' in source
-    assert "No specialist route is evidenced by current metadata" in source
-    assert 'return { view: "Proof"' in source
+    router = ROUTER.read_text(encoding="utf-8")
+    heartbeat = HEARTBEAT.read_text(encoding="utf-8")
+    assert 'export type V6View = "Field" | "Earth" | "Assistant" | "Hybrid" | "Proof"' in router
+    assert 'pathname.startsWith("/app/")' in router
+    assert "if (specialist.matched)" in heartbeat
+    assert 'error: "unknown_specialist"' in heartbeat
+    assert "No specialist route is evidenced by current metadata" in router
+    assert 'return { view: "Proof"' in router
 
 
 def test_r91_uses_only_sanitized_public_capability_fields():
@@ -61,10 +64,19 @@ def test_r91_uses_only_sanitized_public_capability_fields():
     assert "raw_corpus" not in source.lower()
 
 
+def test_r91_binds_capability_routing_to_same_heartbeat_governed_edge_snapshot():
+    router = ROUTER.read_text(encoding="utf-8")
+    heartbeat = HEARTBEAT.read_text(encoding="utf-8")
+    assert "handleCapabilityRequest(request, env, () => provenEdgeSnapshot(request, env))" in heartbeat
+    assert "async function provenEdgeSnapshot" in heartbeat
+    assert "enforceHeartbeatTruth(response, env)" in heartbeat
+    assert 'from "./heartbeatTruth"' not in router
+
+
 def test_r91_preserves_existing_release_identities_and_verifier():
     wrangler = WRANGLER.read_text(encoding="utf-8")
     verify = VERIFY.read_text(encoding="utf-8")
-    assert 'main = "src/capabilityRouter.ts"' in wrangler
+    assert 'main = "src/heartbeatTruth.ts"' in wrangler
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"' in wrangler
     assert 'CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"' in wrangler
