@@ -10,3 +10,11 @@ select{display:block;width:100%;margin-top:4px;background:#070c13;color:white;bo
 .webgl-field canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .render-legend{position:absolute;left:14px;bottom:14px;z-index:2;display:flex;flex-direction:column;gap:3px;padding:8px 10px;border:1px solid #33425a;border-radius:9px;background:rgba(6,9,14,.72);backdrop-filter:blur(10px);pointer-events:none}
 .render-legend b{font-size:.7rem;letter-spacing:.08em;color:#d9b86d}.render-legend span{font-size:.62rem;color:#8e9bb1}
+
+.cloud-login{position:fixed;inset:0;display:none;place-items:center;padding:24px;background:rgba(3,8,16,.92);backdrop-filter:blur(12px);z-index:9999}
+.cloud-login.active{display:grid}
+.cloud-login-card{width:min(520px,100%);padding:28px;border:1px solid rgba(215,179,90,.36);border-radius:22px;background:linear-gradient(155deg,rgba(12,20,34,.98),rgba(6,11,20,.98));box-shadow:0 28px 90px rgba(0,0,0,.52)}
+.cloud-login-card h2{margin:.35rem 0 .75rem}
+.cloud-login-card input{width:100%;margin:1rem 0;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.055);color:inherit}
+html[data-omega-cloud="canonical"] .brand::after{content:"CLOUD CANONICAL";display:inline-block;margin-left:.65rem;padding:.2rem .45rem;border:1px solid rgba(215,179,90,.35);border-radius:999px;font-size:.62rem;letter-spacing:.12em;vertical-align:middle}
+html[data-omega-cloud-stream="live"] .status-dot{box-shadow:0 0 0 4px rgba(100,210,170,.10),0 0 18px rgba(100,210,170,.32)}
