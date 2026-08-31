@@ -8,6 +8,7 @@ BUILD_ID = "r87-semantic-edge-settle-proof"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
+RELATION_WORKBENCH_ID = "r94-relation-workbench-graph-projection"
 # Configure SOVEREIGN_ORIGIN in the deployment environment.
 # It must point at the authenticated ingress of the sovereign runtime/bridge.
 
