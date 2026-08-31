@@ -1,0 +1,15 @@
+{$OMEGA_DOMAIN:localhost} {
+    encode zstd gzip
+
+    @stream path /stream*
+    reverse_proxy @stream omega:8128
+
+    reverse_proxy omega:8127
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "same-origin"
+        X-Frame-Options "DENY"
+    }
+}
