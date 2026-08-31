@@ -336,8 +336,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "43014cd8b075119bcab9d1109194523c97ea8983d6eae6dd025f63f26c5879fd",
-      "bytes": 3582
+      "sha256": "0bd2d27bc417b89d3914a4c999e94dbce4c6c0fa8b42fdaaea32019bc6bdfb95",
+      "bytes": 3731
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -406,8 +406,8 @@
     },
     {
       "path": "omega_genesis/learning.py",
-      "sha256": "4dcadfb0c29bb6897c83b90a2981b71be8359155be009fbc6321f0447051496d",
-      "bytes": 8081
+      "sha256": "d0e69c947cd897404238e71028dfac5c290e53c55431cba36e161696f14a5f73",
+      "bytes": 11960
     },
     {
       "path": "omega_genesis/mission.py",
@@ -631,7 +631,7 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "b2d93277b5645ce6abd4777a41d675b0f304a803b55639198ff893c1b3ae8b5d",
+      "sha256": "c13721bb36ab0ae4260a9196c995b7d95e43323bfbd6e82de68865e27ddfd51b",
       "bytes": 3904
     },
     {
@@ -646,8 +646,8 @@
     },
     {
       "path": "tests/test_learning.py",
-      "sha256": "45d2378245cfab32663f2398031791026ec7b681c451240e8efbf12beb43019b",
-      "bytes": 2360
+      "sha256": "224196803c10b0c45d6801b71221c905463280ff4332b166cb9d59f02c0d3761",
+      "bytes": 4660
     },
     {
       "path": "tests/test_provenance.py",
