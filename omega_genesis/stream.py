@@ -27,7 +27,15 @@ def status() -> dict[str, Any]:
         return dict(_STATUS)
 
 
-async def _client(websocket, runtime, interval: float) -> None:
+async def _client(websocket, runtime, interval: float, auth=None) -> None:
+    if auth is not None and getattr(auth, "enabled", False):
+        request = getattr(websocket, "request", None)
+        headers = getattr(request, "headers", {}) if request is not None else {}
+        cookie = headers.get("Cookie", "") if hasattr(headers, "get") else ""
+        token = auth.cookie_value(cookie)
+        if not auth.verify_session(token):
+            await websocket.close(code=1008, reason="unauthorized")
+            return
     with _LOCK:
         _STATUS["clients"] += 1
     try:
@@ -45,19 +53,19 @@ async def _client(websocket, runtime, interval: float) -> None:
             _STATUS["clients"] = max(0, int(_STATUS["clients"]) - 1)
 
 
-async def _run(runtime, host: str, port: int, interval: float) -> None:
+async def _run(runtime, host: str, port: int, interval: float, auth=None) -> None:
     if serve is None:
         raise RuntimeError("websockets dependency is unavailable")
-    async with serve(lambda ws: _client(ws, runtime, interval), host, port, max_size=1_048_576, ping_interval=20, ping_timeout=20):
+    async with serve(lambda ws: _client(ws, runtime, interval, auth), host, port, max_size=1_048_576, ping_interval=20, ping_timeout=20):
         with _LOCK:
             _STATUS.update(status="LIVE", host=host, port=port, started_at=time.time(), error=None)
         await asyncio.Future()
 
 
-def start_state_stream(runtime, host: str = "127.0.0.1", port: int = 8128, interval: float = 1.0) -> threading.Thread:
+def start_state_stream(runtime, host: str = "127.0.0.1", port: int = 8128, interval: float = 1.0, auth=None) -> threading.Thread:
     def runner() -> None:
         try:
-            asyncio.run(_run(runtime, host, port, interval))
+            asyncio.run(_run(runtime, host, port, interval, auth))
         except Exception as exc:
             with _LOCK:
                 _STATUS.update(status="FAILED", host=host, port=port, error=f"{type(exc).__name__}: {exc}")
