@@ -341,8 +341,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "584519e14885a2437f2ea2b3a1c585f79647acabaf2337917d0f0a1b42411b74",
-      "bytes": 4275
+      "sha256": "df1289462d407c4e498d8a0ec83ad32adb7c99f881be9d89df10b237656834c1",
+      "bytes": 4457
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -473,6 +473,11 @@
       "path": "omega_genesis/release.py",
       "sha256": "48ed90f4219a16acc2be03ba0317abd89d1c9e4a17fbe90386d639044523e077",
       "bytes": 4044
+    },
+    {
+      "path": "omega_genesis/render_acceptance.py",
+      "sha256": "8c22a0ee5b8132c1b0110fdde7da8600bee3e35eeb3080c21bbc5f1bd35f88a3",
+      "bytes": 2400
     },
     {
       "path": "omega_genesis/runtime.py",
@@ -666,7 +671,7 @@
     },
     {
       "path": "tests/test_evolution.py",
-      "sha256": "cb580594d1c77784f5e9e455ebd00c597a71c6ef16841c46adaab9ff2c3b02b2",
+      "sha256": "96dce0289902180ef77156cc4f1c8c383af27d848c2f3ae486a865298dc372a0",
       "bytes": 3904
     },
     {
@@ -698,6 +703,11 @@
       "path": "tests/test_provenance.py",
       "sha256": "8253928f66e04456c49b88d4adc668ec5b56fe57c4e326a7397f0286fb70844a",
       "bytes": 1763
+    },
+    {
+      "path": "tests/test_render_acceptance.py",
+      "sha256": "ce45bd4295d98967c0d70581f1538f90f71e62c554df48e70ed7169a7e7d56ca",
+      "bytes": 1059
     },
     {
       "path": "tests/test_selfbuild.py",
@@ -746,8 +756,8 @@
     },
     {
       "path": "web/field3d.js",
-      "sha256": "3c4288fc0479a9dfbcef886d8dfb78d73ffe40729388615c2504be8d9f2647d5",
-      "bytes": 4754
+      "sha256": "4aa07c99a97679df6152139098d9fdf833bd33a2a699ad49bda91904dbad5887",
+      "bytes": 8385
     },
     {
       "path": "web/index.html",
