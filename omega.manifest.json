@@ -20,6 +20,7 @@
   "provenance_schema_version": 1,
   "autodeploy_policy_version": 1,
   "autodeploy": "host pull-based governed promotion ledger -> immutable digest deploy -> live proof/replay/provenance gate -> rollback",
+  "cloud_host_bootstrap": "provider-neutral one-time Linux host initialization with secret minimization, first governed deploy, and persistent systemd watcher",
   "lineage_provenance": "sanitized Drive-derived contracts + capability lineage + evidence boundaries; validated before cloud promotion",
   "private_corpus_policy": "names/hashes/contracts only; no private Drive identifiers/content published",
   "truth_boundary": "high-capacity values are software representation/design spaces unless independent evidence establishes a physical interpretation",
@@ -66,8 +67,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "7f1e6a89332c837afcc49e508480d6fc8c6052d22152e82e4069b71f13aa8a75",
-      "bytes": 7321
+      "sha256": "02234602dd159d19fbec6550a8a9fee9832e69ad2d6dce56ff43c1457ac68f8e",
+      "bytes": 8019
     },
     {
       "path": "START_OMEGA.py",
@@ -216,8 +217,13 @@
     },
     {
       "path": "docs/CLOUD_DEPLOYMENT.md",
-      "sha256": "2a7c7fef4df42bbfcf91a8aa384690619984610f0de06bda279f64a25a28ed61",
-      "bytes": 3133
+      "sha256": "4ce79ceea03c80766d6f09d8a68d0ddd70731e01d1374cd71b5b3309c08b1882",
+      "bytes": 3590
+    },
+    {
+      "path": "docs/CLOUD_HOST_BOOTSTRAP.md",
+      "sha256": "abaec626e51035db01cfd1222a8babc6c9646906d740d1b67cd9740a1b6197ba",
+      "bytes": 2605
     },
     {
       "path": "docs/CLOUD_SELF_BUILD.md",
@@ -333,6 +339,11 @@
       "path": "omega_genesis/host.py",
       "sha256": "dba2658964b7a94a3552e45c0e7c655bd62fa17c35c0b925a39cc6a5fb0fa56b",
       "bytes": 2718
+    },
+    {
+      "path": "omega_genesis/host_bootstrap.py",
+      "sha256": "e0057058bde45364eebb673e2a34989e00d5a6c3178a44c3077be919fa3a7936",
+      "bytes": 4536
     },
     {
       "path": "omega_genesis/intelligence.py",
@@ -456,8 +467,8 @@
     },
     {
       "path": "scripts/build_manifest.py",
-      "sha256": "100975413d0ec869c8fde904a2ebb61b2e4662d01d4ed3f53eeae36c1b1052a3",
-      "bytes": 2894
+      "sha256": "c8e2d51141ca97c13ff71458a0f6780ecd796e89b53ea88f38942aa30b0b2bf7",
+      "bytes": 3056
     },
     {
       "path": "scripts/build_release.py",
@@ -478,6 +489,11 @@
       "path": "scripts/cloud_deploy.py",
       "sha256": "a920312f7cf2b22fed79f441ac28d4cc56047378d36faebf79302708a1cd80b1",
       "bytes": 5921
+    },
+    {
+      "path": "scripts/cloud_host_bootstrap.py",
+      "sha256": "201a2d8fb8eea386a67c55ff5c5657e59fe2abb14faf88801103ff3c71df38b1",
+      "bytes": 5914
     },
     {
       "path": "scripts/cloud_self_loop.py",
@@ -506,8 +522,8 @@
     },
     {
       "path": "scripts/verify_release.py",
-      "sha256": "61086c47abb43e214f460610e56d79d77ed765e7dcd4d1b1f28b1080f81298aa",
-      "bytes": 7160
+      "sha256": "2a264c606a75775e20814a9ba3053b759e64a959623b3e9167a038d3c837b02a",
+      "bytes": 7310
     },
     {
       "path": "tests/test_autodeploy.py",
@@ -528,6 +544,11 @@
       "path": "tests/test_genesis.py",
       "sha256": "5567691d97d515cc90fa55736a885c847a4d3983d9a9f5ede5303bc870ea7e65",
       "bytes": 14598
+    },
+    {
+      "path": "tests/test_host_bootstrap.py",
+      "sha256": "7de458a4083c90ff9471b52bc3cc8fbf0ccc7b3f08a7398d10d450480d6afbe4",
+      "bytes": 2593
     },
     {
       "path": "tests/test_provenance.py",
