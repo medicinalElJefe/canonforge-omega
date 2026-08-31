@@ -21,6 +21,7 @@ jobs:
     outputs:
       image: ${{ steps.publish.outputs.image }}
       source_sha: ${{ steps.release_head.outputs.sha }}
+      promotion_sha: ${{ steps.promotion.outputs.sha }}
       superseded: ${{ steps.ledger.outputs.superseded }}
     steps:
       - uses: actions/checkout@v4
@@ -123,6 +124,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish governed cloud promotion ledger
+        id: promotion
         if: ${{ steps.ledger.outputs.superseded != 'true' }}
         env:
           DIGEST_REF: ${{ steps.publish.outputs.image }}
@@ -169,12 +171,115 @@ jobs:
             git commit -m "OMEGA self-build: publish governed cloud promotion [skip ci]"
             git push origin "HEAD:$GITHUB_REF_NAME"
           fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           {
             echo "### Governed promotion ledger"
             echo
             echo "Image: $DIGEST_REF"
             echo "Release-source head: $RELEASE_SOURCE_SHA"
+            echo "Promotion head: $(git rev-parse HEAD)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  edge-deploy:
+    needs: self-build
+    if: ${{ needs.self-build.outputs.superseded != 'true' && needs.self-build.outputs.promotion_sha != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: omega-genesis-cloudflare
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.self-build.outputs.promotion_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify final promoted Genesis identity
+        env:
+          EXPECTED_IMAGE: ${{ needs.self-build.outputs.image }}
+          EXPECTED_SOURCE_SHA: ${{ needs.self-build.outputs.source_sha }}
+          EXPECTED_PROMOTION_SHA: ${{ needs.self-build.outputs.promotion_sha }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          promotion = json.loads(Path('cloud/omega-cloud/promotion.json').read_text(encoding='utf-8'))
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert head == os.environ['EXPECTED_PROMOTION_SHA'], (head, os.environ['EXPECTED_PROMOTION_SHA'])
+          assert promotion.get('decision') == 'PROMOTE', promotion
+          assert promotion.get('image') == os.environ['EXPECTED_IMAGE'], promotion
+          assert promotion.get('source_sha') == os.environ['EXPECTED_SOURCE_SHA'], promotion
+          print(json.dumps({'status':'PASS','promotion_sha':head,'image':promotion['image'],'source_sha':promotion['source_sha']}))
+          PY
+      - name: Verify final promoted Genesis before edge mutation
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -e .
+          python -m pytest -q
+          python scripts/build_manifest.py
+          python scripts/verify_release.py
+      - name: Install and check Worker
+        working-directory: cloudflare/omega-genesis-worker
+        run: |
+          npm install
+          npm run check
+      - name: Deploy final promoted Genesis to Cloudflare and prove live health
+        working-directory: cloudflare/omega-genesis-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "BLOCKED_CREDENTIALS: final promoted Genesis was verified, but Cloudflare credentials are unavailable." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          DEPLOY_LOG="$(mktemp)"
+          npx wrangler deploy 2>&1 | tee "$DEPLOY_LOG"
+          PUBLIC_URL="$(grep -Eo 'https://[A-Za-z0-9._-]+\.workers\.dev' "$DEPLOY_LOG" | tail -n 1 || true)"
+          if [ -z "$PUBLIC_URL" ]; then
+            echo "DEPLOY_UNVERIFIED: Wrangler returned success but no workers.dev URL was proven." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          verify_live() {
+            local health_file api_file
+            health_file="$(mktemp)"
+            api_file="$(mktemp)"
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/_omega/health" -o "$health_file" || return 1
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors "$PUBLIC_URL/api/health" -o "$api_file" || return 1
+            python - "$health_file" "$api_file" <<'PY'
+          import json, sys
+          health = json.load(open(sys.argv[1], encoding='utf-8'))
+          api = json.load(open(sys.argv[2], encoding='utf-8'))
+          assert health.get('ok') is True, health
+          assert health.get('authority') == 'durable-object-canonical', health
+          assert api.get('status') == 'OK', api
+          assert api.get('runtime') == 'OMEGA_GENESIS_CLOUD', api
+          assert isinstance(api.get('canonical_digest'), str) and len(api['canonical_digest']) == 64, api
+          assert api.get('proof', {}).get('valid') is True, api
+          assert api.get('replay', {}).get('valid') is True, api
+          assert api.get('replay', {}).get('current_digest') == api.get('canonical_digest'), api
+          PY
+          }
+          if verify_live; then
+            echo "LIVE_VERIFIED_FINAL_PROMOTION: $PUBLIC_URL passed final-promotion edge health, canonical state, proof-chain, and replay checks." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "POST_DEPLOY_VERIFY_FAILED: attempting bounded rollback to the immediately previous Worker version." | tee -a "$GITHUB_STEP_SUMMARY"
+          npx wrangler rollback --message "OMEGA automatic rollback: final-promotion verification failed"
+          if verify_live; then
+            echo "ROLLBACK_VERIFIED: previous Worker version restored and verified." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "QUARANTINE: rollback did not restore a verified Worker." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          exit 1
 
   deploy:
     needs: self-build
