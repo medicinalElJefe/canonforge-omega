@@ -47,4 +47,4 @@ def test_r128_production_verifier_requires_roles_digest_and_v3_without_rebrandin
     assert 'V6_CANONICAL_OPERATIONAL_RUNTIME' in source
     assert 'manifest.get("manifest_digest") != peer_manifest.get("digest")' in source
     assert 'genesis_may_deploy_v6' in source
-    assert 'LIVE_ROLE_SEPARATED_V3_CONVERGENCE_VERIFIED' in source
+    assert 'LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3' in source
