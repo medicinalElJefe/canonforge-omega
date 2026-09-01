@@ -5,6 +5,7 @@ import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
 export const VISUAL_DELIVERY_RELEASE = "r137-live-visual-delivery";
+export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
   "R137 composes archive workstation, virtual lattice/light mandala and live phase/time rendering beneath the established heartbeatTruth -> sovereignVisualShell path. This wrapper is presentation/model-only: it does not mutate canonical state, alter OmegaRuntime authority, weaken Hybrid heartbeat truth, change Genesis role separation, promote evidence, or treat representational 12^n shells as physical dimensions.";
 
