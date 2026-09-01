@@ -1,51 +1,52 @@
 # OMEGA Archive Family Coverage Register
 
-Checkpoint: R159 / BATCH 006
+Checkpoint: R159 / BATCH 007
 Canonical parent at R159 start: `781e9077c4ce183cec0a0451e22cce077c87c9c2`
 
 Coverage states: `UNSEEN` → `METADATA_REVIEWED` → `ENTRYPOINT_REVIEWED` → `INTEGRATED`; alternate terminal states: `DEFERRED`, `QUARANTINED`.
 
-This register tracks family-level coverage. `METADATA_REVIEWED` means the family has been located and its role/known artifacts have been reconciled without bulk-loading large files. It does not mean every file in that family has been deeply read.
+| Family | State | Recovered role / capability | One-system disposition |
+|---|---|---|---|
+| One-System Runtime / Sovereign | ENTRYPOINT_REVIEWED | Single HostState + CanonState/OmegaRuntime spine, state/health/proof authority | KEEP canonical runtime authority |
+| Operator Cockpit / Total Control | ENTRYPOINT_REVIEWED | Menu-driven control plane, readable instruments, presets/action ledger | MERGE into OmegaEnvironmentShell |
+| Renderer / Intrinsic Membrane | ENTRYPOINT_REVIEWED | state-spine render, projection skins, intrinsic membrane, one renderer authority | KEEP/MERGE behind shell stage |
+| Current V6 Shell / Orchestration | ENTRYPOINT_REVIEWED | base shell plus launch/workstation/HD-instrument collision map | PRUNE duplicate page authority; KEEP capabilities |
+| Canon Console lineage | ENTRYPOINT_REVIEWED | v24 canonical proof; v31r1 readable dimensional instrument; v34 atlas control; v43 visual cockpit; v44 intelligence/unified concepts; forensic proof/triangulation and instrument navigate/select flows verified in Total Control realization | KEEP proof/admissibility law; MERGE readable control/instrument/proof UX, never create second proof/state authority |
+| Hybrid / Fusion / Hybrid Link | ENTRYPOINT_REVIEWED | V90-R4 Windows bridge entrypoint: protected local token, approved-root confinement, allow-listed operations/keys/patch extensions, workspace limits, rollback items, emergency stop, visible-window locks, password-field block, pair → governed jobs → returned proof packet loop | MERGE safe local governance/bridge patterns into current sovereign Hybrid; QUARANTINE legacy AppDeploy endpoint and any stale remote authority |
+| Traversal / EAG / Address / Dewey | ENTRYPOINT_REVIEWED | execution rule: input/world data → state manifold → traversal controller → real visual host → reversible address ledger; Truth Traversal workbook schema includes README, Focus_Set, Lens_Map, Phase_Map, Reg_Map, Skin_Map, Operators_188, Build_Ledger, Atlas_Summary, Full_Atlas | KEEP traversal semantics and reversible route/address proof; MERGE into Field/Calculus/Intelligence without duplicate state |
+| Motion / Atlas / Calculus | METADATA_REVIEWED | adjacency, time/phase, motion relativity, Mode188, calculus workbooks | KEEP targeted computational/data donors |
+| Visual Design Archive | METADATA_REVIEWED | intrinsic membrane, motion-relativity, embodiment, time-mandala visual language | MERGE visual grammar, not empirical claims |
+| Audio / Signal / SOMA | METADATA_REVIEWED | optional state sonification, carrier/layer/mute, signal logging | DEFER UI integration until shell/core stable; retain capability |
+| World / Bio / Reality / Forecast | METADATA_REVIEWED | domain projections and supporting kernel/completion/discovery artifacts | KEEP evidence boundaries; MERGE as domain lenses |
+| Installer / Recovery / Packaging | METADATA_REVIEWED | one-click/repair/patch/checksum, implementation index, 12→1 merge lineage | KEEP sovereign packaging/recovery capability |
+| Camera / Host Inputs | METADATA_REVIEWED | camera/browser/text/file/API observation packets; camera as observation pressure | KEEP evidence-class host input contract |
+| AI Orchestration / Creator / Task Router | METADATA_REVIEWED | governed task plans, routing, creator/assistant, suggest/execute with approval | KEEP route-before-generation; MERGE workflow surfaces |
+| Excel / LensMatrix / Data Atlas | METADATA_REVIEWED | workbook registry, filter/drill/export, formula checks, CSV/XLSX/DB atlas | KEEP data capability behind one system |
+| Crimson / Alpha specialized runtimes | METADATA_REVIEWED | CRIMSON asymmetry engine; ALPHA→BASE→CONSTRUCT/PRUNE→OMEGA cycle | KEEP as governed operators, not separate runtime authority |
+| Memory / Scar / Relation | INTEGRATED | continuity/scar/relation graph, timeline/replay, carry into forecast | KEEP current workspace |
+| Intelligence / Forecast / Action Gate | INTEGRATED | route→mode→forecast→proposed action→generation gate | KEEP current route authority |
+| Create / Simulate / Consequence | INTEGRATED | local branch simulation/comparison, simulated provenance, rollback | KEEP canonical non-mutation boundary |
+| Sovereign Devices / Compute | INTEGRATED | credential/reachability/authenticating/current/stale/error heartbeat grammar | KEEP heartbeat truth |
+| Earth | INTEGRATED | source-backed catalog and observed/derived/forecast separation | KEEP source truth boundary |
+| Build / Evolution / Recovery Board | INTEGRATED | candidate/CI/promote/deploy/rollback governance | KEEP secondary development workspace |
 
-| Family | State | Recovered role / capability | Current one-system target | Next action |
-|---|---|---|---|---|
-| One-System Runtime / Sovereign | ENTRYPOINT_REVIEWED | Single HostState + CanonState/OmegaRuntime spine, state/health/proof authority | KEEP canonical runtime authority | Continue regression verification only |
-| Operator Cockpit / Total Control | ENTRYPOINT_REVIEWED | Menu-driven human control plane, readable instruments, presets/action ledger | MERGE into OmegaEnvironmentShell | Recover strongest cockpit interaction patterns during shell build |
-| Renderer / Intrinsic Membrane | ENTRYPOINT_REVIEWED | 20736 spine render, projection skins, intrinsic membrane, one renderer authority | KEEP/MERGE behind shell stage | Mount renderers as instruments; no duplicate renderer authority |
-| Motion / Atlas / Calculus | METADATA_REVIEWED | Atlas adjacency, time/phase, motion relativity, Mode188, calculus workbooks | KEEP as computational/data donors | Target workbook ranges only when implementing specific controls |
-| Visual Design Archive | METADATA_REVIEWED | Intrinsic membrane, motion-relativity, embodiment, time-mandala visual language | MERGE visual grammar, not empirical claims | Target individual visual references when rebuilding Field/launch |
-| Current V6 Shell / Orchestration | ENTRYPOINT_REVIEWED | Base shell + launch/dock + workstation + HD instrument collision map | PRUNE duplicate page authority; KEEP capabilities | First deterministic shell slice |
-| Canon Console lineage | METADATA_REVIEWED | Canonical proof, admissibility, readable dimensional instrument, later governance donors; BUILD_VERIFICATION artifacts located | KEEP proof law; MERGE readable proof/instrument UX | B007 inspect strongest BUILD_VERIFICATION/readme/source entrypoint only |
-| Hybrid / Fusion / Hybrid Link | METADATA_REVIEWED | Archive bridge, standalone compatibility bridge, canon donor packs; current heartbeat/PC contract already protected | KEEP bridge capability, never state authority | B007 locate launcher/bridge manifests and reconcile with current heartbeatTruth |
-| Traversal / EAG / Address / Dewey | METADATA_REVIEWED | Route/address traversal, STAY/TURN/ESCALATE, path/replay visuals; Truth Traversal ledger located | KEEP traversal semantics; merge into Field/Calculus/Intelligence | B007 inspect one traversal ledger/entrypoint, avoid 10MB workbook bulk read |
-| Audio / Signal / SOMA | METADATA_REVIEWED | Optional state sonification, carrier/layer/mute, signal logging | DEFER UI integration until shell/core is stable; retain capability | Later targeted audio manifest/entrypoint review |
-| World / Bio / Reality / Forecast | METADATA_REVIEWED | Domain projections, Earth/world/bio/forecast modes; kernel/completion/discovery artifacts located | KEEP truth boundaries; MERGE as domain lenses | Reconcile domain donors against current Earth/Forecast before adding views |
-| Installer / Recovery / Packaging | METADATA_REVIEWED | One-click/repair/patch/checksum, implementation canon index, final 12→1 merge workbook | KEEP sovereign packaging/recovery capability | Inspect strongest manifest/launcher after shell authority is stable |
-| Camera / Host Inputs | METADATA_REVIEWED | Camera/browser/text/file/API observation packets; camera feed as observation pressure; renderer master plan located | KEEP evidence-class host input contract | Inspect camera shell entrypoint and preserve source/evidence classification |
-| AI Orchestration / Creator / Task Router | METADATA_REVIEWED | Governed task plans, routing, creator/assistant, suggest/execute with approval | KEEP route-before-generation; MERGE tool/workflow surfaces | Reconcile historical router semantics with current Intelligence pipeline |
-| Excel / LensMatrix / Data Atlas | METADATA_REVIEWED | Workbook registry, filter/drill/export, formula checks, CSV/XLSX/DB atlas | KEEP data capability behind one system | Review selected workbook schemas only when binding a concrete workspace |
-| Crimson / Alpha specialized runtimes | METADATA_REVIEWED | CRIMSON ONE asymmetry engine; ALPHA→BASE→CONSTRUCT/PRUNE→OMEGA cycle | KEEP as governed modes/operators, not separate runtime authority | Inspect strongest specialized runtime manifest/entrypoint |
-| Memory / Scar / Relation | INTEGRATED | Continuity/scar/relation graph, timeline/replay, carry into forecast | KEEP current workspace; recover donors only if they add capability | Verify shell mounting and no duplicate memory state |
-| Intelligence / Forecast / Action Gate | INTEGRATED | Route→mode→forecast→proposed action→generation gate | KEEP current route authority | Verify shell mounting and progressive explanation |
-| Create / Simulate / Consequence | INTEGRATED | Local branch simulation, comparison, simulated provenance, rollback | KEEP current canonical non-mutation boundary | Merge strongest StandaloneConsequence UX only if superior |
-| Sovereign Devices / Compute | INTEGRATED | Credential/reachability/authenticating/current/stale/error heartbeat grammar | KEEP heartbeat truth | Shell mounting + launcher usability later |
-| Earth | INTEGRATED | Source-backed catalog and observed/derived/forecast separation | KEEP source truth boundary | Shell mounting + domain lens recovery later |
-| Build / Evolution / Recovery Board | INTEGRATED | Candidate/CI/promote/deploy/rollback governance | KEEP secondary development workspace | Add archive coverage/provenance as a bounded instrument |
+## Master corpus audit snapshot recovered in BATCH 007
+A prior `MASTER_CORPUS_AUDIT_REPORT.md` gives a bounded audited corpus snapshot of **188 files / 463.7 MB**: 52 workbooks, 37 images, 37 PDFs, 24 CSVs, 12 ZIPs, 7 SVGs, 7 videos, 3 DOCX, 3 HTML and smaller text/JSON/TSV groups. It also records parsed workbook sheet names/table sizes, JSON keys, ZIP counts, document excerpts, image dimensions and code/SVG excerpts. This is now a coverage accelerator, not proof that the current Drive contains only those 188 files.
 
-## Batch 006 metadata evidence
-Searches were deliberately small and family-specific. They located/reconfirmed:
-- Canon Console `BUILD_VERIFICATION.md` artifacts plus the existing one-system lineage rows.
-- Hybrid/Fusion through the One-System and J-drive ledgers.
-- Traversal/EAG/address through the same ledgers and Truth Traversal family references.
-- Audio/SOMA through the full-software and one-system ledgers.
-- World/Bio/Reality through J-drive/one-system ledgers plus kernel, canon-completion and discovery artifacts.
-- Camera/Host Inputs through ledgers plus `DIMREL_NATIVE_RENDERER_1728_MASTER_PLAN.md` and B058 correspondence material.
-- AI orchestration and Excel/LensMatrix/Data Atlas through the master ledgers.
-- Installer/recovery through the J-drive ledger, full-software build, implementation canon index and final 12→1 merge workbook.
-- Crimson/Alpha through the master ledgers.
+Its clusters include Data/Table 78, 20736D 45, Visual 44, Atlas 40, Document 40, Full Sphere 21, Fold 14, 144D 13, Physics 13, JWST 8, 1728D 6, Dewey 6, Proof 6, Bio 5, Energy 5, Chemistry 4 and smaller software/shell/cosmology groups. The audit explicitly separates archive instantiation from unproven universal ontology claims, which remains the correct OMEGA evidence boundary.
+
+## BATCH 007 entrypoint evidence
+### Canon / control / proof
+`Omega Total Control Suite — Realization Build Verification` records compile, smoke, regression and realized-surface tests plus exercised flows for health/frame/system/cockpit/field/instrument navigation, assistant command/recommendation, automation queue/run, forensic proof/triangulation, archive library/document and tools. It explicitly surfaced CanonConsole v24, v31r1, v34, v43 and v44 donor concepts. Recover those as instruments/proof UX, not as a competing runtime.
+
+### Hybrid
+`OMEGA_HYBRID_LINK_BRIDGE_V90_R4.ps1` is a concrete bridge entrypoint. Strong KEEP/MERGE patterns include approved-root confinement; encrypted-at-rest local token handling; allow-listed operations, keys and patch types; workspace limits; rollback ledger; emergency Ctrl+Alt+Esc; visible-window/process locks; password-field protection; bounded waits; pair credential persistence; governed job claim/completion; and proof-packet return. Its default API base points to obsolete AppDeploy infrastructure, so that endpoint/authority is explicitly QUARANTINED. Current canonical Hybrid/heartbeat APIs remain authority.
+
+### Traversal
+The J-drive execution rule and the Truth Traversal workbook schema establish a reversible traversal architecture: observation/input → canonical state manifold → traversal controller → rendered host → reversible address ledger, with Focus/Lens/Phase/Reg/Skin maps, Operators_188, Build_Ledger and Atlas summaries. These are compatible with the current Field/Calculus/Intelligence stack if represented as read/derived traversal over the same canonical packet.
 
 ## Coverage conclusion
-The major top-level capability families are now represented in the register, but archive review is **NOT COMPLETE**. Many families remain at `METADATA_REVIEWED`; completion requires at least one strongest manifest/readme/source entrypoint review for high-value KEEP/MERGE families, plus disposition of remaining discoverable donor families and duplicate artifacts.
+Archive review remains **NOT COMPLETE**. Three high-value families moved from metadata-only to entrypoint-reviewed. The next pass targets Camera/Host Inputs, AI Orchestration, and Installer/Recovery/Packaging entrypoints; after that, Data Atlas, Crimson/Alpha, Audio/SOMA, World/Bio, and remaining math/visual clusters.
 
 ## Next cursor
-`R159:BATCH_006_COMPLETE;NEXT=BATCH_007_CANON_HYBRID_TRAVERSAL_ENTRYPOINTS`
+`R159:BATCH_007_COMPLETE;NEXT=BATCH_008_HOST_AI_PACKAGING_ENTRYPOINTS`
