@@ -8,14 +8,14 @@ CONVERGENCE = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "convergence.ts"
 VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
 
 
-def test_r90_adds_user_visible_live_convergence_surface():
+def test_r90_preserves_user_visible_live_convergence_surface():
     source = WRAPPER.read_text(encoding="utf-8")
     assert 'url.pathname === "/convergence"' in source
     assert "Governed live convergence" in source
     assert "Manifest agreement" in source
-    assert "Capability genome" in source
     assert "Hybrid truth" in source
     assert 'href="/convergence"' in source
+    assert "fetch('/api/convergence/edge'" in source
 
 
 def test_r90_cockpit_is_observation_only_and_preserves_authorities():
@@ -32,6 +32,7 @@ def test_r90_preserves_current_heartbeat_requirement_for_pc_online():
     assert "heartbeat_required_for_pc_online = true" in source
     assert "HEARTBEAT_STALE_OR_UNPROVEN" in source
     assert "PC ONLINE requires both" in source
+    assert "current authenticated heartbeat not proven" in source
 
 
 def test_r90_preserves_service_binding_and_public_probe_fallback_contract():
@@ -54,10 +55,11 @@ def test_r90_does_not_rebrand_or_weaken_existing_promotion_verifier():
     assert "manifest_digest" in verify
 
 
-def test_r90_reports_client_measured_freshness_and_does_not_infer_pc_online_from_transport():
+def test_r90_reports_client_measured_freshness_and_never_promotes_pc_from_transport():
     source = WRAPPER.read_text(encoding="utf-8")
     assert "Date.now()-t" in source
-    assert "Evidence '+age(d.timestamp)" in source
+    assert "'Evidence '+age(d.timestamp)" in source
     assert "current authenticated heartbeat not proven" in source
     assert "pc.pc_online?'PC ONLINE'" in source
-    assert "genesis_transport||m.transport" in source
+    assert "upstream_online_claim" in source
+    assert "pc_online_requires_current_heartbeat" in source
