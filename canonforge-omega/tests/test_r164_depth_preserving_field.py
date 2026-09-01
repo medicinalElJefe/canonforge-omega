@@ -20,13 +20,18 @@ def test_r164_field_preserves_depth_instead_of_hiding_operator_layers():
 
     # Field may de-emphasize secondary instruments, but must not delete them.
     forbidden = [
-        'html.omega-root-field-active .top,\nhtml.omega-root-field-active .nav,\nhtml.omega-root-field-active #omegaSpatialCore',
+        'html.omega-root-field-active .top,\nhtml.omega-root-field-active .nav,\nhtml.omega-root-field-active #omegaSpatialCore,\nhtml.omega-root-field-active #omegaMobileContext',
         'html.omega-field-focus #omegaSpatialCore,html.omega-field-focus #omegaLivePhaseRail{display:none!important}',
         'html.omega-field-focus .archiveWorkstation .awTop p,html.omega-field-focus .archiveWorkstation .awTruth{display:none}',
         'html.omega-field-focus .archiveWorkstation .awPanel{display:none}',
     ]
+    combined = environment + field
     for marker in forbidden:
-        assert marker not in environment + field
+        if marker.startswith("html.omega-root-field-active .top"):
+            assert marker + ',\nhtml.omega-root-field-active .omegaMobileWorkspaceRail' not in combined
+            assert "{display:none!important}" not in environment.split("html.omega-root-field-active .top", 1)[1].split("html.omega-root-field-active .shell", 1)[0]
+        else:
+            assert marker not in combined
 
     assert "opacity:.22" in environment
     assert ".awTruth{display:grid}" in field
