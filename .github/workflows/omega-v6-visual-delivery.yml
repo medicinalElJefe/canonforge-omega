@@ -7,10 +7,34 @@ name: OMEGA V6 visual delivery proof
 # orsfUltraQuality
 # root+micro-macro-skin+ultra-quality+phase+integrity-v3
 # PUBLIC_VISUAL_DELIVERY_VERIFIED
+# /?view=Field&delivery_probe=$GITHUB_SHA
 # r149-intelligence-reasoning-pipeline
+# ?view=Intelligence
+# INSPECT ROUTE
+# GENERATE FROM ADMITTED ROUTE
+# PUBLIC_INTELLIGENCE_REASONING_VERIFIED
 # r150-create-simulate-branch-lab
+# ?view=Create&delivery_probe=$GITHUB_SHA
+# ROLLBACK / DISCARD
+# PUBLIC_CREATE_SIMULATE_VERIFIED
 # r151-sovereign-devices-compute
+# omegaSovereignDevicesRuntime
+# SOVEREIGN DEVICES / COMPUTE
+# BROWSER CREDENTIAL
+# AGENT REACHABILITY
+# AUTHENTICATING
+# PC ONLINE
+# ERROR / STALE
+# /api/convergence/edge
+# PUBLIC_SOVEREIGN_DEVICES_VERIFIED
 # r152-earth-truth-layers
+# omegaEarthTruthLayersRuntime
+# EARTH TRUTH LENS
+# OBSERVED_SOURCE
+# DERIVED_FRAMEWORK_MATH
+# FORECAST_PROJECTION
+# /api/earth/catalog
+# PUBLIC_EARTH_TRUTH_LAYERS_VERIFIED
 
 on:
   push:
