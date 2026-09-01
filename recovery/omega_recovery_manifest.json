@@ -1,8 +1,8 @@
 {
-  "schema": "omega.recovery.manifest.v1",
+  "schema": "omega.recovery.manifest.v2",
   "candidate": "omega-evolve/r159-recovery-convergence",
   "canonical_parent": "781e9077c4ce183cec0a0451e22cce077c87c9c2",
-  "review_cursor": "R159:BATCH_003_COMPLETE;NEXT=BATCH_004_OPERATOR_COCKPIT_RENDERER_AUTHORITY",
+  "review_cursor": "R159:BATCH_004_COMPLETE;NEXT=BATCH_005_CURRENT_SHELL_ARBITRATION_MAP_AND_FIRST_SLICE",
   "authority_contract": {
     "canonical_state_authority": "V6/OmegaRuntime",
     "genesis_role": "governed discovery/evolution",
@@ -10,97 +10,18 @@
     "duplicate_renderer_authority_allowed": false,
     "appdeploy_allowed": false
   },
-  "archive_summary": {
-    "software_families": 100,
-    "master_menus": 12,
-    "sequence_rows": 144,
-    "proof_gates": 12,
-    "capability_rows": 18,
-    "disposition": {"KEEP": 63, "MERGE": 26, "DONOR": 11}
+  "archive_summary": {"software_families":100,"master_menus":12,"sequence_rows":144,"proof_gates":12,"capability_rows":18,"disposition":{"KEEP":63,"MERGE":26,"DONOR":11}},
+  "recovered_control_render_authority": {
+    "KEEP": ["Omega_Total_Control_Suite","20736SpineNativeRender","DimensionSkinEngine","MergedRendererAuthority","Omega_Universal_Intrinsic_Render_Machine","single_runtime_spine","Operator_Cockpit_Menu_Matrix"],
+    "MERGE": ["FullyPolishedHandoff","StandaloneConsequence","CanonConsoleOmega_v31r1_Readable_Dimensional_Instrument"],
+    "DEMOTE_PAGE_AUTHORITY": ["duplicate_global_fixed_bottom_docks","duplicate_global_mode_navigation_strips","legacy_floating_field_shortcuts","enhancer_owned_global_layout_mutation","secondary_renderer_state_authority"]
   },
-  "capability_domains": [
-    "runtime_core",
-    "proof_governance",
-    "traversal",
-    "render_field",
-    "host_inputs",
-    "ai_orchestration",
-    "data_excel_atlas",
-    "audio_signal",
-    "world_bio_forecast",
-    "recovery_packaging",
-    "archive_merge",
-    "operator_cockpit"
-  ],
-  "protected_current_capabilities": [
-    "OmegaRuntime_Durable_Object",
-    "heartbeat_truth",
-    "Genesis_role_separation",
-    "route_before_generation",
-    "Earth_source_boundaries",
-    "canonical_state_authority",
-    "rollback_provenance",
-    "Memory_continuity_scar_relation_graph",
-    "Calculus_gradient_curvature_RK2",
-    "Intelligence_route_mode_forecast_action_gate",
-    "Create_Simulate_branch_comparison",
-    "Sovereign_device_state_grammar",
-    "Build_Evolution_governance",
-    "representational_shell_boundary"
-  ],
-  "archive_keep_candidates": [
-    "Omega_Sovereign_Runtime",
-    "Omega_Total_Control_Suite",
-    "20736SpineNativeRender",
-    "DimensionSkinEngine",
-    "MergedRendererAuthority",
-    "Mode188_Sovereign_Runtime",
-    "Mode188_RealTime_Runtime_Engine",
-    "OMEGA_HYBRID_LINK",
-    "Omega_Universal_Intrinsic_Render_Machine",
-    "routing_kernel",
-    "state_store",
-    "HostState_HostClient",
-    "CRIMSON_ONE",
-    "ALPHA_CRIMSON_SOVEREIGN_ATLAS_ENGINE",
-    "Recovery_Board_System",
-    "ReturnPacket_topology_system",
-    "Traversal_cockpit_builds",
-    "Runtime_replay_verifier"
-  ],
-  "visual_reference_metadata": [
-    "OMEGA_INTRINSIC_MEMBRANE_V2_SOFTWARE_RENDER.png",
-    "OMEGA_ATLAS_MOTION_RELATIVITY_V5_EARLY_EMERGENCE.png",
-    "omega_20736d_dimensional_core_REAL.png",
-    "omega_embodiment_family",
-    "time_mandala_20736D_3min_loop.gif"
-  ],
-  "prune_presentation_authority_candidates": [
-    "mobile_page_level_omegaSpatialCore",
-    "duplicate_omegaContinuityRibbon_context_chrome",
-    "duplicate_omegaDock",
-    "legacy_floating_field_shortcuts",
-    "global_layout_writes_without_shell_arbitration"
-  ],
-  "convergence_target": {
+  "environment_shell": {
     "name": "OmegaEnvironmentShell",
-    "properties": [
-      "one_primary_workspace_mounted",
-      "one_navigation_authority_per_viewport",
-      "reserved_status_field_context_proof_navigation_regions",
-      "safe_area_aware_mobile_composition",
-      "archive_renderers_mounted_as_instruments_not_page_chrome",
-      "no_post_load_layout_authority_race",
-      "canonical_runtime_unchanged"
-    ]
+    "regions": ["status","navigation","stage","context","proof"],
+    "rules": ["one_primary_workspace_mounted","one_navigation_authority_per_viewport","mobile_safe_area_reserved_before_stage_layout","desktop_and_mobile_navigation_mutually_exclusive","archive_instruments_mount_inside_shell","canonical_state_preserved_across_navigation","workspace_local_view_state_preserved","semantic_operator_color_is_state_encoding","representational_shell_changes_density_trajectory_projection_not_physical_dimension","no_post_load_layout_authority_race"]
   },
-  "next_batch": {
-    "id": "BATCH_004",
-    "focus": [
-      "Operator_Cockpit_Total_Control_readable_instrument_donors",
-      "Intrinsic_Render_MergedRendererAuthority_donors",
-      "current_shell_vs_donor_comparison"
-    ],
-    "bulk_ingest": false
-  }
+  "protected_current_capabilities": ["OmegaRuntime_Durable_Object","heartbeat_truth","Genesis_role_separation","route_before_generation","Earth_source_boundaries","canonical_state_authority","rollback_provenance","Memory_continuity_scar_relation_graph","Calculus_gradient_curvature_RK2","Intelligence_route_mode_forecast_action_gate","Create_Simulate_branch_comparison","Sovereign_device_state_grammar","Build_Evolution_governance","representational_shell_boundary"],
+  "current_source_inventory": ["index.ts","archiveRecoveredWorkstation.ts","launchHdNavigation.ts","coreStudioHdInstrument.ts","governedModeAtlas.ts","highDetail20736Field.ts","individualSkinRelativity.ts","livePhaseVisual.ts","memoryContinuityGraph.ts","calculusInstrument.ts","intelligenceReasoningPipeline.ts","createSimulateBranchLab.ts","buildEvolutionGovernance.ts"],
+  "next_batch": {"id":"BATCH_005","focus":["current_shell_orchestration_entry_points","exact_mount_and_injection_boundaries","mobile_navigation_owner","first_material_mobile_Field_shell_slice"],"bulk_ingest":false}
 }
