@@ -7,6 +7,7 @@ const V6_URL="https://omegav6.jeffdeweyeljefe.workers.dev";
 const LAW=["OBSERVE","INVENTORY","RELATE","PRUNE","TRANSLATE","PROVE","PLAN","BUILD","TEST","VISUAL_ACCEPTANCE","ADVERSARIAL_VERIFY","PROMOTE_OR_REJECT","OBSERVE_RESULT","UPDATE_STRATEGY_MEMORY"];
 const OPERATOR_ROLES=["ALPHA","BASE","CONSTRUCT","PRUNE","OMEGA"];
 const DONOR_DISPOSITIONS=["KEEP","BIND","REIMPLEMENT","PRUNE","QUARANTINE"];
+const VISUAL_BOUNDARY="Genesis live phase rendering is a discovery/evolution visualization channel only. Text/chat output remains separate. Animation, phase, symmetry/asymmetry and 144/1728/20736/12^n projection depth do not mutate state or create empirical evidence.";
 
 function canonical(value){
   if(Array.isArray(value))return "["+value.map(canonical).join(",")+"]";
@@ -65,7 +66,7 @@ async function manifest(env){
     donor_dispositions:DONOR_DISPOSITIONS,
     promotion_boundary:"Genesis may discover, recover, test and propose bounded candidates. OMEGA V6 remains the canonical operational/release authority and promotes through its own exact-head verification workflow.",
     authority_boundary:"Genesis internal Durable Object state is not V6 operational state. Reciprocal convergence is observational and proposal-oriented; it does not grant cross-runtime mutation authority.",
-    dimensional_boundary:"144/1728/20736 are software/model/interface representation shells unless independently evidenced otherwise"
+    dimensional_boundary:"144/1728/20736 and larger 12^n spaces are software/model/interface representation shells unless independently evidenced otherwise"
   };
   return{...core,manifest_digest:await digest(core)};
 }
@@ -88,6 +89,17 @@ async function reciprocalSnapshot(env){
     }
   };
 }
+async function injectVisual(response){
+  const type=response.headers.get("content-type")||"";
+  if(!type.includes("text/html"))return response;
+  let html=await response.text();
+  if(!html.includes("live-phase-visual.js"))html=html.replace("</body>",'<script src="/live-phase-visual.js" defer></script></body>');
+  const headers=new Headers(response.headers);
+  headers.set("cache-control","no-store");
+  headers.set("x-omega-visual-channel","genesis-live-phase-separated-from-chat");
+  headers.set("x-omega-visual-boundary",VISUAL_BOUNDARY);
+  return new Response(html,{status:response.status,headers});
+}
 
 export default{
   async fetch(request,env){
@@ -98,6 +110,8 @@ export default{
     if(url.pathname==="/_omega/convergence"){
       return Response.json(await reciprocalSnapshot(env),{headers:{"cache-control":"no-store","x-omega-authority":"genesis-convergence-observer"}});
     }
-    return base.fetch(request,env);
+    const eligibleVisual=request.method==="GET"&&!url.pathname.startsWith("/api/")&&!url.pathname.startsWith("/_omega/")&&!url.pathname.startsWith("/host/");
+    if(!eligibleVisual)return base.fetch(request,env);
+    return injectVisual(await base.fetch(request,env));
   }
 };
