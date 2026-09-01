@@ -7,6 +7,7 @@
   "genesis_sha_observed": "fca954774e2246ec1bb1e3408ede7610c69c813c",
   "active_recovery_candidate": "recovery/archive-convergence-b004",
   "active_recovery_candidate_parent": "77defb727e3b9f09bb66c8033b0677eab0819a72",
+  "active_candidate_code_head_before_checkpoint": "d1b9c3d16046ee39530427ef6309045841b8c71c",
   "superseded_candidates": [
     {
       "branch": "recovery/archive-convergence-b001",
@@ -17,25 +18,26 @@
     {
       "branch": "omega-evolve/r161-intelligence-authority",
       "pr": 125,
-      "state": "REJECTED_PENDING_CLOSE",
+      "state": "REJECTED_CLOSED_UNMERGED",
       "last_observed_sha": "580abc9e0c512e99608f8c9b2161d833fe8e7d7b",
-      "reason": "R161 deterministic Intelligence logic is valid as a MERGE candidate, but changing wrangler main from heartbeatTruth.ts to a wrapper caused repeated sovereign-runtime preservation failures across historical entrypoint contracts. Reintegrate inside the established heartbeat/shell composition chain instead of replacing the canonical Worker entrypoint."
+      "reason": "deterministic Intelligence logic remains MERGE-worthy, but wrapper Worker entry changed the protected heartbeatTruth entrypoint and repeatedly failed sovereign runtime preservation"
     }
   ],
   "cursor": {
-    "batch": 4,
-    "source": "canonical_v6+github_lineage+google_drive_bounded_content",
-    "family": "r161_intelligence_authority_and_one_system_ledger",
-    "checkpoint": "canonical V6/Genesis authority confirmed; one bounded Drive ledger content-reviewed; deterministic Intelligence module recovered; wrapper-entry integration rejected after three CI attempts because it changed canonical entrypoint semantics",
-    "next": "mount deterministic Intelligence enhancement within existing heartbeatTruth/sovereign shell chain while keeping wrangler main=src/heartbeatTruth.ts; then exact-head CI; content-inspect one additional full-software/menu ledger"
+    "batch": 5,
+    "source": "canonical_v6+github_source+google_drive_bounded_content",
+    "family": "full_software_menu_ledger_and_r162_unified_workspace_acceptance",
+    "checkpoint": "second Drive ledger content-reviewed; existing acceptance instruments source-reconciled; Calculus mounted into canonical compositor candidate; single OmegaEnvironmentShell navigation augmented to expose all nine primary workspace families without changing Worker entry authority",
+    "next": "run exact-head CI for R162 and promote only if fully green; verify deployment/public convergence; then reintegrate deterministic Intelligence status path inside the established composition chain and inspect one additional bounded archive family"
   },
   "coverage": {
     "archive_families_metadata_reviewed": 31,
     "software_families_mapped_prior": 24,
+    "full_software_ledger_registry_rows_content_reviewed": 100,
     "high_value_source_entry_family_lines_reconciled": 6,
     "current_v6_cloudflare_authority_roots_confirmed": 3,
-    "drive_ledgers_content_reviewed": 1,
-    "material_v6_candidates_attempted": 1,
+    "drive_ledgers_content_reviewed": 2,
+    "material_v6_candidates_attempted": 2,
     "material_v6_candidates_promoted": 0,
     "quarantined_authority_patterns": 2,
     "unknown_or_inaccessible": [
@@ -50,22 +52,26 @@
       "wrangler canonical entrypoint src/heartbeatTruth.ts until a tested migration explicitly supersedes it",
       "OmegaRuntime Durable Object export and migrations",
       "heartbeatTruth runtime truth/composition gate",
-      "OmegaEnvironmentShell unified human environment",
+      "OmegaEnvironmentShell unified human environment and primary navigation authority",
+      "existing governed V6 workspace instruments under the virtual lattice compositor",
       "atlas_runtime_test_bundle historical tested runtime/API reference",
       "Mode188 STAY/TURN/ESCALATE admissibility law",
       "one-system ledger rule: renderer/menus/AI/forecast/camera/workbook/packager are submodules behind one runtime spine"
     ],
     "MERGE": [
-      "R161 deterministic Intelligence status logic: current convergence/hybrid/development/health endpoints with zero generation call, to be mounted inside existing composition chain",
+      "R162: mount existing calculusInstrument.ts into virtualLatticeDisplay composition",
+      "R162: augment existing OmegaEnvironmentShell navigation with Calculus, Memory, Create/Simulate and Build/Evolution without introducing a second navigation surface",
+      "full-software menu ledger one-authority/one-menu-path/no-shadow-state requirements as design-control",
+      "R161 deterministic Intelligence status logic, later to be mounted inside existing composition chain",
       "Mode188 v10/v11 proof mechanics",
       "CanonConsole v24/v31/v31r1 proof/readable-state/governance pieces",
       "Hybrid Link adapters only",
       "Dewey Calculus",
       "Earth traversal/source-backed observation",
-      "Proof/forensic/replay ledger",
-      "one-system ledger menu capabilities as workspace/instrument requirements"
+      "Proof/forensic/replay ledger"
     ],
     "DONOR": [
+      "OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER historical Windows roots/ports/package names and standalone menu implementations",
       "R161 wrapper-entry experiment r161Entry.ts as implementation evidence only",
       "TCS 20736 native render",
       "Apex World",
@@ -83,19 +89,17 @@
       "historical synthetic camera fallback unless explicitly simulation/test labeled"
     ]
   },
-  "capability_map_additions_batch_4": [
-    "Host Intake camera/text/files/telemetry evidence channels",
-    "12x12x12 representational state manifold",
-    "20736 representational expansion layer",
-    "single renderer authority and living membrane instrument",
-    "reversible traversal with STAY/TURN/ESCALATE",
-    "forecast curvature/conductance instrument",
-    "proof/drift/replay/checksum workspace",
-    "state sonification as non-medical feedback",
-    "AI task routing with operator authority retained",
-    "recovery board KEEP/MERGE/DONOR/QUARANTINE workflow",
-    "packaging/patch/backup/repair support pipeline",
-    "deterministic operational Intelligence response path separated from routed synthesis"
+  "capability_map_additions_batch_5": [
+    "12-master-menu one-system capability taxonomy",
+    "Operator Cockpit plus menu matrix as intended human-control model",
+    "one HostState plus CanonState authority design law",
+    "replayable proof with no shadow state",
+    "direct manipulable Calculus projection over canonical runtime state",
+    "direct navigable Memory continuity/scar/relation graph",
+    "direct navigable Create/Simulate bounded branch comparison",
+    "direct navigable Build/Evolution release-observation workspace",
+    "nine-family primary workspace navigation under OmegaEnvironmentShell",
+    "mobile primary workspace targets at least 44px"
   ],
   "ci_history_batch_4": [
     {
@@ -119,6 +123,7 @@
   ],
   "preserved_contracts": [
     "OmegaRuntime export / Durable Object compatibility",
+    "wrangler main remains src/heartbeatTruth.ts",
     "heartbeat truth",
     "Genesis service binding and separate discovery/evolution authority",
     "capability/specialist routing",
@@ -127,10 +132,12 @@
     "Earth source/derived/forecast boundaries",
     "route-before-generation",
     "exact PC heartbeat proof",
-    "rollback/provenance"
+    "rollback/provenance",
+    "single renderer/composition authority per viewport"
   ],
   "release_evidence": {
     "canonical_parent_deployment_previously_verified": true,
+    "r162_exact_head_ci": "PENDING",
     "candidate_promoted_this_batch": false,
     "deployment_verified_this_batch": false,
     "hybrid_pc_online_verified_this_batch": false
@@ -138,5 +145,5 @@
   "archive_review_complete": false,
   "material_candidate_functional_improvement": true,
   "material_product_improvement": false,
-  "status": "NO MATERIAL PRODUCT IMPROVEMENT: bounded recovery advanced and a deterministic Intelligence candidate was built/typechecked, but its wrapper-entry architecture was rejected after repeated full-runtime-test failures. Cursor moved to a clean canonical-parent recovery branch for safe reintegration next batch."
+  "status": "R162 MATERIAL CANDIDATE: existing Calculus is now mounted in the compositor candidate and all nine acceptance workspace families are reachable from the single environment navigation design. Promotion remains gated on exact-head CI, deployment verification and post-deployment observation."
 }
