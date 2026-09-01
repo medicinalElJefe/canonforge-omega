@@ -4,6 +4,7 @@ import { enhanceVirtualLatticeDisplay } from "./virtualLatticeDisplay";
 import { enhanceLivePhaseVisual } from "./livePhaseVisual";
 import { enhanceCalculusInstrument } from "./calculusInstrument";
 import { enhanceUnifiedWorkspaceAcceptance } from "./unifiedWorkspaceAcceptance";
+import { enhanceFieldExperience } from "./fieldExperience";
 
 export const SPATIAL_COMMAND_CORE_BOUNDARY = "R136 keeps navigation separate from visualization and chat. Every launch target resolves to an existing governed route. The compact switcher is navigation only; live visual computation is rendered by state-bound workspace instruments, the archive workstation, virtual lattice and phase renderer, while chat/text output remains a separate channel.";
 
@@ -33,4 +34,4 @@ const runtime=`<script id="omegaSpatialCommandCoreRuntime">(()=>{const core=docu
 
 async function compactNavigation(response:Response):Promise<Response>{const type=response.headers.get('content-type')||'';if(!type.includes('text/html'))return response;let html=await response.text();if(!html.includes('OMEGA V6')||html.includes('omegaSpatialCommandCoreStyle'))return new Response(html,{status:response.status,headers:response.headers});html=html.replace('</head>',style+'</head>');const target=html.includes('<main class="work">')?'<main class="work">':html.includes('<main class="wrap">')?'<main class="wrap">':'<body>';html=html.replace(target,target+markup());html=html.replace('</body>',runtime+'</body>');return new Response(html,{status:response.status,headers:response.headers});}
 
-export async function enhanceSpatialCommandCore(response:Response):Promise<Response>{let out=await compactNavigation(response);out=await enhanceCapabilityViewRestoration(out);out=await enhanceArchiveRecoveredWorkstation(out);out=await enhanceVirtualLatticeDisplay(out);out=await enhanceCalculusInstrument(out);out=await enhanceLivePhaseVisual(out);return enhanceUnifiedWorkspaceAcceptance(out);}
+export async function enhanceSpatialCommandCore(response:Response):Promise<Response>{let out=await compactNavigation(response);out=await enhanceCapabilityViewRestoration(out);out=await enhanceArchiveRecoveredWorkstation(out);out=await enhanceVirtualLatticeDisplay(out);out=await enhanceCalculusInstrument(out);out=await enhanceLivePhaseVisual(out);out=await enhanceUnifiedWorkspaceAcceptance(out);return enhanceFieldExperience(out);}

@@ -1,0 +1,21 @@
+export const FIELD_EXPERIENCE_BOUNDARY = "R163 makes Field a living state-bound viewport and reduces competing chrome. Motion is driven by canonical state controls, governed operator semantics and time; it is visualization, not empirical evidence or a second state authority.";
+
+const style=`<style id="omegaFieldExperienceStyle">
+html.omega-field-focus #omegaSpatialCore,html.omega-field-focus #omegaLivePhaseRail{display:none!important}
+html.omega-field-focus .archiveWorkstation{margin:8px 0 18px;border-radius:18px}
+html.omega-field-focus .archiveWorkstation .awTop{padding:13px 16px 11px}
+html.omega-field-focus .archiveWorkstation .awTop h2{font-size:clamp(1.25rem,2.2vw,2rem);margin:2px 0}
+html.omega-field-focus .archiveWorkstation .awTop p,html.omega-field-focus .archiveWorkstation .awTruth{display:none}
+html.omega-field-focus .archiveWorkstation .awToolbar{padding:8px 12px}
+html.omega-field-focus .archiveWorkstation .awStage{grid-template-columns:minmax(0,1fr) 250px;min-height:0}
+html.omega-field-focus .archiveWorkstation .awViewport{min-height:clamp(520px,70vh,880px)!important}
+html.omega-field-focus .archiveWorkstation .awPanel{padding:10px}
+html.omega-field-focus .archiveWorkstation .awSection{margin-top:9px;padding-top:8px}
+#omegaFieldFocusBar{display:none}
+html.omega-field-focus #omegaFieldFocusBar{display:flex;align-items:center;gap:8px;margin:4px 0 8px;padding:8px 10px;border:1px solid #263d59;border-radius:13px;background:rgba(4,9,15,.82);backdrop-filter:blur(18px)}
+.offEy{font:800 9px ui-monospace,monospace;letter-spacing:.12em;color:#7890ad}.offState{font:800 10px ui-monospace,monospace;color:#eaf2ff}.offHint{margin-left:auto;color:#72849b;font:9px ui-monospace,monospace}.offPulse{width:8px;height:8px;border-radius:50%;background:#42cb7c;box-shadow:0 0 14px #42cb7c88}
+@media(max-width:760px){html.omega-field-focus .archiveWorkstation .awStage{grid-template-columns:1fr}html.omega-field-focus .archiveWorkstation .awPanel{display:none}html.omega-field-focus .archiveWorkstation .awViewport{min-height:calc(100svh - 230px)!important}.offHint{display:none}}
+</style>`;
+const bar=`<div id="omegaFieldFocusBar"><span class="offPulse"></span><span class="offEy">LIVING FIELD</span><span class="offState" id="offState">STATE-BOUND MOTION</span><span class="offHint">drag field controls · switch lens only when needed</span></div>`;
+const runtime=`<script id="omegaFieldExperienceRuntime">(()=>{if(window.__omegaFieldExperience)return;window.__omegaFieldExperience=true;const p=new URLSearchParams(location.search),view=(p.get('view')||'Field').toLowerCase(),field=view==='field'||view==='';document.documentElement.classList.toggle('omega-field-focus',field);if(!field)return;const ws=document.querySelector('#archiveWorkstation');if(ws){const h=ws.querySelector('.awTop h2');if(h)h.textContent='Living Field';const ey=ws.querySelector('.awEy');if(ey)ey.textContent='ONE CANONICAL PACKET · STATE / TIME / OPERATOR MOTION';const live=ws.querySelector('[data-aw-lens="live"]');if(live&&!live.classList.contains('active'))live.click()}const state=document.querySelector('#offState');function sync(){const mode=document.querySelector('#hdMode')?.textContent?.trim()||document.querySelector('[data-mode].active')?.textContent?.trim()||'BASE';const op=document.querySelector('#hdOperator')?.textContent?.trim()||'OMEGA';if(state)state.textContent=mode+' · '+op+' · LIVE'}sync();setInterval(sync,1200);document.documentElement.dataset.omegaFieldExperience='r163'})();</script>`;
+export async function enhanceFieldExperience(response:Response):Promise<Response>{const type=response.headers.get('content-type')||'';if(!type.includes('text/html'))return response;let html=await response.text();if(!html.includes('OMEGA V6')||html.includes('omegaFieldExperienceRuntime'))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});html=html.replace('</head>',style+'</head>');const target=html.includes('<main class="work">')?'<main class="work">':html.includes('<main class="wrap">')?'<main class="wrap">':'<body>';html=html.replace(target,target+bar);html=html.replace('</body>',runtime+'</body>');return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});}
