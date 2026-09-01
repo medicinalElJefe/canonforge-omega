@@ -43,7 +43,10 @@ def test_r89_repairs_only_from_successful_bound_genesis_observations():
     assert "if (edge?.reachable) topologyGenesis.edge = edge" in heartbeat
     assert "if (health?.reachable) topologyGenesis.health = health" in heartbeat
     assert "if (manifestProbe?.reachable)" in heartbeat
-    assert 'manifest.schema === "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2"' in heartbeat
+    assert 'manifest.schema === GENESIS_SCHEMA_V3' in heartbeat
+    assert 'manifest.authority_contract === AUTHORITY_CONTRACT' in heartbeat
+    assert 'runtime.operational_release_authority === false' in heartbeat
+    assert 'product.genesis_may_deploy_v6 === false' in heartbeat
 
 
 def test_r89_keeps_authority_and_transport_truth_boundaries_explicit():
@@ -52,3 +55,5 @@ def test_r89_keeps_authority_and_transport_truth_boundaries_explicit():
     assert "Genesis canonical state and V6 release authority remain separate" in heartbeat
     assert "genesis_transport_boundary" in heartbeat
     assert "genesis_manifest_digest" in heartbeat
+    assert "authority_contract_ready" in heartbeat
+    assert "v6_release_authority" in heartbeat
