@@ -1,8 +1,8 @@
 {
-  "schema": "omega.recovery.manifest.v2",
+  "schema": "omega.recovery.manifest.v3",
   "candidate": "omega-evolve/r159-recovery-convergence",
   "canonical_parent": "781e9077c4ce183cec0a0451e22cce077c87c9c2",
-  "review_cursor": "R159:BATCH_004_COMPLETE;NEXT=BATCH_005_CURRENT_SHELL_ARBITRATION_MAP_AND_FIRST_SLICE",
+  "review_cursor": "R159:BATCH_005_COMPLETE;NEXT=BATCH_006_ARCHIVE_FAMILY_COVERAGE_REGISTER",
   "authority_contract": {
     "canonical_state_authority": "V6/OmegaRuntime",
     "genesis_role": "governed discovery/evolution",
@@ -11,17 +11,23 @@
     "appdeploy_allowed": false
   },
   "archive_summary": {"software_families":100,"master_menus":12,"sequence_rows":144,"proof_gates":12,"capability_rows":18,"disposition":{"KEEP":63,"MERGE":26,"DONOR":11}},
+  "coverage_completed": ["one_system_master_ledger","motion_atlas_calculus_metadata_family","visual_design_metadata_family","operator_cockpit_renderer_authority_family","current_shell_arbitration_entrypoints"],
+  "coverage_complete": false,
   "recovered_control_render_authority": {
-    "KEEP": ["Omega_Total_Control_Suite","20736SpineNativeRender","DimensionSkinEngine","MergedRendererAuthority","Omega_Universal_Intrinsic_Render_Machine","single_runtime_spine","Operator_Cockpit_Menu_Matrix"],
-    "MERGE": ["FullyPolishedHandoff","StandaloneConsequence","CanonConsoleOmega_v31r1_Readable_Dimensional_Instrument"],
-    "DEMOTE_PAGE_AUTHORITY": ["duplicate_global_fixed_bottom_docks","duplicate_global_mode_navigation_strips","legacy_floating_field_shortcuts","enhancer_owned_global_layout_mutation","secondary_renderer_state_authority"]
+    "KEEP": ["base_canonical_shell_runtime","Omega_Total_Control_Suite","20736SpineNativeRender","DimensionSkinEngine","MergedRendererAuthority","Omega_Universal_Intrinsic_Render_Machine","archiveRecoveredWorkstation_capability","coreStudioHdInstrument_capability"],
+    "MERGE": ["FullyPolishedHandoff","StandaloneConsequence","CanonConsoleOmega_v31r1_Readable_Dimensional_Instrument","launch_experience","command_palette","workspace_navigation_semantics"],
+    "DEMOTE_PAGE_AUTHORITY": ["launchHdNavigation_global_omegaDock","archiveWorkstation_sibling_hdInstrument_suppression","hdInstrument_global_cinema_layout_mutation","duplicate_global_mode_navigation_strips","legacy_floating_field_shortcuts","enhancer_owned_global_layout_mutation"]
   },
   "environment_shell": {
     "name": "OmegaEnvironmentShell",
     "regions": ["status","navigation","stage","context","proof"],
-    "rules": ["one_primary_workspace_mounted","one_navigation_authority_per_viewport","mobile_safe_area_reserved_before_stage_layout","desktop_and_mobile_navigation_mutually_exclusive","archive_instruments_mount_inside_shell","canonical_state_preserved_across_navigation","workspace_local_view_state_preserved","semantic_operator_color_is_state_encoding","representational_shell_changes_density_trajectory_projection_not_physical_dimension","no_post_load_layout_authority_race"]
+    "rules": ["one_primary_workspace_mounted","one_navigation_authority_per_viewport","mobile_safe_area_reserved_before_stage_layout","dynamic_viewport_browser_chrome_tolerance","desktop_and_mobile_navigation_mutually_exclusive","archive_instruments_mount_inside_shell","canonical_state_preserved_across_navigation","workspace_local_view_state_preserved","semantic_operator_color_is_state_encoding","representational_shell_changes_density_trajectory_projection_not_physical_dimension","no_post_load_layout_authority_race"]
   },
   "protected_current_capabilities": ["OmegaRuntime_Durable_Object","heartbeat_truth","Genesis_role_separation","route_before_generation","Earth_source_boundaries","canonical_state_authority","rollback_provenance","Memory_continuity_scar_relation_graph","Calculus_gradient_curvature_RK2","Intelligence_route_mode_forecast_action_gate","Create_Simulate_branch_comparison","Sovereign_device_state_grammar","Build_Evolution_governance","representational_shell_boundary"],
-  "current_source_inventory": ["index.ts","archiveRecoveredWorkstation.ts","launchHdNavigation.ts","coreStudioHdInstrument.ts","governedModeAtlas.ts","highDetail20736Field.ts","individualSkinRelativity.ts","livePhaseVisual.ts","memoryContinuityGraph.ts","calculusInstrument.ts","intelligenceReasoningPipeline.ts","createSimulateBranchLab.ts","buildEvolutionGovernance.ts"],
-  "next_batch": {"id":"BATCH_005","focus":["current_shell_orchestration_entry_points","exact_mount_and_injection_boundaries","mobile_navigation_owner","first_material_mobile_Field_shell_slice"],"bulk_ingest":false}
+  "next_batch": {
+    "id": "BATCH_006",
+    "focus": ["Canon_Console_lineage","Hybrid_Fusion_packages","Traversal_EAG_Address","Audio_Signal_SOMA","World_Bio_Reality","Installer_Recovery_Packaging","Camera_Host_Inputs","AI_Orchestration_Creator_TaskRouter","Excel_LensMatrix_DataAtlas","Crimson_Alpha_specialized_runtimes"],
+    "coverage_states": ["UNSEEN","METADATA_REVIEWED","ENTRYPOINT_REVIEWED","INTEGRATED","DEFERRED","QUARANTINED"],
+    "bulk_ingest": false
+  }
 }
