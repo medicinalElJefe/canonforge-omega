@@ -12,68 +12,48 @@ Persistent bounded checkpoint for archive-wide OMEGA recovery. Preserve canonica
 - Never AppDeploy.
 
 ## Recovery law
-1. One canonical packet/state authority.
-2. One renderer/composition authority per viewport.
-3. Donors contribute capability, never duplicate authority.
-4. KEEP / MERGE / DONOR / QUARANTINE before integration.
-5. Visual artifacts are design evidence, not empirical evidence.
-6. 144 / 1728 / 20736 / 61,917,364,224 are representational computation/interface capacity labels, not physical dimensions.
-7. Preserve OmegaRuntime, Durable Object compatibility, heartbeat truth, Genesis separation, Earth source boundaries, route-before-generation, rollback/provenance, APIs.
-8. Mobile and desktop are intentionally composed, never layered by unrelated enhancers.
+One canonical packet/state authority. One renderer/composition authority per viewport. Donors contribute capability, never duplicate authority. KEEP / MERGE / DONOR / QUARANTINE before integration. Visual artifacts are design evidence, not empirical evidence. Preserve OmegaRuntime, Durable Object compatibility, heartbeat truth, Genesis separation, Earth/source boundaries, route-before-generation, rollback/provenance and APIs. 144/1728/20736/61,917,364,224 remain representational/interface capacity labels, not physical dimensions.
 
-## BATCH 001 — One-System ledger
-Recovered 100 software/module families, 12 master menus, 144 sequence rows, 12 proof gates, 18 capability rows; KEEP 63 / MERGE 26 / DONOR 11. Governing architecture: Single HostState + CanonState authority; Operator Cockpit + Menu Matrix; replayable proof/no shadow state; live field membrane, not decorative graphics.
-
-## BATCH 002 — Motion / atlas / calculus metadata
-Catalogued ATOMS motion atlas, Time Mandala, 144D adjacency, Mode188 unified runtime, QHOTS non-flat atlas, cube-engine lineage and integrated kernel workbooks without bulk ingest.
-
-## BATCH 003 — Visual archive metadata
-Indexed intrinsic membrane, motion-relativity emergence, 20,736 core, embodiment family and time-mandala animation; recovered visual law is state/relation/phase/continuity/trajectory/operator driven, with stable readable cockpit and semantic operator colors.
-
-## BATCH 004 — Operator Cockpit + renderer authority
-Recovered Total Control KEEP; FullyPolishedHandoff MERGE; StandaloneConsequence MERGE; readable dimensional instrument MERGE; 20736SpineNativeRender KEEP; DimensionSkinEngine KEEP; MergedRendererAuthority KEEP; Universal Intrinsic Render Machine KEEP. One runtime spine remains authority.
-
-## BATCH 005 — Current shell arbitration
-Inspected base `index.ts`, `launchHdNavigation.ts`, `archiveRecoveredWorkstation.ts`, `coreStudioHdInstrument.ts` and source inventory. Created `OMEGA_SHELL_ARBITRATION_MAP.md`; froze STATUS / NAVIGATION / STAGE / CONTEXT / PROOF regions. Useful instruments remain; page-level duplicate layout authority is demoted.
+## BATCH 001–005 summary
+B001 recovered the 100-family One-System ledger and single-runtime/Operator-Cockpit/live-membrane architecture. B002 catalogued motion/atlas/calculus datasets without bulk ingest. B003 indexed the visual language. B004 recovered Total Control and renderer-authority donors. B005 inspected current V6 shell entrypoints and created `OMEGA_SHELL_ARBITRATION_MAP.md`, freezing STATUS / NAVIGATION / STAGE / CONTEXT / PROOF as the one presentation authority.
 
 ## BATCH 006 — Archive family coverage register
-Created `OMEGA_ARCHIVE_FAMILY_COVERAGE.md`. Raised Canon Console, Hybrid/Fusion, Traversal/EAG/Address, Audio/SOMA, World/Bio/Reality, Installer/Recovery, Camera/Host Inputs, AI Orchestration, Excel/LensMatrix/Data Atlas and Crimson/Alpha to METADATA_REVIEWED. Archive review remains NOT COMPLETE.
+Created `OMEGA_ARCHIVE_FAMILY_COVERAGE.md`. All major top-level software capability families are now represented in the register. Archive review remains NOT COMPLETE until high-value metadata-only families reach entrypoint review or receive an explicit deferred/quarantine disposition.
 
-## BATCH 007 — Canon + Hybrid + Traversal entrypoints
-### Master corpus audit snapshot
-Recovered `MASTER_CORPUS_AUDIT_REPORT.md`, a prior bounded audit of 188 files / 463.7 MB: 52 workbooks, 37 images, 37 PDFs, 24 CSVs, 12 ZIPs, 7 SVGs, 7 videos, 3 DOCX, 3 HTML and smaller text/JSON/TSV groups. It records parsed metadata/content signatures and major clusters including Data/Table, 20736D, Visual, Atlas, Document, Full Sphere, Fold, 144D, Physics, JWST, Dewey, Proof, Bio, Energy and Chemistry. Treat this as a historical coverage snapshot, not the full current Drive.
+## BATCH 007 — Canon + Hybrid + Traversal
+Recovered a historical master corpus audit snapshot of 188 files / 463.7 MB with parsed signatures and clusters. Canon Console lineage moved to ENTRYPOINT_REVIEWED via Total Control realization verification: v24 canonical proof, v31r1 readable dimensional instrument, v34 atlas control surface, v43 visual cockpit, v44 intelligence/unified concepts, plus forensic proof/triangulation and instrument navigation flows. Hybrid moved to ENTRYPOINT_REVIEWED from `OMEGA_HYBRID_LINK_BRIDGE_V90_R4.ps1`: protected tokens, approved-root confinement, allowlists, limits, rollback, emergency stop, UI/password guards, pair/job/proof loop. Its AppDeploy API base is QUARANTINED. Traversal moved to ENTRYPOINT_REVIEWED via the execution rule input→state manifold→traversal→visual host→reversible address ledger and Truth Traversal Focus/Lens/Phase/Reg/Skin/Operators_188 schema.
 
-The audit's evidence boundary is retained: the corpus proves substantial formal/software/data instantiation, but archive presence alone does not prove universal ontology or external predictive superiority.
+## BATCH 008 — Camera/Host + AI Orchestration + Packaging
+### Camera / Host Inputs — ENTRYPOINT_REVIEWED
+`Canon Donor Matrix + Menu Model` designates `Mode188_Atlas_Camera_Shell_v11` as the primary multiview renderer/camera-shell donor over the DB-centered runtime. `README_FORENSIC_UNIFIED` repeats it as a visualization donor rather than authority. The J-drive Host Intake contract binds Camera/Text/Files/Telemetry to host observations and explicitly forbids fake background authority. Decision: KEEP source/evidence-class host intake; MERGE multiview/camera visualization into shell stage only.
 
-### Canon Console / proof-control lineage — ENTRYPOINT_REVIEWED
-Fetched `Omega Total Control Suite — Realization Build Verification`. It records passing compile/smoke/regression/realization tests and exercised flows for `/health`, frame/system/cockpit/field/instrument summaries, instrument navigate/select, assistant command/recommendation, automation queue/run, forensic proof/triangulation, archive library/document and tools. Donor concepts explicitly surfaced: CanonConsole v24 canonical state proof; v31r1 readable dimensional instrument; v34 atlas control surface; v43 visual cockpit; v44 intelligence/unified surface. Decision: KEEP proof/admissibility semantics, MERGE readable instrument/cockpit/proof UX, never import a second state/proof authority.
+### AI Orchestration / Creator / Task Router — ENTRYPOINT_REVIEWED
+The J-drive ledger binds CanonForge/Task Router to semantic state + Unified Coherence and allows suggestions for merges, summaries, extraction and code tasks while the operator remains authority. Archive indexes expose concrete routing components including `app/ui/intent_router.py`, `integrations/command_router.py`, `kernel_transport/router.py`, CanonForge bridge/runtime-law files and an RCL parser. OmegaKernel manual metadata describes a WebSocket server, TypeScript console UI, CanonForge RCL parser and Intuition Engine training pipeline. Decision: KEEP current route-before-generation and operator gate; MERGE parser/router/tool orchestration only behind current Intelligence authority.
 
-### Hybrid Link — ENTRYPOINT_REVIEWED
-Located and fetched `OMEGA_HYBRID_LINK_BRIDGE_V90_R4.ps1` plus the Hybrid full chart. Strong bounded patterns recovered: encrypted/protected local token storage; approved-root path confinement; allow-listed operations/keys/patch extensions; workspace size/change limits; rollback ledger; Ctrl+Alt+Esc emergency stop; foreground window/process locking; password-field protection; bounded waits; pairing persistence; governed job claim/completion; returned proof packet. The bridge also contains a legacy AppDeploy default API base. That endpoint/remote authority is QUARANTINED and must never return to canonical OMEGA. Only the safe local governance/bridge mechanisms are donors to current heartbeatTruth/Sovereign architecture.
-
-### Traversal / EAG / Address — ENTRYPOINT_REVIEWED
-Recovered the J-drive execution rule: input/world data → state manifold → traversal controller → real visual host → reversible address ledger. The master audit exposes the Truth Traversal workbook structure: README, Focus_Set, Lens_Map, Phase_Map, Reg_Map, Skin_Map, Operators_188, Build_Ledger, Atlas_Summary and Full_Atlas. Decision: KEEP reversible traversal/address/path proof and Mode188 operator maps; MERGE them into current Field/Calculus/Intelligence as derived traversal over the canonical packet, never as shadow state.
+### Installer / Recovery / Packaging — ENTRYPOINT_REVIEWED
+`README_STANDALONE_EXE_PATH.md` documents a concrete Windows path: `OmegaAtlasRuntime.spec`, `OmegaAtlasDesktop.iss`, `BUILD_WINDOWS_STANDALONE.bat`, PyInstaller runtime EXE, Electron desktop EXE and optional Inno Setup installer. Desktop fallback preference is packaged runtime → built runtime → Python `server_entry.py`. J-drive recovery adds install root, logs/backups, sealing/checksums and `omega.lock.json`. Decision: KEEP packaging/repair/fallback/checksum capability; packaging never becomes canonical truth authority.
 
 ## Accumulated one-system capability map
 - State/authority: OmegaRuntime Durable Object; canonical packet/APIs; Genesis separation; heartbeat truth.
-- Human control/render: Operator Cockpit; Total Control; readable instrument; intrinsic membrane; merged renderer authority; projection skins; shell arbitration.
-- Canon/governance: canonical proof; forensic proof/triangulation; Mode188; route-before-generation; governed forecast/action/generation gate.
+- Shell/control/render: Operator Cockpit; Total Control; readable instrument; intrinsic membrane; merged renderer authority; projection skins; deterministic shell arbitration.
+- Canon/governance: canonical proof, forensic triangulation, Mode188, route-before-generation, governed forecast/action/generation gate.
 - Memory/relation: continuity/scar/relation graph; timeline/replay; relation carry.
 - Calculus/motion/traversal: gradient/curvature/RK2; atlas context; phase/time; motion relativity; reversible Focus/Lens/Phase/Reg/Skin/address traversal.
-- Earth/world/evidence: source-backed Earth; observed/derived/forecast boundary; domain-lens lineage.
-- Create/simulation: local branch comparison; simulated provenance; rollback/discard; consequence donor lineage.
-- Sovereign/host: authenticated heartbeat grammar; approved-root Hybrid bridge patterns; protected credentials; governed operations/proof return.
+- Earth/world/evidence: source-backed Earth; observed/derived/forecast boundaries; domain-lens lineage.
+- Create/simulation: local branch comparison; simulated provenance; rollback/discard; consequence lineage.
+- Sovereign/host: heartbeat grammar; safe Hybrid bridge patterns; camera/text/file/telemetry observation contracts; multiview host donor.
+- Intelligence/tools: CanonForge/Task Router/RCL/router modules, subordinate to current Intelligence route gate.
 - Data/signal: Excel/LensMatrix/Data Atlas; optional Audio/SOMA/signal.
-- Build/recovery/packaging: CI/promote/deploy/rollback; Recovery Board; archive ingestion; installer/repair/patch/checksum lineage.
-- Specialized modes: Crimson/Alpha retained as governed operators, never separate state authority.
+- Build/recovery/packaging: CI/promote/deploy/rollback; Recovery Board; archive ingestion; Windows standalone packaging/repair/fallback/checksum lineage.
+- Specialized modes: Crimson/Alpha retained as governed operators, never separate runtime authority.
 
 ## Coverage status
 Archive review: **NOT COMPLETE**.
-Coverage register: `recovery/OMEGA_ARCHIVE_FAMILY_COVERAGE.md`.
-Entrypoint-reviewed high-value families now include runtime/sovereign, Operator Cockpit/Total Control, renderer/intrinsic membrane, current shell/orchestration, Canon Console, Hybrid/Fusion and Traversal/EAG/Address.
+ENTRYPOINT_REVIEWED now includes runtime/sovereign, Operator Cockpit/Total Control, renderer/intrinsic membrane, current shell/orchestration, Canon Console, Hybrid/Fusion, Traversal/EAG/Address, Camera/Host Inputs, AI Orchestration, Installer/Recovery/Packaging.
+METADATA_REVIEWED still includes Motion/Atlas/Calculus deeper data family, Visual archive targeted references, Audio/SOMA, World/Bio/Reality, Excel/LensMatrix/Data Atlas and Crimson/Alpha.
 
-## Next bounded sweep — BATCH 008
-Raise Camera/Host Inputs, AI Orchestration/Creator/Task Router, and Installer/Recovery/Packaging from METADATA_REVIEWED to ENTRYPOINT_REVIEWED. Extract only authority-compatible patterns. Then continue Data Atlas, Crimson/Alpha, Audio/SOMA, World/Bio and remaining math/visual clusters.
+## Next bounded sweep — BATCH 009
+Raise Excel/LensMatrix/Data Atlas, Crimson/Alpha, Audio/SOMA and World/Bio/Reality to entrypoint-reviewed or explicit deferred status. Then map remaining master-audit clusters (Full Sphere, Fold, Physics, JWST, Chemistry, Electric Bio, shell/cosmology and unclassified) into the one-system capability/disposition model.
 
 ## Review cursor
-`R159:BATCH_007_COMPLETE;NEXT=BATCH_008_HOST_AI_PACKAGING_ENTRYPOINTS`
+`R159:BATCH_008_COMPLETE;NEXT=BATCH_009_DATA_CRIMSON_AUDIO_WORLD_ENTRYPOINTS`
