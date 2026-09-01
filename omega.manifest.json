@@ -146,13 +146,13 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "43570223c95fd0886b29ddf1bc5c04635e9cebfcc7bf3be1852cabf2c6b1758d",
-      "bytes": 6605
+      "sha256": "2bbd83f320f4094e97f5841918367749b081ba2271b60245116511a3d0259ef3",
+      "bytes": 6813
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/convergence.js",
-      "sha256": "bc393b69a9aa5ebabaf659eb6697b645e310648c24b0a1961a255e496dfc2a90",
-      "bytes": 4108
+      "sha256": "992d8a1a58dd874e4c0b0cad2f4c67611d06b450f2992a0c951cfbb621260e77",
+      "bytes": 4682
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -401,8 +401,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "6e486ba6f3ecf10f7e9edc24227dc80a023c1773ddf74533f900fd35ac3d4625",
-      "bytes": 6325
+      "sha256": "ef79a14bea838662d1039cd8e3aef2182ecd1441c48bcd23d5794e2f92fe7a52",
+      "bytes": 6547
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -825,6 +825,11 @@
       "bytes": 1059
     },
     {
+      "path": "tests/test_role_separated_convergence_v3.py",
+      "sha256": "3b9beb6061bed005181058901b0dbfde5e0df8b59aaf7d2b58f84bfcb2dc7e17",
+      "bytes": 1430
+    },
+    {
       "path": "tests/test_selfbuild.py",
       "sha256": "7d6acc0192e7cd9753b2c4ea1aff27c741247c0698debcc980052961ac8591f9",
       "bytes": 2669
@@ -846,8 +851,8 @@
     },
     {
       "path": "tests/test_v6_single_product_facade.py",
-      "sha256": "8296df28d42fcafd0f164b282fd85dca2413f719b4821fddef5d134696123d83",
-      "bytes": 2478
+      "sha256": "5cebb8afc12d4de3d3704613ca22e4a5255a3fb09ad6e24daadc5848532d88b6",
+      "bytes": 2330
     },
     {
       "path": "tests/test_worker_capability_truth.py",
