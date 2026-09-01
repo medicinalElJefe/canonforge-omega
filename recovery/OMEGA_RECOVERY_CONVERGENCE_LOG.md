@@ -87,3 +87,84 @@ Remaining gaps include nested second-order self-copying-machine package contents
 3. Run exact-head typecheck/full-runtime CI and promote only if green.
 4. Content-inspect exactly one additional full-software/menu ledger from the discovered Drive set.
 5. Then address one visible acceptance gap—prefer Calculus, Memory, Create/Simulate or Build/Evolution—as a directly navigable OmegaEnvironmentShell workspace, not duplicate chrome.
+
+## Batch 005 — 2026-09-01
+
+### Exact authority and cursor continuity
+
+- Canonical V6 remains `omega-v6-full-convergence` at `77defb727e3b9f09bb66c8033b0677eab0819a72`.
+- Genesis remains governed discovery/evolution branch `omega-genesis-v1-full`, last observed SHA `fca954774e2246ec1bb1e3408ede7610c69c813c`.
+- Active recovery/build candidate remains `recovery/archive-convergence-b004`, directly parented from canonical V6.
+- Candidate code/test head before this durable checkpoint write: `d1b9c3d16046ee39530427ef6309045841b8c71c`.
+- Wrangler/Worker entrypoint was not changed: canonical composition remains `src/heartbeatTruth.ts` → sovereign visual shell → existing V6 compositor/environment shell.
+
+### Bounded archive content slice — full-software menu ledger
+
+Content-reviewed exactly one additional discovered Drive artifact: `OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx`.
+
+The ledger is classified **DONOR + MERGE design-control**, never canonical authority. Recovered high-value laws/capabilities:
+
+- one `HostState + CanonState` runtime authority;
+- state capacity tiers `144 → 1728 → 20736 → 145152 → 61917364224` are representational computation/interface capacities;
+- STAY / TURN / ESCALATE + Mode188 gate remains the core decision law;
+- `Operator Cockpit + Menu Matrix` is the intended human-control surface;
+- proof standard is replayable proof with **no shadow state**;
+- renderer standard is a live field membrane, not decorative graphics;
+- the ledger maps **100 registry rows**, **12 master menus**, **144 sequence rows**, **12 gates**, and **18 capability rows**;
+- twelve master menus: Runtime Core; Proof & Governance; Traversal; Render Field; Host Inputs; AI Orchestration; Data/Excel Atlas; Audio/Signal; World/Bio/Forecast; Recovery/Packaging; Archive Merge; Operator Cockpit;
+- workbook disposition totals: **63 KEEP / 26 MERGE / 11 DONOR**;
+- Omega Sovereign Runtime, tested runtime spine, Mode188, merged renderer authority and one-system cockpit are KEEP design references; later standalone package surfaces remain donors unless admitted behind current authority.
+
+This bounded content review materially advances archive coverage without importing the workbook as state or execution authority.
+
+### R162 visible convergence candidate
+
+Source inspection found that the canonical V6 already contains acceptance-grade governed instruments for Calculus, Memory, Intelligence, Create/Simulate, Sovereign Devices, Earth and Build/Evolution, but `OmegaEnvironmentShell` exposes only Field, Earth, Intelligence, Sovereign and Proof. It also found that `calculusInstrument.ts` existed but was not executed by `virtualLatticeDisplay.ts`.
+
+R162 therefore changes composition, not authority:
+
+1. `virtualLatticeDisplay.ts` now mounts the existing `enhanceCalculusInstrument` after unified motion relativity and before Memory.
+2. New `unifiedWorkspaceAcceptance.ts` augments the existing `#omegaEnvironmentDeck .oesWorkspaces` navigation rather than creating another global navigation surface.
+3. The one environment now exposes specialized entry points for **Calculus**, **Memory**, **Create / Simulate**, and **Build / Evolution**, alongside the existing **Field**, **Earth**, **Intelligence**, **Sovereign**, and **Proof** workspaces.
+4. Specialized workspace navigation reuses the established view contracts; it does not create new state/API/render authorities.
+5. Calculus remains a manipulable read-only projection over `/api/omega/state`; Memory remains read-only continuity/scar/relation observation; Create/Simulate remains `SIMULATED_CONTINUATION`; Build/Evolution remains observation-only release governance.
+6. When a specialized instrument is active, underlying Field/global stage surfaces are suppressed to prevent duplicate stage/render authority while the instrument itself remains inside the existing compositor.
+7. Mobile targets preserve ≥44px primary workspace controls and horizontal intentional composition.
+
+A new R162 regression test explicitly protects `wrangler.toml main = src/heartbeatTruth.ts`, `OmegaRuntime` export, sovereign shell composition, Calculus mounting, nine-workspace coverage, and absence of `/api/chat` calls from the navigation adapter.
+
+### Classification changes
+
+- **KEEP:** canonical heartbeatTruth → sovereign shell → OmegaEnvironmentShell composition authority; existing V6 workspace instruments and their evidence boundaries.
+- **MERGE:** existing `calculusInstrument.ts` into active compositor; full-software menu ledger's one-menu-path/one-authority requirements; unified acceptance navigation adapter.
+- **DONOR:** the full-software ledger's historical Windows install roots, ports, packaging names and standalone menu implementations.
+- **QUARANTINE:** no new authority patterns added; prior synthetic/randomized state and unlabeled camera fallback quarantines remain.
+
+### Preserved contracts / genuine regressions rejected
+
+Preserved: `OmegaRuntime` Durable Object export/migrations; `src/heartbeatTruth.ts` Wrangler entry; authenticated heartbeat truth; Genesis service binding and separate role; capability routing; observation-only convergence; existing APIs; Earth source/derived/forecast boundaries; route-before-generation; exact PC proof; rollback/provenance.
+
+The previously rejected R161 wrapper-entry architecture remains rejected and was not revived.
+
+### Coverage / current acceptance state
+
+- Archive families metadata-reviewed: **31+**
+- Software families mapped: **24 prior + 100-row full-software ledger cross-map now content-reviewed**
+- High-value source-entry lineages reconciled: **6**
+- Drive ledgers content-reviewed: **2**
+- Material V6 candidates attempted cumulatively in recovery loop: **2**
+- Material V6 candidates promoted: **0 pending R162 exact-head CI**
+- `ARCHIVE REVIEW COMPLETE`: **false**
+- Hybrid PC ONLINE this batch: **not verified**; no online claim is inferred.
+
+### Material-improvement result
+
+**MATERIAL CANDIDATE PRODUCT IMPROVEMENT:** R162 makes the existing direct Calculus capability part of the canonical visual composition candidate and makes all nine acceptance workspace families reachable from the single OmegaEnvironmentShell navigation authority. It is not yet a product improvement until exact-head CI, merge, deployment and post-deployment verification succeed.
+
+### Durable next slice
+
+1. Run exact-head Cloudflare typecheck/full sovereign runtime tests for R162; reject rather than weaken protected contracts if red.
+2. If green, merge only this current candidate, verify exact merged head, authorized Worker deployment and public convergence.
+3. Observe post-deployment workspace behavior as far as the available public tooling permits; do not substitute CI for visual acceptance.
+4. Then reintegrate the R161 deterministic Intelligence status path **inside** the established composition chain, without changing Worker entrypoint.
+5. Continue bounded archive review with one further unreconciled package/ledger family and update this cursor again.
