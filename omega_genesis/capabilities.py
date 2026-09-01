@@ -30,13 +30,14 @@ CAPABILITIES = [
     {"id":"CAP-027","name":"Authenticated controller-scoped cloud conversation memory sync","menu":"06 AI Orchestration","gate":"Controller isolation + durable save/search/archive + integrity verification","status":"LIVE_CORE"},
     {"id":"CAP-028","name":"Adaptive cloud-first contextual interaction memory","menu":"06 AI Orchestration","gate":"Cloud-first/local-fallback + explicit save suggestion + selected-context provenance","status":"LIVE_CORE"},
     {"id":"CAP-029","name":"Reciprocal V6↔Genesis convergence manifest","menu":"11 Archive Merge","gate":"Non-recursive peer observation + canonical authority separation","status":"LIVE_CORE"},
-    {"id":"CAP-030","name":"Single-product OMEGA V6 facade over Genesis canonical authority","menu":"01 Runtime Core","gate":"V6/Genesis digest parity + service binding + no shadow state","status":"LIVE_CORE"},
-    {"id":"CAP-031","name":"Legacy OmegaRuntime Durable Object preservation bridge","menu":"10 Recovery / Packaging","gate":"Preserve historical V6 Durable Object lineage without storage mutation while forwarding authority to Genesis","status":"LIVE_CORE"},
+    {"id":"CAP-030","name":"OMEGA V6 public-product convergence transport","menu":"01 Runtime Core","gate":"Service-binding observation + operational authority separation","status":"LIVE_CORE"},
+    {"id":"CAP-031","name":"Legacy OmegaRuntime Durable Object preservation bridge","menu":"10 Recovery / Packaging","gate":"Preserve historical V6 Durable Object lineage without granting Genesis V6 release authority","status":"LIVE_CORE"},
+    {"id":"CAP-032","name":"Role-separated V3 reciprocal convergence contract","menu":"02 Proof & Governance","gate":"Schema identity + explicit authority compatibility + no cross-runtime mutation","status":"LIVE_CORE"},
 ]
 
 MENUS = [
-    ("01","Runtime Core","One canonical state owner behind the stable OMEGA V6 public product surface; health and transport."),
-    ("02","Proof & Governance","Admission, replay, evidence and shadow-state controls."),
+    ("01","Runtime Core","Genesis maintains its bounded discovery/evolution runtime while OMEGA V6 remains the operational/release authority."),
+    ("02","Proof & Governance","Admission, replay, evidence, role separation and shadow-state controls."),
     ("03","Traversal","Stay/Turn/Escalate, addresses, Dewey/RSC motion logic."),
     ("04","Render Field","Living membrane, skins, graph and state-bound projection."),
     ("05","Host Inputs","Camera, text, workbook and external observation adapters."),
