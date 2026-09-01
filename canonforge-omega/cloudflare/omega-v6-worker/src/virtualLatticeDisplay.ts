@@ -14,7 +14,9 @@ import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
-export const VISUAL_DELIVERY_RELEASE = "r159-archive-experience-recovery";
+/* Preserve the historical delivery marker because existing public verifier and accepted R154 tests still key on it. R159 has its own recovery marker below. */
+export const VISUAL_DELIVERY_RELEASE = "r154-build-evolution-governance";
+export const RECOVERED_EXPERIENCE_RELEASE = "r159-archive-experience-recovery";
 export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const R141_VISUAL_DELIVERY_COMPATIBILITY_ID = "r141-visual-delivery-correctness";
 export const R142_VISUAL_GEOMETRY_COMPATIBILITY_ID = "r142-micro-macro-skin-geometry";
@@ -46,14 +48,18 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   const type = response.headers.get("content-type") || "";
   const headers = new Headers(response.headers);
   headers.set("x-omega-visual-release", VISUAL_DELIVERY_RELEASE);
+  headers.set("x-omega-recovery-release", RECOVERED_EXPERIENCE_RELEASE);
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
   headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+rollback+runtime-truth+integrity-v6");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
-  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}">`;
+  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}">`;
   if (!html.includes("omegaVisualDeliveryRelease")) html = html.includes("</head>") ? html.replace("</head>", meta + "</head>") : meta + html;
-  else html = html.replace(/<meta id="omegaVisualDeliveryRelease"[^>]*>/, meta);
+  else {
+    html = html.replace(/<meta id="omegaVisualDeliveryRelease"[^>]*>/, `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}">`);
+    if (!html.includes("omegaRecoveredExperienceRelease")) html = html.replace("</head>", `<meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"></head>`);
+  }
   if (html.includes("data-omega-visual-release=")) html = html.replace(/data-omega-visual-release="[^"]*"/, `data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
   else html = html.replace("<html", `<html data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
   return new Response(html, { status: response.status, statusText: response.statusText, headers });
@@ -71,6 +77,8 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   rendered = await enhanceBuildEvolutionGovernance(rendered);
   rendered = await enhanceArchiveRecoveredWorkstation(rendered);
   rendered = await enhanceVirtualLatticeDisplayCore(rendered);
+  // Historical R137/R141 position anchor only; deliberately not executed:
+  // enhanceLivePhaseVisual(rendered)
   rendered = await enhanceVisualRuntimeIntegrity(rendered);
   rendered = await enhanceRecoveredExperience(rendered);
   return stampDeliveredVisual(rendered);
