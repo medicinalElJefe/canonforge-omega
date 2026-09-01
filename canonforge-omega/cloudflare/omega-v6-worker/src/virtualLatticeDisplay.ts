@@ -1,6 +1,7 @@
 import { enhanceRootSovereignField } from "./rootSovereignField";
 import { enhanceGovernedModeAtlas } from "./governedModeAtlas";
 import { enhanceUnifiedMotionRelativity } from "./unifiedMotionRelativity";
+import { enhanceCalculusInstrument } from "./calculusInstrument";
 import { enhanceMemoryContinuityGraph } from "./memoryContinuityGraph";
 import { enhanceIntelligenceReasoningPipeline } from "./intelligenceReasoningPipeline";
 import { enhanceCreateSimulateBranchLab } from "./createSimulateBranchLab";
@@ -10,6 +11,7 @@ import { enhanceBuildEvolutionGovernance } from "./buildEvolutionGovernance";
 import { enhanceArchiveRecoveredWorkstation } from "./archiveRecoveredWorkstation";
 import { enhanceVisualRuntimeIntegrity } from "./visualRuntimeIntegrity";
 import { enhanceRecoveredExperience } from "./recoveredExperienceOrchestrator";
+import { enhanceUnifiedWorkspaceAcceptance } from "./unifiedWorkspaceAcceptance";
 import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from "./virtualLatticeDisplayCore";
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
@@ -69,6 +71,7 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   let rendered = await enhanceRootSovereignField(response);
   rendered = await enhanceGovernedModeAtlas(rendered);
   rendered = await enhanceUnifiedMotionRelativity(rendered);
+  rendered = await enhanceCalculusInstrument(rendered);
   rendered = await enhanceMemoryContinuityGraph(rendered);
   rendered = await enhanceIntelligenceReasoningPipeline(rendered);
   rendered = await enhanceCreateSimulateBranchLab(rendered);
@@ -81,5 +84,6 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   // enhanceLivePhaseVisual(rendered)
   rendered = await enhanceVisualRuntimeIntegrity(rendered);
   rendered = await enhanceRecoveredExperience(rendered);
+  rendered = await enhanceUnifiedWorkspaceAcceptance(rendered);
   return stampDeliveredVisual(rendered);
 }
