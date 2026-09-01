@@ -4,32 +4,41 @@
   "canonical_v6_sha_observed": "62d244d9a184e28a3e476d27b31a0087201b5b9d",
   "genesis_sha_observed": null,
   "active_candidate": "recovery/archive-convergence-b001",
-  "active_candidate_sha": "9453e51217405bc9fa94729b3966755e83b08b7c",
+  "active_candidate_sha_observed_before_state_write": "f9b3c45ae2cfbee5cd84843c7f832e3ced3413bd",
   "cursor": {
-    "batch": 2,
-    "source": "file_library+github",
-    "family": "high_value_source_entry_reconciliation",
-    "checkpoint": "forensic_manifest + full_review_status + build_verification reconciled against current repository root structure",
-    "next": "inspect current canonforge-omega/api, desktop_ui, omega_fusion_core and omega_144d_core authority entrypoints; translate one deterministic donor capability behind current authority"
+    "batch": 3,
+    "source": "github+google_drive_metadata",
+    "family": "current_authority_mapping_and_route_composition_repair",
+    "checkpoint": "api/desktop_ui/omega_fusion_core/omega_144d_core inspected; API-before-static-mount repair committed; bounded Drive ledger/control families discovered",
+    "next": "verify candidate exact head; inspect one Drive one-system/full-software ledger at content level; locate authoritative Cloudflare Worker/OmegaRuntime source or deployment-to-repo binding before any V6 UI/runtime integration claim"
   },
   "coverage": {
     "archive_families_metadata_reviewed": 31,
     "software_families_mapped": 24,
     "high_value_source_entry_family_lines_reconciled": 6,
-    "high_value_candidates_integrated": 0,
+    "current_repository_authority_roots_inspected": 4,
+    "deterministic_candidate_repairs_integrated": 1,
     "high_value_candidates_deferred": 8,
     "quarantined": 1,
+    "new_drive_metadata_donor_artifacts": [
+      "OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx",
+      "OMEGA_ALL_SOFTWARE_61917364224D_FULL_BUILD_v22.xlsx",
+      "CanonForge_Discovery_Ledger_v2.xlsx",
+      "OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx",
+      "final_12_to_1_merge_workbook.xlsx"
+    ],
     "unknown_or_inaccessible": [
       "inner contents of second-order bundles inside Any_machine_that_can_copy_itself_must_be_designed_never_to_harm_what_can_only_evolve_once..zip are not exposed by the available indexed corpus",
       "Genesis exact SHA",
-      "current Cloudflare deployment SHA binding",
+      "authoritative Cloudflare Worker/OmegaRuntime source or current deployment SHA binding",
       "first-hand public mobile/desktop visual observation in this execution environment"
     ]
   },
   "classifications": {
     "KEEP": [
       "atlas_runtime_test_bundle: strongest tested historical runtime/API spine reference with explicit backend/frontend entrypoints and boot/transition/basin/replay evidence",
-      "Sovereign Doc family: dependency-minimal reusable module pattern"
+      "Sovereign Doc family: dependency-minimal reusable module pattern",
+      "current repository API authority ordering: /api routes registered before catch-all static UI mount"
     ],
     "MERGE": [
       "Mode188 Sovereign Runtime v10: DB-centered runtime/proof mechanics behind current authority",
@@ -49,7 +58,12 @@
       "Observer/Now-Frame Runtime",
       "Echo/SOMA Audio Engine",
       "Recovery Board/Patch/Micro Build packaging lineage",
-      "Omega Atlas Desktop/Electron presentation shells"
+      "Omega Atlas Desktop/Electron presentation shells",
+      "OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx pending bounded content review",
+      "OMEGA_ALL_SOFTWARE_61917364224D_FULL_BUILD_v22.xlsx pending bounded content review",
+      "CanonForge_Discovery_Ledger_v2.xlsx pending bounded content review",
+      "OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx pending bounded content review",
+      "final_12_to_1_merge_workbook.xlsx pending bounded content review"
     ],
     "QUARANTINE": [
       "CanonConsoleOmega_v44_2_Unified runtime state: synthetic/randomized data is not admissible as authority",
@@ -70,6 +84,23 @@
     "canonforge-omega/omega_144d_core",
     "canonforge-omega/omega_fusion_core"
   ],
+  "current_authority_findings": {
+    "api_entrypoint": "canonforge-omega/api/app.py",
+    "api_dependencies": [
+      "OmegaPacket",
+      "UniversalMomentCalculator",
+      "TICCalculator",
+      "SequenceStore",
+      "MacroPlayer",
+      "HostMuscles",
+      "MacroExecutor"
+    ],
+    "desktop_ui_role": "Electron presentation shell",
+    "omega_fusion_core_role": "core/host/pattern_hub/storage implementation layers",
+    "omega_144d_core_role": "core bus/DSS/event queue/RC144/subverse implementation layers",
+    "candidate_repair": "moved root StaticFiles mount after /api route registration to prevent catch-all route shadowing",
+    "independent_reproduction": "mount-first /api/status -> 404; api-first /api/status -> 200"
+  },
   "preserved_contracts": [
     "OmegaRuntime export / Durable Object compatibility",
     "heartbeat truth",
@@ -85,12 +116,19 @@
   "release_evidence": {
     "pr": 123,
     "merged": false,
-    "candidate_exact_head_combined_status_count": 0,
-    "candidate_exact_head_pr_workflow_run_count": 0,
+    "pr_mergeable_observed": true,
+    "base_sha": "62d244d9a184e28a3e476d27b31a0087201b5b9d",
+    "pre_batch3_exact_head_checked": "a3bbd76c6470d74009df610d022c2d87bb63c88c",
+    "pre_batch3_exact_head_combined_status_count": 0,
+    "pre_batch3_exact_head_workflow_run_count": 0,
+    "batch3_functional_commit": "921c523e59a9c7ecb77be3cd99f360277527a6ca",
+    "batch3_log_commit": "f9b3c45ae2cfbee5cd84843c7f832e3ced3413bd",
+    "batch3_exact_head_ci_verified": false,
     "deployment_verified": false,
     "hybrid_pc_online_verified": false
   },
   "archive_review_complete": false,
   "material_product_improvement": false,
-  "status": "NO MATERIAL PRODUCT IMPROVEMENT: bounded recovery advanced to source-entry/test-level reconciliation for six high-value family lines; no current-V6 runtime code promoted without current authority mapping and exact-head release evidence."
+  "material_candidate_functional_improvement": true,
+  "status": "MATERIAL CANDIDATE FUNCTIONAL IMPROVEMENT: current repository API authority is no longer shadowed by the catch-all static root mount. Promotion remains blocked pending exact-head CI, authoritative Cloudflare/OmegaRuntime binding and live deployment/visual verification."
 }
