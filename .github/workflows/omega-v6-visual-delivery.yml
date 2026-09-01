@@ -16,7 +16,7 @@ jobs:
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-          EXPECTED_VISUAL_RELEASE: r141-visual-delivery-correctness
+          EXPECTED_VISUAL_RELEASE: r142-micro-macro-skin-geometry
         run: |
           set -euo pipefail
           ok=false
@@ -33,12 +33,16 @@ jobs:
               'omegaRootSovereignField',
               'omegaIndividualSkinRelativity',
               'omegaVisualRuntimeIntegrity',
+              'omegaMicroMacroGeometry',
+              'omegaSymmetryBalance',
               'OMEGA · LIVE SOVEREIGN FIELD',
               '61,917,364,224',
+              'MICRO↕MACRO',
+              'SYM↔ASYM',
           ]
           if not all(item in html for item in required): raise SystemExit(1)
           if f'x-omega-visual-release: {release}' not in headers: raise SystemExit(1)
-          if 'x-omega-visual-contract: root+skin+phase+integrity-v1' not in headers: raise SystemExit(1)
+          if 'x-omega-visual-contract: root+micro-macro-skin+phase+integrity-v2' not in headers: raise SystemExit(1)
           if 'cache-control: no-store, no-cache, must-revalidate' not in headers: raise SystemExit(1)
           PY
             then
@@ -52,6 +56,6 @@ jobs:
           if [ "$ok" != "true" ]; then
             echo "PUBLIC_VISUAL_DELIVERY_FAILED"
             echo "Headers:"; cat /tmp/v6-root.headers || true
-            echo "Root markers:"; grep -oE 'r14[0-9][^"< ]*|omegaRootSovereignField|omegaIndividualSkinRelativity|omegaVisualRuntimeIntegrity' /tmp/v6-root.html | head -40 || true
+            echo "Root markers:"; grep -oE 'r14[0-9][^"< ]*|omegaRootSovereignField|omegaIndividualSkinRelativity|omegaVisualRuntimeIntegrity|omegaMicroMacroGeometry|omegaSymmetryBalance' /tmp/v6-root.html | head -60 || true
             exit 1
           fi
