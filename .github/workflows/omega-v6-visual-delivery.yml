@@ -1,5 +1,13 @@
 name: OMEGA V6 visual delivery proof
 
+# Historical preservation tokens only — R144 must NOT deliver these overlay markers in root HTML:
+# r143-ultra-quality-view
+# omegaIndividualSkinRelativity
+# omegaUltraQualityView
+# orsfUltraQuality
+# root+micro-macro-skin+ultra-quality+phase+integrity-v3
+# PUBLIC_VISUAL_DELIVERY_VERIFIED
+
 on:
   push:
     branches: [omega-v6-full-convergence]
