@@ -1,4 +1,5 @@
 import convergence, { OmegaRuntime } from "./convergence";
+import { syntheticCameraResponse } from "./syntheticCamera";
 import type { Env } from "./index";
 import {
   handleCapabilityRequest,
@@ -111,6 +112,8 @@ async function injectCockpitLink(response: Response): Promise<Response> {
 export default {
   async fetch(request: Request, env: BoundEnv): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname === "/camera" || url.pathname === "/reconstruct") return syntheticCameraResponse();
 
     const capabilityResponse = await handleCapabilityRequest(request, env, () => provenEdgeSnapshot(request, env));
     if (capabilityResponse) return capabilityResponse;
