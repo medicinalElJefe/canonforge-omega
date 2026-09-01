@@ -1,6 +1,6 @@
 # OMEGA Archive Family Coverage Register
 
-Checkpoint: R159 / BATCH 007
+Checkpoint: R159 / BATCH 008
 Canonical parent at R159 start: `781e9077c4ce183cec0a0451e22cce077c87c9c2`
 
 Coverage states: `UNSEEN` → `METADATA_REVIEWED` → `ENTRYPOINT_REVIEWED` → `INTEGRATED`; alternate terminal states: `DEFERRED`, `QUARANTINED`.
@@ -11,16 +11,16 @@ Coverage states: `UNSEEN` → `METADATA_REVIEWED` → `ENTRYPOINT_REVIEWED` → 
 | Operator Cockpit / Total Control | ENTRYPOINT_REVIEWED | Menu-driven control plane, readable instruments, presets/action ledger | MERGE into OmegaEnvironmentShell |
 | Renderer / Intrinsic Membrane | ENTRYPOINT_REVIEWED | state-spine render, projection skins, intrinsic membrane, one renderer authority | KEEP/MERGE behind shell stage |
 | Current V6 Shell / Orchestration | ENTRYPOINT_REVIEWED | base shell plus launch/workstation/HD-instrument collision map | PRUNE duplicate page authority; KEEP capabilities |
-| Canon Console lineage | ENTRYPOINT_REVIEWED | v24 canonical proof; v31r1 readable dimensional instrument; v34 atlas control; v43 visual cockpit; v44 intelligence/unified concepts; forensic proof/triangulation and instrument navigate/select flows verified in Total Control realization | KEEP proof/admissibility law; MERGE readable control/instrument/proof UX, never create second proof/state authority |
-| Hybrid / Fusion / Hybrid Link | ENTRYPOINT_REVIEWED | V90-R4 Windows bridge entrypoint: protected local token, approved-root confinement, allow-listed operations/keys/patch extensions, workspace limits, rollback items, emergency stop, visible-window locks, password-field block, pair → governed jobs → returned proof packet loop | MERGE safe local governance/bridge patterns into current sovereign Hybrid; QUARANTINE legacy AppDeploy endpoint and any stale remote authority |
-| Traversal / EAG / Address / Dewey | ENTRYPOINT_REVIEWED | execution rule: input/world data → state manifold → traversal controller → real visual host → reversible address ledger; Truth Traversal workbook schema includes README, Focus_Set, Lens_Map, Phase_Map, Reg_Map, Skin_Map, Operators_188, Build_Ledger, Atlas_Summary, Full_Atlas | KEEP traversal semantics and reversible route/address proof; MERGE into Field/Calculus/Intelligence without duplicate state |
+| Canon Console lineage | ENTRYPOINT_REVIEWED | v24 proof; v31r1 readable instrument; v34 atlas control; v43 cockpit; v44 intelligence/unified; forensic proof/triangulation | KEEP proof law; MERGE UX only |
+| Hybrid / Fusion / Hybrid Link | ENTRYPOINT_REVIEWED | V90-R4 governed Windows bridge with root confinement, protected token, allowlists, rollback, emergency stop, window/password guards, job/proof loop | MERGE safe local mechanisms; QUARANTINE legacy AppDeploy endpoint |
+| Traversal / EAG / Address / Dewey | ENTRYPOINT_REVIEWED | observation→state manifold→traversal→visual host→reversible address ledger; Focus/Lens/Phase/Reg/Skin/Operators_188 maps | KEEP reversible traversal over canonical packet |
+| Camera / Host Inputs | ENTRYPOINT_REVIEWED | donor matrix identifies Mode188_Atlas_Camera_Shell_v11 as primary multiview/camera-shell donor over DB-centered runtime; forensic README confirms it is a visualization donor, while J-drive Host Intake binds camera/text/files/telemetry to observation contract and forbids fake background authority | KEEP evidence-class host intake; MERGE multiview camera-shell visualization only; never camera-as-truth authority |
+| AI Orchestration / Creator / Task Router | ENTRYPOINT_REVIEWED | J-drive menu binds CanonForge/Task Router to semantic state, Unified Coherence, suggested merges/summaries/extraction/code tasks with operator authority; archive paths expose `intent_router.py`, `integrations/command_router.py`, `kernel_transport/router.py`, CanonForge parser/bridge/runtime-law components | KEEP route-before-generation/operator authority; MERGE routing/parser/tool orchestration behind current Intelligence gate |
+| Installer / Recovery / Packaging | ENTRYPOINT_REVIEWED | J-drive root/install/seal flow plus standalone EXE path: PyInstaller runtime spec, Electron desktop output, Inno Setup installer option, packaged-runtime→built-runtime→Python fallback order; checksummed manifests and START_OMEGA lineage located | KEEP sovereign packaging/repair/checksum/fallback capability; do not make packaging a runtime truth authority |
 | Motion / Atlas / Calculus | METADATA_REVIEWED | adjacency, time/phase, motion relativity, Mode188, calculus workbooks | KEEP targeted computational/data donors |
 | Visual Design Archive | METADATA_REVIEWED | intrinsic membrane, motion-relativity, embodiment, time-mandala visual language | MERGE visual grammar, not empirical claims |
 | Audio / Signal / SOMA | METADATA_REVIEWED | optional state sonification, carrier/layer/mute, signal logging | DEFER UI integration until shell/core stable; retain capability |
 | World / Bio / Reality / Forecast | METADATA_REVIEWED | domain projections and supporting kernel/completion/discovery artifacts | KEEP evidence boundaries; MERGE as domain lenses |
-| Installer / Recovery / Packaging | METADATA_REVIEWED | one-click/repair/patch/checksum, implementation index, 12→1 merge lineage | KEEP sovereign packaging/recovery capability |
-| Camera / Host Inputs | METADATA_REVIEWED | camera/browser/text/file/API observation packets; camera as observation pressure | KEEP evidence-class host input contract |
-| AI Orchestration / Creator / Task Router | METADATA_REVIEWED | governed task plans, routing, creator/assistant, suggest/execute with approval | KEEP route-before-generation; MERGE workflow surfaces |
 | Excel / LensMatrix / Data Atlas | METADATA_REVIEWED | workbook registry, filter/drill/export, formula checks, CSV/XLSX/DB atlas | KEEP data capability behind one system |
 | Crimson / Alpha specialized runtimes | METADATA_REVIEWED | CRIMSON asymmetry engine; ALPHA→BASE→CONSTRUCT/PRUNE→OMEGA cycle | KEEP as governed operators, not separate runtime authority |
 | Memory / Scar / Relation | INTEGRATED | continuity/scar/relation graph, timeline/replay, carry into forecast | KEEP current workspace |
@@ -30,23 +30,21 @@ Coverage states: `UNSEEN` → `METADATA_REVIEWED` → `ENTRYPOINT_REVIEWED` → 
 | Earth | INTEGRATED | source-backed catalog and observed/derived/forecast separation | KEEP source truth boundary |
 | Build / Evolution / Recovery Board | INTEGRATED | candidate/CI/promote/deploy/rollback governance | KEEP secondary development workspace |
 
-## Master corpus audit snapshot recovered in BATCH 007
-A prior `MASTER_CORPUS_AUDIT_REPORT.md` gives a bounded audited corpus snapshot of **188 files / 463.7 MB**: 52 workbooks, 37 images, 37 PDFs, 24 CSVs, 12 ZIPs, 7 SVGs, 7 videos, 3 DOCX, 3 HTML and smaller text/JSON/TSV groups. It also records parsed workbook sheet names/table sizes, JSON keys, ZIP counts, document excerpts, image dimensions and code/SVG excerpts. This is now a coverage accelerator, not proof that the current Drive contains only those 188 files.
+## Master corpus audit snapshot
+Historical bounded audit: 188 files / 463.7 MB; 52 workbooks, 37 images, 37 PDFs, 24 CSVs, 12 ZIPs, 7 SVGs, 7 videos, 3 DOCX, 3 HTML plus smaller groups. This accelerates family discovery but is not asserted to equal the complete current Drive.
 
-Its clusters include Data/Table 78, 20736D 45, Visual 44, Atlas 40, Document 40, Full Sphere 21, Fold 14, 144D 13, Physics 13, JWST 8, 1728D 6, Dewey 6, Proof 6, Bio 5, Energy 5, Chemistry 4 and smaller software/shell/cosmology groups. The audit explicitly separates archive instantiation from unproven universal ontology claims, which remains the correct OMEGA evidence boundary.
+## BATCH 008 entrypoint evidence
+### Camera / Host Inputs
+`Canon Donor Matrix + Menu Model` designates `Mode188_Atlas_Camera_Shell_v11` as the primary renderer/camera-shell donor because it extends the DB-centered runtime with multiview visualization. `README_FORENSIC_UNIFIED` repeats that role as a donor cue rather than authority. The J-drive Host Intake menu binds Camera/Text/Files/Telemetry to a Host Observation Contract and describes real-world pressure/input with evidence handling; rendered camera/scene output must not become fake background authority.
 
-## BATCH 007 entrypoint evidence
-### Canon / control / proof
-`Omega Total Control Suite — Realization Build Verification` records compile, smoke, regression and realized-surface tests plus exercised flows for health/frame/system/cockpit/field/instrument navigation, assistant command/recommendation, automation queue/run, forensic proof/triangulation, archive library/document and tools. It explicitly surfaced CanonConsole v24, v31r1, v34, v43 and v44 donor concepts. Recover those as instruments/proof UX, not as a competing runtime.
+### AI orchestration
+The J-drive ledger defines AI Assist as CanonForge / Task Router, semantic state layer, Unified Coherence, and suggested merges/summaries/extraction/code tasks with the operator remaining authority. Archive checksum/content indexes expose actual routing components (`app/ui/intent_router.py`, `integrations/command_router.py`, `kernel_transport/router.py`) and CanonForge bridge/runtime-law/parser components. `OmegaKernel_Full_Manual` metadata describes a working WebSocket server, TypeScript console UI, CanonForge RCL parser and Intuition Engine training pipeline. These are bounded donors to the current route→mode→forecast→action gate, not permission to bypass it.
 
-### Hybrid
-`OMEGA_HYBRID_LINK_BRIDGE_V90_R4.ps1` is a concrete bridge entrypoint. Strong KEEP/MERGE patterns include approved-root confinement; encrypted-at-rest local token handling; allow-listed operations, keys and patch types; workspace limits; rollback ledger; emergency Ctrl+Alt+Esc; visible-window/process locks; password-field protection; bounded waits; pair credential persistence; governed job claim/completion; and proof-packet return. Its default API base points to obsolete AppDeploy infrastructure, so that endpoint/authority is explicitly QUARANTINED. Current canonical Hybrid/heartbeat APIs remain authority.
-
-### Traversal
-The J-drive execution rule and the Truth Traversal workbook schema establish a reversible traversal architecture: observation/input → canonical state manifold → traversal controller → rendered host → reversible address ledger, with Focus/Lens/Phase/Reg/Skin maps, Operators_188, Build_Ledger and Atlas summaries. These are compatible with the current Field/Calculus/Intelligence stack if represented as read/derived traversal over the same canonical packet.
+### Installer / Recovery / Packaging
+`README_STANDALONE_EXE_PATH.md` documents a real Windows packaging path with `OmegaAtlasRuntime.spec`, `OmegaAtlasDesktop.iss`, `BUILD_WINDOWS_STANDALONE.bat`, PyInstaller runtime output, Electron desktop output and optional Inno Setup packaging. Desktop preference order is packaged runtime EXE → built runtime EXE → Python `server_entry.py` fallback. The J-drive ledger adds root creation, logs/backups, seal/checksum tooling and `omega.lock.json`. Recover packaging, fallback and repair mechanics behind canonical runtime identity; packaging never determines truth.
 
 ## Coverage conclusion
-Archive review remains **NOT COMPLETE**. Three high-value families moved from metadata-only to entrypoint-reviewed. The next pass targets Camera/Host Inputs, AI Orchestration, and Installer/Recovery/Packaging entrypoints; after that, Data Atlas, Crimson/Alpha, Audio/SOMA, World/Bio, and remaining math/visual clusters.
+Archive review remains **NOT COMPLETE**. Camera/Host, AI Orchestration and Packaging are now entrypoint-reviewed. Remaining metadata-only major families: Motion/Atlas/Calculus deeper schemas, Visual archive targeted references, Audio/SOMA, World/Bio/Reality, Excel/LensMatrix/Data Atlas, Crimson/Alpha. Additional clusters from the master audit (Full Sphere, Fold, Physics, JWST, Chemistry, Electric Bio, shell/cosmology, etc.) still require explicit disposition or mapping.
 
 ## Next cursor
-`R159:BATCH_007_COMPLETE;NEXT=BATCH_008_HOST_AI_PACKAGING_ENTRYPOINTS`
+`R159:BATCH_008_COMPLETE;NEXT=BATCH_009_DATA_CRIMSON_AUDIO_WORLD_ENTRYPOINTS`
