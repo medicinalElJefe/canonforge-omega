@@ -16,11 +16,13 @@ def test_worker_entry_authority_is_unchanged():
     assert "enhanceSovereignVisualShell" in heartbeat
 
 
-def test_calculus_is_mounted_inside_existing_compositor():
+def test_calculus_preserves_established_spatial_mount_without_duplicate():
+    spatial = text("spatialCommandCore.ts")
     lattice = text("virtualLatticeDisplay.ts")
     calculus = text("calculusInstrument.ts")
-    assert 'import { enhanceCalculusInstrument } from "./calculusInstrument";' in lattice
-    assert "rendered = await enhanceCalculusInstrument(rendered);" in lattice
+    assert "enhanceCalculusInstrument" in spatial
+    assert "/?view=Calculus" in spatial
+    assert "enhanceCalculusInstrument" not in lattice
     assert "CALCULUS_INSTRUMENT_BOUNDARY" in calculus
     assert "/api/omega/state" in calculus
     assert "does not mutate canonical state" in calculus
