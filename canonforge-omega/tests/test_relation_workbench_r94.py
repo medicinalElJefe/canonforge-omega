@@ -5,12 +5,16 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKBENCH = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "relationWorkbench.ts"
 ROUTER = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "capabilityRouter.ts"
 RELATIONS = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "relationGraph.ts"
+ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "r161Entry.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
 
-def test_r94_preserves_canonical_heartbeat_entrypoint():
+def test_r94_preserves_canonical_heartbeat_chain_under_current_entry():
     wrangler = WRANGLER.read_text(encoding="utf-8")
-    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    entry = ENTRY.read_text(encoding="utf-8")
+    assert 'main = "src/r161Entry.ts"' in wrangler
+    assert 'heartbeatTruth.fetch(request, env)' in entry
+    assert 'export { OmegaRuntime };' in entry
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"' in wrangler
     assert 'CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"' in wrangler
