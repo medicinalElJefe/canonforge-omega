@@ -1,70 +1,81 @@
 # OMEGA Archive Family Coverage Register
 
-Checkpoint: R159 / BATCH 010
+Checkpoint: R159 / BATCH 011
 Canonical parent at R159 start: `781e9077c4ce183cec0a0451e22cce077c87c9c2`
 
-Coverage states: `UNSEEN` → `METADATA_REVIEWED` → `ENTRYPOINT_REVIEWED` → `INTEGRATED`; alternate terminal states: `DEFERRED`, `QUARANTINED`.
+Coverage states: `UNSEEN` → `METADATA_REVIEWED` → `ENTRYPOINT_REVIEWED` → `INTEGRATED`; alternate terminal states: `DEFERRED`, `QUARANTINED`, `INACCESSIBLE_WITH_EVIDENCE`.
 
-## Primary software-family coverage
-| Family | State | Recovered role / capability | One-system disposition |
-|---|---|---|---|
-| One-System Runtime / Sovereign | ENTRYPOINT_REVIEWED | Single HostState + CanonState/OmegaRuntime spine | KEEP canonical runtime authority |
-| Operator Cockpit / Total Control | ENTRYPOINT_REVIEWED | menu-driven control plane, readable instruments, action ledger | MERGE into OmegaEnvironmentShell |
-| Renderer / Intrinsic Membrane | ENTRYPOINT_REVIEWED | state-spine render, projection skins, living membrane | KEEP/MERGE behind shell stage |
-| Current V6 Shell / Orchestration | ENTRYPOINT_REVIEWED | base shell + competing enhancer arbitration map | PRUNE duplicate page authority; KEEP capabilities |
-| Canon Console lineage | ENTRYPOINT_REVIEWED | canonical proof/readable instrument/atlas control/cockpit/intelligence concepts | KEEP proof law; MERGE UX only |
-| Hybrid / Fusion / Hybrid Link | ENTRYPOINT_REVIEWED | governed local bridge, root confinement, protected token, allowlists, rollback, proof loop | MERGE safe local mechanisms; QUARANTINE AppDeploy endpoint |
-| Traversal / EAG / Address / Dewey | ENTRYPOINT_REVIEWED | reversible state-manifold traversal with Focus/Lens/Phase/Reg/Skin/188 maps | KEEP traversal over canonical packet |
-| Camera / Host Inputs | ENTRYPOINT_REVIEWED | camera-shell multiview donor + host observation contract | KEEP evidence-class intake; MERGE visualization only |
-| AI Orchestration / Creator / Task Router | ENTRYPOINT_REVIEWED | CanonForge/Task Router + intent/command/kernel routers + parser/bridge | KEEP route-before-generation; MERGE behind current gate |
-| Installer / Recovery / Packaging | ENTRYPOINT_REVIEWED | standalone EXE/Electron/Inno path, fallback chain, seal/checksum/repair | KEEP sovereign packaging; never truth authority |
-| Excel / LensMatrix / Data Atlas | ENTRYPOINT_REVIEWED | sealed Lens×Phase×Regulation×Skin thin router + proof/claim constraints | KEEP data-lens capability behind canonical packet/Proof |
-| Audio / Signal / SOMA | ENTRYPOINT_REVIEWED | bounded 12-lane phase sonification, gain cap, stop/override, prune→integrate→build ordering | KEEP optional state sonification; DEFER default-on integration |
-| World / Bio / Reality / Forecast | ENTRYPOINT_REVIEWED | model/derived domain lenses and phase/self-drive prototype | MERGE as model lenses only; no empirical promotion without sources |
-| Motion / Atlas / Calculus | METADATA_REVIEWED | adjacency, time/phase, motion relativity, Mode188, calculus workbooks | KEEP targeted computational/data donors; deeper schema pass remains |
-| Visual Design Archive | METADATA_REVIEWED | intrinsic membrane, motion-relativity, embodiment, time-mandala visual language | MERGE visual grammar; targeted reference pass remains |
-| Crimson / Alpha specialized runtimes | DEFERRED | ledger confirms CRIMSON asymmetry and ALPHA→BASE→CONSTRUCT/PRUNE→OMEGA cycle; no stronger distinct entrypoint found in bounded search | KEEP semantics; exact donor import deferred until concrete source appears |
-| Memory / Scar / Relation | INTEGRATED | continuity/scar/relation graph, timeline/replay | KEEP |
-| Intelligence / Forecast / Action Gate | INTEGRATED | route→mode→forecast→action→generation gate | KEEP |
-| Create / Simulate / Consequence | INTEGRATED | local simulated branches + rollback | KEEP |
-| Sovereign Devices / Compute | INTEGRATED | truthful heartbeat/device-state grammar | KEEP |
-| Earth | INTEGRATED | source-backed observed/derived/forecast separation | KEEP |
-| Build / Evolution / Recovery Board | INTEGRATED | governed candidate/CI/promote/deploy/rollback | KEEP |
+## Primary family state
+ENTRYPOINT_REVIEWED: One-System Runtime/Sovereign; Operator Cockpit/Total Control; Renderer/Intrinsic Membrane; Current V6 Shell/Orchestration; Canon Console; Hybrid/Fusion; Traversal/EAG/Address/Dewey; Camera/Host Inputs; AI Orchestration; Installer/Recovery/Packaging; Excel/LensMatrix/Data Atlas; Audio/SOMA; World/Bio/Reality/Forecast.
 
-## BATCH 010 — Secondary cluster dispositions
-The historical Master Corpus Audit clusters are now mapped into the one-system architecture rather than left as orphan categories.
+INTEGRATED: Memory/Scar/Relation; Intelligence/Forecast/Action Gate; Create/Simulate/Consequence; Sovereign Devices/Compute; Earth; Build/Evolution/Recovery Board.
 
-| Secondary cluster | Evidence observed | Disposition | Integration role |
-|---|---|---|---|
-| Full Sphere | `98197093908_2D_TRUE_MOTION_FULL_CANON_EXCEL.xlsx`, full-atlas/Mode188 families; workbook itself states symbolic/instrumentation atlas and rejects empirical physical-dimension claim | KEEP / MERGE | representational projection, address/compression, outverse/inverse lens inside Calculus/Field; never physical-dimension fact |
-| Fold / Fold Scale Relativity | calibration/test harness with variables, units, formulas, calibration data, benchmarks, stability proofs, shell calibrator and proof-status ledger | KEEP | Calculus + Proof calibration/benchmark instrument; external datasets required for empirical claims |
-| Fiedler / Metrics | clustered with Fold metrics/proof artifacts in historical audit | KEEP as diagnostic donor | numerical graph/metric diagnostics and validation surfaces, never standalone ontology |
-| Physics | historical audit cluster plus calibration harness explicitly labels several claims TESTABLE MODEL / UNPROVEN and prunes 20736D-as-literal-reality | KEEP / DEFER domain use | external-domain benchmark datasets and falsification tests; source-backed observations only |
-| JWST | eight archived benchmark/eval/pilot/flagger package families in master audit | DEFER as validation corpus | external astronomy benchmark/evaluation donor after equations are frozen; never merge as runtime authority |
-| Chemistry | four-item historical cluster without a stronger bounded entrypoint found this pass | DEFER | domain dataset/model lens only when source/schema is specifically reviewed |
-| Electric Bio | executable `electric_bio_phase_engine_v2_atlas_self_drive.html` already entrypoint-reviewed | KEEP as model/simulation donor | optional phase/time/audio/visual instrument; no medical/biological empirical claim without external evidence |
-| Shell | 1+6 shell theorem/formalism and calibration artifacts in audit | KEEP as representational/calculus donor | shell geometry/control/projection and calibration, not physical primitive |
-| Cosmology | two-item historical cluster; audit explicitly says archive alone does not prove final cosmology | DEFER / evidence-gated | model/forecast lens only; empirical promotion requires external data |
-| Energy | five-item historical cluster, related to fold/state-energy tables | KEEP as derived diagnostic | state/benchmark energy metrics with explicit units/provenance; no unsupported physical equivalence |
-| 144D / 1728D / 20736D | numerous atlas/table artifacts | KEEP | representational resolution/address shells, not physical dimensions |
-| Proof | six-item cluster plus current Canon/Proof stack | KEEP / INTEGRATED | admissibility, replay, calibration, checksums, falsification, provenance |
-| Code / Executable | three executable artifacts in historical audit, including Electric Bio family | DONOR / review-before-merge | source entrypoints only after authority/safety/evidence review |
-| Unclassified | five items reported by historical audit; names not enumerated in the available report excerpt | UNSEEN / HOLD | must be identified from ranked inventory or targeted Drive search before ARCHIVE REVIEW COMPLETE |
+DEFERRED: exact CRIMSON ONE / ALPHA–CRIMSON donor source (semantics preserved; distinct concrete source not located in bounded search).
 
-## Batch 010 evidence consequences
-- The Full Sphere workbook explicitly distinguishes exact symbolic/instrumentation mapping from empirical physical-reality claims. This matches current OMEGA shell-boundary law.
-- The Fold calibration harness contains a useful internal benchmark discipline: preserve representations/control heuristics where useful, but classify uncalibrated ontology/physical claims as testable or unproven instead of promoting them.
-- JWST and other external-domain families are valuable primarily as **validation corpora**. They should test frozen OMEGA equations/forecasts against standard baselines, not become hidden training evidence or runtime authority.
-- Chemistry/Cosmology remain evidence-gated because this bounded pass did not locate sufficiently specific entrypoints to justify deeper integration.
-- Five historical `Unclassified` items are the main explicit cluster-level coverage hole remaining from the 188-file audit snapshot.
+## BATCH 011 — closure of explicit recovery gaps
 
-## Coverage conclusion
-Archive review remains **NOT COMPLETE**. The secondary clusters are now dispositioned, but three bounded gaps remain before a defensible archive-review completion claim:
-1. enumerate/dispose the five historical `Unclassified` items (or record them as inaccessible with evidence);
-2. raise Motion/Atlas/Calculus from broad metadata coverage to bounded schema/entrypoint disposition using selected README/sheet schemas, not wholesale workbook ingest;
-3. perform targeted visual-reference disposition so the strongest historic visual language is explicitly mapped to Field/Launch/Earth/Memory/Calculus instead of merely indexed.
+### 1. Historical `Unclassified` five-item cluster
+The historical `MASTER_CORPUS_AUDIT_REPORT.md` records `Unclassified: 5` and says the detailed rows live in `corpus_inventory_ranked.csv`. Multiple bounded Drive searches for the exact inventory filename and variants (`corpus_inventory_ranked.csv`, `corpus inventory ranked`, `Unclassified corpus inventory ranked Omega`) returned only the master audit report, not the referenced ranked CSV or the five row names.
 
-After those recovery gaps close, run a final family/cluster coverage audit against the persistent register. Only then may `ARCHIVE REVIEW COMPLETE` be recorded. Actual full product completion still requires material `OmegaEnvironmentShell` reconstruction and integration testing afterward.
+Disposition: `INACCESSIBLE_WITH_EVIDENCE` for the five historical row identities **within the currently searchable Drive surface**. They are not silently treated as reviewed. If the ranked inventory or those artifacts become discoverable later, reopen this cluster. This closes the current recovery cursor without inventing filenames or content.
+
+### 2. Motion / Atlas / Calculus bounded schema disposition
+The large workbooks remain intentionally un-bulk-loaded. Bounded searches reconfirmed the concrete families:
+- `ATOMS_1728D_Omega_Atlas_MOTION_12power_20736_UPDATED.xlsx`
+- `Time_Mandala_of_Matter_20736D_Excel_Engine.xlsx`
+- `Mode188_Unified_Runtime_20736D(.xlsx / _SYNCED.xlsx)`
+- `full_atlas_20736D_exact_filled_data.xlsx`
+- Truth Traversal and LensMatrix schemas already entrypoint-reviewed
+- Fold Scale Relativity calibration harness already reviewed as a calibration/proof instrument.
+
+The historical master audit also identifies concrete atlas schemas such as state tables, graph edges, symmetry/asymmetry lookup, orbit classes, proof checksums and dashboard/report sheets. Current V6 already contains atlas context, phase/time, gradient/curvature/RK2, shell scaling and Mode188 dispatch. Therefore Motion/Atlas/Calculus is raised to `ENTRYPOINT_REVIEWED_BY_SCHEMA_FAMILY` with this bounded disposition:
+- KEEP native address/adjacency, phase/time, trajectory, state-space and calculus data structures;
+- KEEP graph/symmetry/asymmetry/metric and calibration diagnostics;
+- MERGE only specific workbook ranges when a current workspace needs a concrete missing computation;
+- never import a workbook as a second canonical state authority;
+- preserve representational-shell and empirical-truth boundaries.
+
+### 3. Visual archive targeted workspace mapping
+Targeted Drive metadata reconfirmed the strongest named design references:
+- `OMEGA_INTRINSIC_MEMBRANE_V2_SOFTWARE_RENDER.png`
+- `OMEGA_ATLAS_MOTION_RELATIVITY_V5_EARLY_EMERGENCE.png`
+- `omega_20736d_dimensional_core_REAL.png`
+- `omega_embodiment_*` family
+- `time_mandala_20736D_3min_loop.gif`
+
+These are design-reference artifacts, not empirical evidence. Their recovered role is now explicit rather than merely indexed:
+
+| Visual reference family | Primary unified-workspace role | Recovered design principle |
+|---|---|---|
+| Intrinsic Membrane | Living Field / shell STAGE | field should read as one living state membrane, not disconnected dashboard cards |
+| Motion Relativity emergence | Calculus + Living Field | trajectory, phase, curvature and relation motion should be visibly state-driven |
+| 20,736 core | Calculus / Atlas lens / Proof | high-density relation/address topology with readable aggregation; 20,736 remains representational |
+| Embodiment family | Launch / Living Field / workspace identity | coherent visual identity and depth without adding a second data authority |
+| Time Mandala animation | Calculus / Memory timeline / Create-Simulate | time/phase evolution, cyclic progression and replay should be visible consequences of state/time controls |
+
+Cross-workspace visual rule: Earth uses the same depth/relationship grammar only after source/derived/forecast truth class is explicit; Memory uses relation/scar topology; Intelligence uses route/mode/action flow; Sovereign uses topology only for authenticated device/transport state. Visual richness may never obscure evidence class or controls.
+
+Visual Design Archive is now raised to `ENTRYPOINT_REVIEWED_AS_DESIGN_REFERENCE_FAMILY` for recovery purposes. Individual image pixels were not asserted as machine-readable evidence; named artifacts and established visual-design lineage are the recovered authority.
+
+## Secondary cluster dispositions retained from BATCH 010
+- Full Sphere: KEEP/MERGE representational projection lens; no literal physical-dimension claim.
+- Fold: KEEP calibration/proof instrument.
+- Fiedler/Metrics: KEEP numerical/graph diagnostics.
+- Physics: KEEP/DEFER external benchmark domain.
+- JWST: DEFER external validation corpus.
+- Chemistry: DEFER pending concrete entrypoint.
+- Electric Bio: KEEP model/simulation donor with strict evidence boundary.
+- Shell: KEEP representational/calculus donor, no new physical primitive.
+- Cosmology: DEFER/evidence-gated.
+- Energy: KEEP derived diagnostic with units/provenance.
+- Code/Executable: DONOR/review before merge.
+
+## Recovery coverage conclusion after BATCH 011
+The **explicit family/cluster coverage gaps known from the historical 188-file audit snapshot are now dispositioned**: reviewed, integrated, deferred, quarantined or recorded inaccessible with evidence. This does **not yet justify `ARCHIVE REVIEW COMPLETE` for the entire currently accessible Drive**, because the historical 188-file audit is only a snapshot and the Drive may contain later/newer OMEGA artifacts.
+
+One final recovery step is required: a bounded **current-Drive discovery sweep** using metadata pagination/family signatures to identify post-audit OMEGA families not represented in this register. That sweep must be bounded page-by-page and logged. If it yields no new capability families, or all new families receive dispositions, then `ARCHIVE REVIEW COMPLETE` can be recorded with an explicit scope statement.
+
+After archive review closes, immediately transition to actual software convergence: first material `OmegaEnvironmentShell` slice, then workspace-by-workspace integration and release verification.
 
 ## Next cursor
-`R159:BATCH_010_COMPLETE;NEXT=BATCH_011_UNCLASSIFIED_MOTION_VISUAL_CLOSURE`
+`R159:BATCH_011_COMPLETE;NEXT=BATCH_012_CURRENT_DRIVE_DISCOVERY_SWEEP_AND_FINAL_COVERAGE_AUDIT`
