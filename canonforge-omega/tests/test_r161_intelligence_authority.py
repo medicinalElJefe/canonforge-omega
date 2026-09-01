@@ -12,6 +12,7 @@ def test_r161_is_canonical_worker_entry_without_replacing_omega_runtime():
     assert 'service = "omega-genesis-v1"' in wrangler
     assert 'import heartbeatTruth, { OmegaRuntime } from "./heartbeatTruth";' in entry
     assert 'export { OmegaRuntime };' in entry
+    assert 'heartbeatTruth.fetch(request, env)' in entry
     assert 'enhanceIntelligenceAuthorityRuntime(response)' in entry
 
 
@@ -26,3 +27,9 @@ def test_r161_fast_path_is_evidence_bound_and_zero_chat():
     fast_body = source.split("async function fast", 1)[1].split("const oldRoute", 1)[0]
     assert "/api/chat" not in fast_body
     assert "not proven online" in source
+
+
+def test_r161_enhancer_cannot_rewrite_non_html_api_responses():
+    source = (WORKER / "src" / "intelligenceAuthorityRuntime.ts").read_text(encoding="utf-8")
+    assert 'if(!type.includes("text/html"))return response;' in source
+    assert 'html.replace("</body>",script+"</body>")' in source
