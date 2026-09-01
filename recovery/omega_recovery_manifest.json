@@ -7,7 +7,8 @@
   "genesis_sha_observed": "fca954774e2246ec1bb1e3408ede7610c69c813c",
   "active_recovery_candidate": "recovery/archive-convergence-b004",
   "active_recovery_candidate_parent": "77defb727e3b9f09bb66c8033b0677eab0819a72",
-  "active_candidate_code_head_before_checkpoint": "d1b9c3d16046ee39530427ef6309045841b8c71c",
+  "active_candidate_code_head_before_checkpoint": "f2cd70005e85c97e9a6695620ef7c1d49b1b2c1d",
+  "active_pr": 126,
   "superseded_candidates": [
     {
       "branch": "recovery/archive-convergence-b001",
@@ -27,8 +28,8 @@
     "batch": 5,
     "source": "canonical_v6+github_source+google_drive_bounded_content",
     "family": "full_software_menu_ledger_and_r162_unified_workspace_acceptance",
-    "checkpoint": "second Drive ledger content-reviewed; existing acceptance instruments source-reconciled; Calculus mounted into canonical compositor candidate; single OmegaEnvironmentShell navigation augmented to expose all nine primary workspace families without changing Worker entry authority",
-    "next": "run exact-head CI for R162 and promote only if fully green; verify deployment/public convergence; then reintegrate deterministic Intelligence status path inside the established composition chain and inspect one additional bounded archive family"
+    "checkpoint": "second Drive ledger content-reviewed; nine workspace families reconciled; first R162 exact-head CI caught duplicate Calculus mounting because Calculus already mounts through spatialCommandCore; duplicate virtual-lattice mount removed; corrected candidate retains only single-shell workspace exposure",
+    "next": "run fresh exact-head CI for corrected R162; promote only if fully green and deployment verified; then reintegrate deterministic Intelligence status path inside established composition and inspect one additional bounded archive family"
   },
   "coverage": {
     "archive_families_metadata_reviewed": 31,
@@ -53,20 +54,20 @@
       "OmegaRuntime Durable Object export and migrations",
       "heartbeatTruth runtime truth/composition gate",
       "OmegaEnvironmentShell unified human environment and primary navigation authority",
-      "existing governed V6 workspace instruments under the virtual lattice compositor",
+      "existing Calculus mount through spatialCommandCore.ts",
+      "existing governed V6 workspace instruments under established compositor paths",
       "atlas_runtime_test_bundle historical tested runtime/API reference",
       "Mode188 STAY/TURN/ESCALATE admissibility law",
       "one-system ledger rule: renderer/menus/AI/forecast/camera/workbook/packager are submodules behind one runtime spine"
     ],
     "MERGE": [
-      "R162: mount existing calculusInstrument.ts into virtualLatticeDisplay composition",
-      "R162: augment existing OmegaEnvironmentShell navigation with Calculus, Memory, Create/Simulate and Build/Evolution without introducing a second navigation surface",
+      "R162 unified workspace exposure: augment existing OmegaEnvironmentShell navigation with Calculus, Memory, Create/Simulate and Build/Evolution without a second navigation surface",
       "full-software menu ledger one-authority/one-menu-path/no-shadow-state requirements as design-control",
       "R161 deterministic Intelligence status logic, later to be mounted inside existing composition chain",
       "Mode188 v10/v11 proof mechanics",
       "CanonConsole v24/v31/v31r1 proof/readable-state/governance pieces",
       "Hybrid Link adapters only",
-      "Dewey Calculus",
+      "Dewey Calculus capability behind existing mount",
       "Earth traversal/source-backed observation",
       "Proof/forensic/replay ledger"
     ],
@@ -87,6 +88,9 @@
     "QUARANTINE": [
       "CanonConsoleOmega_v44_2_Unified synthetic/randomized state as authority",
       "historical synthetic camera fallback unless explicitly simulation/test labeled"
+    ],
+    "REJECTED_PATTERN": [
+      "duplicate Calculus mount in virtualLatticeDisplay.ts; historical R136 confirms spatialCommandCore.ts is the established mount, so duplicate participation violates one-compositor authority"
     ]
   },
   "capability_map_additions_batch_5": [
@@ -101,24 +105,14 @@
     "nine-family primary workspace navigation under OmegaEnvironmentShell",
     "mobile primary workspace targets at least 44px"
   ],
-  "ci_history_batch_4": [
+  "ci_history_batch_5": [
     {
-      "head": "770b103e84e58e4307336bf9efb30d39c8b103de",
-      "workflow_run": 33542752839,
+      "head": "d8ac6e0107d76f7775318bb653de017979abaa0c",
+      "workflow_run": 33548937802,
       "cloudflare_interface": "PASS",
-      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS"
-    },
-    {
-      "head": "83532e3fbb9c8ef961dda2bf3e136fff94b60207",
-      "workflow_run": 33543132162,
-      "cloudflare_interface": "PASS",
-      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS"
-    },
-    {
-      "head": "580abc9e0c512e99608f8c9b2161d833fe8e7d7b",
-      "workflow_run": 33543598106,
-      "cloudflare_interface": "PASS",
-      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS"
+      "sovereign_compile": "PASS",
+      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS",
+      "adversarial_result": "duplicate Calculus mount discovered; candidate corrected rather than weakening established R136 contract"
     }
   ],
   "preserved_contracts": [
@@ -133,11 +127,13 @@
     "route-before-generation",
     "exact PC heartbeat proof",
     "rollback/provenance",
-    "single renderer/composition authority per viewport"
+    "single renderer/composition authority per viewport",
+    "single established Calculus instrument mount"
   ],
   "release_evidence": {
     "canonical_parent_deployment_previously_verified": true,
-    "r162_exact_head_ci": "PENDING",
+    "r162_exact_head_ci_first_attempt": "REJECTED_ON_FULL_RUNTIME_TESTS",
+    "r162_corrected_exact_head_ci": "PENDING",
     "candidate_promoted_this_batch": false,
     "deployment_verified_this_batch": false,
     "hybrid_pc_online_verified_this_batch": false
@@ -145,5 +141,5 @@
   "archive_review_complete": false,
   "material_candidate_functional_improvement": true,
   "material_product_improvement": false,
-  "status": "R162 MATERIAL CANDIDATE: existing Calculus is now mounted in the compositor candidate and all nine acceptance workspace families are reachable from the single environment navigation design. Promotion remains gated on exact-head CI, deployment verification and post-deployment observation."
+  "status": "R162 CORRECTED MATERIAL CANDIDATE: first exact-head CI caught and rejected a duplicate Calculus mount. Existing spatialCommandCore Calculus authority is preserved; candidate now only exposes all nine acceptance workspace families through the single OmegaEnvironmentShell navigation. Fresh exact-head CI is required before merge/deploy."
 }
