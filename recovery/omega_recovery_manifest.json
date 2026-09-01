@@ -1,31 +1,24 @@
 {
-  "schema": "omega.recovery.manifest.v5",
+  "schema": "omega.recovery.manifest.v6",
   "candidate": "omega-evolve/r159-recovery-convergence",
   "canonical_parent": "781e9077c4ce183cec0a0451e22cce077c87c9c2",
-  "review_cursor": "R159:BATCH_007_COMPLETE;NEXT=BATCH_008_HOST_AI_PACKAGING_ENTRYPOINTS",
-  "authority_contract": {
-    "canonical_state_authority": "V6/OmegaRuntime",
-    "genesis_role": "governed discovery/evolution",
-    "duplicate_state_authority_allowed": false,
-    "duplicate_renderer_authority_allowed": false,
-    "appdeploy_allowed": false
-  },
+  "review_cursor": "R159:BATCH_008_COMPLETE;NEXT=BATCH_009_DATA_CRIMSON_AUDIO_WORLD_ENTRYPOINTS",
+  "authority_contract": {"canonical_state_authority":"V6/OmegaRuntime","genesis_role":"governed discovery/evolution","duplicate_state_authority_allowed":false,"duplicate_renderer_authority_allowed":false,"appdeploy_allowed":false},
   "archive_summary": {"software_families":100,"master_menus":12,"sequence_rows":144,"proof_gates":12,"capability_rows":18,"disposition":{"KEEP":63,"MERGE":26,"DONOR":11}},
-  "master_corpus_audit_snapshot": {"files":188,"visible_mb":463.7,"workbooks":52,"images":37,"pdfs":37,"csvs":24,"zips":12,"svgs":7,"videos":7,"docx":3,"html":3,"note":"bounded historical audit snapshot; not asserted as complete current Drive"},
+  "master_corpus_audit_snapshot": {"files":188,"visible_mb":463.7,"workbooks":52,"images":37,"pdfs":37,"csvs":24,"zips":12,"svgs":7,"videos":7,"docx":3,"html":3,"note":"historical bounded audit snapshot; not asserted as complete current Drive"},
   "coverage_complete": false,
   "coverage_register": "recovery/OMEGA_ARCHIVE_FAMILY_COVERAGE.md",
   "coverage_states": {
-    "ENTRYPOINT_REVIEWED": ["one_system_runtime_sovereign","operator_cockpit_total_control","renderer_intrinsic_membrane","current_v6_shell_orchestration","canon_console_lineage","hybrid_fusion","traversal_eag_address_dewey"],
-    "METADATA_REVIEWED": ["motion_atlas_calculus","visual_design_archive","audio_signal_soma","world_bio_reality_forecast","installer_recovery_packaging","camera_host_inputs","ai_orchestration_creator_task_router","excel_lensmatrix_data_atlas","crimson_alpha_specialized"],
+    "ENTRYPOINT_REVIEWED": ["one_system_runtime_sovereign","operator_cockpit_total_control","renderer_intrinsic_membrane","current_v6_shell_orchestration","canon_console_lineage","hybrid_fusion","traversal_eag_address_dewey","camera_host_inputs","ai_orchestration_creator_task_router","installer_recovery_packaging"],
+    "METADATA_REVIEWED": ["motion_atlas_calculus","visual_design_archive","audio_signal_soma","world_bio_reality_forecast","excel_lensmatrix_data_atlas","crimson_alpha_specialized"],
     "INTEGRATED": ["memory_scar_relation","intelligence_forecast_action_gate","create_simulate_consequence","sovereign_devices_compute","earth","build_evolution_recovery_board"]
   },
   "entrypoint_findings": {
-    "canon_console": ["v24_canonical_state_proof","v31r1_readable_dimensional_instrument","v34_atlas_control_surface","v43_visual_cockpit","v44_intelligence_unified_surface","forensic_proof_and_triangulation","instrument_navigate_select"],
-    "hybrid": ["approved_root_confinement","protected_local_token","allowlisted_ops_keys_patch_types","workspace_limits","rollback_items","emergency_stop","visible_window_lock","password_field_block","pair_and_governed_job_loop","proof_packet_return"],
-    "hybrid_quarantine": ["legacy_AppDeploy_default_api_base"],
-    "traversal": ["input_to_state_manifold_to_traversal_to_visual_host_to_reversible_address_ledger","Focus_Set","Lens_Map","Phase_Map","Reg_Map","Skin_Map","Operators_188","Build_Ledger","Atlas_Summary"]
+    "camera_host": ["Mode188_Atlas_Camera_Shell_v11_primary_multiview_donor","Host_Observation_Contract","camera_text_files_telemetry_as_inputs","no_fake_background_authority"],
+    "ai_orchestration": ["CanonForge_Task_Router_semantic_state","operator_remains_authority","intent_router.py","integrations_command_router.py","kernel_transport_router.py","CanonForge_RCL_parser_bridge_runtime_law"],
+    "packaging": ["OmegaAtlasRuntime.spec","OmegaAtlasDesktop.iss","BUILD_WINDOWS_STANDALONE.bat","PyInstaller_runtime","Electron_desktop","optional_Inno_Setup","packaged_to_built_to_python_fallback","seal_checksums_omega.lock"]
   },
-  "environment_shell": {"name":"OmegaEnvironmentShell","regions":["status","navigation","stage","context","proof"],"rules":["one_primary_workspace_mounted","one_navigation_authority_per_viewport","mobile_safe_area_reserved_before_stage_layout","desktop_and_mobile_navigation_mutually_exclusive","archive_instruments_mount_inside_shell","canonical_state_preserved_across_navigation","no_post_load_layout_authority_race"]},
-  "protected_current_capabilities": ["OmegaRuntime_Durable_Object","heartbeat_truth","Genesis_role_separation","route_before_generation","Earth_source_boundaries","canonical_state_authority","rollback_provenance","Memory_continuity_scar_relation_graph","Calculus_gradient_curvature_RK2","Intelligence_route_mode_forecast_action_gate","Create_Simulate_branch_comparison","Sovereign_device_state_grammar","Build_Evolution_governance","representational_shell_boundary"],
-  "next_batch": {"id":"BATCH_008","focus":["Camera_Host_Inputs_entrypoint","AI_Orchestration_entrypoint","Installer_Recovery_Packaging_entrypoint"],"bulk_ingest":false}
+  "quarantine": ["legacy_AppDeploy_Hybrid_endpoint","duplicate_page_layout_authorities","shadow_state_or_renderer_authorities"],
+  "environment_shell": {"name":"OmegaEnvironmentShell","regions":["status","navigation","stage","context","proof"],"rules":["one_primary_workspace_mounted","one_navigation_authority_per_viewport","archive_instruments_mount_inside_shell","canonical_state_preserved_across_navigation","no_post_load_layout_authority_race"]},
+  "next_batch": {"id":"BATCH_009","focus":["Excel_LensMatrix_DataAtlas_entrypoint","Crimson_Alpha_entrypoint","Audio_SOMA_entrypoint","World_Bio_Reality_entrypoint"],"bulk_ingest":false}
 }
