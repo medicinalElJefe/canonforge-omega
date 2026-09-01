@@ -1,5 +1,5 @@
 name = "omegav6"
-main = "src/heartbeatTruth.ts"
+main = "src/r161Entry.ts"
 compatibility_date = "2026-08-29"
 workers_dev = true
 
