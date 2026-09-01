@@ -12,7 +12,7 @@ def test_r140_binds_individual_skin_layer_over_root_without_new_authority():
     assert 'CONTROL=20736' in skin
     for name in ["PARENT", "INTERACTION", "SCAR", "CONTINUITY", "COMPRESSION", "SKIN", "INTERPRETATION", "BEHAVIOR"]:
         assert name in skin
-    assert 'does not mutate canonical state' in skin
+    assert 'state authority' in skin
     assert 'not a new physical law' in skin
 
 
