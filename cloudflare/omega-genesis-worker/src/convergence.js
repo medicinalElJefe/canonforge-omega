@@ -32,19 +32,23 @@ async function probe(url){
 async function manifest(env){
   const core={
     schema:"OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3",
+    authority_contract:"OMEGA_ROLE_SEPARATED_CONVERGENCE_V1",
     runtime:{
-      role:"GENESIS_CANONICAL_AUTHORITY",
+      role:"GENESIS_DISCOVERY_EVOLUTION_AUTHORITY",
       canonical_branch:"omega-genesis-v1-full",
       public_url:"https://omega-genesis-v1.jeffdeweyeljefe.workers.dev/",
       build:env.BUILD_ID||"omega-genesis-v1",
-      authority:"durable-object-canonical-for-genesis-state",
+      authority:"durable-object-canonical-for-genesis-internal-state-only",
+      operational_release_authority:false,
       private_corpus_embedded:false
     },
     public_product:{
-      role:"V6_PUBLIC_PRODUCT_FACADE",
+      role:"V6_CANONICAL_OPERATIONAL_RUNTIME",
       public_url:V6_URL+"/",
-      authority_transport:"cloudflare-service-binding",
-      state_rule:"V6 holds no second canonical state; API/state authority resolves to Genesis"
+      release_authority:"omega-v6-full-convergence",
+      genesis_transport:"cloudflare-service-binding-observation",
+      state_rule:"Genesis discovery, archive recovery, evidence and candidate evolution cannot mutate or promote V6 operational state. V6 owns its operational/release lifecycle.",
+      genesis_may_deploy_v6:false
     },
     capability_genome:{
       capability_count:CAPABILITIES.length,
@@ -59,7 +63,8 @@ async function manifest(env){
     recursive_law:LAW,
     operator_roles:OPERATOR_ROLES,
     donor_dispositions:DONOR_DISPOSITIONS,
-    promotion_boundary:"Genesis owns canonical state and governed evolution. V6 is the stable human-facing product surface and must prove canonical-digest parity before deployment acceptance.",
+    promotion_boundary:"Genesis may discover, recover, test and propose bounded candidates. OMEGA V6 remains the canonical operational/release authority and promotes through its own exact-head verification workflow.",
+    authority_boundary:"Genesis internal Durable Object state is not V6 operational state. Reciprocal convergence is observational and proposal-oriented; it does not grant cross-runtime mutation authority.",
     dimensional_boundary:"144/1728/20736 are software/model/interface representation shells unless independently evidenced otherwise"
   };
   return{...core,manifest_digest:await digest(core)};
@@ -76,10 +81,10 @@ async function reciprocalSnapshot(env){
     ok:Boolean(v6Health.reachable&&v6Convergence.reachable),
     genesis_manifest:ownManifest,
     peer:{
-      role:"V6_PUBLIC_PRODUCT_FACADE",
+      role:"V6_CANONICAL_OPERATIONAL_RUNTIME",
       health:v6Health,
       convergence:v6Convergence,
-      boundary:"peer observation cannot mutate either canonical state or deployment governance"
+      boundary:"peer observation cannot mutate Genesis internal state or V6 operational/release state"
     }
   };
 }
@@ -88,7 +93,7 @@ export default{
   async fetch(request,env){
     const url=new URL(request.url);
     if(url.pathname==="/api/convergence/manifest"){
-      return Response.json(await manifest(env),{headers:{"cache-control":"no-store","x-omega-authority":"genesis-convergence-manifest"}});
+      return Response.json(await manifest(env),{headers:{"cache-control":"no-store","x-omega-authority":"genesis-discovery-evolution-manifest"}});
     }
     if(url.pathname==="/_omega/convergence"){
       return Response.json(await reciprocalSnapshot(env),{headers:{"cache-control":"no-store","x-omega-authority":"genesis-convergence-observer"}});
