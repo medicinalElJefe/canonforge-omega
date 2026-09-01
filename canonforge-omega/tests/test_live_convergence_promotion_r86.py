@@ -20,7 +20,7 @@ def test_v6_promotion_requires_live_post_deploy_convergence_proof():
     assert 'GENESIS_DISCOVERY_EVOLUTION_AUTHORITY' in source
     assert 'V6_CANONICAL_OPERATIONAL_RUNTIME' in source
     assert 'genesis_may_deploy_v6' in source
-    assert 'LIVE_ROLE_SEPARATED_V3_CONVERGENCE_VERIFIED' in source
+    assert 'LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3' in source
     assert 'EXPECTED_BUILD: r87-semantic-edge-settle-proof' in source
     assert 'seq 1 30' in source
     assert 'Edge not settled on expected role-separated V3 identity yet' in source
