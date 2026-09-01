@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKBENCH = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "stateWorkbench.ts"
 ROUTER = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "capabilityRouter.ts"
 HEARTBEAT = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "heartbeatTruth.ts"
+ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "r161Entry.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
 
@@ -60,11 +61,14 @@ def test_r92_workbench_is_computation_only_and_nonmutating():
     assert 'href="/workbench"' in router
 
 
-def test_r92_preserves_r88_r89_r90_r91_entrypoint_and_truth_contracts():
+def test_r92_preserves_r88_r89_r90_r91_truth_contracts_under_current_entry():
     heartbeat = HEARTBEAT.read_text(encoding="utf-8")
+    entry = ENTRY.read_text(encoding="utf-8")
     wrangler = WRANGLER.read_text(encoding="utf-8")
     router = ROUTER.read_text(encoding="utf-8")
-    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    assert 'main = "src/r161Entry.ts"' in wrangler
+    assert 'heartbeatTruth.fetch(request, env)' in entry
+    assert 'export { OmegaRuntime };' in entry
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"' in wrangler
     assert 'CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"' in wrangler
