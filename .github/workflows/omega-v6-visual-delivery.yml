@@ -16,7 +16,7 @@ jobs:
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-          EXPECTED_VISUAL_RELEASE: r142-micro-macro-skin-geometry
+          EXPECTED_VISUAL_RELEASE: r143-ultra-quality-view
         run: |
           set -euo pipefail
           ok=false
@@ -32,6 +32,8 @@ jobs:
               f'content="{release}"',
               'omegaRootSovereignField',
               'omegaIndividualSkinRelativity',
+              'omegaUltraQualityView',
+              'orsfUltraQuality',
               'omegaVisualRuntimeIntegrity',
               'omegaMicroMacroGeometry',
               'omegaSymmetryBalance',
@@ -39,10 +41,11 @@ jobs:
               '61,917,364,224',
               'MICRO↕MACRO',
               'SYM↔ASYM',
+              'ULTRA ·',
           ]
           if not all(item in html for item in required): raise SystemExit(1)
           if f'x-omega-visual-release: {release}' not in headers: raise SystemExit(1)
-          if 'x-omega-visual-contract: root+micro-macro-skin+phase+integrity-v2' not in headers: raise SystemExit(1)
+          if 'x-omega-visual-contract: root+micro-macro-skin+ultra-quality+phase+integrity-v3' not in headers: raise SystemExit(1)
           if 'cache-control: no-store, no-cache, must-revalidate' not in headers: raise SystemExit(1)
           PY
             then
@@ -56,6 +59,6 @@ jobs:
           if [ "$ok" != "true" ]; then
             echo "PUBLIC_VISUAL_DELIVERY_FAILED"
             echo "Headers:"; cat /tmp/v6-root.headers || true
-            echo "Root markers:"; grep -oE 'r14[0-9][^"< ]*|omegaRootSovereignField|omegaIndividualSkinRelativity|omegaVisualRuntimeIntegrity|omegaMicroMacroGeometry|omegaSymmetryBalance' /tmp/v6-root.html | head -60 || true
+            echo "Root markers:"; grep -oE 'r14[0-9][^"< ]*|omegaRootSovereignField|omegaIndividualSkinRelativity|omegaUltraQualityView|orsfUltraQuality|omegaVisualRuntimeIntegrity|omegaMicroMacroGeometry|omegaSymmetryBalance' /tmp/v6-root.html | head -80 || true
             exit 1
           fi
