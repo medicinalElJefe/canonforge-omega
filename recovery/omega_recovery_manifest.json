@@ -1,8 +1,8 @@
 {
-  "schema": "omega.recovery.manifest.v3",
+  "schema": "omega.recovery.manifest.v4",
   "candidate": "omega-evolve/r159-recovery-convergence",
   "canonical_parent": "781e9077c4ce183cec0a0451e22cce077c87c9c2",
-  "review_cursor": "R159:BATCH_005_COMPLETE;NEXT=BATCH_006_ARCHIVE_FAMILY_COVERAGE_REGISTER",
+  "review_cursor": "R159:BATCH_006_COMPLETE;NEXT=BATCH_007_CANON_HYBRID_TRAVERSAL_ENTRYPOINTS",
   "authority_contract": {
     "canonical_state_authority": "V6/OmegaRuntime",
     "genesis_role": "governed discovery/evolution",
@@ -11,8 +11,13 @@
     "appdeploy_allowed": false
   },
   "archive_summary": {"software_families":100,"master_menus":12,"sequence_rows":144,"proof_gates":12,"capability_rows":18,"disposition":{"KEEP":63,"MERGE":26,"DONOR":11}},
-  "coverage_completed": ["one_system_master_ledger","motion_atlas_calculus_metadata_family","visual_design_metadata_family","operator_cockpit_renderer_authority_family","current_shell_arbitration_entrypoints"],
   "coverage_complete": false,
+  "coverage_register": "recovery/OMEGA_ARCHIVE_FAMILY_COVERAGE.md",
+  "coverage_states": {
+    "ENTRYPOINT_REVIEWED": ["one_system_runtime_sovereign","operator_cockpit_total_control","renderer_intrinsic_membrane","current_v6_shell_orchestration"],
+    "METADATA_REVIEWED": ["motion_atlas_calculus","visual_design_archive","canon_console_lineage","hybrid_fusion","traversal_eag_address_dewey","audio_signal_soma","world_bio_reality_forecast","installer_recovery_packaging","camera_host_inputs","ai_orchestration_creator_task_router","excel_lensmatrix_data_atlas","crimson_alpha_specialized"],
+    "INTEGRATED": ["memory_scar_relation","intelligence_forecast_action_gate","create_simulate_consequence","sovereign_devices_compute","earth","build_evolution_recovery_board"]
+  },
   "recovered_control_render_authority": {
     "KEEP": ["base_canonical_shell_runtime","Omega_Total_Control_Suite","20736SpineNativeRender","DimensionSkinEngine","MergedRendererAuthority","Omega_Universal_Intrinsic_Render_Machine","archiveRecoveredWorkstation_capability","coreStudioHdInstrument_capability"],
     "MERGE": ["FullyPolishedHandoff","StandaloneConsequence","CanonConsoleOmega_v31r1_Readable_Dimensional_Instrument","launch_experience","command_palette","workspace_navigation_semantics"],
@@ -25,9 +30,9 @@
   },
   "protected_current_capabilities": ["OmegaRuntime_Durable_Object","heartbeat_truth","Genesis_role_separation","route_before_generation","Earth_source_boundaries","canonical_state_authority","rollback_provenance","Memory_continuity_scar_relation_graph","Calculus_gradient_curvature_RK2","Intelligence_route_mode_forecast_action_gate","Create_Simulate_branch_comparison","Sovereign_device_state_grammar","Build_Evolution_governance","representational_shell_boundary"],
   "next_batch": {
-    "id": "BATCH_006",
-    "focus": ["Canon_Console_lineage","Hybrid_Fusion_packages","Traversal_EAG_Address","Audio_Signal_SOMA","World_Bio_Reality","Installer_Recovery_Packaging","Camera_Host_Inputs","AI_Orchestration_Creator_TaskRouter","Excel_LensMatrix_DataAtlas","Crimson_Alpha_specialized_runtimes"],
-    "coverage_states": ["UNSEEN","METADATA_REVIEWED","ENTRYPOINT_REVIEWED","INTEGRATED","DEFERRED","QUARANTINED"],
-    "bulk_ingest": false
+    "id": "BATCH_007",
+    "focus": ["Canon_Console_strongest_verification_or_entrypoint","Hybrid_Link_launcher_bridge_manifest","Traversal_Truth_ledger_or_entrypoint"],
+    "bulk_ingest": false,
+    "goal": "raise three high-value families from METADATA_REVIEWED to ENTRYPOINT_REVIEWED and extract only capabilities compatible with one-system authority"
   }
 }
