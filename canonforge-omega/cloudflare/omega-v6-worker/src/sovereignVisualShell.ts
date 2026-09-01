@@ -1,5 +1,6 @@
 import { enhanceSpatialCommandCore } from "./spatialCommandCore";
 import { enhanceVirtualLatticeDisplay } from "./virtualLatticeDisplay";
+import { enhanceOmegaEnvironmentShell } from "./omegaEnvironmentShell";
 
 export const SOVEREIGN_VISUAL_SHELL_BOUNDARY = "R129 upgrades presentation and interaction only. It does not mutate canonical state, invent evidence, change execution authority, or weaken heartbeat/proof boundaries.";
 export const MOBILE_FIELD_COMPOSITION_BOUNDARY = "R158 composes the mobile Field as one usable viewport: legacy specialist shortcuts and duplicate docks are removed from the live canvas on narrow screens while the canonical mobile workspace rail remains the navigation authority. This presentation repair does not mutate canonical state, heartbeat truth, Earth source truth, route authority, evidence classes, or execution authority.";
@@ -40,5 +41,6 @@ export async function enhanceSovereignVisualShell(response: Response): Promise<R
   const withStyle = html.replace("</head>", style + "</head>");
   const withChrome = withStyle.replace("<body>", "<body>" + chrome);
   const enriched = new Response(withChrome.replace("</body>", script + "</body>"), { status: response.status, headers: response.headers });
-  return enhanceVirtualLatticeDisplay(await enhanceSpatialCommandCore(enriched));
+  const lattice = enhanceVirtualLatticeDisplay(await enhanceSpatialCommandCore(enriched));
+  return enhanceOmegaEnvironmentShell(await lattice);
 }
