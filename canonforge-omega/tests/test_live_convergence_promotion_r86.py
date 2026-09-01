@@ -14,11 +14,16 @@ def test_v6_promotion_requires_live_post_deploy_convergence_proof():
     assert 'api/convergence/edge' in source
     assert 'api/convergence/manifest' in source
     assert 'reciprocal_manifest_ready' in source
-    assert 'OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2' in source
-    assert 'LIVE_CONVERGENCE_VERIFIED' in source
+    assert 'authority_contract_ready' in source
+    assert 'OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3' in source
+    assert 'OMEGA_ROLE_SEPARATED_CONVERGENCE_V1' in source
+    assert 'GENESIS_DISCOVERY_EVOLUTION_AUTHORITY' in source
+    assert 'V6_CANONICAL_OPERATIONAL_RUNTIME' in source
+    assert 'genesis_may_deploy_v6' in source
+    assert 'LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3' in source
     assert 'EXPECTED_BUILD: r87-semantic-edge-settle-proof' in source
     assert 'seq 1 30' in source
-    assert 'Edge not settled on expected semantic identity yet' in source
+    assert 'Edge not settled on expected role-separated V3 identity yet' in source
 
 
 def test_live_proof_runs_after_deploy_and_before_promotion_record():
