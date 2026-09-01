@@ -14,9 +14,9 @@ def test_r128_exposes_domains_phases_mechanisms_and_mode188():
 
 def test_r128_calculus_drives_camera_result_state():
     s=(SRC/'syntheticCamera.ts').read_text(encoding='utf-8')
-    for token in ['z ≈ f·B / disparity','STAY','TURN','ESCALATE','confidence','C*P','Q+L','omega=']:
+    for token in ['z ≈ f·B / disparity','STAY','TURN','ESCALATE','confidence','S.C/100*S.P/100','S.Q/100+S.L/100','.01']:
         assert token in s
-    assert 'temporal coherence' in s
+    assert 'phase warp' in s
 
 def test_r128_camera_acquisition_is_actionable_and_truth_bounded():
     s=(SRC/'syntheticCamera.ts').read_text(encoding='utf-8')
