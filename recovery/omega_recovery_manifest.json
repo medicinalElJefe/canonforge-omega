@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "canonical_repo": "medicinalElJefe/canonforge-omega",
+  "canonical_v6_branch": "omega-v6-full-convergence",
+  "canonical_v6_sha_observed": "77defb727e3b9f09bb66c8033b0677eab0819a72",
+  "genesis_branch": "omega-genesis-v1-full",
+  "genesis_sha_observed": "fca954774e2246ec1bb1e3408ede7610c69c813c",
+  "active_candidate": "omega-evolve/r161-intelligence-authority",
+  "active_candidate_parent": "77defb727e3b9f09bb66c8033b0677eab0819a72",
+  "active_candidate_sha_observed_before_state_write": "171ec3bf108e4eb9dafd022aba4adbdf498f916f",
+  "superseded_candidate": {
+    "branch": "recovery/archive-convergence-b001",
+    "pr": 123,
+    "reason": "Batches 001-003 were based on repository main rather than the canonical V6 release branch; their recovery knowledge is carried forward here, but their Python app repair is not promoted into Cloudflare V6."
+  },
+  "cursor": {
+    "batch": 4,
+    "source": "canonical_v6+github_lineage+google_drive_bounded_content",
+    "family": "r161_intelligence_authority_and_one_system_ledger",
+    "checkpoint": "canonical branch corrected; R161 deterministic intelligence path wired behind heartbeatTruth/OmegaRuntime; one-system 1728D J-drive ledger content reviewed",
+    "next": "exact-head CI and promotion decision for R161; then inspect one additional full-software/menu ledger and converge primary workspace coverage without duplicate navigation"
+  },
+  "coverage": {
+    "archive_families_metadata_reviewed": 31,
+    "software_families_mapped_prior": 24,
+    "high_value_source_entry_family_lines_reconciled": 6,
+    "current_v6_cloudflare_authority_roots_confirmed": 3,
+    "drive_ledgers_content_reviewed": 1,
+    "material_v6_candidates_integrated_on_active_branch": 1,
+    "quarantined_authority_patterns": 2,
+    "unknown_or_inaccessible": [
+      "inner contents of second-order self-copying-machine bundles not exposed by available indexed corpus",
+      "first-hand rendered mobile screenshot capture unavailable in current tool surface",
+      "current Hybrid PC ONLINE state unless returned by authenticated heartbeat endpoints"
+    ]
+  },
+  "classifications": {
+    "KEEP": [
+      "canonical omega-v6-full-convergence Cloudflare worker spine",
+      "OmegaRuntime Durable Object export and migrations",
+      "heartbeatTruth as runtime truth/composition gate",
+      "OmegaEnvironmentShell as unified human environment",
+      "atlas_runtime_test_bundle as tested historical runtime/API reference",
+      "Mode188 admissibility/STAY-TURN-ESCALATE law",
+      "one-system ledger authority rule: single runtime spine; renderer/menus/AI/forecast/camera/workbook/packager remain submodules"
+    ],
+    "MERGE": [
+      "R161 deterministic Intelligence status path using current convergence/hybrid/development/health endpoints with zero generation call",
+      "Mode188 v10/v11 proof mechanics behind current authority",
+      "CanonConsole v24/v31/v31r1 proof/readable-state/governance pieces",
+      "Hybrid Link adapters only",
+      "Dewey Calculus",
+      "Earth traversal/source-backed observation",
+      "Proof/forensic/replay ledger",
+      "one-system ledger menu capabilities as workspace/instrument requirements rather than page authorities"
+    ],
+    "DONOR": [
+      "TCS 20736 native render",
+      "Apex World",
+      "Dimension Skin",
+      "GPU Field Master",
+      "Intrinsic/Inevitability/Living Coherence renderers",
+      "Workbook/Excel Atlas",
+      "Observer/Now-Frame",
+      "Audio/SOMA",
+      "Recovery/packaging lineage",
+      "J-drive installer commands and historical absolute paths from OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx"
+    ],
+    "QUARANTINE": [
+      "CanonConsoleOmega_v44_2_Unified synthetic/randomized state as authority",
+      "historical synthetic camera fallback unless explicitly simulation/test labeled"
+    ]
+  },
+  "capability_map_additions_batch_4": [
+    "Host Intake: camera/text/files/telemetry evidence channels",
+    "State Manifold: 12x12x12 representational auto-ping grid",
+    "20736 representational expansion layer",
+    "single renderer authority and living membrane instrument",
+    "reversible traversal with STAY/TURN/ESCALATE",
+    "forecast curvature/conductance instrument",
+    "proof/drift/replay/checksum workspace",
+    "state sonification as non-medical feedback",
+    "AI task routing with operator authority retained",
+    "recovery board KEEP/MERGE/DONOR/QUARANTINE workflow",
+    "packaging/patch/backup/repair support pipeline"
+  ],
+  "authority_contract": [
+    "one canonical packet/state authority",
+    "one renderer/composition authority per viewport",
+    "one OmegaEnvironmentShell",
+    "one navigation authority per viewport",
+    "one proof/provenance chain",
+    "archive donors mount only as instruments/adapters"
+  ],
+  "preserved_contracts": [
+    "OmegaRuntime export / Durable Object compatibility",
+    "heartbeat truth",
+    "Genesis service binding and separate discovery/evolution authority",
+    "capability/specialist routing",
+    "convergence observation-only semantics",
+    "existing API paths",
+    "Earth source/derived/forecast boundaries",
+    "route-before-generation",
+    "exact PC heartbeat proof",
+    "rollback/provenance"
+  ],
+  "release_evidence": {
+    "canonical_parent_deployment_previously_verified": true,
+    "canonical_parent_sha": "77defb727e3b9f09bb66c8033b0677eab0819a72",
+    "r161_entry_wired": true,
+    "r161_regression_test_added": true,
+    "exact_head_ci_verified": false,
+    "merged": false,
+    "deployment_verified_for_r161": false,
+    "hybrid_pc_online_verified_this_batch": false
+  },
+  "archive_review_complete": false,
+  "material_candidate_functional_improvement": true,
+  "material_product_improvement": false,
+  "status": "R161 is a canonical-V6 candidate: deterministic operational questions are routed to current evidence endpoints with zero /api/chat generation, while synthesis remains route-gated. Awaiting exact-head CI and deployment verification."
+}
