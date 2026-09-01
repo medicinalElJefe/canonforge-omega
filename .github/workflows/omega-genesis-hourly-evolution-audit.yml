@@ -2,8 +2,6 @@ name: OMEGA Genesis Hourly Evolution Audit
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '37 * * * *'
 
 permissions:
   contents: read
@@ -42,10 +40,10 @@ jobs:
       - name: Compile governed improvement backlog
         run: python scripts/evolution_cycle.py --once --data-dir release/evolution-hourly
 
-      - name: Upload hourly evolution evidence
+      - name: Upload evolution evidence
         uses: actions/upload-artifact@v4
         with:
-          name: OMEGA-hourly-evolution-${{ github.run_id }}
+          name: OMEGA-evolution-${{ github.run_id }}
           path: |
             release/evolution-hourly/evolution/status.json
             release/evolution-hourly/evolution/backlog.json
@@ -55,8 +53,8 @@ jobs:
       - name: Record boundary
         run: |
           {
-            echo '## OMEGA hourly evolution audit'
+            echo '## OMEGA evolution audit'
             echo
-            echo 'This scheduled default-branch controller observes and scores omega-genesis-v1-full.'
+            echo 'This controller runs only when manually dispatched and observes and scores omega-genesis-v1-full.'
             echo 'It does not mutate canonical source. Source improvements are routed through omega-evolve/* candidates and the trusted PR gate.'
           } >> "$GITHUB_STEP_SUMMARY"
