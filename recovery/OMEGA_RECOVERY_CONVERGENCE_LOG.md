@@ -8,7 +8,7 @@ Preserved prior classifications include: `atlas_runtime_test_bundle` as the stro
 
 ## Batch 004 — 2026-09-01
 
-Canonical V6 release authority was corrected to branch `omega-v6-full-convergence`, exact observed SHA `77defb727e3b9f09bb66c8033b0677eab0819a72`. Genesis governed discovery/evolution branch `omega-genesis-v1-full` is observed at `fca954774e2246ec1bb1e3408ede7610c69c813c`. Active candidate is `omega-evolve/r161-intelligence-authority`, directly parented by the canonical V6 SHA. PR #123 is superseded by this authority correction and must not be merged into V6.
+Canonical V6 release authority was corrected to branch `omega-v6-full-convergence`, exact observed SHA `77defb727e3b9f09bb66c8033b0677eab0819a72`. Genesis governed discovery/evolution branch `omega-genesis-v1-full` is observed at `fca954774e2246ec1bb1e3408ede7610c69c813c`. Active candidate is `omega-evolve/r161-intelligence-authority`, directly parented by the canonical V6 SHA. PR #123 is superseded by this authority correction and has been closed unmerged.
 
 ### OBSERVE / authority binding
 
@@ -32,13 +32,23 @@ Classification: the architecture rules and capability requirements are KEEP/MERG
 
 Recovered B020/AGI-QTI separation was translated into the canonical Intelligence workspace as `intelligenceAuthorityRuntime.ts`. Operational questions involving status, health, heartbeat, host/PC/runtime/development availability use a `FAST_DETERMINISTIC` path that reads `/api/convergence/edge`, `/api/hybrid/status`, `/api/development/status` and `/api/health`. The deterministic path performs zero `/api/chat` calls and reports unavailable evidence as unproven rather than inferred. Explanation, design, forecast, repair, optimization, training, DEEP/FULL and ALL_MODES stay on route-gated synthesis.
 
-The initially unwired enhancer is now materially connected through new `src/r161Entry.ts`, which wraps the existing `heartbeatTruth` worker and post-processes only HTML through `enhanceIntelligenceAuthorityRuntime`. `OmegaRuntime` is re-exported unchanged. `wrangler.toml` now points `main` to `src/r161Entry.ts` while preserving the Durable Object migration and Genesis binding. Regression coverage in `tests/test_r161_intelligence_authority.py` asserts the OmegaRuntime/Genesis contracts and verifies the deterministic fast function contains no `/api/chat` call.
+The initially unwired enhancer is materially connected through `src/r161Entry.ts`, which wraps the existing `heartbeatTruth` worker and post-processes only HTML through `enhanceIntelligenceAuthorityRuntime`. `OmegaRuntime` is re-exported unchanged. `wrangler.toml` points `main` to `src/r161Entry.ts` while preserving the Durable Object migration and Genesis binding. Regression coverage in `tests/test_r161_intelligence_authority.py` asserts the OmegaRuntime/Genesis contracts and verifies the deterministic fast function contains no `/api/chat` call.
+
+### TEST / genuine regression gate
+
+Exact-head CI was run on candidate SHA `770b103e84e58e4307336bf9efb30d39c8b103de`. The Cloudflare interface/typecheck job passed. The sovereign-core job compiled successfully but failed during the full pytest suite. Promotion and deployment jobs were correctly skipped.
+
+The first concrete incompatibility found was an obsolete R88 test that asserted `wrangler.toml` must forever point directly at `src/heartbeatTruth.ts`. The product upgrade preserves heartbeat truth by making `r161Entry.ts` call `heartbeatTruth.fetch(request, env)` and re-export its `OmegaRuntime`; therefore the old assertion tested a historical filename, not the preserved contract. The test was updated to prove the new wrapper still preserves heartbeatTruth, OmegaRuntime, BUILD_ID and TRUTH_BOUNDARY_ID. No runtime capability or truth check was deleted.
+
+Candidate SHA after this repair was `5e7062ebf5b3fb42191eb57b81ab16547735d7d2` before the durable recovery-state checkpoint commits. A fresh exact-head CI run is required on the final checkpoint head before merge.
 
 ### Preservation / adversarial review
 
 Preserved: OmegaRuntime export and SQLite Durable Object migration; heartbeat truth; Genesis service binding and role separation; specialist/capability routing; existing API paths; convergence observation-only semantics; Earth truth boundaries; route-before-generation; rollback/provenance. No historical J-drive path, standalone renderer or donor menu becomes authority.
 
-Rejected regression: merging PR #123 into canonical V6 is rejected because its parent is repository `main`, not `omega-v6-full-convergence`. Recovery knowledge is carried forward; unrelated Python-lineage mutation is not.
+Rejected regressions:
+- merging PR #123 into canonical V6 was rejected because its parent is repository `main`, not `omega-v6-full-convergence`;
+- weakening or deleting the R88 heartbeat contract to make CI pass was rejected; only the obsolete direct-entry filename assertion was updated.
 
 ### Coverage / cursor
 
@@ -48,11 +58,11 @@ Remaining inaccessible/unknown items include second-order nested self-copying-ma
 
 ### Release state
 
-R161 is not yet claimed merged or deployed. Exact-head CI and post-merge Cloudflare verification remain required before `material_product_improvement` can become true.
+PR #125 is the current canonical candidate. R161 is not claimed merged or deployed. CI attempt #298 proved Cloudflare type safety but rejected the first candidate head at full-runtime-test stage. The obsolete assertion has been repaired without weakening contracts; final-head CI and post-merge Cloudflare verification remain required before `material_product_improvement` can become true.
 
 ### Next bounded slice
 
-1. Run exact-head PR CI for R161 and reject or promote strictly from the current candidate SHA.
+1. Run exact-head PR CI on the final Batch-004 checkpoint SHA and repair any remaining genuine/obsolete failures without deleting capability.
 2. If green, merge only into `omega-v6-full-convergence`, verify post-merge compatibility, deploy exact head through the authorized workflow and verify public convergence.
 3. Content-inspect one additional full-software/menu ledger without bulk ingestion.
 4. Next product target after R161: directly navigable Calculus/Memory/Create-Simulate/Build workspaces mounted inside `OmegaEnvironmentShell`, not duplicate global chrome.
