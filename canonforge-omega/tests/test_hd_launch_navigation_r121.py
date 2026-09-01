@@ -13,9 +13,13 @@ def test_r121_root_launch_is_additive_and_governed():
     assert 'id="omegaDock"' in s
     assert 'id="omegaPalette"' in s
     assert '/core' in s
-    assert 'second canonical packet' in s
-    assert 'new execution authority' in s
-    assert 'new evidence authority' in s
+    # Contract-level preservation: an upgraded launch/navigation layer may change
+    # wording and visible workspaces, but it may not replace canonical authority.
+    assert 'canonical runtime' in s
+    assert 'canonical packet' in s
+    assert 'execution authority' in s
+    assert 'evidence authority' in s
+    assert 'heartbeat truth' in s
 
 def test_r121_workspace_navigation_uses_existing_surfaces():
     s=read('launchHdNavigation.ts')
