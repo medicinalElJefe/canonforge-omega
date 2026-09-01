@@ -94,3 +94,42 @@ Metadata-level archive families reviewed remains **31+**; software families mapp
 2. Select exactly one donor capability with deterministic behavior and no shadow authority—prefer proof/replay instrumentation or a state-bound workspace/navigation primitive—and translate it behind the current authority.
 3. Update this cursor again with the exact files touched, preserved contracts and test evidence.
 4. Do not merge until applicable tests/build checks plus exact-head CI exist; separately verify public Cloudflare deployment and live phone/desktop composition before claiming acceptance.
+
+## Batch 003 — 2026-09-01
+
+Canonical `main` remains `62d244d9a184e28a3e476d27b31a0087201b5b9d`. Active candidate entered this batch at `a3bbd76c6470d74009df610d022c2d87bb63c88c`; functional candidate commit produced in this batch: `921c523e59a9c7ecb77be3cd99f360277527a6ca`. Genesis exact SHA remains unobserved. No Cloudflare deployment or Hybrid PC ONLINE claim is made.
+
+### Current authority inspection
+
+Inspected the candidate/current source roots requested by the prior cursor rather than rescanning the archive: `canonforge-omega/api`, `desktop_ui`, `omega_fusion_core`, and `omega_144d_core`. `api/app.py` is the current Python API/composition entrypoint for the repository lineage; it imports the existing `OmegaPacket`, Universal Moment/TIC calculators, sequence store and host/macro execution services. `desktop_ui` is an Electron presentation shell. `omega_fusion_core` contains core, host, pattern-hub and storage layers. `omega_144d_core` contains the core bus, DSS, event queue, RC144 and subverse modules. These are treated as current repository authorities/implementation roots, not permission for archive donors to create parallel runtimes.
+
+### Material candidate repair
+
+A concrete composition bug was found in `canonforge-omega/api/app.py`: `app.mount("/", StaticFiles(...))` was registered before `/api/status`, `/api/patterns`, `/api/events` and `/api/run-pattern`. Starlette/FastAPI route matching is ordered, so the catch-all root mount can intercept `/api/*` and return static 404 responses before API handlers are reached. This failure mode was independently reproduced in a minimal FastAPI test: mount-first `/api/status` returned HTTP 404, API-first returned HTTP 200.
+
+The candidate now registers all `/api/*` routes first and mounts the UI at `/` only after those routes. No packet model, TIC/Universal Moment calculation, sequence storage, host execution, API path, heartbeat behavior, Genesis behavior, Earth semantics or proof authority was replaced. This is a bounded functional repair of route composition, not a new authority.
+
+### Bounded Drive metadata slice
+
+A Drive search for the CanonForge/OMEGA lineage surfaced additional high-value recovery/control artifacts without bulk ingestion: `OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx`, `OMEGA_ALL_SOFTWARE_61917364224D_FULL_BUILD_v22.xlsx`, `CanonForge_Discovery_Ledger_v2.xlsx`, `OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx`, and `final_12_to_1_merge_workbook.xlsx`, along with related OmegaInfinity/CanonForge artifacts. At this metadata-only stage these are classified **DONOR** references/control ledgers pending bounded content inspection; none is admitted as runtime/state authority from filename alone.
+
+### Release / CI evidence
+
+PR #123 is open, unmerged and currently reports mergeable=true against base SHA `62d244d9a184e28a3e476d27b31a0087201b5b9d`. Before the Batch 003 functional commit, exact-head workflow query for `a3bbd76c6470d74009df610d022c2d87bb63c88c` returned zero workflow runs and combined commit status had zero statuses. Therefore no merge or deployment was attempted. The candidate functional change must receive its own exact-head verification before promotion.
+
+### Coverage / classification
+
+Metadata archive-family coverage remains **31+** and mapped software-family coverage remains **24**. High-value historical source-entry family lines reconciled remains **6**. Current repository authority roots inspected advances to **4**. One deterministic current-source repair is now integrated on the candidate branch. Newly surfaced Drive control/ledger artifacts are **DONOR** pending content-level review. CanonConsole v44.2 synthetic/randomized state remains **QUARANTINE** as authority.
+
+`ARCHIVE REVIEW COMPLETE` remains **false** because second-order nested package contents, exact Genesis SHA, Cloudflare deployment-to-SHA binding, and first-hand live mobile/desktop acceptance evidence remain unresolved.
+
+### Product / release result
+
+**MATERIAL CANDIDATE FUNCTIONAL IMPROVEMENT, NOT YET PRODUCT ACCEPTANCE.** The repository candidate now preserves `/api/*` authority ahead of the static root mount, eliminating a reproducible routing failure in this source lineage. It is not claimed as deployed V6 because exact-head CI, Cloudflare deployment binding and live presentation verification have not been established.
+
+### Next bounded slice
+
+1. Verify the new candidate exact head with available static/import/test/build evidence and GitHub Actions if configured; do not merge without release-law evidence.
+2. Bounded-content inspect one newly surfaced Drive control/ledger artifact, preferably the one-system menu ledger or full-software build ledger, and classify specific capabilities KEEP / MERGE / DONOR / QUARANTINE.
+3. Locate the actual Cloudflare Worker/OmegaRuntime source or an authoritative deployment-to-repository binding; the current Python/Electron lineage must not be falsely equated with the public V6 Durable Object runtime.
+4. After authority binding is proven, translate one recovered visible workspace capability behind `OmegaEnvironmentShell` without shadow navigation/state/render authorities.
