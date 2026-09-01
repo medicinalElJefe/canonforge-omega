@@ -4,15 +4,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ROUTER = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "capabilityRouter.ts"
 HEARTBEAT = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "heartbeatTruth.ts"
+ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "r161Entry.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
 
 
-def test_r91_binds_beneath_canonical_heartbeat_entrypoint_instead_of_replacing_it():
+def test_r91_binds_beneath_canonical_heartbeat_chain_instead_of_replacing_it():
     router = ROUTER.read_text(encoding="utf-8")
     heartbeat = HEARTBEAT.read_text(encoding="utf-8")
+    entry = ENTRY.read_text(encoding="utf-8")
     wrangler = WRANGLER.read_text(encoding="utf-8")
-    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    assert 'main = "src/r161Entry.ts"' in wrangler
+    assert 'heartbeatTruth.fetch(request, env)' in entry
     assert 'import convergence, { OmegaRuntime } from "./convergence"' in heartbeat
     assert 'from "./capabilityRouter"' in heartbeat
     assert 'export type V6View = "Field" | "Earth" | "Assistant" | "Hybrid" | "Proof"' in router
@@ -75,8 +78,10 @@ def test_r91_binds_capability_routing_to_same_heartbeat_governed_edge_snapshot()
 
 def test_r91_preserves_existing_release_identities_and_verifier():
     wrangler = WRANGLER.read_text(encoding="utf-8")
+    entry = ENTRY.read_text(encoding="utf-8")
     verify = VERIFY.read_text(encoding="utf-8")
-    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    assert 'main = "src/r161Entry.ts"' in wrangler
+    assert 'heartbeatTruth.fetch(request, env)' in entry
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"' in wrangler
     assert 'CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"' in wrangler
