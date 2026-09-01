@@ -1,24 +1,23 @@
 import { enhanceRootSovereignField } from "./rootSovereignField";
+import { enhanceGovernedModeAtlas } from "./governedModeAtlas";
 import { enhanceArchiveRecoveredWorkstation } from "./archiveRecoveredWorkstation";
 import { enhanceVisualRuntimeIntegrity } from "./visualRuntimeIntegrity";
 import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from "./virtualLatticeDisplayCore";
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
-export const VISUAL_DELIVERY_RELEASE = "r144-primary-field-recomposition";
+export const VISUAL_DELIVERY_RELEASE = "r145-governed-mode-atlas";
 export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const R141_VISUAL_DELIVERY_COMPATIBILITY_ID = "r141-visual-delivery-correctness";
 export const R142_VISUAL_GEOMETRY_COMPATIBILITY_ID = "r142-micro-macro-skin-geometry";
 export const R143_VISUAL_QUALITY_COMPATIBILITY_ID = "r143-ultra-quality-view";
+export const R144_RECOMPOSITION_COMPATIBILITY_ID = "r144-primary-field-recomposition";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
-  "R144 removes the accumulated full-screen presentation overlays from the primary Living Field. The primary view is recomposed from the root sovereign field, the recovered functional workstation, the virtual lattice instrument and runtime-integrity proof only. R143's device-DPR 3 high-fidelity compositor remains preserved as a specialist capability but is not composited over the primary workspace. Micro/macro skin, high-detail 20,736 control rendering and live-phase renderers are likewise preserved but inactive on the primary plane. This restores view/information/visualization separation and does not mutate canonical state beneath heartbeatTruth. It preserves representational 12^n shells and does not claim a physical 61.9-billion-pixel panel; 20,736 and 61,917,364,224 remain software/model address spaces, not physical dimensions or physical pixels.";
+  "R145 keeps the R144 single-workspace correction and makes the primary visual a governed 20,736 state-atlas projection deck. One current packet is re-projected by Full Overall Canon, Mode 188, Unified Coherence, Forecast, Full Sphere, Relational Skin, Dewey Calculus and the other governed mode operators. The primary workspace uses one visible atlas canvas rather than stacked visual overlays. Live UTC and convergence observations are kept distinct from USER_DEFINED_MODEL geometry. It does not mutate canonical state beneath heartbeatTruth, preserves representational 12^n shells, and does not claim a physical 61.9-billion-pixel panel. R143's device-DPR 3 compositor and other historical visual capabilities remain preserved as specialist code, not primary overlays.";
 
 /*
 Historical preservation signatures — NON-EXECUTING compatibility anchors only.
-They preserve R137/R140/R143 capability identity while R144 intentionally keeps
-these full-screen renderers out of the primary Living Field composition.
-
 enhanceArchiveRecoveredWorkstation(response)
 enhanceIndividualSkinRelativity(rendered)
 enhanceUltraQualityView(rendered)
@@ -30,7 +29,7 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   const headers = new Headers(response.headers);
   headers.set("x-omega-visual-release", VISUAL_DELIVERY_RELEASE);
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
-  headers.set("x-omega-visual-contract", "recomposed-primary-field+workstation+lattice+integrity-v4");
+  headers.set("x-omega-visual-contract", "single-surface+governed-mode-atlas+runtime-truth+integrity-v5");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
@@ -43,8 +42,8 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
 }
 
 export async function enhanceVirtualLatticeDisplay(response: Response): Promise<Response> {
-  // R144 primary Living Field: one composed workspace, not a stack of canvases.
   let rendered = await enhanceRootSovereignField(response);
+  rendered = await enhanceGovernedModeAtlas(rendered);
   rendered = await enhanceArchiveRecoveredWorkstation(rendered);
   rendered = await enhanceVirtualLatticeDisplayCore(rendered);
   // Historical R137/R141 position anchor only; deliberately not executed:

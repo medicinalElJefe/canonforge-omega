@@ -1,6 +1,6 @@
 name: OMEGA V6 visual delivery proof
 
-# Historical preservation tokens only — R144 must NOT deliver these overlay markers in root HTML:
+# Historical preservation tokens only — never required in current root HTML:
 # r143-ultra-quality-view
 # omegaIndividualSkinRelativity
 # omegaUltraQualityView
@@ -20,11 +20,11 @@ jobs:
       group: omega-v6-visual-proof
       cancel-in-progress: true
     steps:
-      - name: Verify public root HTML carries recomposed primary field
+      - name: Verify public root HTML carries governed mode atlas
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-          EXPECTED_VISUAL_RELEASE: r144-primary-field-recomposition
+          EXPECTED_VISUAL_RELEASE: r145-governed-mode-atlas
         run: |
           set -euo pipefail
           ok=false
@@ -36,17 +36,31 @@ jobs:
           html = Path('/tmp/v6-root.html').read_text(errors='ignore') if Path('/tmp/v6-root.html').exists() else ''
           headers = Path('/tmp/v6-root.headers').read_text(errors='ignore').lower() if Path('/tmp/v6-root.headers').exists() else ''
           release = os.environ['EXPECTED_VISUAL_RELEASE']
-          required = [f'content="{release}"','omegaRootSovereignField','omegaVisualRuntimeIntegrity','61,917,364,224']
+          required = [
+              f'content="{release}"',
+              'omegaRootSovereignField',
+              'omegaGovernedModeAtlasStyle',
+              'omegaGovernedModeAtlasRuntime',
+              'gmaCanvas',
+              'data-gma-mode="mode-188"',
+              'data-gma-mode="full-sphere"',
+              'data-gma-mode="relational-skin"',
+              'data-gma-mode="dewey-calculus"',
+              'USER_DEFINED_MODEL',
+              'omegaVisualRuntimeIntegrity',
+              '61,917,364,224',
+          ]
           forbidden = ['omegaIndividualSkinRelativity','omegaUltraQualityView','orsfUltraQuality','omegaMicroMacroGeometry','omegaSymmetryBalance']
           if not all(item in html for item in required): raise SystemExit(1)
           if any(item in html for item in forbidden): raise SystemExit(1)
           if f'x-omega-visual-release: {release}' not in headers: raise SystemExit(1)
-          if 'x-omega-visual-contract: recomposed-primary-field+workstation+lattice+integrity-v4' not in headers: raise SystemExit(1)
+          if 'x-omega-visual-contract: single-surface+governed-mode-atlas+runtime-truth+integrity-v5' not in headers: raise SystemExit(1)
           if 'cache-control: no-store, no-cache, must-revalidate' not in headers: raise SystemExit(1)
           PY
             then
               ok=true
               echo "PUBLIC_VISUAL_RECOMPOSITION_VERIFIED release=$EXPECTED_VISUAL_RELEASE sha=$GITHUB_SHA"
+              echo "PUBLIC_GOVERNED_MODE_ATLAS_VERIFIED release=$EXPECTED_VISUAL_RELEASE sha=$GITHUB_SHA"
               break
             fi
             echo "Visual edge not settled on $EXPECTED_VISUAL_RELEASE yet ($attempt/60)."
