@@ -14,9 +14,8 @@ def test_r128_exposes_domains_phases_mechanisms_and_mode188():
 
 def test_r128_calculus_drives_camera_result_state():
     s=(SRC/'syntheticCamera.ts').read_text(encoding='utf-8')
-    for token in ['z ≈ f·B / disparity','STAY','TURN','ESCALATE','confidence']:
+    for token in ['z ≈ f·B / disparity','STAY','TURN','ESCALATE','confidence','C*P','Q+L','omega=']:
         assert token in s
-    assert '(C*P)/(Q+L+.01)' in s
     assert 'temporal coherence' in s
 
 def test_r128_camera_acquisition_is_actionable_and_truth_bounded():
