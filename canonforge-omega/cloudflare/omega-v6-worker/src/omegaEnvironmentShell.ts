@@ -15,7 +15,12 @@ html.omega-root-field-active #omegaMobileContext,
 html.omega-root-field-active .omegaMobileWorkspaceRail,
 html.omega-root-field-active .surface.app[data-view="Field"],
 html.omega-root-field-active #omegaAuthorityToggle,
-html.omega-root-field-active #omegaAuthorityMap{display:none!important}
+html.omega-root-field-active #omegaAuthorityMap,
+html.omega-root-field-active #omegaLivePhaseRail,
+html.omega-root-field-active #omegaViewAtlasToggle,
+html.omega-root-field-active #omegaViewAtlas,
+html.omega-root-field-active #orsfIntegrity,
+html.omega-root-field-active .work>.crumb{display:none!important}
 html.omega-root-field-active .shell{display:block!important;min-height:100svh!important}
 html.omega-root-field-active .work{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100svh!important;margin:0!important;padding:0!important;overflow:hidden!important}
 html.omega-root-field-active #omegaRootSovereignField{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100%!important;margin:0!important;border:0!important;border-radius:0!important}
