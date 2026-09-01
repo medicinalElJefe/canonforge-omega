@@ -1,7 +1,6 @@
 import { enhanceRootSovereignField } from "./rootSovereignField";
 import { enhanceGovernedModeAtlas } from "./governedModeAtlas";
 import { enhanceUnifiedMotionRelativity } from "./unifiedMotionRelativity";
-import { enhanceCalculusInstrument } from "./calculusInstrument";
 import { enhanceMemoryContinuityGraph } from "./memoryContinuityGraph";
 import { enhanceIntelligenceReasoningPipeline } from "./intelligenceReasoningPipeline";
 import { enhanceCreateSimulateBranchLab } from "./createSimulateBranchLab";
@@ -71,7 +70,6 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   let rendered = await enhanceRootSovereignField(response);
   rendered = await enhanceGovernedModeAtlas(rendered);
   rendered = await enhanceUnifiedMotionRelativity(rendered);
-  rendered = await enhanceCalculusInstrument(rendered);
   rendered = await enhanceMemoryContinuityGraph(rendered);
   rendered = await enhanceIntelligenceReasoningPipeline(rendered);
   rendered = await enhanceCreateSimulateBranchLab(rendered);
