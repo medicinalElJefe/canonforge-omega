@@ -2,34 +2,39 @@
   "schema_version": 2,
   "canonical_repo": "medicinalElJefe/canonforge-omega",
   "canonical_v6_branch": "omega-v6-full-convergence",
-  "canonical_v6_sha_observed": "77defb727e3b9f09bb66c8033b0677eab0819a72",
+  "canonical_v6_sha_observed": "c229c6dfabf7efee052cf2106cf55076dc3e8310",
+  "canonical_v6_deployed_sha_verified": "c229c6dfabf7efee052cf2106cf55076dc3e8310",
   "genesis_branch": "omega-genesis-v1-full",
   "genesis_sha_observed": "fca954774e2246ec1bb1e3408ede7610c69c813c",
-  "active_recovery_candidate": "recovery/archive-convergence-b004",
-  "active_recovery_candidate_parent": "77defb727e3b9f09bb66c8033b0677eab0819a72",
-  "active_candidate_code_head_before_checkpoint": "f2cd70005e85c97e9a6695620ef7c1d49b1b2c1d",
-  "active_pr": 126,
-  "superseded_candidates": [
+  "active_recovery_candidate": "recovery/archive-convergence-b006",
+  "active_recovery_candidate_parent": "c229c6dfabf7efee052cf2106cf55076dc3e8310",
+  "previous_promoted_candidate": {
+    "branch": "recovery/archive-convergence-b004",
+    "pr": 126,
+    "accepted_head": "bf994680141d5601e32ec6355420d69ee71c54ce",
+    "merge_sha": "c229c6dfabf7efee052cf2106cf55076dc3e8310",
+    "state": "MERGED_DEPLOYED_PUBLIC_CONVERGENCE_VERIFIED"
+  },
+  "superseded_or_rejected": [
     {
       "branch": "recovery/archive-convergence-b001",
       "pr": 123,
       "state": "CLOSED_UNMERGED",
-      "reason": "wrong lineage: based on repository main rather than canonical V6 branch"
+      "reason": "wrong lineage: repository main rather than canonical V6"
     },
     {
       "branch": "omega-evolve/r161-intelligence-authority",
       "pr": 125,
       "state": "REJECTED_CLOSED_UNMERGED",
-      "last_observed_sha": "580abc9e0c512e99608f8c9b2161d833fe8e7d7b",
-      "reason": "deterministic Intelligence logic remains MERGE-worthy, but wrapper Worker entry changed the protected heartbeatTruth entrypoint and repeatedly failed sovereign runtime preservation"
+      "reason": "R161 deterministic logic remains MERGE-worthy; wrapper Worker entry changed protected heartbeatTruth authority"
     }
   ],
   "cursor": {
-    "batch": 5,
-    "source": "canonical_v6+github_source+google_drive_bounded_content",
-    "family": "full_software_menu_ledger_and_r162_unified_workspace_acceptance",
-    "checkpoint": "second Drive ledger content-reviewed; nine workspace families reconciled; first R162 exact-head CI caught duplicate Calculus mounting because Calculus already mounts through spatialCommandCore; duplicate virtual-lattice mount removed; corrected candidate retains only single-shell workspace exposure",
-    "next": "run fresh exact-head CI for corrected R162; promote only if fully green and deployment verified; then reintegrate deterministic Intelligence status path inside established composition and inspect one additional bounded archive family"
+    "batch": 6,
+    "source": "deployed_canonical_v6+github_source+google_drive_bounded_content",
+    "family": "post_r162_promotion_then_r161_in_chain_and_next_archive_family",
+    "checkpoint": "R162 corrected navigation-layer convergence passed exact-head CI, merged, deployed and public convergence verified; durable cursor rebased to deployed canonical head",
+    "next": "integrate deterministic Intelligence fast-status handling beneath existing heartbeat/spatial/environment authority without changing Worker entry; content-inspect one additional bounded archive/package/ledger family; pursue first-hand visual acceptance when screenshot-capable browser surface is available"
   },
   "coverage": {
     "archive_families_metadata_reviewed": 31,
@@ -39,41 +44,41 @@
     "current_v6_cloudflare_authority_roots_confirmed": 3,
     "drive_ledgers_content_reviewed": 2,
     "material_v6_candidates_attempted": 2,
-    "material_v6_candidates_promoted": 0,
+    "material_v6_candidates_promoted": 1,
     "quarantined_authority_patterns": 2,
     "unknown_or_inaccessible": [
       "inner contents of second-order self-copying-machine bundles not exposed by available indexed corpus",
-      "first-hand rendered mobile screenshot capture unavailable in current tool surface",
+      "first-hand rendered mobile/desktop screenshot capture unavailable in current tool surface",
       "current Hybrid PC ONLINE state unless returned by authenticated heartbeat endpoints"
     ]
   },
   "classifications": {
     "KEEP": [
-      "canonical omega-v6-full-convergence Cloudflare worker spine",
-      "wrangler canonical entrypoint src/heartbeatTruth.ts until a tested migration explicitly supersedes it",
+      "deployed canonical omega-v6-full-convergence Cloudflare worker spine",
+      "wrangler main src/heartbeatTruth.ts",
       "OmegaRuntime Durable Object export and migrations",
       "heartbeatTruth runtime truth/composition gate",
-      "OmegaEnvironmentShell unified human environment and primary navigation authority",
-      "existing Calculus mount through spatialCommandCore.ts",
-      "existing governed V6 workspace instruments under established compositor paths",
-      "atlas_runtime_test_bundle historical tested runtime/API reference",
-      "Mode188 STAY/TURN/ESCALATE admissibility law",
-      "one-system ledger rule: renderer/menus/AI/forecast/camera/workbook/packager are submodules behind one runtime spine"
+      "OmegaEnvironmentShell unified environment authority",
+      "spatialCommandCore navigation/composition layer including established Calculus mount",
+      "canonical virtualLatticeDisplay unchanged by R162",
+      "existing governed V6 workspace instruments",
+      "atlas_runtime_test_bundle historical tested reference",
+      "Mode188 STAY/TURN/ESCALATE law"
     ],
     "MERGE": [
-      "R162 unified workspace exposure: augment existing OmegaEnvironmentShell navigation with Calculus, Memory, Create/Simulate and Build/Evolution without a second navigation surface",
-      "full-software menu ledger one-authority/one-menu-path/no-shadow-state requirements as design-control",
-      "R161 deterministic Intelligence status logic, later to be mounted inside existing composition chain",
+      "deployed R162 workspace exposure bridge: Calculus, Memory, Create/Simulate and Build/Evolution added to one environment navigation",
+      "full-software menu ledger one-authority/one-menu-path/no-shadow-state design-control",
+      "R161 deterministic Intelligence status logic to integrate inside established authority chain",
       "Mode188 v10/v11 proof mechanics",
-      "CanonConsole v24/v31/v31r1 proof/readable-state/governance pieces",
-      "Hybrid Link adapters only",
-      "Dewey Calculus capability behind existing mount",
+      "selected CanonConsole v24/v31/v31r1 proof/readable-state/governance pieces",
+      "Hybrid Link adapters",
+      "Dewey Calculus capability",
       "Earth traversal/source-backed observation",
       "Proof/forensic/replay ledger"
     ],
     "DONOR": [
-      "OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER historical Windows roots/ports/package names and standalone menu implementations",
-      "R161 wrapper-entry experiment r161Entry.ts as implementation evidence only",
+      "OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER historical Windows roots/ports/package names/standalone menu implementations",
+      "R161 wrapper-entry implementation evidence",
       "TCS 20736 native render",
       "Apex World",
       "Dimension Skin",
@@ -86,40 +91,67 @@
       "historical J-drive commands and absolute paths"
     ],
     "QUARANTINE": [
-      "CanonConsoleOmega_v44_2_Unified synthetic/randomized state as authority",
+      "CanonConsoleOmega_v44_2_Unified randomized/synthetic state as authority",
       "historical synthetic camera fallback unless explicitly simulation/test labeled"
     ],
     "REJECTED_PATTERN": [
-      "duplicate Calculus mount in virtualLatticeDisplay.ts; historical R136 confirms spatialCommandCore.ts is the established mount, so duplicate participation violates one-compositor authority"
+      "R161 wrapper replacing heartbeatTruth Worker entry",
+      "R162 duplicate Calculus mount in virtualLatticeDisplay",
+      "R162 unnecessary modification of canonical virtual-lattice compositor"
     ]
   },
-  "capability_map_additions_batch_5": [
+  "capability_map_additions": [
     "12-master-menu one-system capability taxonomy",
-    "Operator Cockpit plus menu matrix as intended human-control model",
-    "one HostState plus CanonState authority design law",
+    "Operator Cockpit plus menu matrix intent",
     "replayable proof with no shadow state",
-    "direct manipulable Calculus projection over canonical runtime state",
-    "direct navigable Memory continuity/scar/relation graph",
-    "direct navigable Create/Simulate bounded branch comparison",
-    "direct navigable Build/Evolution release-observation workspace",
-    "nine-family primary workspace navigation under OmegaEnvironmentShell",
+    "nine primary acceptance workspace families under one OmegaEnvironmentShell navigation authority",
+    "direct Calculus, Memory, Create/Simulate and Build/Evolution entry paths",
     "mobile primary workspace targets at least 44px"
   ],
-  "ci_history_batch_5": [
+  "ci_history_batch_6": [
     {
       "head": "d8ac6e0107d76f7775318bb653de017979abaa0c",
       "workflow_run": 33548937802,
+      "result": "REJECTED_FULL_RUNTIME_FAIL",
+      "finding": "duplicate Calculus mount"
+    },
+    {
+      "head": "96cc570915e2d25fe41c0904135064b2d227e557",
+      "workflow_run": 33549448977,
+      "result": "REJECTED_FULL_RUNTIME_FAIL",
+      "finding": "mutation surface still too broad; virtual lattice restored canonical"
+    },
+    {
+      "head": "bf994680141d5601e32ec6355420d69ee71c54ce",
+      "workflow_run": 33549868983,
       "cloudflare_interface": "PASS",
-      "sovereign_compile": "PASS",
-      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS",
-      "adversarial_result": "duplicate Calculus mount discovered; candidate corrected rather than weakening established R136 contract"
+      "sovereign_core_full_runtime": "PASS",
+      "fastapi_import": "PASS",
+      "result": "ACCEPTED_FOR_MERGE"
+    },
+    {
+      "head": "c229c6dfabf7efee052cf2106cf55076dc3e8310",
+      "workflow_run": 33549921766,
+      "cloudflare_interface": "PASS",
+      "sovereign_core_full_runtime": "PASS",
+      "promotion_compatibility": "PASS",
+      "deploy_exact_verified_canonical_head": "PASS",
+      "verify_canonical_public_convergence": "PASS",
+      "record_promoted_sha": "PASS",
+      "result": "DEPLOYED"
     }
   ],
+  "visual_acceptance": {
+    "public_visual_delivery_run": 33549924651,
+    "status_at_checkpoint": "IN_PROGRESS",
+    "first_hand_screenshot_acceptance": false,
+    "note": "Do not equate deploy/public convergence CI with phone/desktop human-satisfaction acceptance."
+  },
   "preserved_contracts": [
     "OmegaRuntime export / Durable Object compatibility",
     "wrangler main remains src/heartbeatTruth.ts",
-    "heartbeat truth",
-    "Genesis service binding and separate discovery/evolution authority",
+    "authenticated heartbeat truth",
+    "Genesis binding and separate discovery/evolution authority",
     "capability/specialist routing",
     "convergence observation-only semantics",
     "existing API paths",
@@ -128,18 +160,17 @@
     "exact PC heartbeat proof",
     "rollback/provenance",
     "single renderer/composition authority per viewport",
-    "single established Calculus instrument mount"
+    "single established Calculus mount"
   ],
   "release_evidence": {
-    "canonical_parent_deployment_previously_verified": true,
-    "r162_exact_head_ci_first_attempt": "REJECTED_ON_FULL_RUNTIME_TESTS",
-    "r162_corrected_exact_head_ci": "PENDING",
-    "candidate_promoted_this_batch": false,
-    "deployment_verified_this_batch": false,
+    "r162_merged": true,
+    "r162_merge_sha": "c229c6dfabf7efee052cf2106cf55076dc3e8310",
+    "exact_head_ci_green": true,
+    "deployment_verified": true,
+    "public_convergence_verified": true,
     "hybrid_pc_online_verified_this_batch": false
   },
   "archive_review_complete": false,
-  "material_candidate_functional_improvement": true,
-  "material_product_improvement": false,
-  "status": "R162 CORRECTED MATERIAL CANDIDATE: first exact-head CI caught and rejected a duplicate Calculus mount. Existing spatialCommandCore Calculus authority is preserved; candidate now only exposes all nine acceptance workspace families through the single OmegaEnvironmentShell navigation. Fresh exact-head CI is required before merge/deploy."
+  "material_product_improvement": true,
+  "status": "R162 DEPLOYED MATERIAL IMPROVEMENT. All nine acceptance workspace families now have direct single-environment navigation exposure through the established navigation/composition chain. Archive-wide review and human visual acceptance remain incomplete."
 }
