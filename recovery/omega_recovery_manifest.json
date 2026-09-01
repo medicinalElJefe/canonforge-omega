@@ -1,0 +1,142 @@
+{
+  "schema_version": 2,
+  "canonical_repo": "medicinalElJefe/canonforge-omega",
+  "canonical_v6_branch": "omega-v6-full-convergence",
+  "canonical_v6_sha_observed": "77defb727e3b9f09bb66c8033b0677eab0819a72",
+  "genesis_branch": "omega-genesis-v1-full",
+  "genesis_sha_observed": "fca954774e2246ec1bb1e3408ede7610c69c813c",
+  "active_recovery_candidate": "recovery/archive-convergence-b004",
+  "active_recovery_candidate_parent": "77defb727e3b9f09bb66c8033b0677eab0819a72",
+  "superseded_candidates": [
+    {
+      "branch": "recovery/archive-convergence-b001",
+      "pr": 123,
+      "state": "CLOSED_UNMERGED",
+      "reason": "wrong lineage: based on repository main rather than canonical V6 branch"
+    },
+    {
+      "branch": "omega-evolve/r161-intelligence-authority",
+      "pr": 125,
+      "state": "REJECTED_PENDING_CLOSE",
+      "last_observed_sha": "580abc9e0c512e99608f8c9b2161d833fe8e7d7b",
+      "reason": "R161 deterministic Intelligence logic is valid as a MERGE candidate, but changing wrangler main from heartbeatTruth.ts to a wrapper caused repeated sovereign-runtime preservation failures across historical entrypoint contracts. Reintegrate inside the established heartbeat/shell composition chain instead of replacing the canonical Worker entrypoint."
+    }
+  ],
+  "cursor": {
+    "batch": 4,
+    "source": "canonical_v6+github_lineage+google_drive_bounded_content",
+    "family": "r161_intelligence_authority_and_one_system_ledger",
+    "checkpoint": "canonical V6/Genesis authority confirmed; one bounded Drive ledger content-reviewed; deterministic Intelligence module recovered; wrapper-entry integration rejected after three CI attempts because it changed canonical entrypoint semantics",
+    "next": "mount deterministic Intelligence enhancement within existing heartbeatTruth/sovereign shell chain while keeping wrangler main=src/heartbeatTruth.ts; then exact-head CI; content-inspect one additional full-software/menu ledger"
+  },
+  "coverage": {
+    "archive_families_metadata_reviewed": 31,
+    "software_families_mapped_prior": 24,
+    "high_value_source_entry_family_lines_reconciled": 6,
+    "current_v6_cloudflare_authority_roots_confirmed": 3,
+    "drive_ledgers_content_reviewed": 1,
+    "material_v6_candidates_attempted": 1,
+    "material_v6_candidates_promoted": 0,
+    "quarantined_authority_patterns": 2,
+    "unknown_or_inaccessible": [
+      "inner contents of second-order self-copying-machine bundles not exposed by available indexed corpus",
+      "first-hand rendered mobile screenshot capture unavailable in current tool surface",
+      "current Hybrid PC ONLINE state unless returned by authenticated heartbeat endpoints"
+    ]
+  },
+  "classifications": {
+    "KEEP": [
+      "canonical omega-v6-full-convergence Cloudflare worker spine",
+      "wrangler canonical entrypoint src/heartbeatTruth.ts until a tested migration explicitly supersedes it",
+      "OmegaRuntime Durable Object export and migrations",
+      "heartbeatTruth runtime truth/composition gate",
+      "OmegaEnvironmentShell unified human environment",
+      "atlas_runtime_test_bundle historical tested runtime/API reference",
+      "Mode188 STAY/TURN/ESCALATE admissibility law",
+      "one-system ledger rule: renderer/menus/AI/forecast/camera/workbook/packager are submodules behind one runtime spine"
+    ],
+    "MERGE": [
+      "R161 deterministic Intelligence status logic: current convergence/hybrid/development/health endpoints with zero generation call, to be mounted inside existing composition chain",
+      "Mode188 v10/v11 proof mechanics",
+      "CanonConsole v24/v31/v31r1 proof/readable-state/governance pieces",
+      "Hybrid Link adapters only",
+      "Dewey Calculus",
+      "Earth traversal/source-backed observation",
+      "Proof/forensic/replay ledger",
+      "one-system ledger menu capabilities as workspace/instrument requirements"
+    ],
+    "DONOR": [
+      "R161 wrapper-entry experiment r161Entry.ts as implementation evidence only",
+      "TCS 20736 native render",
+      "Apex World",
+      "Dimension Skin",
+      "GPU Field Master",
+      "Intrinsic/Inevitability/Living Coherence renderers",
+      "Workbook/Excel Atlas",
+      "Observer/Now-Frame",
+      "Audio/SOMA",
+      "Recovery/packaging lineage",
+      "historical J-drive commands and absolute paths"
+    ],
+    "QUARANTINE": [
+      "CanonConsoleOmega_v44_2_Unified synthetic/randomized state as authority",
+      "historical synthetic camera fallback unless explicitly simulation/test labeled"
+    ]
+  },
+  "capability_map_additions_batch_4": [
+    "Host Intake camera/text/files/telemetry evidence channels",
+    "12x12x12 representational state manifold",
+    "20736 representational expansion layer",
+    "single renderer authority and living membrane instrument",
+    "reversible traversal with STAY/TURN/ESCALATE",
+    "forecast curvature/conductance instrument",
+    "proof/drift/replay/checksum workspace",
+    "state sonification as non-medical feedback",
+    "AI task routing with operator authority retained",
+    "recovery board KEEP/MERGE/DONOR/QUARANTINE workflow",
+    "packaging/patch/backup/repair support pipeline",
+    "deterministic operational Intelligence response path separated from routed synthesis"
+  ],
+  "ci_history_batch_4": [
+    {
+      "head": "770b103e84e58e4307336bf9efb30d39c8b103de",
+      "workflow_run": 33542752839,
+      "cloudflare_interface": "PASS",
+      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS"
+    },
+    {
+      "head": "83532e3fbb9c8ef961dda2bf3e136fff94b60207",
+      "workflow_run": 33543132162,
+      "cloudflare_interface": "PASS",
+      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS"
+    },
+    {
+      "head": "580abc9e0c512e99608f8c9b2161d833fe8e7d7b",
+      "workflow_run": 33543598106,
+      "cloudflare_interface": "PASS",
+      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS"
+    }
+  ],
+  "preserved_contracts": [
+    "OmegaRuntime export / Durable Object compatibility",
+    "heartbeat truth",
+    "Genesis service binding and separate discovery/evolution authority",
+    "capability/specialist routing",
+    "convergence observation-only semantics",
+    "existing API paths",
+    "Earth source/derived/forecast boundaries",
+    "route-before-generation",
+    "exact PC heartbeat proof",
+    "rollback/provenance"
+  ],
+  "release_evidence": {
+    "canonical_parent_deployment_previously_verified": true,
+    "candidate_promoted_this_batch": false,
+    "deployment_verified_this_batch": false,
+    "hybrid_pc_online_verified_this_batch": false
+  },
+  "archive_review_complete": false,
+  "material_candidate_functional_improvement": true,
+  "material_product_improvement": false,
+  "status": "NO MATERIAL PRODUCT IMPROVEMENT: bounded recovery advanced and a deterministic Intelligence candidate was built/typechecked, but its wrapper-entry architecture was rejected after repeated full-runtime-test failures. Cursor moved to a clean canonical-parent recovery branch for safe reintegration next batch."
+}
