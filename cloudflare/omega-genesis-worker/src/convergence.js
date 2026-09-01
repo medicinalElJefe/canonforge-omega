@@ -64,7 +64,6 @@ async function manifest(env){
     recursive_law:LAW,
     operator_roles:OPERATOR_ROLES,
     donor_dispositions:DONOR_DISPOSITIONS,
-    visual_channel:{separate_from_chat:true,time_sequenced:true,phase_count:12,logical_shells:[144,1728,20736,248832,2985984,35831808,429981696,5159780352,61917364224],boundary:VISUAL_BOUNDARY},
     promotion_boundary:"Genesis may discover, recover, test and propose bounded candidates. OMEGA V6 remains the canonical operational/release authority and promotes through its own exact-head verification workflow.",
     authority_boundary:"Genesis internal Durable Object state is not V6 operational state. Reciprocal convergence is observational and proposal-oriented; it does not grant cross-runtime mutation authority.",
     dimensional_boundary:"144/1728/20736 and larger 12^n spaces are software/model/interface representation shells unless independently evidenced otherwise"
@@ -95,7 +94,10 @@ async function injectVisual(response){
   if(!type.includes("text/html"))return response;
   let html=await response.text();
   if(!html.includes("live-phase-visual.js"))html=html.replace("</body>",'<script src="/live-phase-visual.js" defer></script></body>');
-  const headers=new Headers(response.headers);headers.set("cache-control","no-store");headers.set("x-omega-visual-channel","genesis-live-phase-separated-from-chat");
+  const headers=new Headers(response.headers);
+  headers.set("cache-control","no-store");
+  headers.set("x-omega-visual-channel","genesis-live-phase-separated-from-chat");
+  headers.set("x-omega-visual-boundary",VISUAL_BOUNDARY);
   return new Response(html,{status:response.status,headers});
 }
 
@@ -108,8 +110,8 @@ export default{
     if(url.pathname==="/_omega/convergence"){
       return Response.json(await reciprocalSnapshot(env),{headers:{"cache-control":"no-store","x-omega-authority":"genesis-convergence-observer"}});
     }
-    const response=await base.fetch(request,env);
-    if(request.method==="GET"&&!url.pathname.startsWith("/api/")&&!url.pathname.startsWith("/_omega/")&&!url.pathname.startsWith("/host/"))return injectVisual(response);
-    return response;
+    const eligibleVisual=request.method==="GET"&&!url.pathname.startsWith("/api/")&&!url.pathname.startsWith("/_omega/")&&!url.pathname.startsWith("/host/");
+    if(!eligibleVisual)return base.fetch(request,env);
+    return injectVisual(await base.fetch(request,env));
   }
 };
