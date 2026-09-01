@@ -1,5 +1,6 @@
 import convergence, { OmegaRuntime } from "./convergence";
 import { syntheticCameraResponse } from "./syntheticCamera";
+import { enhanceSovereignVisualShell } from "./sovereignVisualShell";
 import type { Env } from "./index";
 import {
   handleCapabilityRequest,
@@ -174,13 +175,13 @@ export default {
       const response = await convergence.fetch(new Request(root.toString(), { method: "GET", headers: request.headers }), env);
       const withCockpit = await injectCockpitLink(response);
       const withCapabilities = await injectCapabilityLink(withCockpit);
-      return injectSpecialistActivation(withCapabilities, specialist.view);
+      return enhanceSovereignVisualShell(await injectSpecialistActivation(withCapabilities, specialist.view));
     }
 
     if (url.pathname === "/convergence") return new Response(convergenceCockpit, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-omega-authority": "observation-only" } });
     const response = await convergence.fetch(request, env);
     if (url.pathname !== "/api/convergence/edge") {
-      if (url.pathname === "/") return injectCapabilityLink(await injectCockpitLink(response));
+      if (url.pathname === "/") return enhanceSovereignVisualShell(await injectCapabilityLink(await injectCockpitLink(response)));
       return response;
     }
     return enforceHeartbeatTruth(response, env);
