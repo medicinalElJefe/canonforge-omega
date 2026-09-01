@@ -17,6 +17,7 @@ export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 /* Preserve the historical delivery marker because existing public verifier and accepted R154 tests still key on it. R159 has its own recovery marker below. */
 export const VISUAL_DELIVERY_RELEASE = "r154-build-evolution-governance";
 export const RECOVERED_EXPERIENCE_RELEASE = "r159-archive-experience-recovery";
+export const INTERACTIVE_FIELD_RELEASE = "r163-immersive-living-field";
 export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const R141_VISUAL_DELIVERY_COMPATIBILITY_ID = "r141-visual-delivery-correctness";
 export const R142_VISUAL_GEOMETRY_COMPATIBILITY_ID = "r142-micro-macro-skin-geometry";
@@ -33,6 +34,7 @@ export const R152_EARTH_TRUTH_COMPATIBILITY_ID = "r152-earth-truth-layers";
 export const R153_MOBILE_ORCHESTRATION_COMPATIBILITY_ID = "r153-mobile-workspace-orchestration";
 export const R154_BUILD_GOVERNANCE_COMPATIBILITY_ID = "r154-build-evolution-governance";
 export const R158_MOBILE_FIELD_COMPATIBILITY_ID = "r158-mobile-field-composition";
+export const R163_INTERACTIVE_FIELD_COMPATIBILITY_ID = "r163-interactive-living-field";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
   "R159 restores the one-system operator experience on top of the established R158 mobile Field repair and R154+ governed workspaces. The final compositor enforces one visible navigation/composition authority per viewport, keeps the living state field central, treats governed modes as projections rather than competing navigation, and progressively discloses recovered expert instruments instead of allowing overlays to collide. It does not mutate canonical state, does not bypass release gates, does not fabricate deployment evidence, and does not promote Genesis discovery into V6 authority. R152 Earth OBSERVED_SOURCE identities still come only from /api/earth/catalog; DERIVED_FRAMEWORK_MATH and FORECAST_PROJECTION remain non-observation layers, and missing coordinates are never invented. PC ONLINE remains rendered only when the protected heartbeatTruth contract itself reports pc_online=true. The preserved R147 field contract includes scalar potential, finite-difference gradient, Hessian/Laplacian curvature, derived vector flow and RK2 integral trajectories. Runtime observations remain distinct from DERIVED_FRAMEWORK_MATH, SIMULATED_CONTINUATION, FORECAST_PROJECTION, MODEL_OUTPUT and USER_DEFINED_MODEL geometry; UTC render time is not evidence time. It preserves route-before-generation, heartbeatTruth, OmegaRuntime and Hybrid/Genesis authority boundaries, preserves representational 12^n shells, preserves the R143 device-DPR 3 quality contract as a compatibility capability, does not claim a physical 61.9-billion-pixel panel, and does not claim physical 20,736 dimensions.";
@@ -49,16 +51,19 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   const headers = new Headers(response.headers);
   headers.set("x-omega-visual-release", VISUAL_DELIVERY_RELEASE);
   headers.set("x-omega-recovery-release", RECOVERED_EXPERIENCE_RELEASE);
+  headers.set("x-omega-field-release", INTERACTIVE_FIELD_RELEASE);
+  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity");
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
   headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+rollback+runtime-truth+integrity-v6");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
-  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}">`;
+  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"><meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}">`;
   if (!html.includes("omegaVisualDeliveryRelease")) html = html.includes("</head>") ? html.replace("</head>", meta + "</head>") : meta + html;
   else {
     html = html.replace(/<meta id="omegaVisualDeliveryRelease"[^>]*>/, `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}">`);
     if (!html.includes("omegaRecoveredExperienceRelease")) html = html.replace("</head>", `<meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"></head>`);
+    if (!html.includes("omegaInteractiveFieldRelease")) html = html.replace("</head>", `<meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"></head>`);
   }
   if (html.includes("data-omega-visual-release=")) html = html.replace(/data-omega-visual-release="[^"]*"/, `data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
   else html = html.replace("<html", `<html data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
