@@ -1,96 +1,96 @@
 # OMEGA Recovery Convergence Log
 
-## Durable cumulative recovery state — through Batch 005 (2026-09-01)
+## Durable cumulative recovery state — through Batch 006 (2026-09-01)
 
 ### Current authorities
 
 - Canonical operational branch: `omega-v6-full-convergence`
-- Exact V6 SHA observed: `77defb727e3b9f09bb66c8033b0677eab0819a72`
+- **Exact deployed V6 SHA:** `c229c6dfabf7efee052cf2106cf55076dc3e8310`
 - Genesis governed discovery/evolution branch: `omega-genesis-v1-full`
 - Genesis SHA last observed: `fca954774e2246ec1bb1e3408ede7610c69c813c`
-- Active candidate: `recovery/archive-convergence-b004`, directly parented from canonical V6.
-- Canonical Worker entry remains `src/heartbeatTruth.ts`; Wrangler still binds `OMEGA_RUNTIME` to exported Durable Object `OmegaRuntime`, preserves migration compatibility, and binds Genesis separately.
+- Active recovery cursor branch: `recovery/archive-convergence-b006`, directly parented from deployed canonical V6 SHA.
+- Canonical Worker entry remains `src/heartbeatTruth.ts`; `OmegaRuntime` Durable Object, migrations, authenticated heartbeat truth and Genesis binding are unchanged.
 
-### Carried-forward archive coverage and classifications
-
-Prior bounded recovery established **31+ archive families metadata-reviewed**, **24 software families mapped**, and **6 high-value source-entry lineages reconciled**. Retained classifications:
-
-- **KEEP:** canonical V6 Cloudflare runtime spine; `heartbeatTruth.ts`; `OmegaRuntime`; OmegaEnvironmentShell; `atlas_runtime_test_bundle` as strongest tested historical runtime/API reference; Mode188 STAY/TURN/ESCALATE law; one-runtime/one-state-authority design law.
-- **MERGE:** Mode188 v10/v11 proof mechanics; selected CanonConsole v24/v31/v31r1 readable-state/governance pieces; Hybrid Link adapters; Dewey Calculus; Earth traversal/source-backed observation; proof/forensic/replay; deterministic Intelligence status logic from R161 when mounted beneath existing authority.
-- **DONOR:** historical renderer families, workbook/Excel Atlas, observer/audio, recovery/packaging, old Windows/J-drive launch paths, standalone menus and shells.
-- **QUARANTINE:** CanonConsoleOmega_v44_2_Unified randomized/synthetic state as authority; historical synthetic camera fallback unless explicitly simulation/test labeled.
-
-PR #123 was closed unmerged because it was based on repository `main`, not canonical V6. R161 PR #125 was closed unmerged after three exact-head runs showed Cloudflare typecheck PASS but sovereign full-runtime FAIL when a wrapper replaced the protected `heartbeatTruth.ts` Worker entry. The deterministic status logic remains MERGE-worthy; the wrapper-entry topology remains rejected.
-
-## Batch 004 — bounded J-drive ledger
-
-Content-reviewed `OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx`.
-
-Recovered design laws: one runtime spine owns state; renderer/menu/AI/forecast/camera/workbook/package functions are subordinate modules; 1728 is a 12×12×12 representational state grid and 20736 a representational layered expansion, never physical dimensions/pixels; donor admission requires import/launch/health/state/render/proof/replay evidence; one merged renderer authority; Mode188 remains reversible STAY/TURN/ESCALATE; AI cannot become hidden execution authority.
-
-## Batch 005 — bounded full-software ledger + R162
-
-Content-reviewed exactly one further Drive artifact: `OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx`.
-
-The workbook is **DONOR + MERGE design-control**, never state/execution authority. It records:
-
-- one `HostState + CanonState` authority;
-- representational capacities `144 → 1728 → 20736 → 145152 → 61917364224`;
-- STAY/TURN/ESCALATE + Mode188 gate;
-- `Operator Cockpit + Menu Matrix` as human-control model;
-- replayable proof with **no shadow state**;
-- live field membrane rather than decorative rendering;
-- **100 registry rows**, **12 master menus**, **144 sequence rows**, **12 gates**, **18 capability rows**;
-- master menu families: Runtime Core; Proof & Governance; Traversal; Render Field; Host Inputs; AI Orchestration; Data/Excel Atlas; Audio/Signal; World/Bio/Forecast; Recovery/Packaging; Archive Merge; Operator Cockpit;
-- workbook disposition totals: **63 KEEP / 26 MERGE / 11 DONOR**.
-
-### R162 visible convergence candidate
-
-Canonical source inspection confirmed that governed workspaces already exist for Calculus, Memory, Intelligence, Create/Simulate, Sovereign Devices, Earth, and Build/Evolution, while OmegaEnvironmentShell directly exposes only Field, Earth, Intelligence, Sovereign and Proof.
-
-R162 adds `unifiedWorkspaceAcceptance.ts` to the existing compositor. It augments the existing `#omegaEnvironmentDeck .oesWorkspaces` authority with direct entries for **Calculus**, **Memory**, **Create / Simulate**, and **Build / Evolution**, so the intended nine primary workspace families are reachable from one environment navigation surface. It does not create a second app-state, renderer, route, heartbeat, deployment, Earth-evidence or proof authority. Specialized workspace presentation suppresses competing underlying stage surfaces, and mobile primary workspace controls retain a 44px minimum target.
-
-### Exact-head CI attempt 1 — genuine duplicate-mount regression caught
-
-PR #126 first tested head `d8ac6e0107d76f7775318bb653de017979abaa0c` in workflow `33548937802`.
-
-- Cloudflare install/typecheck: **PASS**.
-- Sovereign install: **PASS**.
-- Sovereign compile: **PASS**.
-- Full runtime tests: **FAIL**.
-- Promotion/deployment: **not attempted**.
-
-Adversarial source review then found the critical cause: historical R136 explicitly preserves Calculus wiring in `spatialCommandCore.ts`, including `enhanceCalculusInstrument` and `/?view=Calculus`. The first R162 implementation had also mounted Calculus in `virtualLatticeDisplay.ts`, which would create duplicate instrument/render participation. That is a genuine one-system regression, not a test to weaken.
-
-**Correction:** the duplicate `virtualLatticeDisplay.ts` Calculus mount was removed. The established `spatialCommandCore.ts` Calculus mount remains the sole Calculus mounting authority. R162 now changes only unified workspace exposure/composition. The R162 regression test was updated to require the established spatial mount and explicitly forbid a duplicate virtual-lattice mount.
-
-Latest corrected code/test head before this log checkpoint: `f2cd70005e85c97e9a6695620ef7c1d49b1b2c1d`.
-
-### Preserved contracts
-
-Preserved without weakening: `OmegaRuntime` export/Durable Object compatibility; Wrangler `main = src/heartbeatTruth.ts`; authenticated heartbeat truth; Genesis service binding and separate discovery/evolution role; capability/specialist routing; convergence observation-only semantics; existing API paths; Earth observed/derived/forecast boundaries; route-before-generation; exact PC heartbeat proof; rollback/provenance; one renderer/composition authority per viewport.
-
-### Coverage / acceptance state
+### Archive-wide cumulative coverage
 
 - Archive families metadata-reviewed: **31+**
 - Prior software families mapped: **24**
-- Full-software ledger registry rows content-reviewed: **100**
-- High-value source-entry lineages reconciled: **6**
+- High-value historical source-entry lineages reconciled: **6**
 - Drive ledgers content-reviewed: **2**
+- Full-software ledger registry rows content-reviewed: **100**
 - Current V6 Cloudflare authority roots source-confirmed: **3**
-- Material candidate families attempted in recovery loop: **2**
-- Material candidates promoted this recovery loop: **0**
 - `ARCHIVE REVIEW COMPLETE`: **false**
-- Hybrid PC ONLINE this batch: **not verified**; no online state is inferred.
 
-### Material-improvement state
+Retained classification map:
 
-**MATERIAL CANDIDATE PRODUCT IMPROVEMENT, NOT YET PRODUCT ACCEPTANCE.** The corrected R162 candidate exposes all nine required primary workspace families through the single environment navigation authority while retaining the established Calculus mount. It remains unmerged and undeployed until a fresh exact-head full test run is green and post-merge deployment verification succeeds.
+- **KEEP:** canonical V6 runtime spine; `heartbeatTruth.ts`; `OmegaRuntime`; OmegaEnvironmentShell; established spatial Calculus mount; governed workspace instruments; `atlas_runtime_test_bundle` historical tested reference; Mode188 STAY/TURN/ESCALATE; one-runtime/one-state-authority law.
+- **MERGE:** Mode188 proof mechanics; selected CanonConsole v24/v31/v31r1 governance/readable-state pieces; Hybrid Link adapters; Dewey Calculus; Earth traversal/source observation; proof/replay; R161 deterministic Intelligence status logic when mounted beneath existing authority; one-menu-path/no-shadow-state design-control from recovered ledgers.
+- **DONOR:** historical renderer families, workbook/Excel Atlas, observer/audio, recovery/packaging, old Windows/J-drive launch paths, standalone historical menus/shells.
+- **QUARANTINE:** CanonConsoleOmega_v44_2_Unified randomized/synthetic state as authority; unlabeled synthetic camera fallback.
 
-### Remaining gaps / next bounded slice
+### Bounded archive content reviewed this cycle
 
-1. Run fresh exact-head CI for the corrected R162 head; merge only if Cloudflare interface and full sovereign runtime are green.
-2. If promoted, verify exact merged-head Worker deployment and public convergence before calling it live.
-3. Observe post-deployment mobile/desktop behavior as far as first-hand tooling permits; CI is not visual acceptance.
-4. Reintegrate R161 deterministic Intelligence status handling inside the existing heartbeat/shell composition chain without changing Worker entrypoint.
-5. Content-inspect one additional unreconciled archive/package/ledger family and advance both durable recovery files.
+`OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx` was content-reviewed as **DONOR + MERGE design-control**, not runtime authority. Recovered data includes one `HostState + CanonState` authority, representational capacity ladder `144 → 1728 → 20736 → 145152 → 61917364224`, Mode188 decision law, Operator Cockpit/Menu Matrix intent, replayable proof/no-shadow-state, **100 registry rows**, **12 master menus**, **144 sequence rows**, **12 gates**, **18 capability rows**, and workbook disposition totals **63 KEEP / 26 MERGE / 11 DONOR**.
+
+### R162 adversarial build history
+
+R162 targeted a visible acceptance gap: existing governed Calculus, Memory, Create/Simulate and Build/Evolution instruments were not all directly exposed through the single OmegaEnvironmentShell navigation authority.
+
+The first implementation placed Calculus into `virtualLatticeDisplay.ts` as well as its existing spatial mount. Exact-head CI caught the candidate before promotion. Historical R136 source/test reconciliation proved `spatialCommandCore.ts` already owns the established Calculus mounting route. The duplicate mount was rejected as a genuine one-system regression.
+
+A second attempt still failed full runtime verification while Cloudflare typecheck remained green. The mutation surface was reduced again: `virtualLatticeDisplay.ts` was restored **exactly to canonical**, and the workspace-exposure bridge was moved into the established `spatialCommandCore.ts` navigation/composition layer, where the canonical governed routes already exist. The R162 regression test now requires the spatial Calculus mount and forbids duplicate Calculus or workspace-acceptance mounting in the virtual-lattice compositor.
+
+### R162 exact-head acceptance and promotion
+
+Corrected candidate exact head: `bf994680141d5601e32ec6355420d69ee71c54ce`.
+
+PR workflow `33549868983`:
+- Cloudflare interface install/typecheck: **PASS**
+- Sovereign install/compile: **PASS**
+- Full runtime tests: **PASS**
+- FastAPI authority import: **PASS**
+- Candidate promotion jobs: intentionally skipped on PR event
+
+PR #126 then merged with expected exact head. Canonical merge SHA: `c229c6dfabf7efee052cf2106cf55076dc3e8310`.
+
+Canonical push workflow `33549921766` completed **SUCCESS** on that exact SHA:
+- sovereign core: **PASS**
+- Cloudflare interface/typecheck: **PASS**
+- promotion compatibility / observed Durable Object contract: **PASS**
+- exact verified canonical Worker deployment: **PASS**
+- canonical public convergence verification: **PASS**
+- promoted SHA recording: **PASS**
+
+A separate public visual-delivery proof run `33549924651` was still **in progress** at this checkpoint; therefore no screenshot-level human-satisfaction claim is inferred from CI. Direct public webpage screenshot capture is not available in the current tool surface.
+
+### Material product delta now deployed
+
+**MATERIAL PRODUCT IMPROVEMENT — DEPLOYED.** The canonical environment now includes the R162 workspace-exposure bridge under the established spatial/navigation composition layer. It augments the existing OmegaEnvironmentShell navigation with direct **Calculus**, **Memory**, **Create / Simulate**, and **Build / Evolution** entries alongside **Field**, **Earth**, **Intelligence**, **Sovereign**, and **Proof**. Specialized instrument presentation suppresses competing underlying stage surfaces; mobile targets are intentionally horizontally composed with a 44px minimum control target.
+
+This is product convergence, not archive completion. It does **not** create a second state, renderer, route, heartbeat, deployment, Earth-evidence, or proof authority.
+
+### Preserved contracts / genuine regressions rejected
+
+Preserved: `OmegaRuntime` export/Durable Object compatibility; Wrangler `main = src/heartbeatTruth.ts`; authenticated heartbeat truth; Genesis separate discovery/evolution authority; capability/specialist routing; convergence observation-only semantics; existing APIs; Earth observed/derived/forecast separation; route-before-generation; exact PC heartbeat proof; rollback/provenance; canonical virtual-lattice compositor; established single Calculus mount.
+
+Rejected this cycle: duplicate Calculus mount in virtual lattice; unnecessary mutation of the canonical virtual-lattice compositor; prior R161 wrapper-entry topology remains rejected.
+
+### Hybrid heartbeat truth
+
+Hybrid `PC ONLINE` was **not independently observed this cycle**. No online claim is inferred from source, CI, or deployment success.
+
+### Remaining acceptance/recovery gaps
+
+- First-hand phone/desktop rendered visual acceptance is still incomplete.
+- Current authenticated Hybrid device-state sequence remains unobserved in this tool run.
+- R161 deterministic Intelligence fast-status path is not yet integrated beneath established authority.
+- Archive has additional unreconciled package/ledger families and inaccessible nested second-order bundle contents.
+- Human acceptance still needs direct verification of hierarchy, overlap freedom, touch behavior, state/time motion, Calculus interaction, Memory graph navigation, Create/Simulate differentiation, Build/Evolution usability and error recovery.
+
+### Durable next bounded slice
+
+1. Start from deployed canonical `c229c6dfabf7efee052cf2106cf55076dc3e8310`.
+2. Reconcile and integrate R161 deterministic Intelligence status handling **inside** the current heartbeat/spatial/environment chain without changing Worker entrypoint or route-before-generation synthesis behavior.
+3. Content-inspect exactly one additional unreconciled archive/package/ledger family and advance classifications/capability map.
+4. Run exact-head CI and promote only a non-regressive candidate.
+5. Pursue first-hand public/mobile/desktop visual acceptance when a capable browser/screenshot surface is available; do not substitute CI for human visual acceptance.
