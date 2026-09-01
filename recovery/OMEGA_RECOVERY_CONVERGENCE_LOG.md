@@ -33,66 +33,56 @@ Catalogued without bulk ingest: ATOMS motion atlas, Time Mandala engine, 144D ad
 Indexed intrinsic membrane, motion-relativity emergence, 20,736 core, embodiment family, and time-mandala animation. Visual law: living computational membrane; state/relation/phase/continuity/trajectory/operator participation; stable readable cockpit around the field; semantic ALPHA purple / BASE gold / CONSTRUCT red / PRUNE blue / OMEGA green only when warranted by state.
 
 ## BATCH 004 — Operator Cockpit + renderer authority
-### Archive evidence recovered
-The One-System ledger explicitly binds menu 12 Operator Cockpit to Total Control/Cockpit/Adaptive UI, with menus/panels/presets, action ledger, HUD, settings JSON, and professional UI as the upgrade direction. The same ledger classifies:
-- Omega Total Control Suite — KEEP: top-level menu-driven control surface for runtime/render/proof/packaging.
-- FullyPolishedHandoff — MERGE: polished integrated handoff donor.
-- StandaloneConsequence — MERGE: consequence visualization/proof feedback.
-- CanonConsoleOmega_v31r1_Readable_Dimensional_Instrument — MERGE: readable dimensional instrumentation.
-- 20736SpineNativeRender — KEEP: native render authority linked to state spine.
-- DimensionSkinEngine — KEEP: switchable projection skins/lenses over one state substrate.
-- MergedRendererAuthority — KEEP: consolidate renderer choices to one authority path.
-- Omega Universal Intrinsic Render Machine — KEEP: state membrane renderer, pixels/cells as state carriers.
+Recovered architecture:
+- Omega Total Control Suite — KEEP control plane.
+- FullyPolishedHandoff — MERGE polished cockpit patterns.
+- StandaloneConsequence — MERGE consequence/proof feedback.
+- CanonConsoleOmega_v31r1_Readable_Dimensional_Instrument — MERGE readable instrumentation.
+- 20736SpineNativeRender — KEEP state-spine renderer.
+- DimensionSkinEngine — KEEP projection skins over one substrate.
+- MergedRendererAuthority — KEEP one renderer authority path.
+- Omega Universal Intrinsic Render Machine — KEEP living state membrane.
 
-The J-drive autoping ledger independently states: a single runtime spine controls state; renderer, menus, AI, forecast, camera, Excel and packager are submodules. No donor becomes authority until path/import/launch/health/state/render/proof/replay gates pass.
+The J-drive ledger independently confirms one runtime spine controls state and renderer/menus/AI/forecast/camera/Excel/packager are submodules; donors must pass health/state/render/proof/replay gates before authority.
 
-### Current V6 comparison
-Current V6 already contains the right semantic building blocks: Living Field, Earth, Assistant/route gate, Sovereign Build, Proof, direct shell controls, semantic operator colors, state proof, source separation, heartbeat proof and canonical APIs. The original shell code also demonstrates a coherent layout hierarchy: top status, nav, work surface, field canvas, HUD, role toolbar and side controls.
+## BATCH 005 — Current shell arbitration map
+Current source entry points inspected: base `index.ts`, `launchHdNavigation.ts`, `archiveRecoveredWorkstation.ts`, `coreStudioHdInstrument.ts`, plus current source directory inventory.
 
-The drift occurred after multiple recovered/enhancement modules were allowed to inject page-level layout independently. Current source inventory contains `archiveRecoveredWorkstation`, `launchHdNavigation`, `coreStudioHdInstrument`, `governedModeAtlas`, `highDetail20736Field`, `individualSkinRelativity`, `livePhaseVisual`, Memory/Calculus/Intelligence/Create/Build modules and other instruments. Those capabilities are valuable, but their presentation must be subordinate to one shell lifecycle.
+### Direct collision evidence
+- Base `index.ts` contains a coherent original hierarchy: `.top` status, `.shell`, `.nav`, `.work`, `.app`, `.surface`, field canvas/HUD/role toolbar/context controls. KEEP as shell substrate/runtime/API surface.
+- `launchHdNavigation.ts` adds a fixed global `#omegaDock`, changes global `.work` mobile padding, writes global `.top/.surface/.panel/.badge` styles, and directly hides `.top`, `main.work`, `#omegaDock`, `#nav` when launch is open. MERGE launch/palette/navigation semantics; DEMOTE independent viewport authority.
+- `archiveRecoveredWorkstation.ts` is a strong one-packet/multiple-lenses instrument, but globally suppresses `#hdInstrument` using `display:none!important`. KEEP the workstation; remove sibling suppression and let shell choose active instrument.
+- `coreStudioHdInstrument.ts` is a strong temporal calculus field instrument, but `body.hd-cinema` globally dims unrelated `.top`, `.hero`, `.studio`, and mode-preview regions. KEEP instrument; shell owns cinema/focus state.
+- Source inventory confirms many valid instruments coexist in the worker: governed modes, high-detail field, skin relativity, live phase, Memory, Calculus, Intelligence, Create/Simulate, Build/Evolution, and recovered workstation modules. These must become mounted instruments/services, not page-level authorities.
 
-### BATCH 004 decisions
-KEEP as architecture:
-- one runtime spine / OmegaRuntime authority;
-- one renderer authority path;
-- one operator cockpit/menu matrix;
-- intrinsic state membrane;
-- projection skins over one substrate;
-- readable dimensional instrumentation;
-- action/proof ledger and progressive proof;
-- current canonical workspaces and truth contracts.
+### Arbitration artifact
+Created `recovery/OMEGA_SHELL_ARBITRATION_MAP.md` with deterministic region ownership and migration rules.
 
-MERGE as bounded UX capability:
-- Total Control cockpit organization;
-- FullyPolishedHandoff polish patterns;
-- readable instrument hierarchy;
-- consequence/simulation feedback;
-- DimensionSkin projection selection;
-- intrinsic membrane visual language.
+### Frozen `OmegaEnvironmentShell` regions
+1. STATUS — runtime/heartbeat/evidence truth only.
+2. NAVIGATION — exactly one viewport-specific workspace authority.
+3. STAGE — exactly one primary workspace/instrument.
+4. CONTEXT — active workspace controls/readouts; mobile in-flow/drawer.
+5. PROOF — progressive expert disclosure.
 
-PRUNE/DEMOTE as page authority, not capability:
-- independent global fixed-bottom docks;
-- independent global mode/navigation strips;
-- floating legacy Field shortcut labels;
-- enhancer-owned `.top`, `.work`, `.nav` layout mutation;
-- any renderer that creates a second state/render authority.
+### Mobile invariants
+- safe areas reserved before stage sizing;
+- dynamic viewport sizing tolerates browser chrome;
+- mobile rail is the only primary navigation authority;
+- mode strips are contextual instrumentation, not navigation;
+- no floating legacy shortcut labels;
+- one stage instrument visible at a time.
 
-### Unified shell contract frozen for implementation
-`OmegaEnvironmentShell` owns five deterministic regions:
-1. `status` — runtime/heartbeat/evidence truth only.
-2. `navigation` — exactly one viewport-specific workspace authority.
-3. `stage` — exactly one primary workspace/instrument mounted.
-4. `context` — controls for the mounted workspace; collapsible/drawer on mobile.
-5. `proof` — progressive expert disclosure, never competing with primary operation.
+### Desktop invariants
+- one persistent application navigation authority;
+- optional contextual panel beside stage;
+- no duplicate floating dock when primary navigation exists;
+- Proof is progressive and secondary.
 
-Rules:
-- mobile bottom safe area is reserved by shell before stage sizing;
-- desktop sidebar/rail and mobile rail are mutually exclusive;
-- archive instruments receive a mount node and state packet; they do not attach global chrome;
-- shell switching preserves canonical state and workspace-local view state;
-- semantic operator color is data/state encoding, not decoration;
-- shell resolution changes alter density/trajectory/projection detail, never physical-dimension claims;
-- no CSS-only hide patch qualifies as convergence unless the competing module is lifecycle-demoted behind shell arbitration.
+### Classification
+KEEP/substrate: base canonical shell/runtime; existing workspaces/APIs; archive workstation capability; HD temporal calculus capability.
+MERGE: launch experience, command palette, Total Control organization, readable instrument patterns, projection skins.
+DEMOTE page authority: duplicate docks, sibling-hiding CSS, global cinema/layout mutations, floating legacy shortcuts.
 
 ## Accumulated capability map
 State/authority: OmegaRuntime Durable Object; canonical packet/APIs; Genesis role separation; heartbeat truth.
@@ -103,17 +93,20 @@ Earth/evidence: source-backed catalog; OBSERVED_SOURCE / DERIVED_FRAMEWORK_MATH 
 Create/simulation: local branch comparison; SIMULATED_CONTINUATION provenance; rollback/discard.
 Sovereign: credential/reachability/authenticating/current/stale/error grammar; PC ONLINE only from protected heartbeat.
 Build/recovery: candidate/CI/promote/deploy/rollback; Recovery Board and Hybrid Link donor ingestion.
-Human control/render: Total Control cockpit; readable instrument; intrinsic membrane; one merged renderer authority; projection skins; action/proof ledger.
+Human control/render: Total Control cockpit; readable instrument; intrinsic membrane; one merged renderer authority; projection skins; action/proof ledger; archive multi-lens workstation; temporal calculus field.
 
-## Immediate convergence target
-Build `OmegaEnvironmentShell` as the single deterministic presentation authority while leaving canonical runtime and APIs untouched.
+## Coverage status
+Archive review is NOT complete. Completed bounded categories so far:
+- one-system software/master-menu ledger;
+- motion/atlas/calculus dataset metadata family;
+- visual design metadata family;
+- Operator Cockpit/renderer-authority donor family;
+- current shell/arbitration source entry points.
 
-## Next bounded sweep — BATCH 005
-1. inspect current shell/orchestration source entry points only: `index.ts`, `launchHdNavigation.ts`, `archiveRecoveredWorkstation.ts`, `coreStudioHdInstrument.ts`, plus whichever current module owns mobile navigation;
-2. identify exact mount/injection boundaries and lifecycle collisions;
-3. write a shell-arbitration map to the recovery manifest;
-4. build the first material slice: deterministic mobile Field composition using shell-owned status/stage/context/navigation regions;
-5. test protected contracts and visual composition before promotion.
+No claim is made that all Drive files or all historical software families have been reviewed yet.
+
+## Next bounded sweep — BATCH 006
+Build the archive-family coverage register without bulk reads. Search metadata/manifests for remaining major families and mark each UNSEEN / METADATA_REVIEWED / ENTRYPOINT_REVIEWED / INTEGRATED / DEFERRED / QUARANTINED. Prioritize: Canon Console lineage; Hybrid/Fusion packages; traversal/EAG/address systems; audio/signal/SOMA; world/bio/reality; installer/recovery/packaging; camera/host inputs; AI orchestration/creator/task-router; Excel/LensMatrix/data-atlas; Crimson/Alpha specialized runtimes. Then continue one family at a time.
 
 ## Review cursor
-`R159:BATCH_004_COMPLETE;NEXT=BATCH_005_CURRENT_SHELL_ARBITRATION_MAP_AND_FIRST_SLICE`
+`R159:BATCH_005_COMPLETE;NEXT=BATCH_006_ARCHIVE_FAMILY_COVERAGE_REGISTER`
