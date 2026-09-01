@@ -179,7 +179,7 @@ jobs:
           edge=json.loads(Path("/tmp/v6-convergence.json").read_text())
           manifest=json.loads(Path("/tmp/genesis-manifest.json").read_text())
           print(json.dumps({
-            "status":"LIVE_ROLE_SEPARATED_V3_CONVERGENCE_VERIFIED",
+            "status":"LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3",
             "v6_build":health.get("build"),
             "authority_contract":manifest.get("authority_contract"),
             "genesis_manifest_digest":manifest.get("manifest_digest"),
