@@ -53,22 +53,29 @@ jobs:
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
           EXPECTED_VISUAL_RELEASE: r154-build-evolution-governance
+          EXPECTED_FIELD_RELEASE: r163-immersive-living-field
         run: |
           set -euo pipefail
           ok=false
           for attempt in $(seq 1 60); do
             curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors -D /tmp/v6-root.headers "$V6_URL/?view=Build&delivery_probe=$GITHUB_SHA" -o /tmp/v6-root.html || true
-            if EXPECTED_VISUAL_RELEASE="$EXPECTED_VISUAL_RELEASE" python - <<'PY'
+            if EXPECTED_VISUAL_RELEASE="$EXPECTED_VISUAL_RELEASE" EXPECTED_FIELD_RELEASE="$EXPECTED_FIELD_RELEASE" python - <<'PY'
           import os
           from pathlib import Path
           html = Path('/tmp/v6-root.html').read_text(errors='ignore') if Path('/tmp/v6-root.html').exists() else ''
           headers = Path('/tmp/v6-root.headers').read_text(errors='ignore').lower() if Path('/tmp/v6-root.headers').exists() else ''
           release = os.environ['EXPECTED_VISUAL_RELEASE']
+          field_release = os.environ['EXPECTED_FIELD_RELEASE']
           required = [
               f'content="{release}"',
+              f'content="{field_release}"',
               'omegaRootSovereignField',
               'omegaGovernedModeAtlasRuntime',
               'omegaUnifiedMotionRelativityRuntime',
+              'omegaInteractiveFieldRelease',
+              'omegaFieldFrame',
+              'omega-field-reset',
+              'DRAG TO EXPLORE',
               'omegaMemoryContinuityRuntime',
               'omegaIntelligenceReasoningRuntime',
               'omegaCreateSimulateRuntime',
@@ -98,13 +105,16 @@ jobs:
           if not all(item in html for item in required): raise SystemExit(1)
           if any(item in html for item in forbidden): raise SystemExit(1)
           if f'x-omega-visual-release: {release}' not in headers: raise SystemExit(1)
-          contract='single-surface+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+rollback+runtime-truth+integrity-v6'
+          if f'x-omega-field-release: {field_release}' not in headers: raise SystemExit(1)
+          contract='single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+rollback+runtime-truth+integrity-v6'
+          field_contract='single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity'
           if f'x-omega-visual-contract: {contract}' not in headers: raise SystemExit(1)
+          if f'x-omega-field-contract: {field_contract}' not in headers: raise SystemExit(1)
           if 'cache-control: no-store, no-cache, must-revalidate' not in headers: raise SystemExit(1)
           PY
             then
               ok=true
-              echo "PUBLIC_BUILD_EVOLUTION_VERIFIED release=$EXPECTED_VISUAL_RELEASE sha=$GITHUB_SHA"
+              echo "PUBLIC_BUILD_EVOLUTION_AND_FIELD_VERIFIED visual=$EXPECTED_VISUAL_RELEASE field=$EXPECTED_FIELD_RELEASE sha=$GITHUB_SHA"
               break
             fi
             echo "Visual edge not settled on $EXPECTED_VISUAL_RELEASE yet ($attempt/60)."
