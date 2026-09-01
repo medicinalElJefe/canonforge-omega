@@ -20,11 +20,11 @@ jobs:
       group: omega-v6-visual-proof
       cancel-in-progress: true
     steps:
-      - name: Verify public root HTML carries governed mode atlas
+      - name: Verify public root HTML carries unified motion relativity runtime
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-          EXPECTED_VISUAL_RELEASE: r145-governed-mode-atlas
+          EXPECTED_VISUAL_RELEASE: r146-unified-motion-relativity-runtime
         run: |
           set -euo pipefail
           ok=false
@@ -39,13 +39,15 @@ jobs:
           required = [
               f'content="{release}"',
               'omegaRootSovereignField',
-              'omegaGovernedModeAtlasStyle',
               'omegaGovernedModeAtlasRuntime',
+              'omegaUnifiedMotionRelativityRuntime',
               'gmaCanvas',
-              'data-gma-mode="mode-188"',
-              'data-gma-mode="full-sphere"',
-              'data-gma-mode="relational-skin"',
-              'data-gma-mode="dewey-calculus"',
+              'VISUAL ⇄ COMPUTE ⇄ AI',
+              '478,922',
+              '20,736',
+              'atlas_context',
+              '/api/route-preview',
+              '/api/chat',
               'USER_DEFINED_MODEL',
               'omegaVisualRuntimeIntegrity',
               '61,917,364,224',
@@ -54,19 +56,18 @@ jobs:
           if not all(item in html for item in required): raise SystemExit(1)
           if any(item in html for item in forbidden): raise SystemExit(1)
           if f'x-omega-visual-release: {release}' not in headers: raise SystemExit(1)
-          if 'x-omega-visual-contract: single-surface+governed-mode-atlas+runtime-truth+integrity-v5' not in headers: raise SystemExit(1)
+          if 'x-omega-visual-contract: single-surface+native-20736-graph+motion-relativity+ai-context+runtime-truth+integrity-v6' not in headers: raise SystemExit(1)
           if 'cache-control: no-store, no-cache, must-revalidate' not in headers: raise SystemExit(1)
           PY
             then
               ok=true
-              echo "PUBLIC_VISUAL_RECOMPOSITION_VERIFIED release=$EXPECTED_VISUAL_RELEASE sha=$GITHUB_SHA"
-              echo "PUBLIC_GOVERNED_MODE_ATLAS_VERIFIED release=$EXPECTED_VISUAL_RELEASE sha=$GITHUB_SHA"
+              echo "PUBLIC_UNIFIED_MOTION_RELATIVITY_VERIFIED release=$EXPECTED_VISUAL_RELEASE sha=$GITHUB_SHA"
               break
             fi
             echo "Visual edge not settled on $EXPECTED_VISUAL_RELEASE yet ($attempt/60)."
             sleep 2
           done
           if [ "$ok" != "true" ]; then
-            echo "PUBLIC_VISUAL_RECOMPOSITION_FAILED"
+            echo "PUBLIC_UNIFIED_MOTION_RELATIVITY_FAILED"
             exit 1
           fi
