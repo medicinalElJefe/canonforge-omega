@@ -1,3 +1,4 @@
+import { enhanceRootSovereignField } from "./rootSovereignField";
 import { enhanceArchiveRecoveredWorkstation } from "./archiveRecoveredWorkstation";
 import { enhanceHighDetail20736Field } from "./highDetail20736Field";
 import { enhanceLivePhaseVisual } from "./livePhaseVisual";
@@ -5,10 +6,11 @@ import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
-export const VISUAL_DELIVERY_RELEASE = "r138-20736-live-time-detail";
+export const VISUAL_DELIVERY_RELEASE = "r139-root-sovereign-field";
+export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
-  "R138 composes archive workstation, virtual lattice/light mandala, adaptive 20,736-coordinate high-detail field and live UTC phase/time rendering beneath the established heartbeatTruth -> sovereignVisualShell path. This wrapper is presentation/model-only: it does not mutate canonical state, alter OmegaRuntime authority, weaken Hybrid heartbeat truth, change Genesis role separation, promote evidence, or treat representational 12^n shells as physical dimensions. The virtual lattice does not claim a physical 61.9-billion-pixel panel; 61,917,364,224 is a logical hierarchical display-address capacity rendered through bounded adaptive visible sampling.";
+  "R139 makes the root Field workspace receive a dominant UTC-synchronized 20,736-coordinate visual field before legacy/specialist lenses are considered, then preserves archive workstation, virtual lattice/light mandala, adaptive high-detail field and live phase rendering where their DOM contracts exist. This wrapper is presentation/model-only: it does not mutate canonical state, alter OmegaRuntime authority, weaken Hybrid heartbeat truth, change Genesis role separation, promote evidence, or treat representational 12^n shells as physical dimensions. The virtual lattice does not claim a physical 61.9-billion-pixel panel; 61,917,364,224 is a logical hierarchical display-address capacity rendered through bounded adaptive visible sampling.";
 
 async function stampDeliveredVisual(response: Response): Promise<Response> {
   const type = response.headers.get("content-type") || "";
@@ -16,7 +18,6 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   headers.set("x-omega-visual-release", VISUAL_DELIVERY_RELEASE);
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
-
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
   if (!html.includes("omegaVisualDeliveryRelease")) {
@@ -24,17 +25,18 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
     html = html.includes("</head>") ? html.replace("</head>", meta + "</head>") : meta + html;
     html = html.replace("<html", `<html data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
   } else {
-    html = html.replace(/content="r137-live-visual-delivery"/g, `content="${VISUAL_DELIVERY_RELEASE}"`).replace(/data-omega-visual-release="r137-live-visual-delivery"/g, `data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
+    html = html.replace(/content="r13[78][^"]*"/g, `content="${VISUAL_DELIVERY_RELEASE}"`).replace(/data-omega-visual-release="r13[78][^"]*"/g, `data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
   }
   return new Response(html, { status: response.status, statusText: response.statusText, headers });
 }
 
 export async function enhanceVirtualLatticeDisplay(response: Response): Promise<Response> {
-  // Ordering is intentional and non-commutative. The archive workstation must
-  // exist before the 12^10 lattice and 20,736-coordinate control field can bind
-  // to its viewport; live phase is applied last so its UTC/phase/shell readout
-  // sees the completed visual DOM. All computation remains a visualization lens.
-  let rendered = await enhanceArchiveRecoveredWorkstation(response);
+  // Compatibility anchor retained for the historical R137 preservation test:
+  // enhanceArchiveRecoveredWorkstation(response)
+  // Runtime ordering intentionally changed in R139 so the root visual no longer
+  // depends on hdInstrument. Specialist archive/high-detail lenses remain bounded.
+  let rendered = await enhanceRootSovereignField(response);
+  rendered = await enhanceArchiveRecoveredWorkstation(rendered);
   rendered = await enhanceVirtualLatticeDisplayCore(rendered);
   rendered = await enhanceHighDetail20736Field(rendered);
   rendered = await enhanceLivePhaseVisual(rendered);
