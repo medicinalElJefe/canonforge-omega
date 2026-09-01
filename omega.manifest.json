@@ -46,8 +46,8 @@
     },
     {
       "path": ".github/workflows/deploy-v6-cloudflare.yml",
-      "sha256": "e55d0d0c455f9cd99a3e038a2c10b8b4c1ead18e1eeb25e2ed565bdcc6305fc7",
-      "bytes": 5103
+      "sha256": "1e210468b28623d542e092b9d5878ed1171eac32f8f16bc30ee02f3faa1fb8be",
+      "bytes": 1573
     },
     {
       "path": ".github/workflows/evolution-candidate.yml",
