@@ -1,12 +1,12 @@
 {
   "schema": "omega.cloud.promotion.v1",
   "decision": "PROMOTE",
-  "image": "ghcr.io/medicinaleljefe/canonforge-omega/omega-cloud@sha256:406a5138eb90dd462abc4a6332d385574a92a5a35260e6e49f427352e02fe888",
-  "source_sha": "4a794a481f532c7a44fba499acf5ba12093280ac",
-  "trigger_sha": "949b3f0b999eb91077cd619c46d2dae2de0814c8",
-  "manifest_sha256": "0f04373522244af5afa7432049da8062ee9d503bd50ec1f30e6c51ba03eafd5b",
-  "release_sha256": "7da33f5167e078e79940c83aa1ef05cd3782254586c03f03fbf34acb2bc82705",
-  "workflow_run_id": "33454918346",
+  "image": "ghcr.io/medicinaleljefe/canonforge-omega/omega-cloud@sha256:a4c25974bb2ab27b1a2283d405e4eb4031dc730f968c298eb85b4aaef70ae948",
+  "source_sha": "7c85f22e472ed9370ebdc078ec8731406f7c699f",
+  "trigger_sha": "37b2eb837a1fbdc9b1ab1727a59a64d6d6a2d32a",
+  "manifest_sha256": "9e136155eed0ebfd496e9d4e93ed891a0aa5ca19c6c9eafac9721349f2e45b21",
+  "release_sha256": "902f83e0a03e85423bba1f50f6731bab923a822a7cd9d80a0a3c669615366b18",
+  "workflow_run_id": "33461428877",
   "provenance": "Drive-derived contracts validated; private Drive identifiers/content excluded",
   "boundary": "This ledger identifies a verified immutable build candidate. It is not proof that a production host deployed it."
 }
