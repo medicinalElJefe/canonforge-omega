@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Batch 005 exact-head verification anchor: recovery cursor and executable candidate are tested together.
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "cloudflare" / "omega-v6-worker" / "src"
 
