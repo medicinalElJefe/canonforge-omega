@@ -1,0 +1,26 @@
+{
+  "schema": "omega.recovery.manifest.v9",
+  "candidate": "omega-evolve/r159-recovery-convergence",
+  "canonical_parent": "781e9077c4ce183cec0a0451e22cce077c87c9c2",
+  "review_cursor": "R159:BATCH_011_COMPLETE;NEXT=BATCH_012_CURRENT_DRIVE_DISCOVERY_SWEEP_AND_FINAL_COVERAGE_AUDIT",
+  "coverage_complete": false,
+  "coverage_register": "recovery/OMEGA_ARCHIVE_FAMILY_COVERAGE.md",
+  "authority_contract": {"canonical_state_authority":"V6/OmegaRuntime","genesis_role":"governed discovery/evolution","duplicate_state_authority_allowed":false,"duplicate_renderer_authority_allowed":false,"appdeploy_allowed":false},
+  "historical_snapshot": {"files":188,"visible_mb":463.7,"scope":"historical bounded master corpus audit; not complete current Drive"},
+  "family_coverage": {
+    "entrypoint_or_schema_reviewed": ["runtime_sovereign","operator_cockpit_total_control","renderer_intrinsic_membrane","current_shell_orchestration","canon_console","hybrid_fusion","traversal_eag_address_dewey","camera_host_inputs","ai_orchestration","installer_recovery_packaging","excel_lensmatrix_data_atlas","audio_signal_soma","world_bio_reality_forecast","motion_atlas_calculus_schema_family","visual_design_reference_family"],
+    "integrated": ["memory_scar_relation","intelligence_forecast_action_gate","create_simulate_consequence","sovereign_devices_compute","earth","build_evolution_recovery_board"],
+    "deferred": ["exact_crimson_alpha_distinct_source","chemistry_specific_entrypoint","cosmology_empirical_promotion","jwst_until_external_validation_use"],
+    "inaccessible_with_evidence": ["historical_unclassified_5_row_identities_referenced_by_missing_corpus_inventory_ranked_csv"],
+    "quarantined": ["legacy_AppDeploy_Hybrid_endpoint","duplicate_page_layout_authorities","shadow_state_or_renderer_authorities","representational_shell_as_physical_dimension_claim","unvalidated_model_as_empirical_truth"]
+  },
+  "visual_workspace_mapping": {
+    "OMEGA_INTRINSIC_MEMBRANE_V2_SOFTWARE_RENDER":"Living_Field_stage",
+    "OMEGA_ATLAS_MOTION_RELATIVITY_V5_EARLY_EMERGENCE":"Calculus_and_Living_Field_motion",
+    "omega_20736d_dimensional_core_REAL":"Calculus_Atlas_Proof_density",
+    "omega_embodiment_family":"Launch_Field_identity",
+    "time_mandala_20736D_3min_loop":"Calculus_Memory_Create_time_phase"
+  },
+  "completion_gaps": ["bounded_current_Drive_discovery_sweep","final_family_cluster_coverage_audit"],
+  "next_batch": {"id":"BATCH_012","focus":["current_Drive_metadata_discovery","post_historical_audit_capability_families","final_coverage_audit"],"bulk_ingest":false}
+}
