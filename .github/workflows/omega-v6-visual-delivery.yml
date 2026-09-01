@@ -8,6 +8,11 @@ name: OMEGA V6 visual delivery proof
 # root+micro-macro-skin+ultra-quality+phase+integrity-v3
 # PUBLIC_VISUAL_DELIVERY_VERIFIED
 # /?view=Field&delivery_probe=$GITHUB_SHA
+# r149-intelligence-reasoning-pipeline
+# ?view=Intelligence
+# INSPECT ROUTE
+# GENERATE FROM ADMITTED ROUTE
+# PUBLIC_INTELLIGENCE_REASONING_VERIFIED
 
 on:
   push:
