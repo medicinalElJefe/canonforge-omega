@@ -110,7 +110,7 @@ jobs:
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
           GENESIS_URL: https://omega-genesis-v1.jeffdeweyeljefe.workers.dev
-          EXPECTED_BUILD: r128-role-separated-v3-convergence
+          EXPECTED_BUILD: r87-semantic-edge-settle-proof
         run: |
           set -euo pipefail
           verified=false
