@@ -1,34 +1,26 @@
 {
-  "schema": "omega.recovery.manifest.v8",
+  "schema": "omega.recovery.manifest.v9",
   "candidate": "omega-evolve/r159-recovery-convergence",
   "canonical_parent": "781e9077c4ce183cec0a0451e22cce077c87c9c2",
-  "review_cursor": "R159:BATCH_010_COMPLETE;NEXT=BATCH_011_UNCLASSIFIED_MOTION_VISUAL_CLOSURE",
+  "review_cursor": "R159:BATCH_011_COMPLETE;NEXT=BATCH_012_CURRENT_DRIVE_DISCOVERY_SWEEP_AND_FINAL_COVERAGE_AUDIT",
   "coverage_complete": false,
   "coverage_register": "recovery/OMEGA_ARCHIVE_FAMILY_COVERAGE.md",
   "authority_contract": {"canonical_state_authority":"V6/OmegaRuntime","genesis_role":"governed discovery/evolution","duplicate_state_authority_allowed":false,"duplicate_renderer_authority_allowed":false,"appdeploy_allowed":false},
-  "primary_family_state": {
-    "ENTRYPOINT_REVIEWED": ["one_system_runtime_sovereign","operator_cockpit_total_control","renderer_intrinsic_membrane","current_v6_shell_orchestration","canon_console_lineage","hybrid_fusion","traversal_eag_address_dewey","camera_host_inputs","ai_orchestration_creator_task_router","installer_recovery_packaging","excel_lensmatrix_data_atlas","audio_signal_soma","world_bio_reality_forecast"],
-    "METADATA_REVIEWED": ["motion_atlas_calculus","visual_design_archive"],
-    "DEFERRED": ["crimson_alpha_exact_donor_source"],
-    "INTEGRATED": ["memory_scar_relation","intelligence_forecast_action_gate","create_simulate_consequence","sovereign_devices_compute","earth","build_evolution_recovery_board"]
+  "historical_snapshot": {"files":188,"visible_mb":463.7,"scope":"historical bounded master corpus audit; not complete current Drive"},
+  "family_coverage": {
+    "entrypoint_or_schema_reviewed": ["runtime_sovereign","operator_cockpit_total_control","renderer_intrinsic_membrane","current_shell_orchestration","canon_console","hybrid_fusion","traversal_eag_address_dewey","camera_host_inputs","ai_orchestration","installer_recovery_packaging","excel_lensmatrix_data_atlas","audio_signal_soma","world_bio_reality_forecast","motion_atlas_calculus_schema_family","visual_design_reference_family"],
+    "integrated": ["memory_scar_relation","intelligence_forecast_action_gate","create_simulate_consequence","sovereign_devices_compute","earth","build_evolution_recovery_board"],
+    "deferred": ["exact_crimson_alpha_distinct_source","chemistry_specific_entrypoint","cosmology_empirical_promotion","jwst_until_external_validation_use"],
+    "inaccessible_with_evidence": ["historical_unclassified_5_row_identities_referenced_by_missing_corpus_inventory_ranked_csv"],
+    "quarantined": ["legacy_AppDeploy_Hybrid_endpoint","duplicate_page_layout_authorities","shadow_state_or_renderer_authorities","representational_shell_as_physical_dimension_claim","unvalidated_model_as_empirical_truth"]
   },
-  "secondary_cluster_disposition": {
-    "Full_Sphere":"KEEP_MERGE_REPRESENTATIONAL_LENS",
-    "Fold":"KEEP_CALIBRATION_PROOF",
-    "Fiedler_Metrics":"KEEP_DIAGNOSTIC",
-    "Physics":"KEEP_DEFER_EXTERNAL_VALIDATION",
-    "JWST":"DEFER_EXTERNAL_VALIDATION_CORPUS",
-    "Chemistry":"DEFER_PENDING_ENTRYPOINT",
-    "Electric_Bio":"KEEP_MODEL_SIMULATION_DONOR",
-    "Shell":"KEEP_REPRESENTATIONAL_CALCULUS",
-    "Cosmology":"DEFER_EVIDENCE_GATED",
-    "Energy":"KEEP_DERIVED_DIAGNOSTIC",
-    "dimension_shells":"KEEP_REPRESENTATIONAL_ONLY",
-    "Proof":"KEEP_INTEGRATED",
-    "Code_Executable":"DONOR_REVIEW_BEFORE_MERGE",
-    "Unclassified":"UNSEEN_HOLD_5_ITEMS"
+  "visual_workspace_mapping": {
+    "OMEGA_INTRINSIC_MEMBRANE_V2_SOFTWARE_RENDER":"Living_Field_stage",
+    "OMEGA_ATLAS_MOTION_RELATIVITY_V5_EARLY_EMERGENCE":"Calculus_and_Living_Field_motion",
+    "omega_20736d_dimensional_core_REAL":"Calculus_Atlas_Proof_density",
+    "omega_embodiment_family":"Launch_Field_identity",
+    "time_mandala_20736D_3min_loop":"Calculus_Memory_Create_time_phase"
   },
-  "completion_gaps": ["enumerate_or_evidence_inaccessible_historical_unclassified_5","motion_atlas_calculus_bounded_schema_disposition","targeted_visual_reference_disposition","final_coverage_audit"],
-  "quarantine": ["legacy_AppDeploy_Hybrid_endpoint","duplicate_page_layout_authorities","shadow_state_or_renderer_authorities","physical_dimension_claim_from_representational_shells","unvalidated_domain_claim_promoted_to_empirical_truth"],
-  "next_batch": {"id":"BATCH_011","focus":["historical_unclassified_items","motion_atlas_calculus_selected_schemas","visual_reference_to_workspace_mapping"],"bulk_ingest":false}
+  "completion_gaps": ["bounded_current_Drive_discovery_sweep","final_family_cluster_coverage_audit"],
+  "next_batch": {"id":"BATCH_012","focus":["current_Drive_metadata_discovery","post_historical_audit_capability_families","final_coverage_audit"],"bulk_ingest":false}
 }
