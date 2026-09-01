@@ -10,7 +10,6 @@ import { enhanceBuildEvolutionGovernance } from "./buildEvolutionGovernance";
 import { enhanceArchiveRecoveredWorkstation } from "./archiveRecoveredWorkstation";
 import { enhanceVisualRuntimeIntegrity } from "./visualRuntimeIntegrity";
 import { enhanceRecoveredExperience } from "./recoveredExperienceOrchestrator";
-import { enhanceUnifiedWorkspaceAcceptance } from "./unifiedWorkspaceAcceptance";
 import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from "./virtualLatticeDisplayCore";
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
@@ -82,6 +81,5 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   // enhanceLivePhaseVisual(rendered)
   rendered = await enhanceVisualRuntimeIntegrity(rendered);
   rendered = await enhanceRecoveredExperience(rendered);
-  rendered = await enhanceUnifiedWorkspaceAcceptance(rendered);
   return stampDeliveredVisual(rendered);
 }
