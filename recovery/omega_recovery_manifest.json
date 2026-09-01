@@ -4,30 +4,93 @@
   "canonical_v6_sha_observed": "62d244d9a184e28a3e476d27b31a0087201b5b9d",
   "genesis_sha_observed": null,
   "active_candidate": "recovery/archive-convergence-b001",
+  "active_candidate_sha": "9453e51217405bc9fa94729b3966755e83b08b7c",
   "cursor": {
-    "batch": 1,
-    "source": "file_library",
-    "family": "prior_archive_review_and_software_master",
-    "checkpoint": "full_review_status + OMEGA_ALL_SOFTWARE_61917364224D_FULL_BUILD_v22 metadata/entry-level classification",
-    "next": "expand nested meta-archive family and reconcile atlas_runtime_test_bundle / Mode188 / CanonConsole donor entrypoints against canonical authorities"
+    "batch": 2,
+    "source": "file_library+github",
+    "family": "high_value_source_entry_reconciliation",
+    "checkpoint": "forensic_manifest + full_review_status + build_verification reconciled against current repository root structure",
+    "next": "inspect current canonforge-omega/api, desktop_ui, omega_fusion_core and omega_144d_core authority entrypoints; translate one deterministic donor capability behind current authority"
   },
   "coverage": {
     "archive_families_metadata_reviewed": 31,
     "software_families_mapped": 24,
+    "high_value_source_entry_family_lines_reconciled": 6,
     "high_value_candidates_integrated": 0,
     "high_value_candidates_deferred": 8,
     "quarantined": 1,
-    "unknown_or_inaccessible": ["nested second-order bundles inside Any_machine_that_can_copy_itself_must_be_designed_never_to_harm_what_can_only_evolve_once..zip", "Genesis exact SHA", "current Cloudflare deployment SHA binding"]
+    "unknown_or_inaccessible": [
+      "inner contents of second-order bundles inside Any_machine_that_can_copy_itself_must_be_designed_never_to_harm_what_can_only_evolve_once..zip are not exposed by the available indexed corpus",
+      "Genesis exact SHA",
+      "current Cloudflare deployment SHA binding",
+      "first-hand public mobile/desktop visual observation in this execution environment"
+    ]
   },
   "classifications": {
-    "KEEP": ["atlas_runtime_test_bundle: tested repo-style spine candidate", "Sovereign Doc family: dependency-minimal reusable module pattern"],
-    "MERGE": ["Mode188 Sovereign Runtime v10/v11: DB-centered runtime/proof donors", "Dewey_Full_PC_Runtime_188: deep logic donor", "CanonConsole v24/v31/v31r1/v32/v35: canonical-state/governance/UI donors", "Hybrid Link family: bridge/advisory donors behind canonical authority", "Omega Atlas Desktop/Electron family: shell/packaging donors", "Dewey Calculus Engine", "Earth Traversal Engine", "Proof/Forensic/Ledger System"],
-    "DONOR": ["Field Render Engine", "Cinematic Field Renderer", "Workbook/Excel Atlas Runtime", "Universal Language System", "Observer/Now-Frame Runtime", "Echo/SOMA Audio Engine", "Recovery Board/Patch/Micro Build packaging lineage"],
-    "QUARANTINE": ["CanonConsoleOmega_v44_2_Unified: synthetic/randomized runtime state is not admissible as authority"]
+    "KEEP": [
+      "atlas_runtime_test_bundle: strongest tested historical runtime/API spine reference with explicit backend/frontend entrypoints and boot/transition/basin/replay evidence",
+      "Sovereign Doc family: dependency-minimal reusable module pattern"
+    ],
+    "MERGE": [
+      "Mode188 Sovereign Runtime v10: DB-centered runtime/proof mechanics behind current authority",
+      "Mode188 Atlas Camera Shell v11: v10 extension with renderer/camera cues; not separate authority",
+      "Dewey_Full_PC_Runtime_188: selective deterministic deep-logic donor only",
+      "CanonConsole v24/v31/v31r1: canonical-state/proof/readable-instrument/governance donors",
+      "Hybrid Link hardened/integrated family: advisory/adapter services only",
+      "Dewey Calculus Engine",
+      "Earth Traversal Engine",
+      "Proof/Forensic/Ledger System"
+    ],
+    "DONOR": [
+      "Field Render Engine",
+      "Cinematic Field Renderer",
+      "Workbook/Excel Atlas Runtime",
+      "Universal Language System",
+      "Observer/Now-Frame Runtime",
+      "Echo/SOMA Audio Engine",
+      "Recovery Board/Patch/Micro Build packaging lineage",
+      "Omega Atlas Desktop/Electron presentation shells"
+    ],
+    "QUARANTINE": [
+      "CanonConsoleOmega_v44_2_Unified runtime state: synthetic/randomized data is not admissible as authority",
+      "historical synthetic camera fallback unless explicitly labeled simulation/test behavior"
+    ]
   },
-  "authority_contract": ["one canonical packet/state authority", "one renderer/composition authority per viewport", "one OmegaEnvironmentShell", "one navigation authority per viewport", "one proof/provenance chain", "donors mount only as instruments/adapters"],
-  "preserved_contracts": ["OmegaRuntime export / Durable Object compatibility", "heartbeat truth", "Genesis service-binding behavior", "capability/specialist routing", "convergence observation-only semantics", "existing API paths", "Earth source/derived/forecast boundaries", "route-before-generation", "exact PC heartbeat proof", "rollback/provenance"],
+  "authority_contract": [
+    "one canonical packet/state authority",
+    "one renderer/composition authority per viewport",
+    "one OmegaEnvironmentShell",
+    "one navigation authority per viewport",
+    "one proof/provenance chain",
+    "donors mount only as instruments/adapters"
+  ],
+  "current_repo_structure_observed": [
+    "canonforge-omega/api",
+    "canonforge-omega/desktop_ui",
+    "canonforge-omega/omega_144d_core",
+    "canonforge-omega/omega_fusion_core"
+  ],
+  "preserved_contracts": [
+    "OmegaRuntime export / Durable Object compatibility",
+    "heartbeat truth",
+    "Genesis service-binding behavior",
+    "capability/specialist routing",
+    "convergence observation-only semantics",
+    "existing API paths",
+    "Earth source/derived/forecast boundaries",
+    "route-before-generation",
+    "exact PC heartbeat proof",
+    "rollback/provenance"
+  ],
+  "release_evidence": {
+    "pr": 123,
+    "merged": false,
+    "candidate_exact_head_combined_status_count": 0,
+    "candidate_exact_head_pr_workflow_run_count": 0,
+    "deployment_verified": false,
+    "hybrid_pc_online_verified": false
+  },
   "archive_review_complete": false,
   "material_product_improvement": false,
-  "status": "NO MATERIAL PRODUCT IMPROVEMENT: durable archive recovery state established and bounded batch advanced; no canonical runtime code promoted in this batch."
+  "status": "NO MATERIAL PRODUCT IMPROVEMENT: bounded recovery advanced to source-entry/test-level reconciliation for six high-value family lines; no current-V6 runtime code promoted without current authority mapping and exact-head release evidence."
 }
