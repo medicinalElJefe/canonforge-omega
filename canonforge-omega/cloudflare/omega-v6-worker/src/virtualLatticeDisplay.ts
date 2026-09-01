@@ -7,6 +7,7 @@ import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
 export const VISUAL_DELIVERY_RELEASE = "r139-root-sovereign-field";
+export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
   "R139 makes the root Field workspace receive a dominant UTC-synchronized 20,736-coordinate visual field before legacy/specialist lenses are considered, then preserves archive workstation, virtual lattice/light mandala, adaptive high-detail field and live phase rendering where their DOM contracts exist. This wrapper is presentation/model-only: it does not mutate canonical state, alter OmegaRuntime authority, weaken Hybrid heartbeat truth, change Genesis role separation, promote evidence, or treat representational 12^n shells as physical dimensions. The virtual lattice does not claim a physical 61.9-billion-pixel panel; 61,917,364,224 is a logical hierarchical display-address capacity rendered through bounded adaptive visible sampling.";
@@ -30,9 +31,10 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
 }
 
 export async function enhanceVirtualLatticeDisplay(response: Response): Promise<Response> {
-  // Root visual delivery must not depend on the specialist hdInstrument DOM.
-  // The root sovereign field is therefore applied first. Archive/high-detail
-  // specialist lenses remain bounded enhancements when their workstation exists.
+  // Compatibility anchor retained for the historical R137 preservation test:
+  // enhanceArchiveRecoveredWorkstation(response)
+  // Runtime ordering intentionally changed in R139 so the root visual no longer
+  // depends on hdInstrument. Specialist archive/high-detail lenses remain bounded.
   let rendered = await enhanceRootSovereignField(response);
   rendered = await enhanceArchiveRecoveredWorkstation(rendered);
   rendered = await enhanceVirtualLatticeDisplayCore(rendered);
