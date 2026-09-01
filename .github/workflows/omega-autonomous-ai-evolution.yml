@@ -2,12 +2,6 @@ name: OMEGA Autonomous AI Evolution
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/omega-autonomous-ai-evolution.yml'
-  schedule:
-    - cron: '37 * * * *'
 
 permissions:
   contents: write
@@ -279,7 +273,7 @@ jobs:
           {
             echo '## OMEGA autonomous AI evolution'
             echo
-            echo '- Schedule: hourly at minute 37 from the default branch.'
+            echo '- Trigger: manual dispatch only; automatic scheduling and push triggers are disabled.'
             echo '- Canonical source: omega-genesis-v1-full.'
             echo '- Candidate author: sovereign local model only by default.'
             echo '- External paid AI fallback: disabled.'
