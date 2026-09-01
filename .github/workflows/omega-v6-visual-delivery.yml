@@ -15,6 +15,7 @@ name: OMEGA V6 visual delivery proof
 # PUBLIC_INTELLIGENCE_REASONING_VERIFIED
 # r150-create-simulate-branch-lab
 # ?view=Create&delivery_probe=$GITHUB_SHA
+# ROLLBACK / DISCARD
 # PUBLIC_CREATE_SIMULATE_VERIFIED
 
 on:
