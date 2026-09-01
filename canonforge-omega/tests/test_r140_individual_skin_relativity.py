@@ -13,13 +13,17 @@ def test_r140_binds_individual_skin_layer_over_root_without_new_authority():
     for name in ["PARENT", "INTERACTION", "SCAR", "CONTINUITY", "COMPRESSION", "SKIN", "INTERPRETATION", "BEHAVIOR"]:
         assert name in skin
     assert 'state authority' in skin
-    assert 'not a new physical law' in skin
+    assert 'visualization/model calculus only' in skin
+    assert 'not a claim of physical 20,736-dimensional space' in skin
+    assert 'physical 61.9-billion-pixel panel' in skin
 
 
 def test_r140_uses_active_address_depth_for_above_below_relativity():
     skin = (SRC / "individualSkinRelativity.ts").read_text(encoding="utf-8")
     assert 'LEVELS=10' in skin
     assert 'function depthDigits()' in skin
-    assert 'function hierarchy(i,active)' in skin
-    assert 'A↕B' in skin
+    assert 'function lineage(i,active)' in skin
+    assert 'A:(above+.5)/den' in skin
+    assert 'R:(active<LEVELS?below/bden:.5)-.5' in skin
+    assert 'MICRO↕MACRO' in skin
     assert 'omegaActiveAddressDigits' in skin
