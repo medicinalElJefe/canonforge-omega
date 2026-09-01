@@ -17,16 +17,18 @@ def test_worker_entry_authority_is_unchanged():
     assert "enhanceSovereignVisualShell" in heartbeat
 
 
-def test_calculus_preserves_established_spatial_mount_without_duplicate():
+def test_calculus_and_r162_preserve_established_navigation_composition():
     spatial = text("spatialCommandCore.ts")
     lattice = text("virtualLatticeDisplay.ts")
     calculus = text("calculusInstrument.ts")
     assert "enhanceCalculusInstrument" in spatial
     assert "/?view=Calculus" in spatial
+    assert "enhanceUnifiedWorkspaceAcceptance" in spatial
     assert "enhanceCalculusInstrument" not in lattice
+    assert "enhanceUnifiedWorkspaceAcceptance" not in lattice
     assert "CALCULUS_INSTRUMENT_BOUNDARY" in calculus
     assert "/api/omega/state" in calculus
-    assert "does not mutate canonical state" in calculus
+    assert "do not mutate canonical state" in calculus
 
 
 def test_one_environment_navigation_exposes_acceptance_workspaces():
