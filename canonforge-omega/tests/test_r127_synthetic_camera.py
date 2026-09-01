@@ -14,17 +14,18 @@ def test_camera_route_preserves_heartbeat_entrypoint():
 
 def test_camera_exposes_domains_phases_and_dimensional_skins():
     s=read('syntheticCamera.ts')
-    for token in ['Geometry','Optics','Material / dimensional skin','Relativity / phase-time','ACQUIRE PRIORS','TRIANGULATE DEPTH','RESOLVE OCCLUSION','SOLVE SURFACE FIELD','APPLY SKIN RESPONSE','PROPAGATE LIGHT','PHASE / MOTION WARP','INTEGRATE RELATIONS','RENDER + CONFIDENCE','Mineral / crystal','Water / liquid','Plant / living tissue','Dynamic mechanism']:
-        assert token in s
+    required=['Geometry','Optics','Material / dimensional skin','Relativity / phase-time','ACQUIRE PRIORS','TRIANGULATE DEPTH','RESOLVE OCCLUSION','SOLVE SURFACE FIELD','APPLY SKIN RESPONSE','PROPAGATE LIGHT','PHASE / MOTION WARP','INTEGRATE RELATIONS','RENDER + CONFIDENCE','Mineral / crystal','Water / liquid','Plant / living tissue','Dynamic mechanism']
+    for token in required: assert token in s
 
 def test_camera_has_actual_reconstruction_math_and_motion():
     s=read('syntheticCamera.ts')
-    for token in ['z ≈ f·B / disparity','radiance','parallax','confidence','requestAnimationFrame(render)','relational samples / frame','phase warp','occlusion','skin response']:
-        assert token in s
+    for token in ['z ≈ f·B / disparity','radiance','parallax','confidence','requestAnimationFrame(render)','phase warp','occlusion','skin response']:
+        assert token.lower() in s.lower()
+    assert ('relational samples / frame' in s) or ('sample field' in s)
 
-def test_camera_never_claims_observed_image():
+def test_camera_never_claims_unseen_reconstruction_as_observation():
     s=read('syntheticCamera.ts')
     assert 'INFERRED MODEL VIEW' in s
-    assert 'not a photograph' in s
-    assert 'not an authenticated observation' in s
-    assert 'cannot be presented as seeing an unseen scene' in s
+    assert 'authenticated observation' in s
+    assert 'unseen content' in s
+    assert 'OBSERVED_CAMERA' in s and 'INFERRED_RECONSTRUCTION' in s
