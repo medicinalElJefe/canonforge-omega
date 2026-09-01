@@ -25,8 +25,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/", StaticFiles(directory="../ui", html=True), name="ui")
-
 _calc = UniversalMomentCalculator()
 _tic_calc = TICCalculator()
 
@@ -126,3 +124,9 @@ def run_pattern(req: RunPatternRequest):
     player = MacroPlayer(fusion_ingest_fn=fusion_log, executor=executor)
     player.play(seq, speed=req.speed, loop_repeats=req.loop_repeats)
     return {"status": "ok", "message": f"Pattern '{req.id}' executed."}
+
+
+# Mount the UI only after API routes are registered so the catch-all static mount
+# cannot shadow /api/* endpoints. This preserves one API authority while keeping
+# the desktop UI served from the same application.
+app.mount("/", StaticFiles(directory="../ui", html=True), name="ui")
