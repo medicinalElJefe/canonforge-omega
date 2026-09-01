@@ -3,13 +3,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HEARTBEAT = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "heartbeatTruth.ts"
+ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "r161Entry.ts"
 CONVERGENCE = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "convergence.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
 
-def test_r89_adds_native_genesis_service_binding_without_replacing_entrypoint():
+def test_r89_preserves_native_genesis_binding_under_current_entrypoint():
     wrangler = WRANGLER.read_text(encoding="utf-8")
-    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    entry = ENTRY.read_text(encoding="utf-8")
+    assert 'main = "src/r161Entry.ts"' in wrangler
+    assert 'import heartbeatTruth, { OmegaRuntime } from "./heartbeatTruth";' in entry
+    assert 'heartbeatTruth.fetch(request, env)' in entry
     assert 'binding = "GENESIS"' in wrangler
     assert 'service = "omega-genesis-v1"' in wrangler
     assert 'CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"' in wrangler
