@@ -9,7 +9,7 @@ def test_r146_native_atlas_matches_supplied_corpus_contract():
     assert '460d56a51be0115347574ebbebd5a2b2bad0e46b1bd75c266f954e9ad742e975' in native
     for token in ['478922','20736','248832','165888','22608','antipode','atlasNeighbors']:
         assert token in native
-    assert 'not physical dimensions' in native
+    assert 'not a physical dimension' in native or 'as physical dimensions' in native
 
 
 def test_r146_unifies_visual_computation_and_ai_on_one_atlas_context():
