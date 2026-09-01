@@ -3,13 +3,14 @@ import { enhanceGovernedModeAtlas } from "./governedModeAtlas";
 import { enhanceUnifiedMotionRelativity } from "./unifiedMotionRelativity";
 import { enhanceMemoryContinuityGraph } from "./memoryContinuityGraph";
 import { enhanceIntelligenceReasoningPipeline } from "./intelligenceReasoningPipeline";
+import { enhanceCreateSimulateBranchLab } from "./createSimulateBranchLab";
 import { enhanceArchiveRecoveredWorkstation } from "./archiveRecoveredWorkstation";
 import { enhanceVisualRuntimeIntegrity } from "./visualRuntimeIntegrity";
 import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from "./virtualLatticeDisplayCore";
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
-export const VISUAL_DELIVERY_RELEASE = "r149-intelligence-reasoning-pipeline";
+export const VISUAL_DELIVERY_RELEASE = "r150-create-simulate-branch-lab";
 export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const R141_VISUAL_DELIVERY_COMPATIBILITY_ID = "r141-visual-delivery-correctness";
 export const R142_VISUAL_GEOMETRY_COMPATIBILITY_ID = "r142-micro-macro-skin-geometry";
@@ -19,9 +20,10 @@ export const R145_MODE_ATLAS_COMPATIBILITY_ID = "r145-governed-mode-atlas";
 export const R146_UNIFIED_RUNTIME_COMPATIBILITY_ID = "r146-unified-motion-relativity-runtime";
 export const R147_CALCULUS_FIELD_COMPATIBILITY_ID = "r147-calculus-field-renderer";
 export const R148_MEMORY_COMPATIBILITY_ID = "r148-memory-continuity-graph";
+export const R149_INTELLIGENCE_COMPATIBILITY_ID = "r149-intelligence-reasoning-pipeline";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
-  "R149 adds an inspectable Intelligence route-to-generation workspace over the established R148 Memory, R147 calculus field and native 20,736 atlas. The preserved R147 field contract includes scalar potential, finite-difference gradient, Hessian/Laplacian curvature, derived vector flow and RK2 integral trajectories. Intelligence reads the existing /api/omega/state authority and /api/route-preview contract, exposes governed mode, bounded forecast, proposed action and generation admission before /api/chat can run, and preserves route-before-generation. Runtime observations remain distinct from DERIVED_FRAMEWORK_MATH, SIMULATED_CONTINUATION, MODEL_OUTPUT and USER_DEFINED_MODEL geometry; UTC render time is not evidence time. It does not mutate canonical state beneath heartbeatTruth, preserves OmegaRuntime and Hybrid/Genesis authority boundaries, preserves representational 12^n shells, preserves the R143 device-DPR 3 quality contract as a compatibility capability, does not claim a physical 61.9-billion-pixel panel, and does not claim physical 20,736 dimensions.";
+  "R150 adds a manipulable Create/Simulate branch laboratory over the established R149 Intelligence, R148 Memory, R147 calculus field and native 20,736 atlas. It reads the existing /api/omega/state authority, forks canonical CΩ/Φ/q/Λ into local Branch A/B SIMULATED_CONTINUATION packets, visibly propagates divergence into trajectories and representational shell density, compares Mode 188 STAY/TURN/ESCALATE consequences, and provides rollback by discarding local branch state and returning to the latest observed packet. It never mutates canonical state. The preserved R147 field contract includes scalar potential, finite-difference gradient, Hessian/Laplacian curvature, derived vector flow and RK2 integral trajectories. Runtime observations remain distinct from DERIVED_FRAMEWORK_MATH, SIMULATED_CONTINUATION, MODEL_OUTPUT and USER_DEFINED_MODEL geometry; UTC render time is not evidence time. It preserves route-before-generation, heartbeatTruth, OmegaRuntime and Hybrid/Genesis authority boundaries, preserves representational 12^n shells, preserves the R143 device-DPR 3 quality contract as a compatibility capability, does not claim a physical 61.9-billion-pixel panel, and does not claim physical 20,736 dimensions.";
 
 /* Historical preservation signatures — NON-EXECUTING compatibility anchors only.
 enhanceArchiveRecoveredWorkstation(response)
@@ -35,7 +37,7 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   const headers = new Headers(response.headers);
   headers.set("x-omega-visual-release", VISUAL_DELIVERY_RELEASE);
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
-  headers.set("x-omega-visual-contract", "single-surface+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+runtime-truth+integrity-v6");
+  headers.set("x-omega-visual-contract", "single-surface+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+rollback+runtime-truth+integrity-v6");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
@@ -53,6 +55,7 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   rendered = await enhanceUnifiedMotionRelativity(rendered);
   rendered = await enhanceMemoryContinuityGraph(rendered);
   rendered = await enhanceIntelligenceReasoningPipeline(rendered);
+  rendered = await enhanceCreateSimulateBranchLab(rendered);
   rendered = await enhanceArchiveRecoveredWorkstation(rendered);
   rendered = await enhanceVirtualLatticeDisplayCore(rendered);
   // Historical R137/R141 position anchor only; deliberately not executed:
