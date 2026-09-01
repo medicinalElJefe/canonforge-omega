@@ -1,3 +1,5 @@
+import { enhanceCapabilityViewRestoration } from "./capabilityViewRestoration";
+
 export const SPATIAL_COMMAND_CORE_BOUNDARY = "R130 is an interaction/composition layer over existing OMEGA V6 capabilities. Every launch target resolves to an existing route; runtime status is observed from existing proof endpoints; no visual state grants execution or canonical mutation authority.";
 
 const routes = [
@@ -32,5 +34,6 @@ export async function enhanceSpatialCommandCore(response: Response): Promise<Res
   const withStyle=html.replace("</head>",style+"</head>");
   const target=withStyle.includes('<main class="work">')?'<main class="work">':withStyle.includes('<main class="wrap">')?'<main class="wrap">':null;
   const withCore=target?withStyle.replace(target,target+markup()):withStyle.replace("<body>","<body>"+markup());
-  return new Response(withCore.replace("</body>",runtime+"</body>"),{status:response.status,headers:response.headers});
+  const enriched=new Response(withCore.replace("</body>",runtime+"</body>"),{status:response.status,headers:response.headers});
+  return enhanceCapabilityViewRestoration(enriched);
 }
