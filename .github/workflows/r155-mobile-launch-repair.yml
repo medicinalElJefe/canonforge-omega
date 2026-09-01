@@ -1,0 +1,117 @@
+name: R155 Mobile Launch Repair
+
+on:
+  push:
+    branches:
+      - omega-evolve/r155-mobile-launch-repair
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[r155-patched]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: omega-evolve/r155-mobile-launch-repair
+          fetch-depth: 0
+      - name: Patch mobile launch composition
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('canonforge-omega/cloudflare/omega-v6-worker/src/launchHdNavigation.ts')
+          s = p.read_text()
+          required = [
+              '#omegaLaunch{position:fixed;inset:0;z-index:120',
+              '.launchPanel{display:none}',
+              "function closeLaunch(){const x=$('#omegaLaunch');if(x)x.classList.add('hidden');"
+          ]
+          missing = [x for x in required if x not in s]
+          if missing:
+              raise SystemExit('R155 expected canonical anchors missing: ' + repr(missing))
+
+          s = s.replace(
+              '#omegaLaunch{position:fixed;inset:0;z-index:120;background:',
+              '#omegaLaunch{position:fixed;inset:0;z-index:2147483000;isolation:isolate;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;background:',
+              1,
+          )
+          s = s.replace(
+              'display:grid;place-items:center;transition:opacity .55s ease,visibility .55s ease}#omegaLaunch.hidden',
+              'display:grid;place-items:center;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));box-sizing:border-box;transition:opacity .38s ease,visibility .38s ease}#omegaLaunch.hidden',
+              1,
+          )
+          s = s.replace(
+              '.launchInner{width:min(1180px,92vw);display:grid;',
+              '.launchInner{width:min(1180px,100%);margin:auto;display:grid;',
+              1,
+          )
+
+          old_mobile = '@media(max-width:760px){.launchInner{grid-template-columns:1fr}.launchPanel{display:none}.launchMark{font-size:clamp(4.2rem,24vw,7rem)}#omegaDock{bottom:8px}.dockBtn{min-width:max-content}.work{padding-bottom:82px}.omegaInstrumentCanvas,.omegaInstrumentCanvas canvas,.omegaMemoryStage,.omegaMemoryStage canvas{height:470px;min-height:470px}.omegaBranchGrid{grid-template-columns:1fr}.omegaMemoryLegend{grid-template-columns:1fr}}'
+          new_mobile = '''@media(max-width:760px){
+#omegaLaunch{place-items:start center;padding-top:max(18px,env(safe-area-inset-top));background:radial-gradient(circle at 48% 8%,#15243a 0,#080d15 34%,#030509 76%)}
+#omegaLaunch:not(.hidden)~#omegaDock{display:none!important}
+.launchInner{grid-template-columns:1fr;gap:18px;align-items:start;padding:clamp(12px,3.2vh,28px) 0 8px;min-height:100%;box-sizing:border-box}
+.launchInner>section{min-width:0}
+.launchInner .eyebrow{font-size:clamp(.68rem,2.7vw,.82rem);letter-spacing:.16em;line-height:1.45;max-width:100%}
+.launchMark{font-size:clamp(4rem,21vw,6.4rem);line-height:.78;margin-top:6px}
+.launchInner h1{font-size:clamp(2.25rem,10.8vw,3.9rem)!important;line-height:.94!important;letter-spacing:-.045em;margin:.22em 0 .3em!important;max-width:11ch}
+.launchSub{font-size:clamp(.98rem,4.2vw,1.15rem);line-height:1.5;max-width:34rem;margin:0;color:#b8c3d2}
+.launchMeta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}
+.launchPill{display:flex;min-width:0;justify-content:center;align-items:center;text-align:center;padding:9px 6px;font-size:.72rem;letter-spacing:.055em;white-space:nowrap}
+.launchPanel{display:block;border-radius:20px;padding:14px;background:linear-gradient(180deg,rgba(14,23,36,.96),rgba(5,9,15,.96));box-shadow:0 22px 70px rgba(0,0,0,.45)}
+.launchPanel .eyebrow{font-size:.68rem}.launchPanel h3{font-size:1rem;margin:4px 0 10px}
+.launchActions{grid-template-columns:1fr 1fr;gap:8px}
+.launchAction{min-height:58px;padding:10px 11px;border-radius:13px;gap:8px;line-height:1.15;overflow:hidden}
+.launchAction b{font-size:.88rem}.launchAction span{font-size:.72rem;color:#8fa2ba;text-align:right}
+.launchEnter{min-height:48px;margin-top:10px;padding:11px 14px}
+#omegaDock{bottom:max(8px,env(safe-area-inset-bottom))}.dockBtn{min-width:max-content}.work{padding-bottom:82px}.omegaInstrumentCanvas,.omegaInstrumentCanvas canvas,.omegaMemoryStage,.omegaMemoryStage canvas{height:470px;min-height:470px}.omegaBranchGrid{grid-template-columns:1fr}.omegaMemoryLegend{grid-template-columns:1fr}}
+@media(max-width:430px){.launchActions{grid-template-columns:1fr}.launchAction{min-height:52px}.launchMeta{grid-template-columns:repeat(2,minmax(0,1fr))}}
+body.omegaLaunchOpen{overflow:hidden!important;touch-action:none}
+body.omegaLaunchOpen>.top,body.omegaLaunchOpen>main.work,body.omegaLaunchOpen>#omegaDock,body.omegaLaunchOpen>#nav{visibility:hidden!important;pointer-events:none!important}
+body.omegaLaunchOpen #omegaLaunch{visibility:visible!important;pointer-events:auto!important;touch-action:pan-y}'''
+          s = s.replace(old_mobile, new_mobile, 1)
+          s = s.replace(
+              "const $=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];",
+              "const $=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];document.body.classList.add('omegaLaunchOpen');",
+              1,
+          )
+          s = s.replace(
+              "function closeLaunch(){const x=$('#omegaLaunch');if(x)x.classList.add('hidden');try{sessionStorage.setItem('omega_launch_seen','1')}catch{}}",
+              "function closeLaunch(){const x=$('#omegaLaunch');if(x)x.classList.add('hidden');document.body.classList.remove('omegaLaunchOpen');try{sessionStorage.setItem('omega_launch_seen','1')}catch{}}",
+              1,
+          )
+          p.write_text(s)
+
+      - name: Add R155 regression test
+        shell: bash
+        run: |
+          cat > canonforge-omega/tests/test_r155_mobile_launch_repair.py <<'PY'
+          from pathlib import Path
+
+          SRC = Path('cloudflare/omega-v6-worker/src/launchHdNavigation.ts')
+
+          def test_mobile_launch_isolated_and_navigable():
+              text = SRC.read_text()
+              assert 'z-index:2147483000' in text
+              assert 'isolation:isolate' in text
+              assert 'omegaLaunchOpen' in text
+              assert 'body.omegaLaunchOpen>main.work' in text
+              assert 'body.omegaLaunchOpen>#omegaDock' in text
+              assert '.launchPanel{display:block' in text
+              assert '.launchActions{grid-template-columns:1fr 1fr' in text
+              assert '@media(max-width:430px)' in text
+              assert "document.body.classList.remove('omegaLaunchOpen')" in text
+              assert 'env(safe-area-inset-top)' in text
+              assert 'env(safe-area-inset-bottom)' in text
+          PY
+      - name: Commit bounded repair
+        shell: bash
+        run: |
+          git config user.name 'OMEGA governed repair'
+          git config user.email 'actions@users.noreply.github.com'
+          git add canonforge-omega/cloudflare/omega-v6-worker/src/launchHdNavigation.ts canonforge-omega/tests/test_r155_mobile_launch_repair.py
+          git diff --cached --check
+          git commit -m 'R155 repair mobile launch isolation and workspace composition [r155-patched]'
+          git push origin HEAD:omega-evolve/r155-mobile-launch-repair
