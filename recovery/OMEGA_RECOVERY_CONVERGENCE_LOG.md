@@ -27,39 +27,52 @@ Canon Console, Hybrid Link and Traversal/EAG/Address moved to ENTRYPOINT_REVIEWE
 Camera/Host moved to ENTRYPOINT_REVIEWED via Mode188 camera-shell donor and Host Observation Contract. AI orchestration moved to ENTRYPOINT_REVIEWED through CanonForge/Task Router and concrete intent/command/kernel router paths, subordinate to route-before-generation. Packaging moved to ENTRYPOINT_REVIEWED via Windows PyInstaller/Electron/Inno/fallback and seal/checksum/repair lineage.
 
 ## BATCH 009 — Data Atlas + Audio/SOMA + World/Bio
-### LensMatrix / Data Atlas — ENTRYPOINT_REVIEWED
-Fetched `Lens Switchboard Runtime (Thin Router) — v1.0`. The switchboard loads `LensMatrix_20736D_FULL_ALL_SKINS.csv`, validates `LENS_LATTICE_v1.0_MANIFEST.json`, routes by LensID/PhaseID/RegID/SkinID, and returns proof requirements, allowed/forbidden claim classes, closure hints and instrumentation. The bundle also names `Operators_188_Locked.json`, `Sigma_Skin_Profile_188.json` and `LensMatrixSpec.json`. Decision: KEEP this exact thin-router/evidence-constraint idea as a donor behind canonical V6 state and Proof; do not make LensMatrix a second state authority.
+LensMatrix moved to ENTRYPOINT_REVIEWED via its thin-router README and proof/claim constraints. Audio/SOMA and World/Bio moved to ENTRYPOINT_REVIEWED through the bounded Electric Bio phase engine prototype, retained strictly as model/sonification donors. Crimson/Alpha exact runtime source remained deferred because no stronger distinct entrypoint was located.
 
-### Audio / Signal / SOMA — ENTRYPOINT_REVIEWED
-Fetched `electric_bio_phase_engine_v2_atlas_self_drive.html`. It is a concrete 12-phase audio/visual prototype with bounded master gain, carrier frequency, micro/session clocks, phase width, contrast, calm/focus/release biases, Stop and Blue Override. It states bounded autonomy and implements the ordering negative response → Blue/prune → Green/integration before new Red/build. Decision: KEEP optional state-sonification and bounded phase-control patterns, but audio is not evidence and stays optional/non-default until the shell and primary workflows are stable.
+## BATCH 010 — Secondary cluster disposition
+Mapped the remaining historical Master Corpus Audit clusters into the one-system architecture rather than leaving them as orphan archives.
 
-### World / Bio / Reality / Forecast — ENTRYPOINT_REVIEWED
-The same executable prototype implements a model pipeline local time → micro phase → session arc → circadian/model bias → lane weights → safety gate → output, with a 12-lane state visualization. Integrated kernel workbooks expose domain/role categories such as identity, will, perception, knowledge, difference, self/reality boundary, collapse, equality and truth. Decision: MERGE only as symbolic/model/derived lenses unless backed by explicit external observations; do not promote bio/cosmology interpretation to empirical truth.
+### Full Sphere — KEEP / MERGE as representational lens
+Located `98197093908_2D_TRUE_MOTION_FULL_CANON_EXCEL.xlsx`, full atlas and Mode188 families. The True Motion workbook explicitly says it charts the law through symbolic constants, exact addresses, 188 closure gates, 1728 active projection and 20736 compression formulas, and explicitly rejects the claim that physical reality has empirically measured those interface dimensions. Recover as Calculus/Field projection/address/compression capability only.
 
-### Crimson / Alpha — still METADATA_REVIEWED
-Master ledgers continue to identify CRIMSON ONE as an asymmetry law engine and ALPHA–CRIMSON as the ALPHA→BASE→CONSTRUCT/PRUNE→OMEGA governed cycle. Bounded searches did not locate a stronger distinct Crimson source/readme/manifest. Related phase-cycle code is real, but it is not sufficient to claim recovery of the exact CRIMSON ONE runtime. Decision: preserve the semantics and DEFER exact donor import until a concrete entrypoint is located; do not invent one.
+### Fold / Fold Scale Relativity — KEEP as calibration/proof instrument
+`Fold_Scale_Relativity_Calibration_Test_Harness_v1.xlsx` exposes variables/units, formal equations, calibration data, test harness, benchmark performance, stability proofs, 1+6 shell calibration and proof-status ledgers. Its own benchmark logic distinguishes useful representation/control heuristics from unproven literal-ontology claims. Recover into Calculus + Proof as benchmark/calibration machinery, with external data required for empirical promotion.
 
-## Accumulated one-system capability map
-State/authority: OmegaRuntime, canonical packet/APIs, Genesis separation, heartbeat truth.
-Shell/control/render: Operator Cockpit, Total Control, readable instruments, intrinsic membrane, merged renderer authority, skins, deterministic shell.
-Canon/governance: canonical proof, forensic triangulation, Mode188, route-before-generation, forecast/action/generation gate.
-Memory/relation: continuity/scar graph, timeline/replay, relation carry.
-Calculus/motion/traversal: gradient/curvature/RK2, atlas context, phase/time, motion relativity, reversible address traversal.
-Earth/world/evidence: source-backed Earth and observed/derived/forecast boundaries; world/bio only as bounded model lenses without external evidence.
-Create/simulation: local branches, simulated provenance, rollback/discard, consequence lineage.
-Sovereign/host: truthful heartbeat grammar, safe Hybrid bridge patterns, host observation contracts, camera multiview donor.
-Intelligence/tools: CanonForge/Task Router/parser/router donors behind current Intelligence gate.
-Data: LensMatrix sealed lattice thin-router with manifest/proof/claim constraints; Excel/Data Atlas family.
-Signal/audio: optional bounded 12-phase sonification/control donor.
-Build/recovery/packaging: CI/promote/deploy/rollback, Recovery Board, archive ingestion, Windows standalone/repair/fallback/checksum lineage.
-Specialized modes: Crimson/Alpha semantics retained as governed operators pending exact entrypoint.
+### Fiedler / Metrics — KEEP diagnostics
+Historical audit clusters Fiedler and metric artifacts with Fold/proof material. Treat as graph/numerical diagnostics and validation surfaces, not ontology.
+
+### Physics — KEEP / DEFER domain validation
+The audit and Fold harness establish physics as a test/benchmark domain. The harness explicitly marks 20736D-as-literal-reality as unproven and several framework components as valid tool/testable model rather than established fact. Physics data may benchmark frozen OMEGA equations against standard baselines; source-backed evidence is required.
+
+### JWST — DEFER as external validation corpus
+The audit lists multiple JWST benchmark/evaluation/pilot/flagger ZIP families. Preserve them as astronomy validation/evaluation donors. They may test frozen models; they may not become hidden runtime authority or evidence for claims they were not designed to test.
+
+### Chemistry — DEFER pending entrypoint
+Four historical chemistry items are recorded, but this bounded pass did not recover a sufficiently specific source/manifest to justify integration. Keep the domain slot and defer until targeted schema review.
+
+### Electric Bio — KEEP as model/simulation donor
+Already entrypoint-reviewed through `electric_bio_phase_engine_v2_atlas_self_drive.html`. Keep bounded phase/audio/visual interaction patterns. Do not infer empirical medical/biological truth from the prototype.
+
+### Shell / Cosmology / Energy
+- Shell: KEEP as representational/calculus geometry and calibration donor; no new physical primitive.
+- Cosmology: DEFER/evidence-gated. The Master Corpus Audit itself says the archive alone does not prove final cosmology.
+- Energy: KEEP as derived benchmark/state diagnostic only with explicit units/provenance; no unsupported physical equivalence.
+
+### Code / Executable
+DONOR / REVIEW BEFORE MERGE. Executable artifacts are useful only after authority, safety and evidence-boundary review.
+
+### Unclassified
+The historical audit reports five Unclassified items but the available report excerpt does not enumerate them. These remain an explicit coverage hole and prevent `ARCHIVE REVIEW COMPLETE` from being claimed.
 
 ## Coverage status
 Archive review: **NOT COMPLETE**.
-ENTRYPOINT_REVIEWED now covers nearly all major software families. Remaining major metadata-level areas are Motion/Atlas/Calculus deeper schemas, targeted visual reference disposition and exact Crimson/Alpha donor source. The Master Corpus Audit secondary clusters still need explicit mapping/disposition: Full Sphere, Fold, Physics, JWST, Chemistry, Electric Bio, Shell/Cosmology, Fiedler/Metrics and Unclassified.
+The remaining bounded recovery gaps are now narrow and explicit:
+1. enumerate/dispose the historical five Unclassified items, or record them inaccessible with evidence;
+2. perform bounded schema/entrypoint disposition for Motion/Atlas/Calculus beyond broad metadata;
+3. map strongest historic visual references directly to Field/Launch/Earth/Memory/Calculus roles;
+4. run a final family/cluster coverage audit against the persistent register.
 
-## Next bounded sweep — BATCH 010
-Map every remaining Master Corpus Audit secondary cluster into the one-system model and give each a KEEP/MERGE/DEFER/QUARANTINE disposition. Use metadata/sheet-name/signature evidence first; only fetch small entrypoints when needed. Then review Motion/Atlas/Calculus deeper schemas and visual-reference families. Do not bulk ingest.
+After archive-review closure, product work continues: build the material `OmegaEnvironmentShell`, mount recovered instruments under one presentation authority, verify all canonical truth contracts and test the visible mobile/desktop system. Archive closure is not the same thing as product completion.
 
 ## Review cursor
-`R159:BATCH_009_COMPLETE;NEXT=BATCH_010_SECONDARY_CLUSTER_DISPOSITION`
+`R159:BATCH_010_COMPLETE;NEXT=BATCH_011_UNCLASSIFIED_MOTION_VISUAL_CLOSURE`
