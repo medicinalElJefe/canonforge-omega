@@ -1,15 +1,16 @@
 name = "omegav6"
-main = "src/heartbeatTruth.ts"
+main = "src/roleContract.ts"
 compatibility_date = "2026-08-29"
 workers_dev = true
 
 [vars]
-BUILD_ID = "r87-semantic-edge-settle-proof"
+BUILD_ID = "r127-role-separated-v3-convergence"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
 RELATION_WORKBENCH_ID = "r94-relation-workbench-graph-projection"
 RICH_OPERATIONAL_UI_ID = "r126-rich-operational-expansion"
+ROLE_CONTRACT_ID = "r127-role-separated-v3-convergence"
 # Configure SOVEREIGN_ORIGIN in the deployment environment.
 # It must point at the authenticated ingress of the sovereign runtime/bridge.
 
