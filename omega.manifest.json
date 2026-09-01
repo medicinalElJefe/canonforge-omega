@@ -151,8 +151,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/convergence.js",
-      "sha256": "992d8a1a58dd874e4c0b0cad2f4c67611d06b450f2992a0c951cfbb621260e77",
-      "bytes": 4682
+      "sha256": "572ad2113299a8635117128d82b4cf9ea60437b4782f97838b898162ae1b9dc8",
+      "bytes": 5815
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -898,6 +898,11 @@
       "path": "web/index.html",
       "sha256": "389f9c2c3708f63c0124122c5965330124aa1f6f6861647c5c9a5ac652b3db91",
       "bytes": 17061
+    },
+    {
+      "path": "web/live-phase-visual.js",
+      "sha256": "4c3281a30c311c0b9e8a21b2897f8ec33310d239f28f0b0893a1af2b4e80581f",
+      "bytes": 9122
     },
     {
       "path": "web/styles.css",
