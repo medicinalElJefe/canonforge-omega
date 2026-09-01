@@ -1,3 +1,5 @@
+import { enhanceSpatialCommandCore } from "./spatialCommandCore";
+
 export const SOVEREIGN_VISUAL_SHELL_BOUNDARY = "R129 upgrades presentation and interaction only. It does not mutate canonical state, invent evidence, change execution authority, or weaken heartbeat/proof boundaries.";
 
 const style = `<style id="omegaSovereignVisualShell">
@@ -21,5 +23,6 @@ export async function enhanceSovereignVisualShell(response: Response): Promise<R
   if (!html.includes("OMEGA V6") || html.includes("omegaSovereignVisualShell")) return new Response(html, { status: response.status, headers: response.headers });
   const withStyle = html.replace("</head>", style + "</head>");
   const withChrome = withStyle.replace("<body>", "<body>" + chrome);
-  return new Response(withChrome.replace("</body>", script + "</body>"), { status: response.status, headers: response.headers });
+  const enriched = new Response(withChrome.replace("</body>", script + "</body>"), { status: response.status, headers: response.headers });
+  return enhanceSpatialCommandCore(enriched);
 }
