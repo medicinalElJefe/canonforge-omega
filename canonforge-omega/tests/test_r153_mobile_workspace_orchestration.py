@@ -10,6 +10,7 @@ def source() -> str:
 def test_r153_preserves_visual_integrity_and_truth_boundaries():
     s = source()
     assert "omegaVisualRuntimeIntegrityRuntime" in s
+    assert "UTC, phase, relativity-depth and individual-skin markers" in s
     assert "does not mutate canonical state" in s
     assert "heartbeat truth" in s
     assert "Earth source truth" in s
@@ -20,7 +21,7 @@ def test_r153_preserves_visual_integrity_and_truth_boundaries():
 def test_mobile_workspace_navigation_is_stateful_and_direct():
     s = source()
     for view in ("Field", "Calculus", "Earth", "Memory", "Assistant", "Simulate", "Hybrid", "Proof"):
-        assert f'data-app=\\"{view}\\"' in s
+        assert f'data-app="{view}"' in s
     assert "omega:lastWorkspace" in s
     assert "URL(location.href)" in s
     assert "history.replaceState" in s
