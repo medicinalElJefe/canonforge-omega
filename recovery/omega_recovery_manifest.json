@@ -7,18 +7,20 @@
   "genesis_sha_observed": "fca954774e2246ec1bb1e3408ede7610c69c813c",
   "active_candidate": "omega-evolve/r161-intelligence-authority",
   "active_candidate_parent": "77defb727e3b9f09bb66c8033b0677eab0819a72",
-  "active_candidate_sha_observed_before_state_write": "171ec3bf108e4eb9dafd022aba4adbdf498f916f",
+  "active_candidate_sha_observed_before_state_write": "a17fc337a129b5ac456b02e28fac2b4933630c9d",
+  "active_pr": 125,
   "superseded_candidate": {
     "branch": "recovery/archive-convergence-b001",
     "pr": 123,
+    "state": "CLOSED_UNMERGED",
     "reason": "Batches 001-003 were based on repository main rather than the canonical V6 release branch; their recovery knowledge is carried forward here, but their Python app repair is not promoted into Cloudflare V6."
   },
   "cursor": {
     "batch": 4,
     "source": "canonical_v6+github_lineage+google_drive_bounded_content",
     "family": "r161_intelligence_authority_and_one_system_ledger",
-    "checkpoint": "canonical branch corrected; R161 deterministic intelligence path wired behind heartbeatTruth/OmegaRuntime; one-system 1728D J-drive ledger content reviewed",
-    "next": "exact-head CI and promotion decision for R161; then inspect one additional full-software/menu ledger and converge primary workspace coverage without duplicate navigation"
+    "checkpoint": "canonical branch corrected; R161 deterministic intelligence path wired behind heartbeatTruth/OmegaRuntime; one-system 1728D J-drive ledger content reviewed; first CI rejection traced to obsolete direct-entry assertion and repaired without weakening heartbeat truth",
+    "next": "exact-head CI on final Batch-004 head and promotion decision for R161; then inspect one additional full-software/menu ledger and converge primary workspace coverage without duplicate navigation"
   },
   "coverage": {
     "archive_families_metadata_reviewed": 31,
@@ -104,11 +106,26 @@
     "exact PC heartbeat proof",
     "rollback/provenance"
   ],
+  "genuine_regressions_rejected": [
+    "wrong-lineage PR #123 based on repository main",
+    "deleting or weakening heartbeat truth to satisfy R88 test"
+  ],
+  "ci_history_batch_4": [
+    {
+      "head": "770b103e84e58e4307336bf9efb30d39c8b103de",
+      "workflow_run": 33542752839,
+      "cloudflare_interface": "PASS",
+      "sovereign_core": "FAIL_FULL_RUNTIME_TESTS",
+      "promotion": "SKIPPED",
+      "diagnosed_issue": "obsolete R88 assertion required wrangler main to equal src/heartbeatTruth.ts even though R161 wrapper preserves heartbeatTruth.fetch and OmegaRuntime"
+    }
+  ],
   "release_evidence": {
     "canonical_parent_deployment_previously_verified": true,
     "canonical_parent_sha": "77defb727e3b9f09bb66c8033b0677eab0819a72",
     "r161_entry_wired": true,
     "r161_regression_test_added": true,
+    "obsolete_r88_entry_assertion_updated_without_contract_deletion": true,
     "exact_head_ci_verified": false,
     "merged": false,
     "deployment_verified_for_r161": false,
@@ -117,5 +134,5 @@
   "archive_review_complete": false,
   "material_candidate_functional_improvement": true,
   "material_product_improvement": false,
-  "status": "R161 is a canonical-V6 candidate: deterministic operational questions are routed to current evidence endpoints with zero /api/chat generation, while synthesis remains route-gated. Awaiting exact-head CI and deployment verification."
+  "status": "R161 remains a canonical-V6 candidate. First exact-head CI rejected the pre-repair head at full runtime tests; Cloudflare typecheck passed. The diagnosed obsolete entrypoint assertion is repaired while preserving heartbeat truth. Awaiting final-head CI and deployment verification."
 }
