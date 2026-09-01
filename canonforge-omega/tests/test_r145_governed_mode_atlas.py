@@ -9,8 +9,7 @@ def test_r145_uses_one_governed_projection_surface_and_existing_modes():
     wrapper = (SRC / "virtualLatticeDisplay.ts").read_text(encoding="utf-8")
     assert 'r145-governed-mode-atlas' in wrapper
     assert 'enhanceGovernedModeAtlas(rendered)' in wrapper
-    assert 'gmaCanvas' in atlas
-    assert atlas.count('<canvas id=\\"gmaCanvas\\"') == 1
+    assert atlas.count('<canvas id="gmaCanvas"') == 1
     for mode in [
         'full-overall-canon', 'mode-188', 'unified-coherence', 'forecast',
         'full-sphere', 'relational-skin', 'dewey-calculus', 'unified-recursion',
