@@ -51,6 +51,11 @@ def test_r163_field_is_canvas_first_with_progressive_controls():
     assert "html.omega-root-field-active .nav" in environment
     assert "html.omega-root-field-active #omegaSpatialCore" in environment
     assert "html.omega-root-field-active .surface.app[data-view=\"Field\"]" in environment
+    assert "html.omega-root-field-active #omegaLivePhaseRail" in environment
+    assert "html.omega-root-field-active #omegaViewAtlasToggle" in environment
+    assert "html.omega-root-field-active #omegaViewAtlas" in environment
+    assert "html.omega-root-field-active #orsfIntegrity" in environment
+    assert "html.omega-root-field-active .work>.crumb" in environment
     assert "bottom:max(8px,env(safe-area-inset-bottom))" in environment
     assert "omegaFieldChrome='r163'" in environment
 
