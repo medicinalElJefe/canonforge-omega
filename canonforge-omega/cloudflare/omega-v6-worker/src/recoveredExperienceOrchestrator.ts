@@ -1,0 +1,47 @@
+export const RECOVERED_EXPERIENCE_BOUNDARY = "R159 restores the intended OMEGA operator experience from the accepted one-system ledger: one canonical state authority, one renderer/composition authority per viewport, a living field as the center, governed modes as projections over that field, and progressive expert tools rather than competing overlays. It changes presentation/orchestration only and does not mutate canonical state, heartbeat truth, Earth source truth, route authority, evidence classes, execution authority, or existing API contracts.";
+
+const style = `<style id="omegaRecoveredExperienceStyle">
+:root{--rx-safe-bottom:max(10px,env(safe-area-inset-bottom));--rx-safe-top:max(0px,env(safe-area-inset-top));--rx-mobile-header:76px}
+html[data-omega-experience="recovered-r159"] body{overflow-x:hidden}
+html[data-omega-experience="recovered-r159"] #omegaRootSovereignField{isolation:isolate}
+html[data-omega-experience="recovered-r159"] .omegaMobileLegacyUtility{display:none!important}
+@media(max-width:760px){
+html[data-omega-experience="recovered-r159"] .top{position:sticky!important;top:0!important;z-index:300!important;min-height:64px!important;height:auto!important}
+html[data-omega-experience="recovered-r159"] #nav,html[data-omega-experience="recovered-r159"] #omegaDock,html[data-omega-experience="recovered-r159"] #omegaSpatialCore,html[data-omega-experience="recovered-r159"] #omegaContinuityRibbon,html[data-omega-experience="recovered-r159"] #omegaContextToggle,html[data-omega-experience="recovered-r159"] #omegaContextRail{display:none!important}
+html[data-omega-experience="recovered-r159"] .omegaMobileWorkspaceRail{position:sticky!important;top:64px!important;left:auto!important;right:auto!important;bottom:auto!important;width:calc(100% - 16px)!important;max-width:none!important;margin:0 8px 10px!important;z-index:280!important;translate:none!important;transform:none!important;border-radius:16px!important;padding:6px!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;overscroll-behavior-x:contain!important;background:rgba(3,8,14,.96)!important;box-shadow:0 10px 32px rgba(0,0,0,.34)!important}
+html[data-omega-experience="recovered-r159"] .omegaMobileWorkspaceRail::-webkit-scrollbar{display:none}
+html[data-omega-experience="recovered-r159"] .omegaMobileWorkspaceRail .omwBtn{min-height:44px!important;flex:0 0 auto!important;white-space:nowrap!important}
+html[data-omega-experience="recovered-r159"] .work{padding:0 8px calc(26px + var(--rx-safe-bottom))!important}
+html[data-omega-experience="recovered-r159"] .crumb{display:none!important}
+html.omega-root-field-active[data-omega-experience="recovered-r159"] .surface.app[data-view="Field"]{display:none!important}
+html.omega-root-field-active[data-omega-experience="recovered-r159"] #omegaRootSovereignField{margin:0 0 14px!important;border-radius:16px!important;min-height:clamp(560px,72svh,820px)!important;max-height:none!important;box-shadow:0 22px 70px rgba(0,0,0,.46)!important}
+html[data-omega-experience="recovered-r159"] #gma{grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr)!important}
+html[data-omega-experience="recovered-r159"] .gmaRail{position:relative!important;display:flex!important;gap:4px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:6px!important;border-right:0!important;border-bottom:1px solid #203044!important;scrollbar-width:none!important}
+html[data-omega-experience="recovered-r159"] .gmaRail::-webkit-scrollbar{display:none}
+html[data-omega-experience="recovered-r159"] .gmaBrand{display:none!important}
+html[data-omega-experience="recovered-r159"] .gmaMode{width:auto!important;min-width:max-content!important;min-height:40px!important;margin:0!important;padding:8px 10px!important;font-size:9px!important}
+html[data-omega-experience="recovered-r159"] .gmaCenter{grid-row:2!important;min-height:0!important}
+html[data-omega-experience="recovered-r159"] .gmaHead{height:54px!important;padding:0 12px!important}
+html[data-omega-experience="recovered-r159"] .gmaTitle{font-size:10px!important;letter-spacing:.1em!important}
+html[data-omega-experience="recovered-r159"] .gmaSub{display:none!important}
+html[data-omega-experience="recovered-r159"] .gmaClock{font-size:9px!important}
+html[data-omega-experience="recovered-r159"] .gmaClock small{display:none!important}
+html[data-omega-experience="recovered-r159"] .gmaViewport{top:54px!important;bottom:48px!important}
+html[data-omega-experience="recovered-r159"] .gmaFoot{height:48px!important;padding:0 9px!important;gap:6px!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important}
+html[data-omega-experience="recovered-r159"] .gmaFoot::-webkit-scrollbar{display:none}
+html[data-omega-experience="recovered-r159"] .gmaTag{font-size:8px!important;padding:5px 7px!important}
+html[data-omega-experience="recovered-r159"] .gmaInfo{display:none!important}
+html.omega-root-field-active[data-omega-experience="recovered-r159"] .archiveWorkstation{position:relative!important;margin:14px 0!important;z-index:1!important}
+html.omega-root-field-active[data-omega-experience="recovered-r159"] .awToolbar{overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none!important}
+html.omega-root-field-active[data-omega-experience="recovered-r159"] .awViewport{min-height:52svh!important}
+html[data-omega-experience="recovered-r159"] button,html[data-omega-experience="recovered-r159"] a,html[data-omega-experience="recovered-r159"] input{touch-action:manipulation}
+html[data-omega-experience="recovered-r159"] canvas{max-width:100%!important}
+}
+@media(max-width:430px){html[data-omega-experience="recovered-r159"] .omegaMobileWorkspaceRail{top:64px!important;margin-inline:6px!important;width:calc(100% - 12px)!important}html[data-omega-experience="recovered-r159"] .omegaMobileWorkspaceRail .omwBtn{padding-inline:10px!important;font-size:.76rem!important}html.omega-root-field-active[data-omega-experience="recovered-r159"] #omegaRootSovereignField{min-height:clamp(540px,70svh,760px)!important}html[data-omega-experience="recovered-r159"] .gmaMode{padding-inline:9px!important}}
+@media(min-width:761px){html[data-omega-experience="recovered-r159"] #omegaDock{display:none!important}html[data-omega-experience="recovered-r159"] .omegaMobileWorkspaceRail{display:none!important}}
+@media(prefers-reduced-motion:reduce){html[data-omega-experience="recovered-r159"] *{scroll-behavior:auto!important}}
+</style>`;
+
+const runtime = `<script id="omegaRecoveredExperienceRuntime">(()=>{const root=document.documentElement;root.dataset.omegaExperience='recovered-r159';const legacyLabels=new Set(['CALIBRATION / ABLATION','MEMORY / SCAR','RELATION WORKBENCH','STATE WORKBENCH','CAPABILITY ROUTER','LIVE CONVERGENCE ↗','LIVE CONVERGENCE']);const normalize=s=>(s||'').replace(/\\s+/g,' ').trim().toUpperCase();function compose(){const mobile=matchMedia('(max-width:760px)').matches;root.dataset.omegaViewport=mobile?'mobile':'desktop';document.querySelectorAll('a,button').forEach(el=>{if(legacyLabels.has(normalize(el.textContent)))el.classList.add('omegaMobileLegacyUtility')});const rail=document.querySelector('.omegaMobileWorkspaceRail');if(rail){rail.setAttribute('aria-label','OMEGA primary workspaces');rail.dataset.compositionAuthority='primary-mobile-navigation'}const gma=document.querySelector('#gma');if(gma)gma.dataset.compositionRole='governed-projection';const field=document.querySelector('#omegaRootSovereignField');if(field)field.dataset.compositionRole='primary-living-field'}let queued=false;function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;compose()})}compose();addEventListener('resize',schedule,{passive:true});new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true})})();</script>`;
+
+export async function enhanceRecoveredExperience(response: Response): Promise<Response> {const type=response.headers.get('content-type')||'';if(!type.includes('text/html'))return response;let html=await response.text();if(!html.includes('OMEGA V6')||html.includes('omegaRecoveredExperienceStyle'))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});html=html.replace('</head>',style+'</head>');html=html.replace('</body>',runtime+'</body>');return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});}
