@@ -110,7 +110,7 @@ jobs:
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
           GENESIS_URL: https://omega-genesis-v1.jeffdeweyeljefe.workers.dev
-          EXPECTED_BUILD: r87-semantic-edge-settle-proof
+          EXPECTED_BUILD: r128-role-separated-v3-convergence
         run: |
           set -euo pipefail
           verified=false
@@ -133,22 +133,40 @@ jobs:
           convergence = edge.get("convergence") or {}
           peer_manifest = (edge.get("genesis") or {}).get("manifest") or {}
           if convergence.get("reciprocal_manifest_ready") is not True: raise SystemExit(1)
-          if peer_manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2": raise SystemExit(1)
+          if convergence.get("authority_contract_ready") is not True: raise SystemExit(1)
+          if convergence.get("authority_contract") != "OMEGA_ROLE_SEPARATED_CONVERGENCE_V1": raise SystemExit(1)
+          if convergence.get("genesis_may_deploy_v6") is not False: raise SystemExit(1)
+          if convergence.get("v6_release_authority") != "omega-v6-full-convergence": raise SystemExit(1)
+          if peer_manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3": raise SystemExit(1)
+          if peer_manifest.get("authority_contract") != "OMEGA_ROLE_SEPARATED_CONVERGENCE_V1": raise SystemExit(1)
+          if peer_manifest.get("runtime_role") != "GENESIS_DISCOVERY_EVOLUTION_AUTHORITY": raise SystemExit(1)
+          if peer_manifest.get("operational_release_authority") is not False: raise SystemExit(1)
+          if peer_manifest.get("public_product_role") != "V6_CANONICAL_OPERATIONAL_RUNTIME": raise SystemExit(1)
+          if peer_manifest.get("release_authority") != "omega-v6-full-convergence": raise SystemExit(1)
+          if peer_manifest.get("genesis_may_deploy_v6") is not False: raise SystemExit(1)
           if not peer_manifest.get("digest"): raise SystemExit(1)
-          if manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V2": raise SystemExit(1)
+          if manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3": raise SystemExit(1)
+          if manifest.get("authority_contract") != "OMEGA_ROLE_SEPARATED_CONVERGENCE_V1": raise SystemExit(1)
+          runtime = manifest.get("runtime") or {}
+          product = manifest.get("public_product") or {}
+          if runtime.get("role") != "GENESIS_DISCOVERY_EVOLUTION_AUTHORITY": raise SystemExit(1)
+          if runtime.get("operational_release_authority") is not False: raise SystemExit(1)
+          if product.get("role") != "V6_CANONICAL_OPERATIONAL_RUNTIME": raise SystemExit(1)
+          if product.get("release_authority") != "omega-v6-full-convergence": raise SystemExit(1)
+          if product.get("genesis_may_deploy_v6") is not False: raise SystemExit(1)
           if manifest.get("manifest_digest") != peer_manifest.get("digest"): raise SystemExit(1)
           genome = manifest.get("capability_genome") or {}
-          if int(genome.get("capability_count") or 0) < 29: raise SystemExit(1)
+          if int(genome.get("capability_count") or 0) < 32: raise SystemExit(1)
           PY
             then
               verified=true
               break
             fi
-            echo "Edge not settled on expected semantic identity yet (attempt $attempt/30)."
+            echo "Edge not settled on expected role-separated V3 identity yet (attempt $attempt/30)."
             sleep 2
           done
           if [ "$verified" != "true" ]; then
-            echo "LIVE_CONVERGENCE_VERIFY_FAILED after semantic edge-settle window."
+            echo "LIVE_CONVERGENCE_VERIFY_FAILED after role-contract edge-settle window."
             echo "V6 health:"; cat /tmp/v6-health.json || true
             echo "V6 convergence:"; cat /tmp/v6-convergence.json || true
             echo "Genesis manifest:"; cat /tmp/genesis-manifest.json || true
@@ -161,11 +179,14 @@ jobs:
           edge=json.loads(Path("/tmp/v6-convergence.json").read_text())
           manifest=json.loads(Path("/tmp/genesis-manifest.json").read_text())
           print(json.dumps({
-            "status":"LIVE_CONVERGENCE_VERIFIED",
+            "status":"LIVE_ROLE_SEPARATED_V3_CONVERGENCE_VERIFIED",
             "v6_build":health.get("build"),
+            "authority_contract":manifest.get("authority_contract"),
             "genesis_manifest_digest":manifest.get("manifest_digest"),
             "v6_observed_manifest_digest":((edge.get("genesis") or {}).get("manifest") or {}).get("digest"),
-            "genesis_capability_count":(manifest.get("capability_genome") or {}).get("capability_count")
+            "genesis_capability_count":(manifest.get("capability_genome") or {}).get("capability_count"),
+            "v6_release_authority":(edge.get("convergence") or {}).get("v6_release_authority"),
+            "genesis_may_deploy_v6":(edge.get("convergence") or {}).get("genesis_may_deploy_v6")
           }, sort_keys=True))
           PY
       - name: Record promoted SHA
