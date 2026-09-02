@@ -1,5 +1,5 @@
 export const GOVERNED_MODE_ATLAS_BOUNDARY =
-  "R167 binds Field state metrics to the canonical /api/omega/state contract instead of inventing fallback values. Continuity, future plasticity, contradiction, burden, dispatch, evidence class, digest and Address20736 are shown only when returned by the sovereign runtime. The renderer may use a neutral presentation basis while state is unavailable, but that basis is explicitly unbound and is never presented as canonical state. 20,736 is a software/model state atlas, not a physical dimension claim.";
+  "R167 binds Field state metrics to the canonical /api/omega/state contract instead of inventing fallback values. Continuity, future plasticity, contradiction, burden, dispatch, evidence class, digest and Address20736 are shown only when returned by the sovereign runtime. The renderer remains one presentation-only governed Field renderer. It may use a neutral presentation basis while state is unavailable, but that basis is explicitly unbound and is never presented as canonical state. 20,736 is a software/model state atlas, not a physical dimension claim.";
 
 const MODES = [
   ["full-overall-canon", "FULL CANON", "constitutional synthesis + admissibility"],
