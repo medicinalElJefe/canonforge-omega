@@ -11,7 +11,7 @@ def test_r150_branch_lab_is_state_bound_and_non_mutating():
         "/api/omega/state",
         "SIMULATED_CONTINUATION",
         "ROLLBACK / DISCARD",
-        "REFORK FROM OBSERVED",
+        "REFORK FROM CANONICAL",
         "Branch A",
         "Branch B",
         "STAY",
@@ -21,7 +21,7 @@ def test_r150_branch_lab_is_state_bound_and_non_mutating():
         "1728",
         "20736",
         "248832",
-        "never mutate canonical state",
+        "no canonical mutation endpoint is used",
     ]:
         assert marker in source
     assert "method:'POST'" not in source
