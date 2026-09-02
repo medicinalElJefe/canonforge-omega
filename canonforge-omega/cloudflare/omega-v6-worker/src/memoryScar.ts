@@ -1,4 +1,4 @@
-export const MEMORY_SCAR_BOUNDARY = "Memory/scar packets are browser-supplied event inputs for bounded comparison. They are not automatically evidence or canonical memory. Supplied outcomes may support an exploratory score, but they are not called held-out observations without an explicit independent validation protocol. The computation does not rewrite canonical V6/Genesis state, establish causation, or validate a forecast by itself.";
+export const MEMORY_SCAR_BOUNDARY = "Memory/scar packets are browser-supplied event inputs for bounded comparison. They are not automatically evidence or canonical memory. Supplied outcomes may support an exploratory score, but they are not called held-out observations without an explicit independent validation protocol. They do not rewrite canonical V6/Genesis state, establish causation, or validate a forecast by themselves.";
 
 export type ScarEvent = { t:number; continuity:number; plasticity:number; contradiction:number; burden:number; outcome:number|null; provenance:string };
 const clamp=(n:number)=>Math.max(0,Math.min(1,n));
