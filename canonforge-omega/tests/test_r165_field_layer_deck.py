@@ -53,7 +53,7 @@ def test_r165_preserves_r164_depth_and_r163_interaction():
     motion = text("unifiedMotionRelativity.ts")
 
     assert "r164-depth-preserving" in environment
-    assert "omega-field-panel-open" in field
+    assert "omega-field-tools-open" in field
     for marker in ["pointerdown", "pointermove", "wheel", "pinch", "omega-field-reset"]:
         assert marker in motion
 
