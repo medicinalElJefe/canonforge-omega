@@ -30,7 +30,8 @@ def test_r146_unifies_visual_computation_and_ai_on_one_atlas_context():
 def test_r146_preserves_truth_and_authority_boundaries():
     umr = (SRC / "unifiedMotionRelativity.ts").read_text(encoding="utf-8")
     wrapper = (SRC / "virtualLatticeDisplay.ts").read_text(encoding="utf-8")
-    assert 'OBSERVED_RUNTIME_WHEN_AVAILABLE' in umr
+    assert 'CANONICAL_RUNTIME_STATE' in umr
+    assert 'UNBOUND_PRESENTATION_BASIS' in umr
     assert 'DERIVED_FRAMEWORK_MATH' in umr
     assert 'USER_DEFINED_MODEL' in umr
     assert 'UTC render time is not evidence time' in wrapper
