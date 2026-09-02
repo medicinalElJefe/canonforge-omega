@@ -6,7 +6,7 @@ import { enhanceCalculusInstrument } from "./calculusInstrument";
 import { enhanceUnifiedWorkspaceAcceptance } from "./unifiedWorkspaceAcceptance";
 import { enhanceFieldExperience } from "./fieldExperience";
 
-export const SPATIAL_COMMAND_CORE_BOUNDARY = "R167 keeps navigation separate from visualization, state authority and chat. Every launch target resolves to an existing governed route. The compact switcher reports route-contract readiness only; it does not promote edge reachability into a broader operational claim.";
+export const SPATIAL_COMMAND_CORE_BOUNDARY = "R167 keeps navigation separate from visualization, state authority and chat. Every launch target resolves to an existing governed route. The compact switcher reports route-contract readiness only; it does not promote edge reachability into a broader operational claim. Chat/text output remains a separate channel from navigation and visual computation.";
 
 const routes = [
   ["FIELD","Field","/?view=Field"],
