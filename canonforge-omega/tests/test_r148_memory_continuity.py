@@ -17,7 +17,7 @@ def test_r148_memory_is_state_bound_navigable_and_non_authoritative():
     assert 'HAND OFF TO FORECAST' in memory
     assert 'Memory samples valid canonical /api/omega/state responses' in memory
     assert 'DERIVED_FRAMEWORK_MATH' in memory
-    assert 'does not create empirical evidence or a second state authority' in memory
+    assert 'not canonical metrics or empirical observations' in memory
 
 
 def test_r148_preserves_calculus_and_truth_boundaries():
