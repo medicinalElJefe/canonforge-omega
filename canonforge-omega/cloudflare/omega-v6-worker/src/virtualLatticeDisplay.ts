@@ -18,6 +18,7 @@ export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 export const VISUAL_DELIVERY_RELEASE = "r154-build-evolution-governance";
 export const RECOVERED_EXPERIENCE_RELEASE = "r159-archive-experience-recovery";
 export const INTERACTIVE_FIELD_RELEASE = "r163-immersive-living-field";
+export const FIELD_LAYER_RELEASE = "r165-non-destructive-layer-deck";
 export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const R141_VISUAL_DELIVERY_COMPATIBILITY_ID = "r141-visual-delivery-correctness";
 export const R142_VISUAL_GEOMETRY_COMPATIBILITY_ID = "r142-micro-macro-skin-geometry";
@@ -52,18 +53,20 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   headers.set("x-omega-visual-release", VISUAL_DELIVERY_RELEASE);
   headers.set("x-omega-recovery-release", RECOVERED_EXPERIENCE_RELEASE);
   headers.set("x-omega-field-release", INTERACTIVE_FIELD_RELEASE);
-  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity");
+  headers.set("x-omega-field-layer-release", FIELD_LAYER_RELEASE);
+  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck");
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
   headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+rollback+runtime-truth+integrity-v6");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
-  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"><meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}">`;
+  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"><meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"><meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}">`;
   if (!html.includes("omegaVisualDeliveryRelease")) html = html.includes("</head>") ? html.replace("</head>", meta + "</head>") : meta + html;
   else {
     html = html.replace(/<meta id="omegaVisualDeliveryRelease"[^>]*>/, `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}">`);
     if (!html.includes("omegaRecoveredExperienceRelease")) html = html.replace("</head>", `<meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"></head>`);
     if (!html.includes("omegaInteractiveFieldRelease")) html = html.replace("</head>", `<meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"></head>`);
+    if (!html.includes("omegaFieldLayerRelease")) html = html.replace("</head>", `<meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}"></head>`);
   }
   if (html.includes("data-omega-visual-release=")) html = html.replace(/data-omega-visual-release="[^"]*"/, `data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
   else html = html.replace("<html", `<html data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
