@@ -26,7 +26,7 @@ def test_r145_keeps_runtime_truth_separate_from_model_geometry():
     assert 'USER_DEFINED_MODEL' in atlas
     assert 'CANONICAL STATE:' in atlas
     assert 'omegaCanonicalState' in atlas
-    assert 'derived presentation, not observed evidence' in atlas
+    assert 'derived presentation, not source evidence' in atlas
     assert 'not a physical dimension claim' in atlas
     assert 'Date.now()' in atlas
 
