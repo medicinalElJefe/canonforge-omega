@@ -1,5 +1,5 @@
 export const GOVERNED_MODE_ATLAS_BOUNDARY =
-  "R166 preserves one presentation-only governed Field renderer and the R165 real layer deck while separating operator-facing controls from implementation vocabulary. The primary surface presents status, mode, phase, motion, zoom and layer state; provenance, model classification and solver detail remain available in the Details drawer. Canonical packet, governed mode, calculus and evidence authority are unchanged.";
+  "R166 preserves one presentation-only governed Field renderer and the R165 real layer deck while separating operator-facing controls from implementation vocabulary. The primary surface presents status, mode, phase, motion, zoom and layer state; provenance, model classification and solver detail remain available in the Details drawer. Canonical packet, governed mode, calculus and evidence authority are unchanged. 20,736 is a software/model state atlas, not a physical dimension claim.";
 
 const MODES = [
   ["full-overall-canon", "FULL CANON", "constitutional synthesis + admissibility"],
