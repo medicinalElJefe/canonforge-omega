@@ -9,7 +9,7 @@ def source() -> str:
 
 def test_r156_preserves_truth_and_authority_boundaries():
     s = source()
-    assert "does not mutate canonical state" in s
+    assert "Animation and representational shell markers are not evidence of canonical state" in s
     assert "heartbeat truth" in s
     assert "route authority" in s
     assert "Earth source truth" in s
