@@ -56,3 +56,17 @@ def test_r165_preserves_r164_depth_and_r163_interaction():
     assert "omega-field-panel-open" in field
     for marker in ["pointerdown", "pointermove", "wheel", "pinch", "omega-field-reset"]:
         assert marker in motion
+
+
+def test_r165_public_delivery_contract_requires_layer_deck():
+    wrapper = text("virtualLatticeDisplay.ts")
+    workflow = (ROOT.parent / ".github" / "workflows" / "omega-v6-visual-delivery.yml").read_text(encoding="utf-8")
+
+    assert 'FIELD_LAYER_RELEASE = "r165-non-destructive-layer-deck"' in wrapper
+    assert 'headers.set("x-omega-field-layer-release", FIELD_LAYER_RELEASE)' in wrapper
+    assert "independent-layer-deck" in wrapper
+    assert "EXPECTED_FIELD_LAYER_RELEASE: r165-non-destructive-layer-deck" in workflow
+    assert "x-omega-field-layer-release" in workflow
+    assert "gmaLayerToggle" in workflow
+    assert "omega-field-layer" in workflow
+    assert "omegaFieldLayers" in workflow
