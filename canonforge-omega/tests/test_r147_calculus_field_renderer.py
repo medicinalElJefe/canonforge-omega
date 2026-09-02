@@ -21,7 +21,7 @@ def test_r147_replaces_spoke_diagram_with_solved_field():
         'gradient_magnitude',
         'gaussian_curvature',
         'SIMULATED_CONTINUATION',
-        'SOLVED SURFACE',
+        'DERIVED SURFACE',
     ]:
         assert token in umr
 
@@ -32,7 +32,8 @@ def test_r147_does_not_render_neighbor_spokes_as_primary_geometry():
     assert "ctx.lineTo(ap[0],ap[1])" not in umr
     assert "neighbors:S.neighbors" in umr
     assert "antipode:S.anti" in umr
-    assert "Atlas neighbor/antipode relations constrain coefficients" in umr
+    assert "mode coefficients are declared visualization weights, not empirical constants" in umr
+    assert "Address/neighbors/antipode provide topology context" in umr
 
 
 def test_r147_preserves_unified_ai_context_and_truth_boundaries():
