@@ -13,10 +13,10 @@ def test_r164_field_preserves_depth_instead_of_hiding_operator_layers():
     environment = text("omegaEnvironmentShell.ts")
     field = text("fieldExperience.ts")
 
-    assert "r164-depth-preserving" in environment
-    assert "omega-field-panel-open" in field
+    assert "r166-deduplicated-depth" in environment
+    assert "omega-field-tools-open" in field
     assert "FIELD CONTROLS" in field
-    assert "CLOSE CONTROLS" in field
+    assert "Advanced Field Tools" in field
 
     # Field may de-emphasize secondary instruments, but must not delete them.
     preserved_block = """html.omega-root-field-active .top,
@@ -34,8 +34,8 @@ html.omega-root-field-active #orsfIntegrity{opacity:.22"""
 
     assert "opacity:.22" in environment
     assert ".awTruth{display:grid}" in field
-    assert "transform:translateY(calc(100% + 120px))" in field
-    assert "html.omega-field-panel-open .archiveWorkstation .awPanel{transform:none}" in field
+    assert "transform:translateX(calc(100% + 42px))" in field
+    assert "html.omega-field-tools-open .archiveWorkstation{transform:none" in field
 
 
 def test_r164_field_keeps_primary_stage_and_existing_interaction_contract():

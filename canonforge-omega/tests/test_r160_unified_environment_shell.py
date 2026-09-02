@@ -10,7 +10,7 @@ def test_r160_environment_shell_is_wired_and_truth_bounded():
 
     assert "OMEGA_ENVIRONMENT_SHELL_BOUNDARY" in env
     assert "Observation, interpretation, hypothesis, canonical state, permission, execution, outcome and proof remain distinct" in env
-    assert "Reasoning may propose" in env
+    assert "Ideas, simulations, actions and evidence stay separate" in env
     assert "data-oes-app=\"Field\"" in env
     assert "data-oes-app=\"Earth\"" in env
     assert "data-oes-app=\"Assistant\"" in env
@@ -19,10 +19,10 @@ def test_r160_environment_shell_is_wired_and_truth_bounded():
     assert "/api/convergence/edge" in env
     assert "/api/hybrid/status" in env
     assert "/api/development/status" in env
-    assert "authenticated host" in env
-    assert "no host proof" in env
-    assert "unobserved" in env
-    assert "omegaEnvironmentShell='r160'" in env
+    assert "PC connected" in env
+    assert "not verified" in env
+    assert "not observed" in env
+    assert "omegaEnvironmentShell='r166'" in env
 
     assert 'import { enhanceOmegaEnvironmentShell } from "./omegaEnvironmentShell";' in sovereign
     assert "enhanceOmegaEnvironmentShell(await lattice)" in sovereign
@@ -41,6 +41,6 @@ def test_r160_does_not_create_shadow_authority_or_fake_execution():
         assert token not in env
 
     assert "second state authority" in env
-    assert "never invents heartbeat" in env
-    assert "successful outcome" in env
-    assert "source interfaces reachable" in env
+    assert "does not create a second state authority" in env
+    assert "fabricate execution, evidence, heartbeat, or deployment success" in env
+    assert "reachable" in env

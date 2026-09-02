@@ -57,12 +57,12 @@ def test_r163_field_is_canvas_first_with_progressive_controls():
     assert "html.omega-root-field-active #orsfIntegrity" in environment
     assert "html.omega-root-field-active .work>.crumb" in environment
     assert "bottom:max(8px,env(safe-area-inset-bottom))" in environment
-    assert "omegaFieldChrome='r164-depth-preserving'" in environment
+    assert "omegaFieldChrome='r166-deduplicated-depth'" in environment
 
 
 def test_r163_integrity_uses_the_live_field_frame_not_retired_skin():
     integrity = text("visualRuntimeIntegrity.ts")
-    assert "['r163','r164'].includes(h.dataset.omegaFieldExperience||'')" in integrity
+    assert "['r163','r164','r166'].includes(h.dataset.omegaFieldExperience||'')" in integrity
     assert "omegaFieldFrame" in integrity
     assert "fieldActive?fieldFrame:skin" in integrity
 
