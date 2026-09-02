@@ -1,4 +1,4 @@
-export const FIELD_EXPERIENCE_BOUNDARY = "R166 keeps the living Field clean without discarding depth. The primary canvas owns normal interaction; X-ray, Atlas, Split, Replay and channel controls move into an explicit Advanced Tools drawer opened from the Field toolbar. Those tools remain functional and state-bound, but no longer duplicate the primary renderer in the normal layout.";
+export const FIELD_EXPERIENCE_BOUNDARY = "R166 keeps the living Field clean without discarding depth. The primary canvas owns normal interaction; drag · zoom · x-ray · replay · atlas remain available. X-ray, Atlas, Split, Replay and channel controls move into an explicit Advanced Tools drawer opened from the Field toolbar. Those tools remain functional and state-bound, but no longer duplicate the primary renderer in the normal layout.";
 
 const style=`<style id="omegaFieldExperienceStyle">
 #omegaFieldFocusBar{display:none!important}
