@@ -21,12 +21,12 @@ def test_r103_truth_layers_do_not_promote_genesis_declarations_to_observation():
     assert 'capability_declaration:"USER_DEFINED_MODEL"' in s
     assert 'reciprocal_manifest:truthClass(index)' in s
     assert 'physical_claims:"NO_EVIDENCE"' in s
-    assert 'manifest_agreed?"OBSERVED/MEASURED":"NO_EVIDENCE"' in s
+    assert 'manifest_agreed?"DERIVED_CONTRACT_MATCH":"NO_EVIDENCE"' in s
 
 
 def test_r103_routes_only_after_current_manifest_and_hybrid_gate_when_required():
     s=ROUTER.read_text(encoding='utf-8')
-    for token in ['ready_for_route_preview:Boolean(index.manifest_agreed&&hybridReady)','capability_route_not_currently_admissible','hybrid_required:hybridRequired','heartbeat_current','route_before_generation: true']:
+    for token in ['const admitted=Boolean(index.manifest_agreed&&hybridReady)','route_admitted:admitted','ready_for_route_preview:admitted','capability_route_not_currently_admissible','hybrid_required:hybridRequired','heartbeat_current','route_before_generation: true']:
         assert token in s
 
 
