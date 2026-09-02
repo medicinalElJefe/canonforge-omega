@@ -15,7 +15,7 @@ def test_r153_preserves_visual_integrity_and_truth_boundaries():
     assert "heartbeat truth" in s
     assert "Earth source truth" in s
     assert "route authority" in s
-    assert "representational shells" in s
+    assert "representational shell markers are not evidence" in s
 
 
 def test_mobile_workspace_navigation_is_stateful_and_direct():
