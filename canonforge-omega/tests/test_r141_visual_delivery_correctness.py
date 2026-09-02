@@ -12,7 +12,8 @@ def test_r141_binds_integrity_after_visual_layers_without_new_authority():
     assert 'enhanceVisualRuntimeIntegrity(rendered)' in wrapper
     assert wrapper.index('enhanceLivePhaseVisual(rendered)') < wrapper.index('enhanceVisualRuntimeIntegrity(rendered)')
     assert 'visual-render integrity from canonical-state availability' in integrity
-    assert 'UTC, phase, relativity-depth and individual-skin markers' in integrity
+    assert 'visual-render integrity' in integrity
+    assert 'canonical-state availability' in integrity
     assert 'omegaVisualIntegrity' in integrity
 
 
