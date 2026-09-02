@@ -13,9 +13,9 @@ def test_r152_earth_truth_lens_is_source_bound_and_non_mutating():
         "OBSERVED_SOURCE",
         "DERIVED_FRAMEWORK_MATH",
         "FORECAST_PROJECTION",
-        "Missing geospatial coordinates are never invented",
+        "Missing coordinates and missing state are explicitly withheld",
         "cannot mutate canonical state",
-        "no invented coordinates",
+        "coordinates:'not invented when absent'",
     ]:
         assert marker in src
     assert "fetch('/api/earth/catalog'" in src
