@@ -10,7 +10,7 @@ def source() -> str:
 def test_r153_preserves_visual_integrity_and_truth_boundaries():
     s = source()
     assert "omegaVisualRuntimeIntegrityRuntime" in s
-    assert "UTC, phase, relativity-depth and individual-skin markers" in s
+    assert "separates visual-render integrity from canonical-state availability" in s
     assert "does not mutate canonical state" in s
     assert "heartbeat truth" in s
     assert "Earth source truth" in s
