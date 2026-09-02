@@ -16,7 +16,7 @@ def test_r149_intelligence_is_inspectable_and_route_gated():
         "route-before-generation",
         "SIMULATED_CONTINUATION",
         "MODEL_OUTPUT",
-        "does not mutate canonical state",
+        "No canonical mutation occurred",
     ]:
         assert marker in text
     assert "oirGenerate\" disabled" in text
