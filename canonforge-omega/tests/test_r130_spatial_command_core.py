@@ -25,7 +25,7 @@ def test_r135_navigation_preserves_real_v6_surfaces_without_becoming_state_autho
     assert '/api/convergence/edge' in core
     assert 'authority_contract_ready' in core
     assert 'route-contract readiness only' in core
-    assert 'chat/text output remains a separate channel' in core
+    assert 'Chat/text output remains a separate channel' in core
 
 
 def test_r135_visual_renderer_is_bound_but_not_reimplemented_in_navigation():
