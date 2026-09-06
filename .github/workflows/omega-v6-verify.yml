@@ -1,5 +1,8 @@
 name: OMEGA V6 verify
 
+# Inherited post-deploy proof identity retained for R86/R128 continuity:
+# LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3
+
 on:
   push:
     branches: [omega-v6-full-convergence]
@@ -223,6 +226,7 @@ jobs:
           manifest=json.loads(Path("/tmp/genesis-manifest.json").read_text())
           print(json.dumps({
             "status":"LIVE_CONVERGENCE_VERIFIED__R174_FEDERATED_ORGAN_FABRIC",
+            "inherited_status":"LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3",
             "v6_build":health.get("build"),
             "authority_contract":manifest.get("authority_contract"),
             "genesis_manifest_digest":manifest.get("manifest_digest"),
