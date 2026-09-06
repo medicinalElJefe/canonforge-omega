@@ -183,10 +183,11 @@ function findJob(status: Obj, jobId: string): Obj | null {
 async function comparePersistedJob(request: Request, body: Obj): Promise<Obj> {
   const jobId = String(body.job_id || body.jobId || "");
   if (!jobId) throw new Error("job_id is required");
-  const [status, hybrid] = await Promise.all([
+  const [status, hybridRaw] = await Promise.all([
     fetchCanonicalJson(request, "/api/development/status"),
-    fetchCanonicalJson(request, "/api/hybrid/status").catch(error => ({ state: "UNAVAILABLE", error: String(error) })),
+    fetchCanonicalJson(request, "/api/hybrid/status").catch(error => ({ state: "UNAVAILABLE", error: String(error) } as Obj)),
   ]);
+  const hybrid: Obj = hybridRaw as Obj;
   const job = findJob(status, jobId);
   if (!job) return { ok: false, state: "PENDING_OR_UNKNOWN", job_id: jobId, validationTier: { level: 3, id: "CROSS_RUNTIME_PARITY" }, boundary: CROSS_RUNTIME_BOUNDARY_R173 };
   const payload = job.payload || {}, evidence = job.evidence || {}, nativeReceipt = evidence.native_receipt || {};
