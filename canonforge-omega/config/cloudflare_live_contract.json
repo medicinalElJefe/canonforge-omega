@@ -1,8 +1,8 @@
 {
-  "schema": "omega.cloudflare.live-contract.v1",
+  "schema": "omega.cloudflare.live-contract.v2",
   "canonical_worker": "omegav6",
-  "observed_at": "2026-08-31T05:34:34Z",
-  "observation_source": "Cloudflare deploy API compatibility error 10064 during exact-head promotion",
+  "observed_at": "2026-09-06T19:31:45Z",
+  "observation_source": "Cloudflare deploy API error 10074 reported the live Worker migration tag r125-autonomic-swarm and confirmed OmegaRuntime is an existing Durable Object namespace",
   "required_exports": [
     "OmegaRuntime"
   ],
@@ -11,17 +11,22 @@
       "required": true,
       "delete_class_allowed": false,
       "rename_class_allowed": false,
-      "behavior_recovery_required_before_replacement": true
+      "behavior_recovery_required_before_replacement": true,
+      "storage_backend": "sqlite"
     }
   },
-  "promotion_policy": "HOLD deployment when the candidate does not preserve every required live Durable Object export. Never infer that a class can be deleted merely because current repository source omits it.",
-  "truth_boundary": "The live-platform requirement was observed directly. The implementation and migration identity were subsequently recovered from the public historical OMEGAv6 R32/R33 lineage; promotion still requires exact-head tests and Cloudflare compatibility proof.",
+  "promotion_policy": "HOLD deployment when the candidate does not preserve every required live Durable Object export, binding identity, behavior marker, and storage lifecycle. Do not replay stale new_sqlite_class migrations over an existing namespace.",
+  "truth_boundary": "The live-platform requirement and current published migration tag were observed directly from Cloudflare deployment responses. The OmegaRuntime implementation was recovered from the public historical OMEGAv6 R32/R33 lineage. R168 moves the repository configuration from legacy imperative migration replay to Cloudflare's declarative exports lifecycle while preserving the existing SQLite namespace and exact binding identity.",
   "recovery": {
     "status": "BEHAVIOR_SOURCE_RECOVERED",
+    "lifecycle_status": "DECLARATIVE_SQLITE_BOUND",
     "source_repo": "medicinalElJefe/OMEGAv6",
     "r32_commit": "d7cbbfe166baf04a42dc7a50d13776ac33ef742b",
     "r33_commit": "ca0660a128f8df88375a9f8e27931c94208c159b",
     "migration_tag": "r32-enacted-runtime",
+    "published_migration_tag_observed": "r125-autonomic-swarm",
+    "lifecycle_mode": "exports",
+    "storage_backend": "sqlite",
     "binding_name": "OMEGA_RUNTIME",
     "behavior_markers": [
       "OMEGA_LIVING_RUNTIME_R33",

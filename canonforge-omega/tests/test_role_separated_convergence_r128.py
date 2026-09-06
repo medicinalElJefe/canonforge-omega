@@ -14,7 +14,10 @@ def test_r128_preserves_canonical_entrypoint_and_durable_object_contract():
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'name = "OMEGA_RUNTIME"' in wrangler
     assert 'class_name = "OmegaRuntime"' in wrangler
-    assert 'tag = "r32-enacted-runtime"' in wrangler
+    assert '[exports.OmegaRuntime]' in wrangler
+    assert 'type = "durable-object"' in wrangler
+    assert 'storage = "sqlite"' in wrangler
+    assert '[[migrations]]' not in wrangler
     assert 'binding = "GENESIS"' in wrangler
     assert 'service = "omega-genesis-v1"' in wrangler
 
