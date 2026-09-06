@@ -13,6 +13,11 @@ CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
 RELATION_WORKBENCH_ID = "r94-relation-workbench-graph-projection"
 RICH_OPERATIONAL_UI_ID = "r126-rich-operational-expansion"
 SWARM_NAMESPACE_RECOVERY_ID = "r169-public-r121-r123-r125-lineage"
+SWARM_PRECISION_BODY_ID = "r170-live-plan-mission-instrument"
+SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+
+[ai]
+binding = "AI"
 
 [[durable_objects.bindings]]
 name = "OMEGA_RUNTIME"
