@@ -1,0 +1,194 @@
+name: OMEGA V6 R178 live warp build candidate proof
+
+on:
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpBuildCandidateR178.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpBuildCandidateLabR178.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/omega_runtime/warp_candidate.py'
+      - 'canonforge-omega/omega_runtime/self_build.py'
+      - '.github/workflows/omega-v6-r178-live-candidate-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r178-warp-build-candidate:
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Wait for R178 candidate fabric after canonical deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 120); do
+            if curl --fail --silent --show-error "$V6_URL/api/swarm/build/manifest" -o /tmp/r178-manifest.json \
+              && python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r178-manifest.json').read_text())
+          assert d.get('ok') is True
+          assert d.get('schema') == 'OMEGA_WARP_BUILD_CANDIDATE_MANIFEST_R178'
+          assert d.get('revision') == 'R178'
+          assert d.get('sourceIntegrityRevision') == 'R177'
+          assert d.get('candidateSchema') == 'OMEGA_WARP_BUILD_CANDIDATE_R178'
+          assert d.get('canonicalMutation') is False
+          assert d.get('deploymentAuthorized') is False
+          assert d.get('promotionAuthorized') is False
+          assert d.get('executableImportActions') == ['run_tests','build_vite','wrangler_dry_run','verify_candidate']
+          PY
+            then
+              curl --fail --silent --show-error "$V6_URL/warp/build" -o /tmp/r178-lab.html
+              exit 0
+            fi
+            if [ "$attempt" -eq 120 ]; then
+              echo "R178 build candidate fabric did not settle on the public edge"
+              cat /tmp/r178-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Launch exact 12-cell strict source pulse
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/launch" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"R178 live source proof: produce an exact strict bounded software-build receipt for candidate synthesis.","profile":"PULSE","purpose":"BUILD","providerBudget":0}' \
+            -o /tmp/r178-launch.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r178-launch.json').read_text())
+          assert d['ok'] is True, d
+          assert d['integrityRevision'] == 'R177', d
+          assert d['profile'] == 'PULSE', d
+          assert d['expectedCells'] == 12, d
+          assert len(d['refs']) == 1, d
+          session={'warpId':d['warpId'],'profile':d['profile'],'purpose':d['purpose'],'refs':d['refs']}
+          Path('/tmp/r178-session.json').write_text(json.dumps(session))
+          print(json.dumps({'status':'R178_SOURCE_PULSE_LAUNCHED','warpId':d['warpId']}, sort_keys=True))
+          PY
+
+      - name: Advance source pulse to strict terminal receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          for wave in $(seq 1 12); do
+            curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/tick" \
+              -H 'content-type: application/json' --data-binary @/tmp/r178-session.json \
+              -o /tmp/r178-source-state.json
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r178-source-state.json').read_text())
+          print(json.dumps({'state':d.get('state'),'progress':d.get('progress'),'completed':d.get('completedCells'),'failed':d.get('failedCells'),'receipt':bool(d.get('receipt'))}, sort_keys=True))
+          PY
+            if python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r178-source-state.json').read_text())
+          sys.exit(0 if d.get('receipt') else 1)
+          PY
+            then break; fi
+            sleep 1
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r178-source-state.json').read_text())
+          assert d['ok'] is True, d
+          assert d['state'] == 'COMPLETE', d
+          assert d['integrityRevision'] == 'R177', d
+          assert d['totalCells'] == 12 and d['completedCells'] == 12 and d['failedCells'] == 0, d
+          inv=d['completionInvariant']
+          assert inv['strict'] is True and inv['allShardsAccounted'] is True, inv
+          assert inv['accountedCells'] == 12 and inv['delta'] == 0 and inv['invalidShardCount'] == 0, inv
+          r=d['receipt']
+          assert r['strictCompletionInvariant'] is True and r['proofState'] == 'RETURNED_NOT_ADMITTED', r
+          assert r['canonicalMutation'] is False, r
+          PY
+
+      - name: Fold strict receipt into live R178 candidate capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          session=json.loads(Path('/tmp/r178-session.json').read_text())
+          session['objective']='Advance OMEGA additively across all software capability dimensions using the proved R177 execution fabric while preserving existing capability, evidence boundaries, tests, interface compatibility, sovereign execution, and separate promotion authority.'
+          Path('/tmp/r178-candidate-request.json').write_text(json.dumps(session))
+          PY
+          curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/build/candidate" \
+            -H 'content-type: application/json' --data-binary @/tmp/r178-candidate-request.json \
+            -o /tmp/r178-candidate.json
+
+      - name: Verify candidate identity, cross-runtime hash contract and authority boundaries
+        shell: python
+        run: |
+          import hashlib, json
+          from pathlib import Path
+          def canonical(v):
+              return json.dumps(v, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+          def sha_text(v):
+              return hashlib.sha256(v.encode('utf-8')).hexdigest()
+          d=json.loads(Path('/tmp/r178-candidate.json').read_text())
+          lab=Path('/tmp/r178-lab.html').read_text()
+          assert d['ok'] is True, d
+          assert d['schema'] == 'OMEGA_WARP_BUILD_CANDIDATE_RESPONSE_R178', d
+          assert d['revision'] == 'R178', d
+          gate=d['sourceGate']
+          assert gate['exactCompletion'] is True and gate['strictR177Integrity'] is True and gate['zeroFailedCells'] is True, gate
+          c=d['candidate']
+          assert c['schema'] == 'OMEGA_WARP_BUILD_CANDIDATE_R178', c
+          assert c['revision'] == 'R178', c
+          assert c['source']['integrityRevision'] == 'R177', c
+          assert c['source']['totalCells'] == 12 and c['source']['completedCells'] == 12 and c['source']['failedCells'] == 0, c
+          assert c['sourceReceipt']['strictCompletionInvariant'] is True, c
+          assert c['sourceReceipt']['proofState'] == 'RETURNED_NOT_ADMITTED', c
+          assert c['sourceReceipt']['canonicalMutation'] is False, c
+          assert c['authority'] == 'CANDIDATE_NOT_CANON', c
+          assert c['canonicalMutation'] is False
+          assert c['sourceMutationAuthorized'] is False
+          assert c['githubMutationAuthorized'] is False
+          assert c['deploymentAuthorized'] is False
+          assert c['promotionAuthorized'] is False
+          assert c['physicalDimensionClaim'] is False
+          assert c['performanceGuaranteeClaim'] is False
+          assert len(c['capabilityDelta']['targetDimensions']) == 12, c
+          assert [a['kind'] for a in c['actions']] == ['prepare_candidate','run_tests','build_vite','wrangler_dry_run','verify_candidate'], c
+          assert c['objectiveSha256'] == sha_text(c['objective']), c
+          assert c['sourceReceiptCanonicalSha256'] == sha_text(canonical(c['sourceReceipt'])), c
+          core=dict(c); capsule=core.pop('capsuleSha256')
+          assert capsule == sha_text(canonical(core)), c
+          assert len(capsule) == 64
+          q=d['sovereignEnqueue']
+          assert q['path'] == '/api/development/enqueue', q
+          assert q['automaticSubmission'] is False, q
+          assert q['requiresSovereignGateway'] is True, q
+          assert q['body']['kind'] == 'run_tests', q
+          p=q['body']['payload']
+          assert p['schema'] == 'OMEGA_SOVEREIGN_WARP_CANDIDATE_JOB_R178', p
+          assert p['sequence_index'] == 1, p
+          assert p['candidate_sha256'] == capsule, p
+          assert p['canonical_mutation'] is False and p['deployment_authorized'] is False and p['promotion_authorized'] is False, p
+          assert d['executableValidationSequence'] == ['run_tests','build_vite','wrangler_dry_run','verify_candidate'], d
+          assert 'RUN + BUILD CANDIDATE' in lab
+          assert 'Sovereign validation path' in lab
+          print(json.dumps({
+              'status':'LIVE_R178_WARP_BUILD_CANDIDATE_VERIFIED',
+              'candidateId':c['candidateId'],
+              'candidateSha256':capsule,
+              'sourceWarpId':c['source']['warpId'],
+              'sourceReceiptSha256':c['source']['receiptSha256'],
+              'sourceCells':c['source']['totalCells'],
+              'capabilityDimensions':len(c['capabilityDelta']['targetDimensions']),
+              'sovereignFirstStage':q['body']['kind'],
+          }, sort_keys=True))
