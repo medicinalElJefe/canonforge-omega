@@ -13,6 +13,7 @@ import { enhanceRecoveredExperience } from "./recoveredExperienceOrchestrator";
 import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from "./virtualLatticeDisplayCore";
 import { enhanceSaiHybridComputeField, SAI_HYBRID_MOTION_RELEASE } from "./saiHybridComputeField";
 import { enhanceSwarmPrecisionBodyR171, SWARM_PRECISION_BODY_RELEASE } from "./swarmPrecisionBodyR171";
+import { enhanceValidationOverlayR172, VALIDATION_OVERLAY_RELEASE_R172 } from "./validation/validationOverlayR172";
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
@@ -24,6 +25,7 @@ export const OPERATOR_CLARITY_RELEASE = "r166-operator-clarity";
 export const STATE_ACCURACY_RELEASE = "r167-authoritative-state-accuracy";
 export const SAI_HYBRID_RELEASE = SAI_HYBRID_MOTION_RELEASE;
 export const SWARM_COMPUTATION_RELEASE = SWARM_PRECISION_BODY_RELEASE;
+export const HETEROGENEOUS_VALIDATION_RELEASE = VALIDATION_OVERLAY_RELEASE_R172;
 export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const R141_VISUAL_DELIVERY_COMPATIBILITY_ID = "r141-visual-delivery-correctness";
 export const R142_VISUAL_GEOMETRY_COMPATIBILITY_ID = "r142-micro-macro-skin-geometry";
@@ -43,7 +45,7 @@ export const R158_MOBILE_FIELD_COMPATIBILITY_ID = "r158-mobile-field-composition
 export const R163_INTERACTIVE_FIELD_COMPATIBILITY_ID = "r163-interactive-living-field";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
-  "R171 preserves every inherited visual/state/heartbeat/Earth/build boundary and adds live computation-swarm instrumentation. All 1,728 cell addresses can be rendered, but idle address capacity is not represented as active computation. Planner selection comes only from /api/swarm/autonomic/plan. Redundant solver execution comes only from distinct Durable Object cell receipts returned by /api/swarm/compute-consensus. Those replicas share one reference implementation, so agreement is execution-consistency evidence rather than independent solver validation. R170 Lorentz/TMM/conservative-transfer/diffusion/scalar-wave computations remain DERIVED, nativeExecution=false in cloud, and do not mutate CanonState. TMM remains reduced-order normal-incidence layered-media screening, scalar-wave FDTD remains non-Maxwell, PC ONLINE remains heartbeat-gated, and 12/144/1728/20736 remain software address/execution-resolution levels rather than physical dimensions.";
+  "R172 preserves every inherited visual/state/heartbeat/Earth/build boundary and extends R171 with explicit validation evidence. The operator field distinguishes address capacity, active swarm execution, replica agreement, invariant/identity checks, independent formulations, cross-runtime parity, independent solver families, and external measurement instead of collapsing them into one confidence signal. All 1,728 cell addresses can be rendered, but idle address capacity is not active computation. Planner selection comes only from /api/swarm/autonomic/plan. Redundant solver execution comes only from distinct Durable Object cell receipts. R172 reference validation comes only from /api/validate/reference and remains VALIDATION_RECEIPT_NOT_CANON. R170 cloud computations remain DERIVED and nativeExecution=false, TMM remains reduced-order normal-incidence layered-media screening, scalar-wave FDTD remains non-Maxwell, PC ONLINE remains heartbeat-gated, and 12/144/1728/20736 remain software address/execution-resolution levels rather than physical dimensions.";
 
 /* Historical preservation signatures — NON-EXECUTING compatibility anchors only.
 enhanceArchiveRecoveredWorkstation(response)
@@ -64,13 +66,14 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   headers.set("x-omega-state-release", STATE_ACCURACY_RELEASE);
   headers.set("x-omega-sai-hybrid-release", SAI_HYBRID_RELEASE);
   headers.set("x-omega-swarm-computation-release", SWARM_COMPUTATION_RELEASE);
-  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults+sai-hybrid-motion-fabric+truth-bound-ai-context+live-1728-address-body+derived-compute-consensus-receipts");
+  headers.set("x-omega-validation-release", HETEROGENEOUS_VALIDATION_RELEASE);
+  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults+sai-hybrid-motion-fabric+truth-bound-ai-context+live-1728-address-body+derived-compute-consensus-receipts+heterogeneous-validation-tiers");
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
-  headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+sai-hybrid-ai-context+swarm-reference-computation+rollback+runtime-truth+integrity-v6");
+  headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+sai-hybrid-ai-context+swarm-reference-computation+validation-evidence-separation+rollback+runtime-truth+integrity-v6");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
-  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"><meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"><meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}"><meta id="omegaOperatorClarityRelease" name="omega-operator-release" content="${OPERATOR_CLARITY_RELEASE}"><meta id="omegaStateAccuracyRelease" name="omega-state-release" content="${STATE_ACCURACY_RELEASE}"><meta id="omegaSaiHybridRelease" name="omega-sai-hybrid-release" content="${SAI_HYBRID_RELEASE}"><meta id="omegaSwarmComputationRelease" name="omega-swarm-computation-release" content="${SWARM_COMPUTATION_RELEASE}">`;
+  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"><meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"><meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}"><meta id="omegaOperatorClarityRelease" name="omega-operator-release" content="${OPERATOR_CLARITY_RELEASE}"><meta id="omegaStateAccuracyRelease" name="omega-state-release" content="${STATE_ACCURACY_RELEASE}"><meta id="omegaSaiHybridRelease" name="omega-sai-hybrid-release" content="${SAI_HYBRID_RELEASE}"><meta id="omegaSwarmComputationRelease" name="omega-swarm-computation-release" content="${SWARM_COMPUTATION_RELEASE}"><meta id="omegaValidationRelease" name="omega-validation-release" content="${HETEROGENEOUS_VALIDATION_RELEASE}">`;
   if (!html.includes("omegaVisualDeliveryRelease")) html = html.includes("</head>") ? html.replace("</head>", meta + "</head>") : meta + html;
   else {
     html = html.replace(/<meta id="omegaVisualDeliveryRelease"[^>]*>/, `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}">`);
@@ -82,6 +85,7 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
       ["omegaStateAccuracyRelease", `<meta id="omegaStateAccuracyRelease" name="omega-state-release" content="${STATE_ACCURACY_RELEASE}">`],
       ["omegaSaiHybridRelease", `<meta id="omegaSaiHybridRelease" name="omega-sai-hybrid-release" content="${SAI_HYBRID_RELEASE}">`],
       ["omegaSwarmComputationRelease", `<meta id="omegaSwarmComputationRelease" name="omega-swarm-computation-release" content="${SWARM_COMPUTATION_RELEASE}">`],
+      ["omegaValidationRelease", `<meta id="omegaValidationRelease" name="omega-validation-release" content="${HETEROGENEOUS_VALIDATION_RELEASE}">`],
     ] as const;
     for (const [id, tag] of tags) if (!html.includes(id)) html = html.replace("</head>", tag + "</head>");
   }
@@ -106,5 +110,6 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   rendered = await enhanceRecoveredExperience(rendered);
   rendered = await enhanceSaiHybridComputeField(rendered);
   rendered = await enhanceSwarmPrecisionBodyR171(rendered);
+  rendered = await enhanceValidationOverlayR172(rendered);
   return stampDeliveredVisual(rendered);
 }
