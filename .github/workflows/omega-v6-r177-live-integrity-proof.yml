@@ -1,0 +1,175 @@
+name: OMEGA V6 R177 live warp integrity proof
+
+on:
+  push:
+    branches: [omega-v6-full-convergence]
+
+jobs:
+  prove-r177-warp-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for R177 integrity fabric after canonical deployment
+        shell: bash
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 120); do
+            if curl --fail --silent --show-error "$V6_URL/api/swarm/warp/manifest" -o /tmp/r177-manifest.json \
+              && python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-manifest.json').read_text())
+          assert d.get('ok') is True
+          assert d.get('schema') == 'OMEGA_WARP_MANIFEST_R176'
+          assert d.get('integrityRevision') == 'R177'
+          e=d.get('execution') or {}
+          assert e.get('serializedMissionProcessing') is True
+          assert e.get('inflightJournal') is True
+          assert e.get('idempotentCellTaskReplay') is True
+          assert e.get('strictTerminalAccounting') is True
+          PY
+            then
+              curl --fail --silent --show-error "$V6_URL/warp" -o /tmp/r177-lab.html
+              exit 0
+            fi
+            if [ "$attempt" -eq 120 ]; then
+              echo "R177 integrity fabric did not settle on the public edge"
+              cat /tmp/r177-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Prove exact 576-cell WARP completion
+        shell: bash
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/launch" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"R177 live integrity proof: execute exactly 576 bounded BUILD cells and reject any under-accounted terminal state.","profile":"WARP","purpose":"BUILD","providerBudget":0}' \
+            -o /tmp/r177-warp-launch.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-warp-launch.json').read_text())
+          assert d['ok'] is True, d
+          assert d['profile'] == 'WARP', d
+          assert d['expectedCells'] == 576, d
+          assert d['integrityRevision'] == 'R177', d
+          assert len(d['refs']) == 4, d
+          Path('/tmp/r177-warp-session.json').write_text(json.dumps({
+              'warpId': d['warpId'], 'profile': d['profile'], 'purpose': d['purpose'], 'refs': d['refs']
+          }))
+          print(json.dumps({'status':'R177_WARP_LAUNCHED','warpId':d['warpId'],'shards':len(d['refs'])}, sort_keys=True))
+          PY
+          for wave in $(seq 1 20); do
+            curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/tick" \
+              -H 'content-type: application/json' --data-binary @/tmp/r177-warp-session.json \
+              -o /tmp/r177-warp-state.json
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-warp-state.json').read_text())
+          print(json.dumps({'state':d.get('state'),'progress':d.get('progress'),'completed':d.get('completedCells'),'failed':d.get('failedCells'),'receipt':bool(d.get('receipt'))}, sort_keys=True))
+          PY
+            if python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-warp-state.json').read_text())
+          sys.exit(0 if d.get('receipt') else 1)
+          PY
+            then break; fi
+            sleep 1
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-warp-state.json').read_text())
+          assert d['ok'] is True, d
+          assert d['state'] == 'COMPLETE', d
+          assert d['integrityRevision'] == 'R177', d
+          assert d['totalCells'] == 576, d
+          assert d['completedCells'] == 576, d
+          assert d['failedCells'] == 0, d
+          assert d['shardCount'] == 4, d
+          inv=d['completionInvariant']
+          assert inv['strict'] is True and inv['allShardsAccounted'] is True, inv
+          assert inv['accountedCells'] == 576 and inv['delta'] == 0 and inv['invalidShardCount'] == 0, inv
+          receipt=d['receipt']
+          assert receipt and receipt['strictCompletionInvariant'] is True, d
+          assert receipt['totalCells'] == 576 and receipt['completedCells'] == 576 and receipt['failedCells'] == 0, receipt
+          assert receipt['proofState'] == 'RETURNED_NOT_ADMITTED', receipt
+          assert receipt['canonicalMutation'] is False, receipt
+          assert len(receipt['receiptSha256']) == 64, receipt
+          print(json.dumps({'status':'LIVE_R177_576_OF_576_VERIFIED','warpId':d['warpId'],'merkleRoot':d['resultMerkleRoot'],'receiptSha256':receipt['receiptSha256']}, sort_keys=True))
+          PY
+
+      - name: Prove exact 1728-cell FULL completion
+        shell: bash
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/launch" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"R177 live integrity proof: execute the full 1,728-cell OMEGA swarm with strict shard accounting and no Canon mutation.","profile":"FULL","purpose":"BUILD","providerBudget":0}' \
+            -o /tmp/r177-full-launch.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-full-launch.json').read_text())
+          assert d['ok'] is True, d
+          assert d['profile'] == 'FULL', d
+          assert d['expectedCells'] == 1728, d
+          assert d['integrityRevision'] == 'R177', d
+          assert len(d['refs']) == 12, d
+          Path('/tmp/r177-full-session.json').write_text(json.dumps({
+              'warpId': d['warpId'], 'profile': d['profile'], 'purpose': d['purpose'], 'refs': d['refs']
+          }))
+          print(json.dumps({'status':'R177_FULL_LAUNCHED','warpId':d['warpId'],'shards':len(d['refs'])}, sort_keys=True))
+          PY
+          for wave in $(seq 1 24); do
+            curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/tick" \
+              -H 'content-type: application/json' --data-binary @/tmp/r177-full-session.json \
+              -o /tmp/r177-full-state.json
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-full-state.json').read_text())
+          print(json.dumps({'state':d.get('state'),'progress':d.get('progress'),'completed':d.get('completedCells'),'failed':d.get('failedCells'),'receipt':bool(d.get('receipt'))}, sort_keys=True))
+          PY
+            if python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-full-state.json').read_text())
+          sys.exit(0 if d.get('receipt') else 1)
+          PY
+            then break; fi
+            sleep 1
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r177-full-state.json').read_text())
+          assert d['ok'] is True, d
+          assert d['state'] == 'COMPLETE', d
+          assert d['integrityRevision'] == 'R177', d
+          assert d['totalCells'] == 1728, d
+          assert d['completedCells'] == 1728, d
+          assert d['failedCells'] == 0, d
+          assert d['shardCount'] == 12, d
+          inv=d['completionInvariant']
+          assert inv['strict'] is True and inv['allShardsAccounted'] is True, inv
+          assert inv['accountedCells'] == 1728 and inv['delta'] == 0 and inv['invalidShardCount'] == 0, inv
+          receipt=d['receipt']
+          assert receipt and receipt['strictCompletionInvariant'] is True, d
+          assert receipt['totalCells'] == 1728 and receipt['completedCells'] == 1728 and receipt['failedCells'] == 0, receipt
+          assert receipt['shardCount'] == 12, receipt
+          assert receipt['proofState'] == 'RETURNED_NOT_ADMITTED', receipt
+          assert receipt['canonicalMutation'] is False, receipt
+          assert len(receipt['receiptSha256']) == 64, receipt
+          print(json.dumps({'status':'LIVE_R177_1728_OF_1728_VERIFIED','warpId':d['warpId'],'merkleRoot':d['resultMerkleRoot'],'receiptSha256':receipt['receiptSha256']}, sort_keys=True))
+          PY
