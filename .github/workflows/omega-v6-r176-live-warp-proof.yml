@@ -1,9 +1,14 @@
 name: OMEGA V6 R176 live warp proof
 
 on:
-  workflow_run:
-    workflows: ["OMEGA V6 verify"]
-    types: [completed]
+  push:
+    branches: ["omega-v6-full-convergence"]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpComputationR176.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpComputationLabR176.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - '.github/workflows/omega-v6-r176-live-warp-proof.yml'
   workflow_dispatch:
 
 permissions:
@@ -11,23 +16,20 @@ permissions:
 
 jobs:
   prove-live-warp-fabric:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
     runs-on: ubuntu-latest
     env:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
     steps:
-      - name: Wait for R176 public fabric
+      - name: Wait for R176 public fabric after canonical deployment
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 30); do
+          for attempt in $(seq 1 90); do
             if curl --fail --silent --show-error "$V6_URL/api/swarm/warp/manifest" -o /tmp/r176-manifest.json \
               && grep -q 'OMEGA_WARP_MANIFEST_R176' /tmp/r176-manifest.json; then
               break
             fi
-            if [ "$attempt" -eq 30 ]; then
+            if [ "$attempt" -eq 90 ]; then
               echo "R176 warp fabric did not settle on the public edge"
               cat /tmp/r176-manifest.json || true
               exit 1
