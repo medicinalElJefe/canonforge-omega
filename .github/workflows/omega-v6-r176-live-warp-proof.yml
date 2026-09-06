@@ -1,0 +1,129 @@
+name: OMEGA V6 R176 live warp proof
+
+on:
+  workflow_run:
+    workflows: ["OMEGA V6 verify"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-live-warp-fabric:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Wait for R176 public fabric
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "$V6_URL/api/swarm/warp/manifest" -o /tmp/r176-manifest.json \
+              && grep -q 'OMEGA_WARP_MANIFEST_R176' /tmp/r176-manifest.json; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "R176 warp fabric did not settle on the public edge"
+              cat /tmp/r176-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error "$V6_URL/warp" -o /tmp/r176-lab.html
+      - name: Launch real 576-cell build warp with zero model-provider budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/launch" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"R176 live proof: execute the deployed OMEGA swarm as a bounded build-analysis organism and return real Durable Object receipts without Canon mutation.","profile":"WARP","purpose":"BUILD","providerBudget":0}' \
+            -o /tmp/r176-launch.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          launch = json.loads(Path('/tmp/r176-launch.json').read_text())
+          assert launch['ok'] is True, launch
+          assert launch['schema'] == 'OMEGA_WARP_COMPUTATION_R176', launch
+          assert launch['profile'] == 'WARP', launch
+          assert launch['expectedCells'] == 576, launch
+          assert len(launch['refs']) == 4, launch
+          assert launch['plan']['structuralDispatch']['dispatchFanoutCeilingFromCodePath'] == 96, launch
+          session = {
+              'warpId': launch['warpId'],
+              'profile': launch['profile'],
+              'purpose': launch['purpose'],
+              'refs': launch['refs'],
+          }
+          Path('/tmp/r176-session.json').write_text(json.dumps(session))
+          print(json.dumps({'status':'R176_WARP_LAUNCHED','warpId':launch['warpId'],'refs':len(launch['refs'])}, sort_keys=True))
+          PY
+      - name: Advance parallel shard waves to terminal receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          for wave in $(seq 1 12); do
+            curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/warp/tick" \
+              -H 'content-type: application/json' \
+              --data-binary @/tmp/r176-session.json \
+              -o /tmp/r176-state.json
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r176-state.json').read_text())
+          print(json.dumps({'state':d.get('state'),'progress':d.get('progress'),'completed':d.get('completedCells'),'failed':d.get('failedCells'),'receipt':bool(d.get('receipt'))}, sort_keys=True))
+          PY
+            if python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r176-state.json').read_text())
+          sys.exit(0 if d.get('receipt') else 1)
+          PY
+            then
+              break
+            fi
+            sleep 1
+          done
+      - name: Verify actual returned swarm receipt and boundaries
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('/tmp/r176-manifest.json').read_text())
+          state = json.loads(Path('/tmp/r176-state.json').read_text())
+          lab = Path('/tmp/r176-lab.html').read_text()
+          assert manifest['ok'] is True
+          assert manifest['schema'] == 'OMEGA_WARP_MANIFEST_R176'
+          assert manifest['hierarchy']['cells'] == 1728
+          assert manifest['hierarchy']['lanes'] == 20736
+          assert manifest['execution']['maximumCoordinatorShards'] == 12
+          assert manifest['execution']['dispatchFanoutCeilingFromCodePath'] == 288
+          assert manifest['execution']['observedThroughputClaim'] is False
+          assert state['totalCells'] == 576, state
+          assert state['shardCount'] == 4, state
+          assert state['completedCells'] + state['failedCells'] == 576, state
+          assert state['failedCells'] == 0, state
+          receipt = state['receipt']
+          assert receipt and receipt['schema'] == 'OMEGA_WARP_EXECUTION_RECEIPT_R176', state
+          assert receipt['totalCells'] == 576, receipt
+          assert receipt['resultMerkleRoot'] == state['resultMerkleRoot'], receipt
+          assert len(receipt['receiptSha256']) == 64, receipt
+          assert receipt['proofState'] == 'RETURNED_NOT_ADMITTED', receipt
+          assert receipt['authority'] == 'WARP_EXECUTION_RECEIPT_NOT_CANON', receipt
+          assert receipt['canonicalMutation'] is False, receipt
+          assert receipt['performanceGuaranteeClaim'] is False, receipt
+          assert receipt['physicalDimensionClaim'] is False, receipt
+          assert 'FULL · 1728' in lab
+          assert 'AUTO-ADVANCE' in lab
+          print(json.dumps({
+              'status':'LIVE_R176_576_CELL_WARP_RECEIPT_VERIFIED',
+              'warpId':state['warpId'],
+              'completedCells':state['completedCells'],
+              'failedCells':state['failedCells'],
+              'merkleRoot':state['resultMerkleRoot'],
+              'receiptSha256':receipt['receiptSha256'],
+          }, sort_keys=True))
