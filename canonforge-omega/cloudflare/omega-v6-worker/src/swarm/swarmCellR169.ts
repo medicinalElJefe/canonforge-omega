@@ -1,4 +1,5 @@
 import { AnyObj, SwarmEnv, SWARM_MODEL_R121, CONTINUITY_LAW, capabilityProfile, clip, decodeCell, evidence, jsonResponse, modelText, num, parseCellId, sha } from "./swarmCoreR169";
+import { handleComputeRequest } from "../compute/computeTruthR170";
 
 function initialCell(address: AnyObj): AnyObj {
   const profile = capabilityProfile(address);
@@ -8,8 +9,25 @@ function deterministic(task: AnyObj, address: AnyObj, profile: AnyObj): AnyObj {
   const intent = clip(task.intent || task.text), words = intent.split(/\s+/).filter(Boolean), ev = evidence(task.evidence);
   return { kind: "DETERMINISTIC_CELL_ANALYSIS", summary: `${profile.cellId} processed the mission through ${profile.domainRole}/${profile.phaseRole}/${profile.regulationRole}.`, metrics: { intentLength: intent.length, wordCount: words.length, evidencePackets: ev.length, evidenceWithHashes: ev.filter(x => x.sha256).length, localSeed: (address.index * 131 + intent.length * 17) % 100000 }, partition: { domain: profile.domainRole, phase: profile.phaseRole, regulation: profile.regulationRole }, evidence: ev.map(x => ({ id: x.id, type: x.type, sha256: x.sha256, authority: x.authority })), carry: { invariant: "operator intent + address + lineage + evidence identities", scar: "local failures remain scar until recovery" }, continuityLaw: CONTINUITY_LAW, truthBoundary: "Deterministic swarm decomposition is instrumentation. Operator evidence retains its authority label and is not promoted into measurement or canonical truth." };
 }
+async function runReferenceComputation(task: AnyObj, profile: AnyObj): Promise<AnyObj> {
+  const computation = task.computation || {}, path = String(computation.path || "");
+  const allowed = new Set([
+    "/api/compute/relativity/event",
+    "/api/compute/relativity/velocity",
+    "/api/compute/optics/tmm",
+    "/api/compute/continuity/transfer",
+    "/api/compute/continuity/diffusion",
+    "/api/compute/wave/fdtd1d",
+  ]);
+  if (!allowed.has(path)) return { kind: "COMPUTATION_R170_GATED", summary: "Requested computation path is not in the R170 reference allow-list.", path, authority: "NO_RESULT_FABRICATED" };
+  const response = await handleComputeRequest(new Request(`https://compute.internal${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(computation.input || {}) }));
+  const data = await response.json().catch(() => null) as AnyObj | null;
+  if (!response.ok || !data?.ok) return { kind: "COMPUTATION_R170_FAILED", summary: clip(data?.error || data?.code || `HTTP ${response.status}`, 1200), path, authority: "NO_RESULT_FABRICATED" };
+  return { kind: "COMPUTATION_R170", summary: `${profile.cellId} executed ${data?.receipt?.kind || path} as a DERIVED reference computation.`, path, computation: data.result, computeReceipt: data.receipt, authority: "DERIVED_REFERENCE_COMPUTATION_NOT_CANON", canonicalMutation: false };
+}
 async function runCellTask(env: SwarmEnv, task: AnyObj, address: AnyObj, profile: AnyObj): Promise<AnyObj> {
   const executor = String(task.executor || "DETERMINISTIC");
+  if (executor === "COMPUTE_R170") return runReferenceComputation(task, profile);
   if (executor === "WORKERS_AI") {
     if (!env?.AI?.run) return { kind: "PROVIDER_GATED", summary: "Workers AI binding unavailable; no model result fabricated.", authority: "NO_RESULT_FABRICATED" };
     const ev = evidence(task.evidence), system = `You are bounded OMEGA swarm cell ${profile.cellId}. Role ${profile.domainRole}; phase ${profile.phaseRole}; regulation ${profile.regulationRole}. Return a specialist contribution, not a canonical conclusion. Preserve evidence authority and unresolved claims. 12/144/1728/20736 are address-resolution levels, not physical dimensions. Never claim PC execution, measurement, RCWA/FDTD, external research, or CanonState mutation unless explicit evidence supports it.`, user = `${clip(task.intent || task.text, 7000)}\n\nEVIDENCE:\n${ev.map(x => `- ${x.id} [${x.type}] ${x.summary} (${x.authority})`).join("\n").slice(0, 6000)}`;
