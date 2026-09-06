@@ -1,4 +1,5 @@
 import { DurableBinding, SwarmEnv, AUTONOMIC_REVISION, CONTINUITY_LAW, ORGANISM_REVISION, SWARM_CELL_COUNT, SWARM_DOMAIN_ROLES, SWARM_LANE_COUNT, SWARM_PHASE_ROLES, SWARM_RECOVERY_REVISION, SWARM_REGULATION_ROLES, SWARM_SOURCE_COMMIT, TRUTH_BOUNDARY, jsonResponse } from "./swarmCoreR169";
+import { SWARM_MODEL_R170, SWARM_MODEL_R170_AUTHORITY } from "./swarmCellR169";
 
 function withCors(response: Response): Response {
   const headers = new Headers(response.headers);
@@ -17,7 +18,24 @@ async function forward(binding: DurableBinding | undefined, name: string, path: 
 export async function handleSwarmRequest(request: Request, env: SwarmEnv): Promise<Response> {
   if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }));
   const path = new URL(request.url).pathname;
-  if (path === "/api/swarm/manifest") return withCors(jsonResponse({ ok: true, schema: "OMEGA_SWARM_RECOVERY_MANIFEST_R169", recoveryRevision: SWARM_RECOVERY_REVISION, historicalRuntime: { cell: "R121", organism: ORGANISM_REVISION, autonomic: AUTONOMIC_REVISION, sourceRepo: "medicinalElJefe/OMEGAv6", sourceCommit: SWARM_SOURCE_COMMIT }, hierarchy: { seed: 1, organs: 12, branches: 144, cells: SWARM_CELL_COUNT, lanes: SWARM_LANE_COUNT }, roles: { domains: SWARM_DOMAIN_ROLES, phases: SWARM_PHASE_ROLES, regulations: SWARM_REGULATION_ROLES }, continuityLaw: CONTINUITY_LAW, preservedNamespaces: ["OmegaSwarmCell", "OmegaSwarmCoordinator", "OmegaSwarmBranch", "OmegaSwarmOrgan", "OmegaSwarmOrganismCoordinator", "OmegaSwarmAutonomicCoordinator"], truthBoundary: TRUTH_BOUNDARY, canonicalMutation: false }));
+  if (path === "/api/swarm/manifest") return withCors(jsonResponse({
+    ok: true,
+    schema: "OMEGA_SWARM_PRECISION_MANIFEST_R170",
+    recoveryRevision: SWARM_RECOVERY_REVISION,
+    operatorRevision: "R170",
+    historicalRuntime: { cell: "R121", organism: ORGANISM_REVISION, autonomic: AUTONOMIC_REVISION, sourceRepo: "medicinalElJefe/OMEGAv6", sourceCommit: SWARM_SOURCE_COMMIT },
+    hierarchy: { seed: 1, organs: 12, branches: 144, cells: SWARM_CELL_COUNT, lanes: SWARM_LANE_COUNT },
+    roles: { domains: SWARM_DOMAIN_ROLES, phases: SWARM_PHASE_ROLES, regulations: SWARM_REGULATION_ROLES },
+    providers: {
+      workersAI: { bound: Boolean(env.AI?.run), model: SWARM_MODEL_R170, authority: SWARM_MODEL_R170_AUTHORITY },
+      genesisMachine: { bound: Boolean(env.OMEGA_GENESIS_MACHINE?.fetch), authority: "PROPOSAL_NOT_CANON" },
+      opticalMachine: { bound: Boolean(env.OMEGA_OPTICAL_MACHINE?.fetch), authority: "SCREENING_NOT_FABRICATION_VALIDATION" },
+    },
+    continuityLaw: CONTINUITY_LAW,
+    preservedNamespaces: ["OmegaSwarmCell", "OmegaSwarmCoordinator", "OmegaSwarmBranch", "OmegaSwarmOrgan", "OmegaSwarmOrganismCoordinator", "OmegaSwarmAutonomicCoordinator"],
+    truthBoundary: TRUTH_BOUNDARY,
+    canonicalMutation: false,
+  }));
   let response: Response;
   if (path.startsWith("/api/swarm/autonomic")) response = await forward(env.OMEGA_SWARM_AUTONOMIC, "omega-swarm-autonomic-root", path.slice("/api/swarm/autonomic".length) || "/status", request);
   else if (path.startsWith("/api/swarm/organism")) response = await forward(env.OMEGA_SWARM_ORGANISM, "omega-swarm-organism-root", path.slice("/api/swarm/organism".length) || "/status", request);
