@@ -1,7 +1,7 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 delegates every non-swarm/non-compute request directly to heartbeatTruth.
+# runtimeEntryR169 delegates every non-swarm/non-compute/non-validate request directly to heartbeatTruth.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -16,6 +16,7 @@ SWARM_NAMESPACE_RECOVERY_ID = "r169-public-r121-r123-r125-lineage"
 COMPUTATION_TRUTH_ID = "r170-physically-grounded-reference-solvers"
 COMPUTATION_SWARM_ID = "r171-redundant-reference-compute-consensus"
 SWARM_PRECISION_BODY_ID = "r171-live-address-compute-instrument"
+HETEROGENEOUS_VALIDATION_ID = "r172-independent-formulation-and-evidence-tiering"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]

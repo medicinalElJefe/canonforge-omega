@@ -1,0 +1,17 @@
+export const VALIDATION_OVERLAY_RELEASE_R172 = "r172-heterogeneous-validation";
+
+const STYLE = `<style id="omegaValidationOverlayR172Style">
+#osrValidate{background:#192318!important;border-color:#4f7052!important}.osrValidationBand{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.osrValidationBand .osrStat{background:#08140d}.osrValidationLink{display:block;margin-top:8px;text-align:center;border:1px solid #31495f;border-radius:10px;padding:8px;color:#a9bdd1;text-decoration:none;font:750 8px ui-monospace,monospace;letter-spacing:.07em}.osrValidationLink:hover{background:#0b1723}
+</style>`;
+const SCRIPT = `<script id="omegaValidationOverlayR172Runtime">(()=>{const root=document.querySelector('#osr171');if(!root||document.querySelector('#osrValidate'))return;const buttons=root.querySelector('.osrBtns'),stats=root.querySelector('.osrStats'),solver=root.querySelector('#osrSolver'),input=root.querySelector('#osrInput'),out=root.querySelector('#osrResult');if(!buttons||!stats||!solver||!input||!out)return;const btn=document.createElement('button');btn.id='osrValidate';btn.className='osrBtn';btn.textContent='VALIDATE REFERENCE';buttons.appendChild(btn);const band=document.createElement('div');band.className='osrValidationBand';band.innerHTML='<div class="osrStat"><small>VALIDATION TIER</small><b id="osrValidationTier">—</b></div><div class="osrStat"><small>VALIDATION</small><b id="osrValidationState">UNRUN</b></div>';stats.insertAdjacentElement('afterend',band);const link=document.createElement('a');link.href='/validate';link.className='osrValidationLink';link.textContent='OPEN R172 VALIDATION LAB ↗';band.insertAdjacentElement('afterend',link);async function req(path,init){try{const r=await fetch(path,Object.assign({cache:'no-store'},init||{})),d=await r.json().catch(()=>null);return{ok:r.ok,data:d}}catch(e){return{ok:false,data:{error:String(e)}}}}btn.onclick=async()=>{let parsed;try{parsed=JSON.parse(input.value)}catch{out.textContent='INVALID SOLVER INPUT JSON';return}btn.disabled=true;const r=await req('/api/validate/reference',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path:solver.value,input:parsed})});btn.disabled=false;const v=r.data&&r.data.validation||{};const tier=document.querySelector('#osrValidationTier'),state=document.querySelector('#osrValidationState');tier.textContent=v.validationTier?(v.validationTier.level+' · '+v.validationTier.id):'—';state.textContent=v.status||'FAILED';state.className=r.ok?'osrGood':'osrBad';out.textContent=JSON.stringify(r.data||r,null,2)};})();</script>`;
+
+export async function enhanceValidationOverlayR172(response: Response): Promise<Response> {
+  const type=response.headers.get("content-type")||"";
+  if(!type.includes("text/html"))return response;
+  let html=await response.text();
+  if(!html.includes("OMEGA V6")||html.includes("omegaValidationOverlayR172Style"))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
+  html=html.replace("</head>",STYLE+`<meta name="omega-validation-release" content="${VALIDATION_OVERLAY_RELEASE_R172}">`+"</head>");
+  html=html.replace("</body>",SCRIPT+"</body>");
+  const headers=new Headers(response.headers);headers.set("x-omega-validation-release",VALIDATION_OVERLAY_RELEASE_R172);headers.set("x-omega-validation-authority","validation-receipt-not-canon");
+  return new Response(html,{status:response.status,statusText:response.statusText,headers});
+}
