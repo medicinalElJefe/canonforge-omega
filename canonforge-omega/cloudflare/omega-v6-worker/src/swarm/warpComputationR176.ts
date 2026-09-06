@@ -14,6 +14,7 @@ import {
 } from "./swarmCoreR169";
 
 export const WARP_REVISION_R176 = "R176";
+export const WARP_INTEGRITY_REVISION_R177 = "R177";
 export const WARP_SCHEMA_R176 = "OMEGA_WARP_COMPUTATION_R176";
 export const WARP_RECEIPT_SCHEMA_R176 = "OMEGA_WARP_EXECUTION_RECEIPT_R176";
 export const WARP_AUTHORITY_R176 = "WARP_EXECUTION_RECEIPT_NOT_CANON";
@@ -27,6 +28,8 @@ const PROFILE = Object.freeze({
   WARP: { cells: 576, shards: 4, mode: "FLOCK" },
   FULL: { cells: 1728, shards: 12, mode: "FLOCK" },
 });
+
+const TERMINAL_CHILD_STATES = new Set(["COMPLETE", "COMPLETE_WITH_FAILURES", "FAILED"]);
 
 type WarpProfile = keyof typeof PROFILE;
 type WarpRef = {
@@ -108,6 +111,7 @@ async function createChildMission(
     warp: {
       schema: WARP_SCHEMA_R176,
       revision: WARP_REVISION_R176,
+      integrityRevision: WARP_INTEGRITY_REVISION_R177,
       purpose,
       profile,
       residue,
@@ -169,13 +173,36 @@ async function fetchChild(env: SwarmEnv, ref: WarpRef, tick = false): Promise<An
   }
 }
 
+function shardAccounting(row: AnyObj): AnyObj {
+  const expected = num(row.mission?.total, row.expectedCells);
+  const completed = num(row.mission?.completed);
+  const failed = num(row.mission?.failed);
+  const accounted = completed + failed;
+  const state = String(row.mission?.status || "UNAVAILABLE");
+  return {
+    coordinator: row.coordinator,
+    missionId: row.missionId,
+    residue: row.residue,
+    state,
+    expected,
+    completed,
+    failed,
+    accounted,
+    delta: expected - accounted,
+    terminalStateReported: TERMINAL_CHILD_STATES.has(state),
+    invariantValid: expected > 0 && accounted === expected,
+  };
+}
+
 async function aggregate(warpId: string, profile: WarpProfile, purpose: string, rows: AnyObj[]): Promise<AnyObj> {
   const missions = rows.map(row => ({ ...row.ref, transportOk: row.ok, transportStatus: row.status, mission: row.mission }));
-  const total = missions.reduce((sum, row) => sum + num(row.mission?.total, row.expectedCells), 0);
-  const completed = missions.reduce((sum, row) => sum + num(row.mission?.completed), 0);
-  const failed = missions.reduce((sum, row) => sum + num(row.mission?.failed), 0);
-  const terminal = missions.length > 0 && missions.every(row => ["COMPLETE", "FAILED"].includes(String(row.mission?.status || "")));
-  const successful = missions.length > 0 && missions.every(row => row.mission?.status === "COMPLETE");
+  const accounting = missions.map(shardAccounting);
+  const total = accounting.reduce((sum, row) => sum + row.expected, 0);
+  const completed = accounting.reduce((sum, row) => sum + row.completed, 0);
+  const failed = accounting.reduce((sum, row) => sum + row.failed, 0);
+  const invalidShards = accounting.filter(row => row.state === "INVARIANT_VIOLATION" || (row.terminalStateReported && !row.invariantValid));
+  const terminal = missions.length > 0 && accounting.every(row => row.terminalStateReported && row.invariantValid);
+  const successful = terminal && completed === total && failed === 0;
   const active = missions.filter(row => ["QUEUED", "RUNNING"].includes(String(row.mission?.status || ""))).length;
   const childHashes = await Promise.all(missions.map(row => sha({
     coordinator: row.coordinator,
@@ -185,13 +212,26 @@ async function aggregate(warpId: string, profile: WarpProfile, purpose: string, 
     total: row.mission?.total ?? null,
     completed: row.mission?.completed ?? null,
     failed: row.mission?.failed ?? null,
+    integrity: row.mission?.integrity ?? null,
     proofState: row.mission?.proofState ?? null,
     finalSynthesis: row.mission?.finalSynthesis ?? null,
   })));
   const resultMerkleRoot = await merkle(childHashes);
+  const completionInvariant = {
+    schema: "OMEGA_WARP_COMPLETION_INVARIANT_R177",
+    integrityRevision: WARP_INTEGRITY_REVISION_R177,
+    strict: true,
+    expectedCells: total,
+    accountedCells: completed + failed,
+    delta: total - (completed + failed),
+    allShardsAccounted: accounting.every(row => row.invariantValid),
+    invalidShardCount: invalidShards.length,
+    invalidShards,
+  };
   const receiptCore = terminal ? {
     schema: WARP_RECEIPT_SCHEMA_R176,
     revision: WARP_REVISION_R176,
+    integrityRevision: WARP_INTEGRITY_REVISION_R177,
     warpId,
     profile,
     purpose,
@@ -200,6 +240,8 @@ async function aggregate(warpId: string, profile: WarpProfile, purpose: string, 
     totalCells: total,
     completedCells: completed,
     failedCells: failed,
+    strictCompletionInvariant: true,
+    completionInvariant,
     childMissionHashes: childHashes,
     resultMerkleRoot,
     proofState: "RETURNED_NOT_ADMITTED",
@@ -210,20 +252,23 @@ async function aggregate(warpId: string, profile: WarpProfile, purpose: string, 
     physicalDimensionClaim: false,
     truthBoundary: WARP_TRUTH_BOUNDARY_R176,
   } : null;
+  const state = invalidShards.length ? "INVARIANT_VIOLATION" : terminal ? (successful ? "COMPLETE" : "COMPLETE_WITH_FAILURES") : active ? "RUNNING" : "QUEUED_OR_UNAVAILABLE";
   return {
-    ok: rows.every(row => row.ok),
+    ok: rows.every(row => row.ok) && invalidShards.length === 0,
     schema: "OMEGA_WARP_STATUS_R176",
     revision: WARP_REVISION_R176,
+    integrityRevision: WARP_INTEGRITY_REVISION_R177,
     warpId,
     profile,
     purpose,
-    state: terminal ? (successful ? "COMPLETE" : "COMPLETE_WITH_FAILURES") : active ? "RUNNING" : "QUEUED_OR_UNAVAILABLE",
+    state,
     totalCells: total,
     completedCells: completed,
     failedCells: failed,
     activeShards: active,
     shardCount: missions.length,
     progress: total ? Math.round(((completed + failed) / total) * 1000) / 10 : 0,
+    completionInvariant,
     resultMerkleRoot,
     shards: missions,
     receipt: receiptCore ? { ...receiptCore, receiptSha256: await sha(receiptCore) } : null,
@@ -274,6 +319,7 @@ async function launch(request: Request, env: SwarmEnv): Promise<Response> {
   const planCore = {
     schema: "OMEGA_WARP_PLAN_R176",
     revision: WARP_REVISION_R176,
+    integrityRevision: WARP_INTEGRITY_REVISION_R177,
     warpId,
     profile,
     purpose,
@@ -295,6 +341,7 @@ async function launch(request: Request, env: SwarmEnv): Promise<Response> {
   return jsonResponse({
     ok: true,
     schema: WARP_SCHEMA_R176,
+    integrityRevision: WARP_INTEGRITY_REVISION_R177,
     warpId,
     profile,
     purpose,
@@ -314,7 +361,9 @@ async function statusOrTick(request: Request, env: SwarmEnv, tick: boolean): Pro
   const profile = profileOf(body.profile);
   const purpose = purposeOf(body.purpose);
   const rows = await Promise.all(refs.map(ref => fetchChild(env, ref, tick)));
-  return jsonResponse(await aggregate(warpId, profile, purpose, rows), rows.every(x => x.ok) ? 200 : 207);
+  const result = await aggregate(warpId, profile, purpose, rows);
+  const status = result.state === "INVARIANT_VIOLATION" ? 409 : rows.every(x => x.ok) ? 200 : 207;
+  return jsonResponse(result, status);
 }
 
 export async function handleWarpComputationRequest(request: Request, env: SwarmEnv): Promise<Response> {
@@ -325,6 +374,7 @@ export async function handleWarpComputationRequest(request: Request, env: SwarmE
       ok: true,
       schema: "OMEGA_WARP_MANIFEST_R176",
       revision: WARP_REVISION_R176,
+      integrityRevision: WARP_INTEGRITY_REVISION_R177,
       profiles: PROFILE,
       hierarchy: { seed: 1, organs: 12, branches: 144, cells: SWARM_CELL_COUNT, lanes: SWARM_LANE_COUNT },
       shardAxis: { count: 12, meaning: "cell index modulo 12 / regulation axis", roles: SWARM_REGULATION_ROLES },
@@ -336,8 +386,13 @@ export async function handleWarpComputationRequest(request: Request, env: SwarmE
         observedThroughputClaim: false,
         alarmContinuation: true,
         explicitTickAcceleration: true,
+        serializedMissionProcessing: true,
+        inflightJournal: true,
+        idempotentCellTaskReplay: true,
+        strictTerminalAccounting: true,
       },
-      continuity: "partition -> parallel shard execution -> receipt carry -> Merkle reconvergence -> returned-not-admitted",
+      completionInvariant: "receipt exists only when every shard reports a terminal state and completed + failed === total",
+      continuity: "partition -> parallel shard execution -> idempotent receipt carry -> strict accounting -> Merkle reconvergence -> returned-not-admitted",
       authority: WARP_AUTHORITY_R176,
       canonicalMutation: false,
       truthBoundary: WARP_TRUTH_BOUNDARY_R176,
@@ -350,6 +405,7 @@ export async function handleWarpComputationRequest(request: Request, env: SwarmE
     return jsonResponse({
       ok: false,
       code: "R176_WARP_ERROR",
+      integrityRevision: WARP_INTEGRITY_REVISION_R177,
       error: error instanceof Error ? error.message : String(error),
       canonicalMutation: false,
       truthBoundary: WARP_TRUTH_BOUNDARY_R176,
