@@ -4,13 +4,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 HEARTBEAT = WORKER / "src" / "heartbeatTruth.ts"
+ENTRY = WORKER / "src" / "runtimeEntryR169.ts"
 WRANGLER = WORKER / "wrangler.toml"
 VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
 
 
 def test_r128_preserves_canonical_entrypoint_and_durable_object_contract():
     wrangler = WRANGLER.read_text(encoding="utf-8")
-    assert 'main = "src/heartbeatTruth.ts"' in wrangler
+    entry = ENTRY.read_text(encoding="utf-8")
+    assert 'main = "src/runtimeEntryR169.ts"' in wrangler
+    assert 'import canonicalRuntime from "./heartbeatTruth"' in entry
+    assert 'export { OmegaRuntime } from "./heartbeatTruth"' in entry
+    assert 'return canonical.fetch(request, env, ctx)' in entry
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'name = "OMEGA_RUNTIME"' in wrangler
     assert 'class_name = "OmegaRuntime"' in wrangler
@@ -18,6 +23,7 @@ def test_r128_preserves_canonical_entrypoint_and_durable_object_contract():
     assert 'type = "durable-object"' in wrangler
     assert 'storage = "sqlite"' in wrangler
     assert '[[migrations]]' not in wrangler
+    assert 'new_sqlite_classes' not in wrangler
     assert 'binding = "GENESIS"' in wrangler
     assert 'service = "omega-genesis-v1"' in wrangler
 

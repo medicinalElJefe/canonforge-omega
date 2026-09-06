@@ -1,22 +1,28 @@
 {
-  "schema": "omega.cloudflare.live-contract.v2",
+  "schema": "omega.cloudflare.live-contract.v3",
   "canonical_worker": "omegav6",
-  "observed_at": "2026-09-06T19:31:45Z",
-  "observation_source": "Cloudflare deploy API error 10074 reported the live Worker migration tag r125-autonomic-swarm and confirmed OmegaRuntime is an existing Durable Object namespace",
+  "observed_at": "2026-09-06T19:42:13Z",
+  "observation_source": "Cloudflare exact-head deploy reconciliation exposed six provisioned live swarm Durable Object namespaces that were absent from the converged repository; the public OMEGAv6 R121/R123/R125 lineage confirms their class identities, bindings, and SQLite migration origins.",
   "required_exports": [
-    "OmegaRuntime"
+    "OmegaRuntime",
+    "OmegaSwarmCell",
+    "OmegaSwarmCoordinator",
+    "OmegaSwarmBranch",
+    "OmegaSwarmOrgan",
+    "OmegaSwarmOrganismCoordinator",
+    "OmegaSwarmAutonomicCoordinator"
   ],
   "durable_object_contract": {
-    "OmegaRuntime": {
-      "required": true,
-      "delete_class_allowed": false,
-      "rename_class_allowed": false,
-      "behavior_recovery_required_before_replacement": true,
-      "storage_backend": "sqlite"
-    }
+    "OmegaRuntime": {"required": true, "binding_name": "OMEGA_RUNTIME", "storage_backend": "sqlite", "migration_origin": "r32-enacted-runtime", "delete_class_allowed": false, "rename_class_allowed": false},
+    "OmegaSwarmCell": {"required": true, "binding_name": "OMEGA_SWARM_CELL", "storage_backend": "sqlite", "migration_origin": "r121-sovereign-swarm", "delete_class_allowed": false, "rename_class_allowed": false},
+    "OmegaSwarmCoordinator": {"required": true, "binding_name": "OMEGA_SWARM_COORDINATOR", "storage_backend": "sqlite", "migration_origin": "r121-sovereign-swarm", "delete_class_allowed": false, "rename_class_allowed": false},
+    "OmegaSwarmBranch": {"required": true, "binding_name": "OMEGA_SWARM_BRANCH", "storage_backend": "sqlite", "migration_origin": "r123-organism-swarm", "delete_class_allowed": false, "rename_class_allowed": false},
+    "OmegaSwarmOrgan": {"required": true, "binding_name": "OMEGA_SWARM_ORGAN", "storage_backend": "sqlite", "migration_origin": "r123-organism-swarm", "delete_class_allowed": false, "rename_class_allowed": false},
+    "OmegaSwarmOrganismCoordinator": {"required": true, "binding_name": "OMEGA_SWARM_ORGANISM", "storage_backend": "sqlite", "migration_origin": "r123-organism-swarm", "delete_class_allowed": false, "rename_class_allowed": false},
+    "OmegaSwarmAutonomicCoordinator": {"required": true, "binding_name": "OMEGA_SWARM_AUTONOMIC", "storage_backend": "sqlite", "migration_origin": "r125-autonomic-swarm", "delete_class_allowed": false, "rename_class_allowed": false}
   },
-  "promotion_policy": "HOLD deployment when the candidate does not preserve every required live Durable Object export, binding identity, behavior marker, and storage lifecycle. Do not replay stale new_sqlite_class migrations over an existing namespace.",
-  "truth_boundary": "The live-platform requirement and current published migration tag were observed directly from Cloudflare deployment responses. The OmegaRuntime implementation was recovered from the public historical OMEGAv6 R32/R33 lineage. R168 moves the repository configuration from legacy imperative migration replay to Cloudflare's declarative exports lifecycle while preserving the existing SQLite namespace and exact binding identity.",
+  "promotion_policy": "HOLD deployment unless all seven observed live Durable Object classes are exported, bound to their historical names, declared SQLite-backed, and kept live. Never tombstone or replay new_sqlite_classes merely to satisfy deployment.",
+  "truth_boundary": "Namespace preservation restores deployed state identity. It does not by itself prove that provider bindings, native PC execution, optical full-wave validation, or CanonState admission are available; those remain independently gated by evidence and authority.",
   "recovery": {
     "status": "BEHAVIOR_SOURCE_RECOVERED",
     "lifecycle_status": "DECLARATIVE_SQLITE_BOUND",
@@ -38,5 +44,32 @@
       "DURABLE_MESSAGE_MEMORY",
       "LAST_48_DURABLE_TURNS"
     ]
+  },
+  "swarm_recovery": {
+    "status": "PUBLIC_R121_R123_R125_LINEAGE_RECOVERED",
+    "source_repo": "medicinalElJefe/OMEGAv6",
+    "source_commit": "1b587801ce6e8e465a74cf5426fcc88a411bc824",
+    "historical_entrypoint": "src/workerR116.js",
+    "lineage": {
+      "r121-sovereign-swarm": ["OmegaSwarmCell", "OmegaSwarmCoordinator"],
+      "r123-organism-swarm": ["OmegaSwarmBranch", "OmegaSwarmOrgan", "OmegaSwarmOrganismCoordinator"],
+      "r125-autonomic-swarm": ["OmegaSwarmAutonomicCoordinator"]
+    },
+    "hierarchy": {"seed": 1, "organs": 12, "branches": 144, "cells": 1728, "lanes": 20736},
+    "continuity_law": "partition -> exchange/transform -> invariant carry -> scar/residual carry -> re-contextualize/repartition",
+    "behavior_markers": [
+      "OMEGA_SWARM_R121",
+      "OMEGA_SWARM_CELL_STATE_R121",
+      "OMEGA_SWARM_MISSION_R121",
+      "OMEGA_BRANCH_RECEIPT_R123",
+      "OMEGA_ORGANISM_MISSION_R123",
+      "OMEGA_AUTONOMIC_MISSION_R125",
+      "OMEGA_EXECUTION_QUORUM_R125",
+      "OMEGA_SELF_BUILD_CAPSULE_R125",
+      "AUTONOMIC_RESULT_FABRIC_NOT_CANON",
+      "EXECUTION_QUORUM_NOT_TRUTH",
+      "partition -> exchange/transform -> invariant carry -> scar/residual carry -> re-contextualize/repartition"
+    ],
+    "authority_boundary": "Recovered swarm classes may partition, execute bounded tasks, carry evidence/receipts, and propose build capsules. They do not independently mutate CanonState, prove external measurement, or claim native execution."
   }
 }

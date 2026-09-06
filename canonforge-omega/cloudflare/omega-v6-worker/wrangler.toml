@@ -1,5 +1,7 @@
 name = "omegav6"
-main = "src/heartbeatTruth.ts"
+main = "src/runtimeEntryR169.ts"
+# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
+# runtimeEntryR169 delegates every non-swarm request directly to heartbeatTruth.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -10,17 +12,63 @@ CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
 RELATION_WORKBENCH_ID = "r94-relation-workbench-graph-projection"
 RICH_OPERATIONAL_UI_ID = "r126-rich-operational-expansion"
-# Configure SOVEREIGN_ORIGIN in the deployment environment.
-# It must point at the authenticated ingress of the sovereign runtime/bridge.
+SWARM_NAMESPACE_RECOVERY_ID = "r169-public-r121-r123-r125-lineage"
 
 [[durable_objects.bindings]]
 name = "OMEGA_RUNTIME"
 class_name = "OmegaRuntime"
 
-# Declarative Durable Object lifecycle. OmegaRuntime already exists as a
-# SQLite-backed namespace; this preserves that namespace without replaying
-# a stale legacy migration tag against live Durable Objects.
+[[durable_objects.bindings]]
+name = "OMEGA_SWARM_CELL"
+class_name = "OmegaSwarmCell"
+
+[[durable_objects.bindings]]
+name = "OMEGA_SWARM_COORDINATOR"
+class_name = "OmegaSwarmCoordinator"
+
+[[durable_objects.bindings]]
+name = "OMEGA_SWARM_BRANCH"
+class_name = "OmegaSwarmBranch"
+
+[[durable_objects.bindings]]
+name = "OMEGA_SWARM_ORGAN"
+class_name = "OmegaSwarmOrgan"
+
+[[durable_objects.bindings]]
+name = "OMEGA_SWARM_ORGANISM"
+class_name = "OmegaSwarmOrganismCoordinator"
+
+[[durable_objects.bindings]]
+name = "OMEGA_SWARM_AUTONOMIC"
+class_name = "OmegaSwarmAutonomicCoordinator"
+
+# These namespaces already exist in production. Declarative exports preserve
+# them without replaying historical class-creation migrations or deleting state.
 [exports.OmegaRuntime]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.OmegaSwarmCell]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.OmegaSwarmCoordinator]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.OmegaSwarmBranch]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.OmegaSwarmOrgan]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.OmegaSwarmOrganismCoordinator]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.OmegaSwarmAutonomicCoordinator]
 type = "durable-object"
 storage = "sqlite"
 
