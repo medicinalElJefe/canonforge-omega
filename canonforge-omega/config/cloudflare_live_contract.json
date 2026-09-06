@@ -18,7 +18,8 @@
   "promotion_policy": "HOLD deployment when the candidate does not preserve every required live Durable Object export, binding identity, behavior marker, and storage lifecycle. Do not replay stale new_sqlite_class migrations over an existing namespace.",
   "truth_boundary": "The live-platform requirement and current published migration tag were observed directly from Cloudflare deployment responses. The OmegaRuntime implementation was recovered from the public historical OMEGAv6 R32/R33 lineage. R168 moves the repository configuration from legacy imperative migration replay to Cloudflare's declarative exports lifecycle while preserving the existing SQLite namespace and exact binding identity.",
   "recovery": {
-    "status": "BEHAVIOR_SOURCE_RECOVERED_AND_DECLARATIVE_LIFECYCLE_BOUND",
+    "status": "BEHAVIOR_SOURCE_RECOVERED",
+    "lifecycle_status": "DECLARATIVE_SQLITE_BOUND",
     "source_repo": "medicinalElJefe/OMEGAv6",
     "r32_commit": "d7cbbfe166baf04a42dc7a50d13776ac33ef742b",
     "r33_commit": "ca0660a128f8df88375a9f8e27931c94208c159b",
