@@ -118,7 +118,7 @@ def test_r173_operator_lab_and_runtime_mount_are_additive_and_atlas_route_is_rep
     assert 'url.pathname.startsWith("/api/compute/atlas/")' in entry
     assert 'return canonical.fetch(request, env, ctx)' in entry
     assert 'CROSS_RUNTIME_VALIDATION_ID = "r173-authenticated-cloud-sovereign-pc-parity"' in wrangler
-    assert "r173-cross-runtime-parity-agent" in agent
+    assert "r173-cross-runtime-parity-agent" in agent or "r175-independent-rcwa-validation-agent" in agent
     assert '"cross_runtime_validate"' in agent
     assert "authenticated native execution" in agent.lower()
     assert "[[migrations]]" not in wrangler

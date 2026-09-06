@@ -1,0 +1,80 @@
+name: OMEGA V6 R175 live proof
+
+on:
+  workflow_run:
+    workflows: ["OMEGA V6 verify"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r175-live-fabric:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Wait for R175 independent solver manifest and lab
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "$V6_URL/api/validate/independent/manifest" -o /tmp/r175-manifest.json \
+              && grep -q 'OMEGA_INDEPENDENT_SOLVER_MANIFEST_R175' /tmp/r175-manifest.json; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "R175 independent solver fabric did not settle on the public edge"
+              cat /tmp/r175-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error "$V6_URL/validate/independent" -o /tmp/r175-lab.html
+      - name: Prove exact full-wave challenge binding without self-promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/validate/independent/prepare" \
+            -H 'content-type: application/json' \
+            --data '{"tier2_job":{"schema":"OMEGA_FULLWAVE_QUEUE_v1","job_id":"live-proof-r175","source_packet_id":"live-proof-r175","solver":"rcwa","geometry":{"pitch_nm":500,"width_nm":250,"length_nm":250,"height_nm":300,"theta_deg":0},"wavelength_nm":700,"polarization":"s","material_model":{"n_incident":1,"n_feature":1,"n_background":1,"n_substrate":1},"numerics":{"nx":32,"ny":32,"harmonics_low":9,"harmonics_high":13,"convergence_tolerance":0.000001,"energy_tolerance":0.000001,"incidence_theta_deg":0,"incidence_phi_deg":0},"proof":{"gate":"STAY","mode188_score":1.2,"continuity":1,"burden":0,"contradiction":0,"scar":0},"lineage":["live-proof:r175"]}}' \
+            -o /tmp/r175-challenge.json
+      - name: Verify R175 public authority boundaries
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('/tmp/r175-manifest.json').read_text())
+          challenge = json.loads(Path('/tmp/r175-challenge.json').read_text())
+          lab = Path('/tmp/r175-lab.html').read_text()
+          assert manifest['ok'] is True
+          assert manifest['schema'] == 'OMEGA_INDEPENDENT_SOLVER_MANIFEST_R175'
+          assert manifest['revision'] == 'R175'
+          assert manifest['validationTier'] == {'level': 4, 'id': 'INDEPENDENT_SOLVER_FAMILY'}
+          assert manifest['inputSchema'] == 'OMEGA_FULLWAVE_QUEUE_v1'
+          assert manifest['nativeResultSchema'] == 'OMEGA_RESULT_v1'
+          assert manifest['solver'] == 'rcwa'
+          assert manifest['solverFamily'] == 'MAXWELL_RCWA'
+          assert manifest['requiredImplementation'] == 'grcwa'
+          assert manifest['level5Gate'] == 'EXTERNAL_MEASUREMENT_REQUIRED'
+          assert manifest['canonicalMutation'] is False
+          assert challenge['ok'] is True
+          c = challenge['challenge']
+          assert c['schema'] == 'OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175'
+          assert len(c['queue_job_sha256']) == 64
+          assert len(c['challenge_sha256']) == 64
+          assert c['authority'] == 'INDEPENDENT_SOLVER_CHALLENGE_NOT_VALIDATION'
+          assert c['canonical_mutation'] is False
+          assert c['external_measurement_claim'] is False
+          assert 'RUN FULL R175 CEREMONY' in lab
+          assert 'EXTERNAL MEASUREMENT STILL REQUIRED' in lab
+          print(json.dumps({
+              'status':'LIVE_R175_INDEPENDENT_SOLVER_FABRIC_VERIFIED',
+              'challenge_id':c['challenge_id'],
+              'queue_job_sha256':c['queue_job_sha256'],
+              'l4_self_promoted':False,
+          }, sort_keys=True))

@@ -9,6 +9,8 @@ import { handleCrossRuntimeValidationRequest } from "./validation/crossRuntimePa
 import { crossRuntimeLabResponse } from "./validation/crossRuntimeLabR173";
 import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR174";
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
+import { handleIndependentSolverValidationRequest } from "./validation/independentSolverR175";
+import { independentSolverLabResponse } from "./validation/independentSolverLabR175";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -23,9 +25,11 @@ export default {
     if (url.pathname === "/compute" || url.pathname === "/compute/") return computeLabResponse();
     if (url.pathname === "/validate" || url.pathname === "/validate/") return validationLabResponse();
     if (url.pathname === "/validate/cross-runtime" || url.pathname === "/validate/cross-runtime/") return crossRuntimeLabResponse();
+    if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
     if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
     if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
+    if (url.pathname.startsWith("/api/validate/independent/")) return handleIndependentSolverValidationRequest(request);
     if (url.pathname.startsWith("/api/validate/cross-runtime/")) return handleCrossRuntimeValidationRequest(request);
     if (url.pathname.startsWith("/api/validate/")) return handleValidationRequest(request);
     if (url.pathname.startsWith("/api/compute/atlas/")) return handleAtlasComputeRequest(request);
