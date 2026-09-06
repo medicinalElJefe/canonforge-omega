@@ -1,5 +1,7 @@
 import { AnyObj, DurableBinding, SwarmEnv, SWARM_CELL_COUNT, SWARM_LANE_COUNT, SWARM_MODEL_R121, clip, compactPlan, evidence, jsonResponse, modelText, num, planMission, publicMission, schedule, sha } from "./swarmCoreR169";
 
+const RETURNED_NOT_ADMITTED = { proofState: "RETURNED_NOT_ADMITTED" } as const;
+
 export class OmegaSwarmCoordinator {
   private storage: any; private env: SwarmEnv;
   constructor(state: any, env: SwarmEnv) { this.storage = state.storage; this.env = env; }
@@ -32,7 +34,7 @@ export class OmegaSwarmCoordinator {
       if (x.executor === "COMPUTE_R170" && x.ok && result?.computation) m.computationOutputs.push({ cellId: x.cell.id, path: result.path, result: result.computation, computeReceipt: result.computeReceipt, authority: result.authority }); m.computationOutputs = m.computationOutputs.slice(0, 4);
     }
     if (m.pending.length) { await this.save(m); await schedule(this.storage, 500); return m; }
-    m.status = m.completed ? "COMPLETE" : "FAILED"; m.completedAt = Date.now(); m.proofState = "RETURNED_NOT_ADMITTED";
+    m.status = m.completed ? "COMPLETE" : "FAILED"; m.completedAt = Date.now(); m.proofState = RETURNED_NOT_ADMITTED.proofState;
     if (m.providerOutputs.length && this.env?.AI?.run) {
       try { const contributions = m.providerOutputs.map((x: AnyObj) => `[${x.cellId} ${x.role}] ${x.summary}`).join("\n\n").slice(0, 16000), raw = await this.env.AI.run(SWARM_MODEL_R121, { messages: [{ role: "system", content: "Reconverge bounded OMEGA swarm contributions. Preserve contradictions and unresolved items. Do not convert interpretation into measurement, native execution, external evidence, or CanonState." }, { role: "user", content: `MISSION: ${m.intent}\n\nCONTRIBUTIONS:\n${contributions}` }], max_tokens: 700, temperature: 0.22, chat_template_kwargs: { enable_thinking: false } }), text = modelText(raw); if (text) m.finalSynthesis = { provider: SWARM_MODEL_R121, text: text.slice(0, 6000), authority: "MODEL_SYNTHESIS_NOT_CANON" }; }
       catch (error) { m.finalSynthesis = { provider: "FAILED", text: error instanceof Error ? error.message : String(error), authority: "NO_RESULT_FABRICATED" }; }
