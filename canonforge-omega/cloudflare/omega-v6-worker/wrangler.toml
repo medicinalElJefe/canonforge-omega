@@ -1,5 +1,7 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
+# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
+# runtimeEntryR169 delegates every non-swarm request directly to heartbeatTruth.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
