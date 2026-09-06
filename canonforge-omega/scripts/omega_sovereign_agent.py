@@ -14,6 +14,7 @@ SAFE_KINDS = {
     "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
+    "compute_truth_suite",
     "run_tests",
     "build_vite",
     "wrangler_dry_run",
@@ -89,6 +90,28 @@ def convergence_scan(root: Path) -> dict:
     }
 
 
+def compute_truth_suite(root: Path) -> dict:
+    result = run([sys.executable, "-m", "omega_runtime.advanced_computation"], root, timeout=120)
+    parsed = None
+    if result["exit_code"] == 0:
+        try:
+            parsed = json.loads(result["stdout_tail"])
+        except json.JSONDecodeError:
+            parsed = None
+    passed = bool(parsed and parsed.get("passed") is True and parsed.get("receipt_sha256"))
+    return {
+        "kind": "compute_truth_suite",
+        "result": result,
+        "truth_suite": parsed,
+        "blocked": not passed,
+        "reason": None if passed else "R170 computation truth suite did not return a passing hash-receipted result",
+        "authority": "DERIVED_REFERENCE_COMPUTATION_NOT_CANON",
+        "native_execution": True,
+        "physical_dimension_claim": False,
+        "fabrication_grade_optical_claim": False,
+    }
+
+
 def execute_job(job: dict, root: Path) -> dict:
     kind = job.get("kind")
     if kind not in SAFE_KINDS:
@@ -97,6 +120,8 @@ def execute_job(job: dict, root: Path) -> dict:
         return convergence_scan(root)
     if kind in {"inspect_workspace", "inspect_runtime"}:
         return {"kind": kind, "inspection": inspect_workspace(root)}
+    if kind == "compute_truth_suite":
+        return compute_truth_suite(root)
     if kind == "run_tests":
         return {"kind": kind, "result": run([sys.executable, "-m", "pytest", "-q"], root)}
     if kind == "build_vite":
@@ -113,9 +138,11 @@ def execute_job(job: dict, root: Path) -> dict:
                 convergence = json.loads(convergence_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 convergence = None
+        computation = compute_truth_suite(root)
         return {
             "kind": kind,
             "tests": run([sys.executable, "-m", "pytest", "-q"], root),
+            "computation_truth": computation,
             "git": run(["git", "status", "--short", "--branch"], root, timeout=60),
             "convergence": convergence,
         }
@@ -151,13 +178,18 @@ def main() -> int:
         print(f"ROOT REJECTED: {root}", file=sys.stderr)
         return 2
 
-    capabilities = ["heartbeat", "convergence_scan", "inspect_workspace", "inspect_runtime", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate"]
+    capabilities = [
+        "heartbeat", "convergence_scan", "inspect_workspace", "inspect_runtime", "compute_truth_suite",
+        "lorentz_reference", "tmm_reference", "conservative_continuity", "scalar_wave_fdtd_1d",
+        "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate",
+    ]
     last_job_id = None
     sequence_seen = 0
     print(f"OMEGA sovereign agent starting: {args.agent_id}")
     print(f"Canonical server: {args.server}")
     print(f"Approved root: {root}")
     print("Recursive convergence is bounded: archive/branch discovery may propose candidates but cannot silently promote production.")
+    print("R170 computation truth is explicit: derived solvers must return invariant/error evidence before advanced-computation claims are accepted.")
     print("PC ONLINE will only be claimed after the server accepts a current authenticated heartbeat.")
 
     while True:
@@ -166,7 +198,7 @@ def main() -> int:
                 "agent_id": args.agent_id,
                 "approved_root": str(root),
                 "capabilities": capabilities,
-                "runtime_version": "r80-recursive-convergence-agent",
+                "runtime_version": "r170-computation-truth-agent",
                 "last_job_id": last_job_id,
             })
             proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
