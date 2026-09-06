@@ -27,6 +27,7 @@ export const ATLAS_MODES = [
   [12,"Alpha / Crimson","Exploration/plasticity and construction/consequence polarity."],
 ] as const;
 
+export const ATLAS_AXES = ["domain","phase","regulation","layer"] as const;
 export type AtlasAddress = readonly [number,number,number,number];
 export type AtlasState = {
   index:number;
@@ -65,7 +66,7 @@ export function atlasNeighbors(index:number){
 export function atlasState(index:number):AtlasState{
   index=((index%20736)+20736)%20736;
   const address=atlasAddress(index);
-  const phase=address[0];
+  const phase=address[1];
   const angle=phase*Math.PI/6;
   return {
     index,address,phase,
@@ -76,4 +77,4 @@ export function atlasState(index:number):AtlasState{
   };
 }
 
-export const NATIVE_20736_ATLAS_BOUNDARY = "This module is a lossless compact reconstruction of the regular graph/topology encoded by the supplied 478,922-row atlas CSV: 12^4 addressed states, ±1 modulo-12 nearest neighbors, +6 modulo-12 antipodes, rank-3 parents, 12 modes × 20,736 states and source identity by SHA-256. It does not fabricate empirical measurements or treat 20,736 as physical dimensions.";
+export const NATIVE_20736_ATLAS_BOUNDARY = "This module is a compact reconstruction of the regular graph/topology encoded by the supplied 478,922-row atlas CSV: 12^4 addressed software/model states with axis order domain, phase, regulation, layer; ±1 modulo-12 nearest neighbors; +6 modulo-12 antipodes; rank-3 parents; 12 modes × 20,736 states; and source identity by SHA-256. The phase coordinate is the second address axis, matching the canonical Address20736 runtime contract. It does not fabricate empirical measurements or treat 20,736 as physical dimensions.";

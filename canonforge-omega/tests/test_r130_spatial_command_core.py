@@ -14,7 +14,7 @@ def test_r130_preserves_protected_runtime_and_composes_beneath_r129():
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in w
     assert 'enhanceSpatialCommandCore' in shell
     assert 'enhanceSovereignVisualShell' in shell
-    assert 'navigation separate from visualization and chat' in core
+    assert 'navigation separate from visualization, state authority and chat' in core
     assert 'existing governed route' in core
 
 
@@ -24,8 +24,8 @@ def test_r135_navigation_preserves_real_v6_surfaces_without_becoming_state_autho
         assert token in core
     assert '/api/convergence/edge' in core
     assert 'authority_contract_ready' in core
-    assert 'live visual computation' in core
-    assert 'chat/text output remains a separate channel' in core
+    assert 'route-contract readiness only' in core
+    assert 'Chat/text output remains a separate channel' in core
 
 
 def test_r135_visual_renderer_is_bound_but_not_reimplemented_in_navigation():

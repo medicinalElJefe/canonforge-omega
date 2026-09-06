@@ -15,8 +15,9 @@ def test_r148_memory_is_state_bound_navigable_and_non_authoritative():
     assert 'canvas.addEventListener(\'click\'' in memory
     assert 'OPEN INTELLIGENCE' in memory
     assert 'HAND OFF TO FORECAST' in memory
-    assert 'read-only continuity/scar/relation instrument' in memory
-    assert 'does not mutate canonical state' in memory
+    assert 'Memory samples valid canonical /api/omega/state responses' in memory
+    assert 'DERIVED_FRAMEWORK_MATH' in memory
+    assert 'not canonical metrics or empirical observations' in memory
 
 
 def test_r148_preserves_calculus_and_truth_boundaries():

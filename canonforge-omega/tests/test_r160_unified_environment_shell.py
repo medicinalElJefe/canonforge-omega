@@ -19,10 +19,10 @@ def test_r160_environment_shell_is_wired_and_truth_bounded():
     assert "/api/convergence/edge" in env
     assert "/api/hybrid/status" in env
     assert "/api/development/status" in env
-    assert "PC connected" in env
-    assert "not verified" in env
-    assert "not observed" in env
-    assert "omegaEnvironmentShell='r166'" in env
+    assert "backend reports online" in env
+    assert "not proven online" in env
+    assert "not current" in env
+    assert "omegaEnvironmentShell='r167'" in env
 
     assert 'import { enhanceOmegaEnvironmentShell } from "./omegaEnvironmentShell";' in sovereign
     assert "enhanceOmegaEnvironmentShell(await lattice)" in sovereign

@@ -22,9 +22,11 @@ def test_r145_uses_one_governed_projection_surface_and_existing_modes():
 def test_r145_keeps_runtime_truth_separate_from_model_geometry():
     atlas = (SRC / "governedModeAtlas.ts").read_text(encoding="utf-8")
     assert '/api/convergence/edge' in atlas
+    assert '/api/omega/state' in atlas
     assert 'USER_DEFINED_MODEL' in atlas
-    assert 'OBSERVED RUNTIME' in atlas
-    assert 'not itself empirical evidence' in atlas
+    assert 'CANONICAL STATE:' in atlas
+    assert 'omegaCanonicalState' in atlas
+    assert 'derived presentation, not source evidence' in atlas
     assert 'not a physical dimension claim' in atlas
     assert 'Date.now()' in atlas
 

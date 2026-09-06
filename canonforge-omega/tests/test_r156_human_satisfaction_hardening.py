@@ -9,12 +9,12 @@ def source() -> str:
 
 def test_r156_preserves_truth_and_authority_boundaries():
     s = source()
-    assert "does not mutate canonical state" in s
+    assert "Animation and representational shell markers are not evidence of canonical state" in s
     assert "heartbeat truth" in s
     assert "route authority" in s
     assert "Earth source truth" in s
-    assert "representational shells" in s
-    assert "UTC, phase, relativity-depth and individual-skin markers" in s
+    assert "representational shell markers are not evidence" in s
+    assert "separates visual-render integrity from canonical-state availability" in s
 
 
 def test_mobile_has_one_primary_navigation_authority():

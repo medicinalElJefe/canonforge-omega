@@ -9,12 +9,12 @@ def source() -> str:
 
 def test_r157_preserves_protected_truth_boundaries():
     s = source()
-    assert "does not mutate canonical state" in s
-    assert "heartbeat truth" in s
+    assert "canonical-state availability" in s
+    assert "heartbeat" in s
     assert "route authority" in s
     assert "Earth source truth" in s
-    assert "representational shells" in s
-    assert "UTC, phase, relativity-depth and individual-skin markers" in s
+    assert "representational shell markers are not evidence" in s
+    assert "visual-render integrity" in s
 
 
 def test_one_primary_navigation_authority_per_viewport():

@@ -28,7 +28,7 @@ def test_calculus_and_r162_preserve_established_navigation_composition():
     assert "enhanceUnifiedWorkspaceAcceptance" not in lattice
     assert "CALCULUS_INSTRUMENT_BOUNDARY" in calculus
     assert "/api/omega/state" in calculus
-    assert "do not mutate canonical state" in calculus
+    assert "Controls never mutate canonical state" in calculus
 
 
 def test_one_environment_navigation_exposes_acceptance_workspaces():

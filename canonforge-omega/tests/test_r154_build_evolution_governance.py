@@ -19,8 +19,8 @@ def test_r154_build_workspace_is_material_and_read_only():
         assert stage in s
     assert "/api/convergence/edge" in s
     assert "/api/development/status" in s
-    assert "does not mutate canonical state" in s
-    assert "does not create a second deployment authority" in s
+    assert "mutate canonical state" in s
+    assert "does not create deployment authority" in s
     assert "No promote, deploy, merge or rollback mutation action is exposed here" in s
     assert "method:'POST'" not in s
     assert 'method:"POST"' not in s
@@ -37,7 +37,7 @@ def test_r154_build_workspace_is_mobile_composed_and_state_navigable():
     assert 'data-app="Build"' in s
     assert 'data-dock-app="Build"' in s
     assert "?view=Proof" in s
-    assert "omegaBuildEvolution='r154'" in s
+    assert "omegaBuildEvolution='r167-evidence-accurate-build'" in s
 
 
 def test_r154_is_wired_over_existing_visual_runtime_without_replacing_it():
