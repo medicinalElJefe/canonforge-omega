@@ -118,9 +118,41 @@ class SovereignBuildController:
         self._save()
         return self.status()
 
+    def _validate_candidate_job_payload(self, kind: str, payload: Dict[str, Any]) -> None:
+        if payload.get("schema") != WARP_BUILD_IMPORT_SCHEMA_R178:
+            return
+        candidate = payload.get("candidate")
+        if not isinstance(candidate, dict):
+            raise ValueError("R178 candidate job requires an embedded candidate capsule")
+        try:
+            valid = validate_candidate_capsule(candidate)
+        except WarpCandidateError as exc:
+            raise ValueError(str(exc)) from exc
+        try:
+            sequence_index = int(payload.get("sequence_index", -1))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("R178 candidate sequence index is invalid") from exc
+        sequence = list(SAFE_CANDIDATE_JOB_KINDS)
+        if sequence_index < 0 or sequence_index >= len(sequence):
+            raise ValueError("R178 candidate sequence index is outside the allow-listed sequence")
+        if kind != sequence[sequence_index]:
+            raise ValueError(f"R178 candidate stage mismatch: kind={kind} expected={sequence[sequence_index]}")
+        if payload.get("candidate_sha256") != valid.get("capsuleSha256"):
+            raise ValueError("R178 candidate job capsule hash mismatch")
+        if payload.get("candidate_id") != valid.get("candidateId"):
+            raise ValueError("R178 candidate job id mismatch")
+        if payload.get("source_warp_id") != (valid.get("source") or {}).get("warpId"):
+            raise ValueError("R178 candidate source warp id mismatch")
+        if payload.get("source_receipt_sha256") != (valid.get("source") or {}).get("receiptSha256"):
+            raise ValueError("R178 candidate source receipt id mismatch")
+        if payload.get("canonical_mutation") is not False or payload.get("deployment_authorized") is not False or payload.get("promotion_authorized") is not False:
+            raise ValueError("R178 candidate job cannot authorize canonical mutation, deployment, or promotion")
+
     def enqueue(self, kind: str, reason: str, payload: Optional[Dict[str, Any]] = None) -> BuildJob:
         if kind not in SAFE_JOB_KINDS:
             raise ValueError(f"unsupported governed build job: {kind}")
+        normalized_payload = payload or {}
+        self._validate_candidate_job_payload(kind, normalized_payload)
         now = self._now()
         job = BuildJob(
             id=str(uuid.uuid4()),
@@ -130,7 +162,7 @@ class SovereignBuildController:
             updated_at=now,
             reason=reason,
             approved_root=str(self.approved_root),
-            payload=payload or {},
+            payload=normalized_payload,
         )
         self.jobs.append(job)
         self._save()
@@ -161,14 +193,19 @@ class SovereignBuildController:
                 "candidate_id": valid["candidateId"],
                 "candidate_sha256": candidate_sha,
                 "job": asdict(latest),
-                "sequence": list(SAFE_CANDIDATE_JOB_KINDS),
+                "sequence": list(SAFE_CANDIDATE_JOB_KINDS[1:]),
                 "canonical_mutation": False,
                 "promotion_authorized": False,
             }
-        payload = candidate_job_payload(valid, 0)
+        # The cloud-built capsule is already persisted verbatim inside the governed
+        # build job payload, so the first executable host stage is run_tests. The
+        # optional prepare_candidate artifact helper remains available for manual
+        # archival use but is not required for the automatic R178 path.
+        first_index = 1
+        payload = candidate_job_payload(valid, first_index)
         job = self.enqueue(
-            SAFE_CANDIDATE_JOB_KINDS[0],
-            "R178 materialize the strict R177 warp-derived candidate capsule as an immutable local artifact before any source change is considered.",
+            SAFE_CANDIDATE_JOB_KINDS[first_index],
+            "R178 validate the strict R177 warp-derived candidate lineage with the full sovereign Python regression suite before any source change is considered.",
             payload,
         )
         return {
@@ -177,7 +214,7 @@ class SovereignBuildController:
             "candidate_id": valid["candidateId"],
             "candidate_sha256": candidate_sha,
             "job": asdict(job),
-            "sequence": list(SAFE_CANDIDATE_JOB_KINDS),
+            "sequence": list(SAFE_CANDIDATE_JOB_KINDS[first_index:]),
             "canonical_mutation": False,
             "promotion_authorized": False,
         }
@@ -206,7 +243,7 @@ class SovereignBuildController:
             "run_tests": "R178 execute the full sovereign Python regression suite for the warp-derived candidate lineage.",
             "build_vite": "R178 typecheck the Cloudflare/Vite interface for the warp-derived candidate lineage.",
             "wrangler_dry_run": "R178 package the Worker in dry-run mode only; deployment remains unauthorized.",
-            "verify_candidate": "R178 verify immutable candidate identity, local artifact, computation truth, tests and workspace state for human/release review.",
+            "verify_candidate": "R178 verify computation truth, tests and workspace state for the immutable warp-candidate lineage and return it for release review.",
         }
         return self.enqueue(next_kind, reasons.get(next_kind, f"R178 governed candidate stage: {next_kind}"), candidate_job_payload(candidate, next_index))
 
@@ -332,7 +369,8 @@ class SovereignBuildController:
             "warp_candidate_r178": {
                 "enabled": True,
                 "schema": WARP_BUILD_IMPORT_SCHEMA_R178,
-                "fixed_sequence": list(SAFE_CANDIDATE_JOB_KINDS),
+                "fixed_executable_sequence": list(SAFE_CANDIDATE_JOB_KINDS[1:]),
+                "capsule_persistence": "embedded immutably in each governed job payload; optional local artifact helper remains available",
                 "workflows": self._candidate_workflows(),
                 "boundary": "strict R177 receipts may enqueue bounded candidate validation; they never grant source mutation, GitHub mutation, deployment or promotion authority",
             },
