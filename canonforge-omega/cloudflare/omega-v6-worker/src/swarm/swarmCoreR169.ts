@@ -166,8 +166,16 @@ export async function schedule(storage: any, delayMs: number): Promise<void> {
 }
 export function publicMission(m: AnyObj | null): AnyObj | null {
   if (!m) return null;
-  const { pending, queue, providerOutputs, providerContributions, ...rest } = m;
+  const { pending, queue, providerOutputs, providerContributions, computation, ...rest } = m;
   const total = num(m.total || m.totalCells), done = num(m.completed || m.completedCells) + num(m.failed || m.failedCells);
-  return { ...rest, pendingCount: Array.isArray(pending) ? pending.length : undefined, queueDepth: Array.isArray(queue) ? queue.length : undefined, providerOutputCount: Array.isArray(providerOutputs) ? providerOutputs.length : undefined, providerContributionCount: Array.isArray(providerContributions) ? providerContributions.length : undefined, progress: total ? Math.round((done / total) * 1000) / 10 : 0 };
+  return {
+    ...rest,
+    computationPath: computation?.path || undefined,
+    pendingCount: Array.isArray(pending) ? pending.length : undefined,
+    queueDepth: Array.isArray(queue) ? queue.length : undefined,
+    providerOutputCount: Array.isArray(providerOutputs) ? providerOutputs.length : undefined,
+    providerContributionCount: Array.isArray(providerContributions) ? providerContributions.length : undefined,
+    progress: total ? Math.round((done / total) * 1000) / 10 : 0,
+  };
 }
 export const branchKey = (domain: number, phase: number) => `${String(domain + 1).padStart(2, "0")}:${String(phase + 1).padStart(2, "0")}`;
