@@ -83,6 +83,13 @@ def evaluate(contract_path: Path, source_root: Path, wrangler_path: Path | None 
     class_checks: dict[str, dict] = {}
     for class_name in sorted(required):
         spec = durable_contract.get(class_name) or {}
+        # Compatibility with the R168 contract shape, which described the
+        # OmegaRuntime lifecycle only inside recovery rather than per-class.
+        if not spec and class_name == "OmegaRuntime" and recovery.get("lifecycle_mode") == "exports":
+            spec = {
+                "binding_name": recovery.get("binding_name"),
+                "storage_backend": recovery.get("storage_backend") or "sqlite",
+            }
         binding_name = spec.get("binding_name")
         storage_backend = str(spec.get("storage_backend") or "sqlite")
         binding_ok = True if not binding_name else _binding_preserved(wrangler, str(binding_name), class_name)
@@ -122,7 +129,7 @@ def evaluate(contract_path: Path, source_root: Path, wrangler_path: Path | None 
         "binding_preserved": binding_preserved,
         "lifecycle_mode": "exports" if durable_contract else str(recovery.get("lifecycle_mode") or "unspecified"),
         "lifecycle_preserved": lifecycle_preserved,
-        "lifecycle_reason": "declarative exports / sqlite" if durable_contract else "not declared by contract",
+        "lifecycle_reason": "declarative exports / sqlite" if (durable_contract or recovery.get("lifecycle_mode") == "exports") else "not declared by contract",
         "migration_preserved": lifecycle_preserved,
         "no_legacy_replay": no_legacy_replay,
         "no_required_tombstones": no_required_tombstones,
