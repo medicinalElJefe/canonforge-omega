@@ -1,0 +1,108 @@
+name: OMEGA V6 cross-runtime proof
+
+on:
+  workflow_run:
+    workflows: ["OMEGA V6 verify"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r173-cross-runtime:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Wait for R173 cross-runtime manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error "$V6_URL/api/validate/cross-runtime/manifest" -o /tmp/r173-manifest.json \
+              && grep -q 'OMEGA_CROSS_RUNTIME_MANIFEST_R173' /tmp/r173-manifest.json; then
+              break
+            fi
+            if [ "$attempt" -eq 40 ]; then
+              echo "R173 cross-runtime manifest did not settle on the public edge"
+              cat /tmp/r173-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error "$V6_URL/validate/cross-runtime" -o /tmp/r173-lab.html
+          curl --fail --silent --show-error "$V6_URL/api/compute/atlas/manifest" -o /tmp/atlas-manifest.json
+
+      - name: Prepare a real cloud-bound parity challenge
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/validate/cross-runtime/prepare" \
+            -H 'content-type: application/json' \
+            --data '{"path":"/api/compute/relativity/event","input":{"t_seconds":1.25,"position_m":[120000000,-25000000,4000000],"frame_velocity_m_s":[40000000,-20000000,10000000]}}' \
+            -o /tmp/r173-challenge.json
+
+      - name: Prove an invented job cannot self-promote to L3
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(curl --silent --show-error -o /tmp/r173-fake-compare.json -w '%{http_code}' \
+            -X POST "$V6_URL/api/validate/cross-runtime/compare" \
+            -H 'content-type: application/json' \
+            --data '{"job_id":"invented-untrusted-job"}')
+          test "$code" = "409"
+
+      - name: Verify R173 public truth and routing contracts
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('/tmp/r173-manifest.json').read_text())
+          challenge = json.loads(Path('/tmp/r173-challenge.json').read_text())
+          fake = json.loads(Path('/tmp/r173-fake-compare.json').read_text())
+          atlas = json.loads(Path('/tmp/atlas-manifest.json').read_text())
+          lab = Path('/tmp/r173-lab.html').read_text()
+
+          assert manifest['ok'] is True
+          assert manifest['schema'] == 'OMEGA_CROSS_RUNTIME_MANIFEST_R173'
+          assert manifest['revision'] == 'R173'
+          assert manifest['validationTier'] == {'level': 3, 'id': 'CROSS_RUNTIME_PARITY'}
+          assert manifest['status'] == 'AVAILABLE_WHEN_AUTHENTICATED_SOVEREIGN_PC_JOB_IS_VERIFIED'
+          assert manifest['canonicalMutation'] is False
+          assert manifest['independentFullWaveStatus'] == 'REQUIRES_RCWA_OR_MAXWELL_FDTD_RECEIPT'
+          assert manifest['externalMeasurementStatus'] == 'REQUIRES_OBSERVED_SOURCE_RECEIPT'
+          assert len(manifest['supportedPaths']) == 7
+
+          c = challenge['challenge']
+          assert challenge['ok'] is True
+          assert c['schema'] == 'OMEGA_CROSS_RUNTIME_CHALLENGE_R173'
+          assert len(c['input_sha256']) == 64
+          assert len(c['cloud_result_sha256']) == 64
+          assert len(c['cloud_receipt_sha256']) == 64
+          assert len(c['challenge_sha256']) == 64
+          assert c['canonical_mutation'] is False
+          assert c['independent_solver_family_claim'] is False
+
+          assert fake['ok'] is False
+          assert fake['validation']['state'] == 'PENDING_OR_UNKNOWN'
+          assert fake['validation']['validationTier'] == {'level': 3, 'id': 'CROSS_RUNTIME_PARITY'}
+
+          assert atlas['ok'] is True
+          assert atlas['topology']['nodes'] == 20736
+          assert atlas['topology']['undirected_edges'] == 72576
+          assert atlas['topology']['degree'] == 7
+          assert atlas['topology']['physical_dimension_claim'] is False
+
+          assert 'OMEGA · R173 · AUTHENTICATED CROSS-RUNTIME PARITY' in lab
+          assert 'Cloud computes. Sovereign PC repeats. Evidence decides.' in lab
+          print(json.dumps({
+              'status': 'LIVE_R173_CROSS_RUNTIME_FABRIC_VERIFIED',
+              'challenge': c['challenge_id'],
+              'fake_job_promoted': False,
+              'atlas_route_live': True,
+          }, sort_keys=True))
