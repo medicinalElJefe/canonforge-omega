@@ -1,0 +1,91 @@
+name: OMEGA V6 independent solver proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/omega_runtime/rcwa_solver.py'
+      - 'canonforge-omega/scripts/omega_sovereign_agent.py'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/validation/independentSolverR175.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/validation/independentSolverLabR175.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/pyproject.toml'
+      - 'canonforge-omega/tests/test_r175_independent_solver_validation.py'
+      - '.github/workflows/omega-v6-independent-solver-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-real-grcwa-no-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install OMEGA R175 with RCWA dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev,rcwa]'
+      - name: Prove dependency identity
+        working-directory: canonforge-omega
+        run: |
+          python -m omega_runtime.rcwa_solver --probe | tee /tmp/r175-probe.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          probe = json.loads(Path('/tmp/r175-probe.json').read_text())
+          assert probe['available'] is True, probe
+          assert probe['solver_family'] == 'MAXWELL_RCWA', probe
+          assert probe['fallback'] is False, probe
+          assert probe['numpy'], probe
+          assert probe['grcwa'], probe
+          print(json.dumps({'status':'R175_GRCWA_DEPENDENCIES_VERIFIED','numpy':probe['numpy'],'grcwa':probe['grcwa']}, sort_keys=True))
+          PY
+      - name: Execute real transparent-medium RCWA convergence proof
+        working-directory: canonforge-omega
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAYLOAD='{"schema":"OMEGA_FULLWAVE_QUEUE_v1","job_id":"ci-r175-transparent","source_packet_id":"ci-r175-transparent","solver":"rcwa","geometry":{"pitch_nm":500,"width_nm":250,"length_nm":250,"height_nm":300,"theta_deg":0},"wavelength_nm":700,"polarization":"s","material_model":{"n_incident":1.0,"n_feature":1.0,"n_background":1.0,"n_substrate":1.0},"numerics":{"nx":32,"ny":32,"harmonics_low":9,"harmonics_high":13,"convergence_tolerance":0.000001,"energy_tolerance":0.000001,"incidence_theta_deg":0,"incidence_phi_deg":0},"proof":{"gate":"STAY","mode188_score":1.2,"continuity":1.0,"burden":0.0,"contradiction":0.0,"scar":0.0},"lineage":["ci:r175"]}'
+          python -m omega_runtime.rcwa_solver --input-json "$PAYLOAD" | tee /tmp/r175-result.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('/tmp/r175-result.json').read_text())
+          assert r['schema'] == 'OMEGA_RESULT_v1', r
+          assert r['revision'] == 'R175', r
+          assert r['solver'] == 'rcwa', r
+          assert r['solver_family'] == 'MAXWELL_RCWA', r
+          assert r['solver_version'].startswith('grcwa:'), r
+          assert r['converged'] is True, r
+          assert r['native_execution'] is True, r
+          assert r['independent_solver_family_claim'] is True, r
+          assert r['external_measurement_claim'] is False, r
+          assert r['canonical_mutation'] is False, r
+          assert len(r['result_sha256']) == 64, r
+          receipt = r['receipt']
+          assert receipt['schema'] == 'OMEGA_SOVEREIGN_RCWA_RECEIPT_R175', receipt
+          assert receipt['converged'] is True, receipt
+          assert receipt['independent_solver_family_claim'] is True, receipt
+          assert len(receipt['receipt_sha256']) == 64, receipt
+          metrics = r['convergence_metrics']
+          assert metrics['delta_RT'] <= metrics['convergence_tolerance'], metrics
+          assert metrics['energy_balance_error'] <= metrics['energy_tolerance'], metrics
+          obs = r['observables']
+          assert abs(obs['R']) < 1e-7, obs
+          assert abs(obs['T'] - 1.0) < 1e-7, obs
+          print(json.dumps({
+              'status':'R175_REAL_GRCWA_NO_FALLBACK_PASS',
+              'delta_RT':metrics['delta_RT'],
+              'energy_balance_error':metrics['energy_balance_error'],
+              'result_sha256':r['result_sha256'],
+              'receipt_sha256':receipt['receipt_sha256'],
+          }, sort_keys=True))
+          PY
+      - name: Run R175 invariants
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r175_independent_solver_validation.py
