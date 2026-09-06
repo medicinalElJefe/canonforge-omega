@@ -1,0 +1,112 @@
+name: OMEGA V6 swarm computation proof
+
+on:
+  workflow_run:
+    workflows: ["OMEGA V6 verify"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r171-swarm-compute:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Wait for R171 public swarm manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "$V6_URL/api/swarm/manifest" -o /tmp/swarm-manifest.json \
+              && grep -q 'OMEGA_SWARM_COMPUTATION_CONVERGENCE_R171' /tmp/swarm-manifest.json; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "R171 swarm manifest did not settle on the public edge"
+              cat /tmp/swarm-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Execute 12-cell Lorentz reference consensus
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/swarm/compute-consensus" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"Cross-cell invariant consistency proof","replicas":12,"computation":{"path":"/api/compute/relativity/event","input":{"t_seconds":1.25,"position_m":[120000000,-25000000,4000000],"frame_velocity_m_s":[40000000,-20000000,10000000]}}}' \
+            -o /tmp/swarm-consensus.json
+
+      - name: Verify hierarchy, providers, receipts and numerical agreement
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('/tmp/swarm-manifest.json').read_text())
+          consensus = json.loads(Path('/tmp/swarm-consensus.json').read_text())
+
+          assert manifest['ok'] is True
+          assert manifest['schema'] == 'OMEGA_SWARM_COMPUTATION_CONVERGENCE_R171'
+          assert manifest['operatorRevision'] == 'R171'
+          assert manifest['hierarchy'] == {'seed': 1, 'organs': 12, 'branches': 144, 'cells': 1728, 'lanes': 20736}
+          assert manifest['canonicalMutation'] is False
+          providers = manifest['providers']
+          assert providers['referenceCompute']['bound'] is True
+          assert providers['referenceCompute']['authority'] == 'DERIVED_REFERENCE_COMPUTATION_NOT_CANON'
+          assert providers['workersAI']['model'] == '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
+
+          assert consensus['ok'] is True
+          assert consensus['schema'] == 'OMEGA_SWARM_COMPUTE_CONSENSUS_R171'
+          assert consensus['canonicalMutation'] is False
+          receipt = consensus['receipt']
+          assert receipt['schema'] == 'OMEGA_SWARM_COMPUTE_CONSENSUS_RECEIPT_R171'
+          assert receipt['requestedReplicas'] == 12
+          assert receipt['successfulReplicas'] == 12
+          assert receipt['failedReplicas'] == 0
+          assert receipt['consensusCount'] == 12
+          assert receipt['consensusRatio'] == 1
+          assert receipt['uniqueResultHashes'] == 1
+          assert receipt['maxReportedResidual'] is not None
+          assert receipt['maxReportedResidual'] < 1e-12
+          assert receipt['canonicalMutation'] is False
+          assert receipt['nativeExecution'] is False
+          assert receipt['authority'] == 'DERIVED_REDUNDANT_REFERENCE_COMPUTATION_NOT_CANON'
+          assert len(receipt['receiptSha256']) == 64
+          assert 'not independent-algorithm validation' in receipt['boundary']
+
+          replicas = consensus['replicas']
+          assert len(replicas) == 12
+          assert len({r['cellId'] for r in replicas}) == 12
+          assert len({r['index'] for r in replicas}) == 12
+          for replica in replicas:
+              assert replica['ok'] is True
+              assert replica['result']['kind'] == 'COMPUTATION_R170'
+              assert replica['result']['authority'] == 'DERIVED_REFERENCE_COMPUTATION_NOT_CANON'
+              assert replica['result']['nativeExecution'] is False
+              assert replica['result']['computation']['invariant_relative_residual'] < 1e-12
+              assert len(replica['receipt']['resultSha256']) == 64
+
+          print(json.dumps({
+              'status': 'LIVE_R171_SWARM_COMPUTATION_VERIFIED',
+              'replicas': receipt['successfulReplicas'],
+              'consensus_ratio': receipt['consensusRatio'],
+              'unique_hashes': receipt['uniqueResultHashes'],
+              'max_residual': receipt['maxReportedResidual'],
+              'workers_ai_bound': providers['workersAI']['bound'],
+          }, sort_keys=True))
+
+      - name: Verify R171 operator surface is publicly composed
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$V6_URL/" -D /tmp/root.headers -o /tmp/root.html
+          grep -q 'omegaSwarmPrecisionR171Release' /tmp/root.html
+          grep -qi 'x-omega-swarm-computation-release: r171-computation-swarm-convergence' /tmp/root.headers
