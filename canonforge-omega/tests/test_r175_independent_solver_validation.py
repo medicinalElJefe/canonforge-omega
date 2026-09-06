@@ -25,12 +25,14 @@ def test_r175_requires_real_grcwa_and_has_no_reduced_order_fallback():
     assert 'import grcwa' in solver
     assert 'SOLVER_FAMILY = "MAXWELL_RCWA"' in solver
     assert 'no fallback result is permitted' in solver
+    assert '"fallback": False' in solver
     assert 'solver_family": SOLVER_FAMILY' in solver
     assert 'independent_solver_family_claim": True' in solver
     assert 'external_measurement_claim": False' in solver
     assert 'canonical_mutation": False' in solver
     assert 'fabrication validation' in solver
-    assert 'TMM' not in solver
+    assert 'NORMAL_INCIDENCE_TMM' not in solver
+    assert 'handleComputeRequest' not in solver
 
 
 def test_r175_agent_only_advertises_rcwa_when_dependency_probe_passes():
