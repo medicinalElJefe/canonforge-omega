@@ -3,10 +3,11 @@ import { handleComputeRequest } from "../compute/computeTruthR170";
 
 export const SWARM_MODEL_R171 = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 export const SWARM_MODEL_R171_AUTHORITY = "Workers AI output is MODEL_SYNTHESIS_NOT_CANON. It may interpret explicit DERIVED computation receipts but cannot upgrade them into measurement, native execution, full-wave validation, or CanonState.";
+export const SWARM_INTEGRITY_R177 = "R177";
 
 function initialCell(address: AnyObj): AnyObj {
   const profile = capabilityProfile(address);
-  return { schema: "OMEGA_SWARM_CELL_STATE_R121", id: profile.cellId, index: address.index, address: { domain: address.domain, phase: address.phase, regulation: address.regulation }, profile, status: "IDLE", missionId: null, heartbeatAt: null, completedTasks: 0, failedTasks: 0, scar: 0, lastReceipt: null, lastResultPreview: null, canonicalMutation: false };
+  return { schema: "OMEGA_SWARM_CELL_STATE_R121", id: profile.cellId, index: address.index, address: { domain: address.domain, phase: address.phase, regulation: address.regulation }, profile, status: "IDLE", missionId: null, heartbeatAt: null, completedTasks: 0, failedTasks: 0, scar: 0, lastReceipt: null, lastResultPreview: null, integrityRevision: SWARM_INTEGRITY_R177, canonicalMutation: false };
 }
 function deterministic(task: AnyObj, address: AnyObj, profile: AnyObj): AnyObj {
   const intent = clip(task.intent || task.text), words = intent.split(/\s+/).filter(Boolean), ev = evidence(task.evidence);
@@ -55,18 +56,30 @@ async function runCellTask(env: SwarmEnv, task: AnyObj, address: AnyObj, profile
 export class OmegaSwarmCell {
   private storage: any; private env: SwarmEnv;
   constructor(state: any, env: SwarmEnv) { this.storage = state.storage; this.env = env; }
+  private async cachedTask(taskId: string): Promise<AnyObj | null> { return await this.storage.get(`task-result:${taskId}`) || null; }
+  private async rememberTask(taskId: string, status: number, payload: AnyObj): Promise<void> {
+    await this.storage.put(`task-result:${taskId}`, { status, payload });
+    const previous = (await this.storage.get("task_result_ids")) || [];
+    const ids = [taskId, ...previous.filter((id: string) => id !== taskId)];
+    const keep = ids.slice(0, 32), stale = ids.slice(32);
+    await this.storage.put("task_result_ids", keep);
+    if (typeof this.storage.delete === "function") for (const id of stale) await this.storage.delete(`task-result:${id}`);
+  }
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    if (request.method === "GET" && url.pathname === "/state") return jsonResponse({ ok: true, cell: (await this.storage.get("cell")) || { schema: "OMEGA_SWARM_CELL_STATE_R121", status: "UNINITIALIZED", canonicalMutation: false } });
+    if (request.method === "GET" && url.pathname === "/state") return jsonResponse({ ok: true, cell: (await this.storage.get("cell")) || { schema: "OMEGA_SWARM_CELL_STATE_R121", status: "UNINITIALIZED", integrityRevision: SWARM_INTEGRITY_R177, canonicalMutation: false } });
     if (request.method !== "POST" || url.pathname !== "/task") return jsonResponse({ ok: false, code: "NOT_FOUND" }, 404);
-    const task = await request.json().catch(() => ({})) as AnyObj, address = parseCellId(task.cellId) || decodeCell(task.index || 0), profile = capabilityProfile(address), base = (await this.storage.get("cell")) || initialCell(address), started = Date.now(), taskId = clip(task.taskId || `${task.missionId || "mission"}:${profile.cellId}:${started}`, 220), evidenceIds = evidence(task.evidence).map(x => ({ id: x.id, sha256: x.sha256, authority: x.authority }));
+    const task = await request.json().catch(() => ({})) as AnyObj, address = parseCellId(task.cellId) || decodeCell(task.index || 0), profile = capabilityProfile(address), started = Date.now(), taskId = clip(task.taskId || `${task.missionId || "mission"}:${profile.cellId}:${started}`, 220);
+    const cached = await this.cachedTask(taskId);
+    if (cached?.payload) return jsonResponse({ ...cached.payload, deduplicated: true, integrityRevision: SWARM_INTEGRITY_R177 }, Number(cached.status) || 200);
+    const base = (await this.storage.get("cell")) || initialCell(address), evidenceIds = evidence(task.evidence).map(x => ({ id: x.id, sha256: x.sha256, authority: x.authority }));
     await this.storage.put("cell", { ...base, ...initialCell(address), status: "WORKING", missionId: clip(task.missionId, 180) || null, taskId, heartbeatAt: started, lastStartedAt: started, completedTasks: num(base.completedTasks), failedTasks: num(base.failedTasks), scar: num(base.scar), evidence: evidenceIds });
     try {
-      const result = await runCellTask(this.env, task, address, profile), completed = Date.now(), receipt = { schema: "OMEGA_SWARM_CELL_RECEIPT_R121", taskId, missionId: clip(task.missionId, 180) || null, cellId: profile.cellId, index: address.index, lane: Number.isFinite(Number(task.lane)) ? Number(task.lane) : null, executor: task.executor || "DETERMINISTIC", provider: result?.provider || null, computeReceiptSha256: result?.computeReceipt?.receiptSha256 || null, evidence: evidenceIds, startedAt: started, completedAt: completed, runtimeMs: completed - started, resultSha256: await sha(result), lineage: [...(Array.isArray(task.lineage) ? task.lineage.slice(-12) : []), `swarm:${profile.cellId}:complete`], canonicalMutation: false }, next = { ...base, ...initialCell(address), status: "IDLE", heartbeatAt: completed, lastCompletedAt: completed, completedTasks: num(base.completedTasks) + 1, failedTasks: num(base.failedTasks), scar: Math.max(0, num(base.scar) * 0.96), lastReceipt: receipt, lastResultPreview: { kind: result.kind, summary: clip(result.summary || result.truthBoundary || result.authority, 1000), provider: result.provider || null, evidenceCount: evidenceIds.length } };
-      await this.storage.put("cell", next); return jsonResponse({ ok: true, cell: next, receipt, result });
+      const result = await runCellTask(this.env, task, address, profile), completed = Date.now(), receipt = { schema: "OMEGA_SWARM_CELL_RECEIPT_R121", integrityRevision: SWARM_INTEGRITY_R177, taskId, missionId: clip(task.missionId, 180) || null, cellId: profile.cellId, index: address.index, lane: Number.isFinite(Number(task.lane)) ? Number(task.lane) : null, executor: task.executor || "DETERMINISTIC", provider: result?.provider || null, computeReceiptSha256: result?.computeReceipt?.receiptSha256 || null, evidence: evidenceIds, startedAt: started, completedAt: completed, runtimeMs: completed - started, resultSha256: await sha(result), lineage: [...(Array.isArray(task.lineage) ? task.lineage.slice(-12) : []), `swarm:${profile.cellId}:complete`], canonicalMutation: false }, next = { ...base, ...initialCell(address), status: "IDLE", heartbeatAt: completed, lastCompletedAt: completed, completedTasks: num(base.completedTasks) + 1, failedTasks: num(base.failedTasks), scar: Math.max(0, num(base.scar) * 0.96), lastReceipt: receipt, lastResultPreview: { kind: result.kind, summary: clip(result.summary || result.truthBoundary || result.authority, 1000), provider: result.provider || null, evidenceCount: evidenceIds.length } }, payload = { ok: true, cell: next, receipt, result, deduplicated: false, integrityRevision: SWARM_INTEGRITY_R177 };
+      await this.storage.put("cell", next); await this.rememberTask(taskId, 200, payload); return jsonResponse(payload);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error), next = { ...base, ...initialCell(address), status: "FAILED", heartbeatAt: Date.now(), completedTasks: num(base.completedTasks), failedTasks: num(base.failedTasks) + 1, scar: Math.min(1, num(base.scar) + 0.08), evidence: evidenceIds, lastResultPreview: { kind: "ERROR", summary: message.slice(0, 1000), evidenceCount: evidenceIds.length } };
-      await this.storage.put("cell", next); return jsonResponse({ ok: false, code: "CELL_EXECUTION_FAILED", cell: next, error: message }, 500);
+      const message = error instanceof Error ? error.message : String(error), next = { ...base, ...initialCell(address), status: "FAILED", heartbeatAt: Date.now(), completedTasks: num(base.completedTasks), failedTasks: num(base.failedTasks) + 1, scar: Math.min(1, num(base.scar) + 0.08), evidence: evidenceIds, lastResultPreview: { kind: "ERROR", summary: message.slice(0, 1000), evidenceCount: evidenceIds.length } }, payload = { ok: false, code: "CELL_EXECUTION_FAILED", cell: next, error: message, deduplicated: false, integrityRevision: SWARM_INTEGRITY_R177 };
+      await this.storage.put("cell", next); await this.rememberTask(taskId, 500, payload); return jsonResponse(payload, 500);
     }
   }
 }
