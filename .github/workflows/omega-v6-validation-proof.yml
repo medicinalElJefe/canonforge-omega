@@ -1,0 +1,144 @@
+name: OMEGA V6 validation proof
+
+on:
+  workflow_run:
+    workflows: ["OMEGA V6 verify"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r172-validation:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Wait for R172 validation manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "$V6_URL/api/validate/manifest" -o /tmp/validation-manifest.json \
+              && grep -q 'OMEGA_VALIDATION_MANIFEST_R172' /tmp/validation-manifest.json; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "R172 validation manifest did not settle on the public edge"
+              cat /tmp/validation-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error "$V6_URL/validate" -o /tmp/validate.html
+
+      - name: Execute independent-formulation references
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error -X POST "$V6_URL/api/validate/reference" \
+            -H 'content-type: application/json' \
+            --data '{"path":"/api/compute/relativity/event","input":{"t_seconds":1.25,"position_m":[120000000,-25000000,4000000],"frame_velocity_m_s":[40000000,-20000000,10000000]}}' \
+            -o /tmp/lorentz-validation.json
+
+          curl --fail --silent --show-error -X POST "$V6_URL/api/validate/reference" \
+            -H 'content-type: application/json' \
+            --data '{"path":"/api/compute/optics/tmm","input":{"wavelength_nm":550,"incident_n":1,"substrate_n":1.5,"layers":[{"n":1.224744871391589,"k":0,"thickness_nm":112.26827987756235}]}}' \
+            -o /tmp/optics-validation.json
+
+          curl --fail --silent --show-error -X POST "$V6_URL/api/validate/reference" \
+            -H 'content-type: application/json' \
+            --data '{"path":"/api/compute/continuity/transfer","input":{"values":[4,3,2,1],"transfers":[{"from":0,"to":1,"amount":1.25},{"from":1,"to":2,"amount":0.5},{"from":2,"to":3,"amount":0.25}]}}' \
+            -o /tmp/continuity-validation.json
+
+          curl --fail --silent --show-error -X POST "$V6_URL/api/validate/reference" \
+            -H 'content-type: application/json' \
+            --data '{"path":"/api/compute/wave/fdtd1d","input":{"initial_displacement":[0,0,1,0,0],"wave_speed":1,"dx":1,"dt":0.5,"steps":20}}' \
+            -o /tmp/wave-validation.json
+
+      - name: Prove supplied metadata cannot self-promote
+        shell: bash
+        run: |
+          set -euo pipefail
+          H1=$(printf 'alpha' | sha256sum | cut -d' ' -f1)
+          H2=$(printf 'beta' | sha256sum | cut -d' ' -f1)
+          curl --fail --silent --show-error -X POST "$V6_URL/api/validate/compare" \
+            -H 'content-type: application/json' \
+            --data "{\"packets\":[{\"id\":\"a\",\"source\":\"claimed-rcwa\",\"methodFamily\":\"RCWA\",\"resultSha256\":\"$H1\"},{\"id\":\"b\",\"source\":\"claimed-measurement\",\"methodFamily\":\"MEASUREMENT\",\"resultSha256\":\"$H2\"}]}" \
+            -o /tmp/supplied-comparison.json
+
+      - name: Verify validation tiers, residuals and authority boundaries
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('/tmp/validation-manifest.json').read_text())
+          lorentz = json.loads(Path('/tmp/lorentz-validation.json').read_text())
+          optics = json.loads(Path('/tmp/optics-validation.json').read_text())
+          continuity = json.loads(Path('/tmp/continuity-validation.json').read_text())
+          wave = json.loads(Path('/tmp/wave-validation.json').read_text())
+          supplied = json.loads(Path('/tmp/supplied-comparison.json').read_text())
+          lab = Path('/tmp/validate.html').read_text()
+
+          assert manifest['ok'] is True
+          assert manifest['schema'] == 'OMEGA_VALIDATION_MANIFEST_R172'
+          assert manifest['revision'] == 'R172'
+          assert manifest['crossRuntimeStatus'] == 'REQUIRES_TRUSTED_NATIVE_RECEIPT'
+          assert manifest['independentFullWaveStatus'] == 'REQUIRES_RCWA_OR_MAXWELL_FDTD_RECEIPT'
+          assert manifest['externalMeasurementStatus'] == 'REQUIRES_OBSERVED_SOURCE_RECEIPT'
+          assert manifest['canonicalMutation'] is False
+          assert [x['level'] for x in manifest['levels']] == [0, 1, 2, 3, 4, 5]
+
+          lv = lorentz['validation']
+          assert lorentz['ok'] is True
+          assert lv['status'] == 'PASS'
+          assert lv['validationTier']['level'] == 2
+          lm = next(x for x in lv['validators'] if x['id'] == 'LORENTZ_MATRIX_PARITY')
+          mi = next(x for x in lv['validators'] if x['id'] == 'MINKOWSKI_INVARIANT')
+          assert lm['passed'] is True and lm['residual'] < 2e-12
+          assert mi['passed'] is True and mi['residual'] < 2e-12
+          assert lv['canonicalMutation'] is False
+          assert lv['nativeExecution'] is False
+          assert lv['authority'] == 'VALIDATION_RECEIPT_NOT_CANON'
+          assert len(lv['receiptSha256']) == 64
+
+          ov = optics['validation']
+          assert optics['ok'] is True
+          assert ov['validationTier']['level'] == 2
+          op = next(x for x in ov['validators'] if x['id'] == 'OPTICAL_RECURSIVE_PARITY')
+          assert op['passed'] is True and op['residual'] < 2e-11
+          assert ov['computation']['result']['solver'] == 'NORMAL_INCIDENCE_TMM'
+          assert ov['computation']['result']['fabricationGrade'] is False
+
+          cv = continuity['validation']
+          assert continuity['ok'] is True
+          assert cv['validationTier']['level'] == 1
+          assert cv['validators'][0]['passed'] is True
+
+          wv = wave['validation']
+          assert wave['ok'] is True
+          assert wv['validationTier']['level'] == 1
+          assert wv['validators'][0]['passed'] is True
+          assert wv['computation']['result']['maxwellSolver'] is False
+
+          comp = supplied['comparison']
+          assert supplied['ok'] is True
+          assert comp['verifiedDiversity'] is False
+          assert comp['authority'] == 'SUPPLIED_COMPARISON_NOT_VALIDATION'
+          assert comp['distinctDeclaredMethods'] == 2
+          assert 'caller-supplied' in comp['boundary']
+
+          assert 'OMEGA · R172 · VALIDATION FABRIC' in lab
+          assert 'Separate computation from proof.' in lab
+          print(json.dumps({
+              'status': 'LIVE_R172_HETEROGENEOUS_VALIDATION_VERIFIED',
+              'lorentz_matrix_residual': lm['residual'],
+              'minkowski_residual': mi['residual'],
+              'optical_recursive_residual': op['residual'],
+              'supplied_diversity_promoted': comp['verifiedDiversity'],
+          }, sort_keys=True))
