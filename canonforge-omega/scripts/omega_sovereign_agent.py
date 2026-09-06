@@ -10,10 +10,7 @@ import time
 import urllib.error
 import urllib.request
 
-from omega_runtime.cross_runtime import (
-    CROSS_RUNTIME_CHALLENGE_SCHEMA,
-    native_reference_receipt,
-)
+CROSS_RUNTIME_CHALLENGE_SCHEMA = "OMEGA_CROSS_RUNTIME_CHALLENGE_R173"
 
 SAFE_KINDS = {
     "convergence_scan",
@@ -135,12 +132,34 @@ def cross_runtime_validate(job: dict, root: Path) -> dict:
         return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R173 canonical input is missing"}
     if not all(isinstance(value, str) and len(value) == 64 for value in (input_sha, challenge_sha, cloud_result_sha, cloud_receipt_sha)):
         return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R173 challenge hashes are incomplete"}
+
+    execution = run([
+        sys.executable,
+        "-m",
+        "omega_runtime.cross_runtime_cli",
+        "--path",
+        path,
+        "--input-json",
+        canonical_input,
+    ], root, timeout=180)
+    if execution["exit_code"] != 0:
+        return {
+            "kind": "cross_runtime_validate",
+            "blocked": True,
+            "reason": "native R173 reference execution failed",
+            "native_executor": execution,
+        }
     try:
-        receipt = native_reference_receipt(path, canonical_input)
-    except Exception as exc:
-        return {"kind": "cross_runtime_validate", "blocked": True, "reason": f"native R173 reference execution failed: {exc}"}
+        receipt = json.loads(execution["stdout_tail"])
+    except json.JSONDecodeError:
+        return {
+            "kind": "cross_runtime_validate",
+            "blocked": True,
+            "reason": "native R173 reference execution did not return a JSON receipt",
+            "native_executor": execution,
+        }
     if receipt.get("input_sha256") != input_sha:
-        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "native input hash does not match the cloud challenge"}
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "native input hash does not match the cloud challenge", "native_receipt": receipt}
     return {
         "kind": "cross_runtime_validate",
         "schema": "OMEGA_SOVEREIGN_CROSS_RUNTIME_RESULT_R173",
@@ -151,6 +170,7 @@ def cross_runtime_validate(job: dict, root: Path) -> dict:
         "cloud_result_sha256": cloud_result_sha,
         "cloud_receipt_sha256": cloud_receipt_sha,
         "native_receipt": receipt,
+        "native_executor": {"exit_code": execution["exit_code"], "elapsed_seconds": execution["elapsed_seconds"]},
         "native_execution": True,
         "blocked": False,
         "authority": "AUTHENTICATED_NATIVE_EXECUTION_RECEIPT_NOT_CANON",
