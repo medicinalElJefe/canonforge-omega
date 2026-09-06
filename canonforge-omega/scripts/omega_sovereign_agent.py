@@ -10,11 +10,17 @@ import time
 import urllib.error
 import urllib.request
 
+from omega_runtime.cross_runtime import (
+    CROSS_RUNTIME_CHALLENGE_SCHEMA,
+    native_reference_receipt,
+)
+
 SAFE_KINDS = {
     "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
     "compute_truth_suite",
+    "cross_runtime_validate",
     "run_tests",
     "build_vite",
     "wrangler_dry_run",
@@ -112,6 +118,49 @@ def compute_truth_suite(root: Path) -> dict:
     }
 
 
+def cross_runtime_validate(job: dict, root: Path) -> dict:
+    payload = job.get("payload") if isinstance(job.get("payload"), dict) else {}
+    if payload.get("schema") != CROSS_RUNTIME_CHALLENGE_SCHEMA:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R173 challenge schema is missing or invalid"}
+    path = payload.get("path")
+    canonical_input = payload.get("input_canonical_json")
+    input_sha = payload.get("input_sha256")
+    challenge_sha = payload.get("challenge_sha256")
+    cloud_result_sha = payload.get("cloud_result_sha256")
+    cloud_receipt_sha = payload.get("cloud_receipt_sha256")
+    challenge_id = payload.get("challenge_id")
+    if not isinstance(path, str) or not path.startswith("/api/compute/"):
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R173 challenge path is invalid"}
+    if not isinstance(canonical_input, str) or not canonical_input:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R173 canonical input is missing"}
+    if not all(isinstance(value, str) and len(value) == 64 for value in (input_sha, challenge_sha, cloud_result_sha, cloud_receipt_sha)):
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R173 challenge hashes are incomplete"}
+    try:
+        receipt = native_reference_receipt(path, canonical_input)
+    except Exception as exc:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": f"native R173 reference execution failed: {exc}"}
+    if receipt.get("input_sha256") != input_sha:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "native input hash does not match the cloud challenge"}
+    return {
+        "kind": "cross_runtime_validate",
+        "schema": "OMEGA_SOVEREIGN_CROSS_RUNTIME_RESULT_R173",
+        "challenge_id": challenge_id,
+        "challenge_sha256": challenge_sha,
+        "path": path,
+        "input_sha256": input_sha,
+        "cloud_result_sha256": cloud_result_sha,
+        "cloud_receipt_sha256": cloud_receipt_sha,
+        "native_receipt": receipt,
+        "native_execution": True,
+        "blocked": False,
+        "authority": "AUTHENTICATED_NATIVE_EXECUTION_RECEIPT_NOT_CANON",
+        "canonical_mutation": False,
+        "independent_solver_family_claim": False,
+        "physical_dimension_claim": False,
+        "approved_root": str(root),
+    }
+
+
 def execute_job(job: dict, root: Path) -> dict:
     kind = job.get("kind")
     if kind not in SAFE_KINDS:
@@ -122,6 +171,8 @@ def execute_job(job: dict, root: Path) -> dict:
         return {"kind": kind, "inspection": inspect_workspace(root)}
     if kind == "compute_truth_suite":
         return compute_truth_suite(root)
+    if kind == "cross_runtime_validate":
+        return cross_runtime_validate(job, root)
     if kind == "run_tests":
         return {"kind": kind, "result": run([sys.executable, "-m", "pytest", "-q"], root)}
     if kind == "build_vite":
@@ -180,8 +231,8 @@ def main() -> int:
 
     capabilities = [
         "heartbeat", "convergence_scan", "inspect_workspace", "inspect_runtime", "compute_truth_suite",
-        "lorentz_reference", "tmm_reference", "conservative_continuity", "scalar_wave_fdtd_1d",
-        "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate",
+        "cross_runtime_validate", "lorentz_reference", "tmm_reference", "conservative_continuity", "scalar_wave_fdtd_1d",
+        "atlas_reference_diffusion_20736", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate",
     ]
     last_job_id = None
     sequence_seen = 0
@@ -189,7 +240,7 @@ def main() -> int:
     print(f"Canonical server: {args.server}")
     print(f"Approved root: {root}")
     print("Recursive convergence is bounded: archive/branch discovery may propose candidates but cannot silently promote production.")
-    print("R170 computation truth is explicit: derived solvers must return invariant/error evidence before advanced-computation claims are accepted.")
+    print("R173 cross-runtime parity is receipt-bound: cloud challenges become L3 validation only after authenticated native execution is persisted and numerically compared.")
     print("PC ONLINE will only be claimed after the server accepts a current authenticated heartbeat.")
 
     while True:
@@ -198,7 +249,7 @@ def main() -> int:
                 "agent_id": args.agent_id,
                 "approved_root": str(root),
                 "capabilities": capabilities,
-                "runtime_version": "r170-computation-truth-agent",
+                "runtime_version": "r173-cross-runtime-parity-agent",
                 "last_job_id": last_job_id,
             })
             proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
