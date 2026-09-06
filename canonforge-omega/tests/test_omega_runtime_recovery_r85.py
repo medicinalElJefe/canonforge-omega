@@ -19,8 +19,11 @@ def test_r85_recovers_exact_live_durable_object_identity():
     assert 'export { OmegaRuntime } from "./omegaRuntime"' in entry
     assert 'name = "OMEGA_RUNTIME"' in wrangler
     assert 'class_name = "OmegaRuntime"' in wrangler
-    assert 'tag = "r32-enacted-runtime"' in wrangler
-    assert 'new_sqlite_classes = ["OmegaRuntime"]' in wrangler
+    assert '[exports.OmegaRuntime]' in wrangler
+    assert 'type = "durable-object"' in wrangler
+    assert 'storage = "sqlite"' in wrangler
+    assert '[[migrations]]' not in wrangler
+    assert 'new_sqlite_classes' not in wrangler
 
 
 def test_r85_preserves_recovered_r32_r33_behavior_contract():
@@ -66,6 +69,9 @@ def test_current_cloudflare_contract_is_behaviorally_satisfied():
     assert result["missing_exports"] == []
     assert result["missing_behavior_markers"] == []
     assert result["binding_preserved"] is True
+    assert result["lifecycle_mode"] == "exports"
+    assert result["lifecycle_preserved"] is True
+    assert result["lifecycle_reason"] == "declarative exports / sqlite"
     assert result["migration_preserved"] is True
 
 
@@ -73,6 +79,7 @@ def test_recovery_provenance_is_public_historical_lineage_not_private_corpus():
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     recovery = contract["recovery"]
     assert recovery["status"] == "BEHAVIOR_SOURCE_RECOVERED"
+    assert recovery["lifecycle_status"] == "DECLARATIVE_SQLITE_BOUND"
     assert recovery["source_repo"] == "medicinalElJefe/OMEGAv6"
     assert recovery["r32_commit"] == "d7cbbfe166baf04a42dc7a50d13776ac33ef742b"
     assert recovery["r33_commit"] == "ca0660a128f8df88375a9f8e27931c94208c159b"
