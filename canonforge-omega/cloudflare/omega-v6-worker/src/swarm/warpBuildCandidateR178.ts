@@ -207,7 +207,7 @@ async function createCandidate(body: AnyObj, env: SwarmEnv): Promise<Response> {
     performanceGuaranteeClaim: false,
     truthBoundary: WARP_BUILD_CANDIDATE_BOUNDARY_R178,
   };
-  const candidate = { ...core, capsuleSha256: await canonicalShaR178(core) };
+  const candidate: AnyObj = { ...core, capsuleSha256: await canonicalShaR178(core) };
   const firstExecutableIndex = 1;
   const sovereignPayload = {
     schema: WARP_BUILD_IMPORT_SCHEMA_R178,
