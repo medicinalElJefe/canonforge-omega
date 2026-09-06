@@ -30,6 +30,7 @@ SAFE_JOB_KINDS = {
     "inspect_workspace",
     "inspect_runtime",
     "compute_truth_suite",
+    "cross_runtime_validate",
     "run_tests",
     "build_vite",
     "wrangler_dry_run",
