@@ -18,6 +18,11 @@ jobs:
     env:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
     steps:
+      - name: Checkout exact promoted computation source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
       - name: Fetch live R170 computations
         shell: bash
         run: |
@@ -110,11 +115,59 @@ jobs:
           assert 'Reference computation you can inspect.' in lab
           assert 'not labeled RCWA/FDTD/FEM' in lab
 
-          print(json.dumps({
-              'status': 'LIVE_R170_COMPUTATION_TRUTH_VERIFIED',
-              'lorentz_invariant_residual': lr['invariant_relative_residual'],
-              'tmm_reflectance': op['reflectance'],
-              'tmm_energy_residual': op['energy_balance_residual'],
-              'continuity_residual': cr['invariant_absolute_residual'],
-              'wave_cfl': wr['cfl'],
-          }, sort_keys=True))
+      - name: Cross-runtime cloud versus Python parity
+        shell: python
+        run: |
+          import json, math, sys
+          from pathlib import Path
+
+          sys.path.insert(0, str((Path.cwd() / 'canonforge-omega').resolve()))
+          from omega_runtime.advanced_computation import (
+              OpticalLayer,
+              conservative_transfer,
+              lorentz_boost_event,
+              normal_incidence_tmm,
+              scalar_wave_fdtd_1d,
+          )
+
+          cloud_l = json.loads(Path('/tmp/lorentz.json').read_text())['result']
+          cloud_o = json.loads(Path('/tmp/tmm.json').read_text())['result']
+          cloud_c = json.loads(Path('/tmp/continuity.json').read_text())['result']
+          cloud_w = json.loads(Path('/tmp/wave.json').read_text())['result']
+
+          py_l = lorentz_boost_event(1.25, (120000000, -25000000, 4000000), (40000000, -20000000, 10000000))
+          py_o = normal_incidence_tmm(550, (OpticalLayer(1.224744871391589, 0, 112.26827987756235),), incident_n=1, substrate_n=1.5)
+          py_c = conservative_transfer((4, 3, 2, 1), ((0, 1, 1.25), (1, 2, 0.5), (2, 3, 0.25)))
+          py_w = scalar_wave_fdtd_1d((0, 0, 1, 0, 0), wave_speed=1, dx=1, dt=0.5, steps=20)
+
+          def close(a, b, rel=2e-12, abs_=2e-12):
+              return abs(a-b) <= max(abs_, rel * max(abs(a), abs(b)))
+
+          assert close(cloud_l['gamma'], py_l.gamma)
+          assert close(cloud_l['transformed_t_seconds'], py_l.transformed_t_seconds)
+          for a, b in zip(cloud_l['transformed_position_m'], py_l.transformed_position_m): assert close(a, b)
+          assert close(cloud_l['interval_before_m2'], py_l.interval_before_m2)
+          assert close(cloud_l['interval_after_m2'], py_l.interval_after_m2)
+
+          assert close(cloud_o['reflectance'], py_o.reflectance)
+          assert close(cloud_o['transmittance'], py_o.transmittance)
+          assert close(cloud_o['absorptance'], py_o.absorptance)
+          assert close(cloud_o['energy_balance_residual'], py_o.energy_balance_residual)
+
+          assert all(close(a, b) for a, b in zip(cloud_c['values_after'], py_c.values_after))
+          assert close(cloud_c['invariant_absolute_residual'], py_c.invariant_absolute_residual)
+
+          assert close(cloud_w['cfl'], py_w.cfl)
+          assert all(close(a, b) for a, b in zip(cloud_w['final_state'], py_w.final_state))
+
+          parity = {
+              'status': 'LIVE_R170_CLOUD_PYTHON_PARITY_VERIFIED',
+              'lorentz_interval_cloud': cloud_l['invariant_relative_residual'],
+              'lorentz_interval_python': py_l.invariant_relative_residual,
+              'tmm_reflectance_cloud': cloud_o['reflectance'],
+              'tmm_reflectance_python': py_o.reflectance,
+              'continuity_residual_cloud': cloud_c['invariant_absolute_residual'],
+              'continuity_residual_python': py_c.invariant_absolute_residual,
+              'wave_cfl': cloud_w['cfl'],
+          }
+          print(json.dumps(parity, sort_keys=True))
