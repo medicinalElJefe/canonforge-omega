@@ -1,5 +1,6 @@
 import canonicalRuntime from "./heartbeatTruth";
 import { handleSwarmRequest } from "./swarm/swarmRouterR169";
+import { handleComputeRequest } from "./compute/computeTruthR170";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -10,7 +11,9 @@ export { OmegaSwarmAutonomicCoordinator } from "./swarm/swarmAutonomicR169";
 const canonical: any = canonicalRuntime;
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    if (new URL(request.url).pathname.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
+    const path = new URL(request.url).pathname;
+    if (path.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
+    if (path.startsWith("/api/compute/")) return handleComputeRequest(request);
     return canonical.fetch(request, env, ctx);
   },
 };
