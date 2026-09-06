@@ -20,6 +20,7 @@ HETEROGENEOUS_VALIDATION_ID = "r172-independent-formulation-and-evidence-tiering
 CROSS_RUNTIME_VALIDATION_ID = "r173-authenticated-cloud-sovereign-pc-parity"
 FEDERATED_ORGAN_FABRIC_ID = "r174-live-genesis-optical-swarm-organism"
 INDEPENDENT_SOLVER_VALIDATION_ID = "r175-sovereign-independent-rcwa-validation"
+WARP_COMPUTATION_ID = "r176-sharded-warp-computation"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
