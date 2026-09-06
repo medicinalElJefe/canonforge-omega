@@ -51,9 +51,13 @@ export function canonicalJsonR178(value: any): string {
   return JSON.stringify(stableValue(value));
 }
 
-export async function canonicalShaR178(value: any): Promise<string> {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonicalJsonR178(value)));
+async function shaTextR178(text: string): Promise<string> {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return [...new Uint8Array(bytes)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+export async function canonicalShaR178(value: any): Promise<string> {
+  return shaTextR178(canonicalJsonR178(value));
 }
 
 function isHash64(value: any): boolean {
@@ -140,7 +144,7 @@ async function createCandidate(body: AnyObj, env: SwarmEnv): Promise<Response> {
   }, 409);
 
   const receipt = gate.receipt;
-  const objectiveSha256 = await canonicalShaR178(objective);
+  const objectiveSha256 = await shaTextR178(objective);
   const sourceReceiptCanonicalSha256 = await canonicalShaR178(receipt);
   const candidateId = `warp_candidate_${String(receipt.receiptSha256).slice(0, 12)}_${objectiveSha256.slice(0, 12)}`;
   const capabilities = desiredDimensions(body.desiredCapabilities || body.capabilityDimensions);
