@@ -1,7 +1,7 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 delegates every non-swarm/non-compute/non-validate request directly to heartbeatTruth.
+# runtimeEntryR169 delegates every non-swarm/non-compute/non-validate/non-federation request directly to heartbeatTruth.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -18,6 +18,7 @@ COMPUTATION_SWARM_ID = "r171-redundant-reference-compute-consensus"
 SWARM_PRECISION_BODY_ID = "r171-live-address-compute-instrument"
 HETEROGENEOUS_VALIDATION_ID = "r172-independent-formulation-and-evidence-tiering"
 CROSS_RUNTIME_VALIDATION_ID = "r173-authenticated-cloud-sovereign-pc-parity"
+FEDERATED_ORGAN_FABRIC_ID = "r174-live-genesis-optical-swarm-organism"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
@@ -84,3 +85,11 @@ storage = "sqlite"
 [[services]]
 binding = "GENESIS"
 service = "omega-genesis-v1"
+
+[[services]]
+binding = "OMEGA_GENESIS_MACHINE"
+service = "omega-genesis-machine-r115"
+
+[[services]]
+binding = "OMEGA_OPTICAL_MACHINE"
+service = "omega-optical-machine-r115"
