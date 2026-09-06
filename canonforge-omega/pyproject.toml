@@ -11,6 +11,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+rcwa = [
+    "numpy>=1.24",
+    "grcwa==0.1.2",
+]
 
 [project.scripts]
 canonforge-omega = "omega_runtime.cli:main"
