@@ -42,15 +42,21 @@ export const R154_BUILD_GOVERNANCE_COMPATIBILITY_ID = "r154-build-evolution-gove
 export const R158_MOBILE_FIELD_COMPATIBILITY_ID = "r158-mobile-field-composition";
 export const R163_INTERACTIVE_FIELD_COMPATIBILITY_ID = "r163-interactive-living-field";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
+
+// Immutable inherited visual/truth contract. Successor releases extend it through
+// separate release headers instead of silently rewriting accepted semantics.
 export const VISUAL_DELIVERY_BOUNDARY =
-  "R171 preserves every inherited visual/state/heartbeat/Earth/build boundary and adds live computation-swarm instrumentation. All 1,728 cell addresses can be rendered, but idle address capacity is not represented as active computation. Planner selection comes only from /api/swarm/autonomic/plan. Redundant solver execution comes only from distinct Durable Object cell receipts returned by /api/swarm/compute-consensus. Those replicas share one reference implementation, so agreement is execution-consistency evidence rather than independent solver validation. R170 Lorentz/TMM/conservative-transfer/diffusion/scalar-wave computations remain DERIVED, nativeExecution=false in cloud, and do not mutate CanonState. TMM remains reduced-order normal-incidence layered-media screening, scalar-wave FDTD remains non-Maxwell, PC ONLINE remains heartbeat-gated, and 12/144/1728/20736 remain software address/execution-resolution levels rather than physical dimensions.";
+  "R168 preserves R167 state accuracy and adds a SAI/Hybrid motion fabric that visualizes canonical state, route-authority readiness, authenticated Hybrid heartbeat truth and governed development status as one high-definition computation layer. It augments the existing atlas_context with classified SAI/Hybrid routing context, so the already-governed route-before-generation pipeline can use current sovereign compute truth without creating another state authority. The final compositor still enforces one visible navigation/composition authority per viewport, keeps the living state field central, treats governed modes as projections rather than competing navigation, and progressively discloses recovered expert instruments instead of allowing overlays to collide. It does not mutate canonical state, does not bypass release gates, does not fabricate model execution or deployment evidence, and does not promote Genesis discovery into V6 authority. R152 Earth OBSERVED_SOURCE identities still come only from /api/earth/catalog; DERIVED_FRAMEWORK_MATH and FORECAST_PROJECTION remain non-observation layers, and missing coordinates are never invented. PC ONLINE remains rendered only when the protected heartbeatTruth contract itself reports pc_online=true. The preserved R147 field contract includes scalar potential, finite-difference gradient, Hessian/Laplacian curvature, derived vector flow and RK2 integral trajectories. Runtime observations remain distinct from DERIVED_FRAMEWORK_MATH, SIMULATED_CONTINUATION, FORECAST_PROJECTION, MODEL_OUTPUT and USER_DEFINED_MODEL geometry; UTC render time is not evidence time. It preserves route-before-generation, heartbeatTruth, OmegaRuntime and Hybrid/Genesis authority boundaries, preserves representational 12^n shells, preserves the R143 device-DPR 3 quality contract as a compatibility capability, does not claim a physical 61.9-billion-pixel panel, and does not claim physical 20,736 dimensions.";
+export const R171_SWARM_SUCCESSOR_BOUNDARY =
+  "R171 adds live computation-swarm instrumentation without replacing the inherited visual/truth contract. All 1,728 deterministic cell addresses can be rendered, but idle address capacity is not active computation. Planner selection comes only from /api/swarm/autonomic/plan. Redundant reference computation comes only from distinct Durable Object cell receipts returned by /api/swarm/compute-consensus. Those replicas share one implementation, so agreement is execution-consistency/fault-divergence evidence rather than independent solver validation. R170 reference computations remain DERIVED, nativeExecution=false in cloud, and do not mutate CanonState; TMM remains reduced-order normal-incidence layered-media screening and scalar-wave FDTD remains non-Maxwell.";
 
 /* Historical preservation signatures — NON-EXECUTING compatibility anchors only.
 enhanceArchiveRecoveredWorkstation(response)
+enhanceVirtualLatticeDisplayCore(rendered)
+enhanceLivePhaseVisual(rendered)
 enhanceIndividualSkinRelativity(rendered)
 enhanceUltraQualityView(rendered)
 enhanceHighDetail20736Field(rendered)
-enhanceLivePhaseVisual(rendered)
 */
 
 async function stampDeliveredVisual(response: Response): Promise<Response> {
@@ -64,9 +70,10 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   headers.set("x-omega-state-release", STATE_ACCURACY_RELEASE);
   headers.set("x-omega-sai-hybrid-release", SAI_HYBRID_RELEASE);
   headers.set("x-omega-swarm-computation-release", SWARM_COMPUTATION_RELEASE);
-  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults+sai-hybrid-motion-fabric+truth-bound-ai-context+live-1728-address-body+derived-compute-consensus-receipts");
+  headers.set("x-omega-swarm-computation-contract", "live-1728-address-body+planner-selected-cells+derived-reference-compute-consensus+receipt-bound-execution+replica-consistency-not-independent-validation");
+  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults+sai-hybrid-motion-fabric+truth-bound-ai-context");
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
-  headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+sai-hybrid-ai-context+swarm-reference-computation+rollback+runtime-truth+integrity-v6");
+  headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+sai-hybrid-ai-context+rollback+runtime-truth+integrity-v6");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
