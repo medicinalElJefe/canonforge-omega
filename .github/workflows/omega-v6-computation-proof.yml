@@ -1,0 +1,120 @@
+name: OMEGA V6 computation truth proof
+
+on:
+  workflow_run:
+    workflows: ["OMEGA V6 verify"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r170:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Fetch live R170 computations
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "$V6_URL/api/compute/manifest" -o /tmp/manifest.json \
+              && grep -q 'OMEGA_COMPUTATION_TRUTH_R170' /tmp/manifest.json; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "R170 manifest did not settle on the public edge"
+              exit 1
+            fi
+            sleep 2
+          done
+
+          curl --fail --silent --show-error -X POST "$V6_URL/api/compute/relativity/event" \
+            -H 'content-type: application/json' \
+            --data '{"t_seconds":1.25,"position_m":[120000000,-25000000,4000000],"frame_velocity_m_s":[40000000,-20000000,10000000]}' \
+            -o /tmp/lorentz.json
+
+          curl --fail --silent --show-error -X POST "$V6_URL/api/compute/optics/tmm" \
+            -H 'content-type: application/json' \
+            --data '{"wavelength_nm":550,"incident_n":1,"substrate_n":1.5,"layers":[{"n":1.224744871391589,"k":0,"thickness_nm":112.26827987756235}]}' \
+            -o /tmp/tmm.json
+
+          curl --fail --silent --show-error -X POST "$V6_URL/api/compute/continuity/transfer" \
+            -H 'content-type: application/json' \
+            --data '{"values":[4,3,2,1],"transfers":[{"from":0,"to":1,"amount":1.25},{"from":1,"to":2,"amount":0.5},{"from":2,"to":3,"amount":0.25}]}' \
+            -o /tmp/continuity.json
+
+          curl --fail --silent --show-error -X POST "$V6_URL/api/compute/wave/fdtd1d" \
+            -H 'content-type: application/json' \
+            --data '{"initial_displacement":[0,0,1,0,0],"wave_speed":1,"dx":1,"dt":0.5,"steps":20}' \
+            -o /tmp/wave.json
+
+          curl --fail --silent --show-error "$V6_URL/compute" -o /tmp/compute.html
+
+      - name: Verify equations, invariants, boundaries and receipts
+        shell: python
+        run: |
+          import json, math
+          from pathlib import Path
+
+          manifest = json.loads(Path('/tmp/manifest.json').read_text())
+          lorentz = json.loads(Path('/tmp/lorentz.json').read_text())
+          tmm = json.loads(Path('/tmp/tmm.json').read_text())
+          continuity = json.loads(Path('/tmp/continuity.json').read_text())
+          wave = json.loads(Path('/tmp/wave.json').read_text())
+          lab = Path('/tmp/compute.html').read_text()
+
+          assert manifest['ok'] is True
+          assert manifest['schema'] == 'OMEGA_COMPUTATION_TRUTH_R170'
+          assert manifest['revision'] == 'R170'
+          assert manifest['constants']['c_m_s'] == 299792458
+          assert manifest['hierarchy']['addressLevels'] == [12, 144, 1728, 20736]
+          assert manifest['hierarchy']['physicalDimensionClaim'] is False
+          assert manifest['canonicalMutation'] is False
+
+          lr = lorentz['result']
+          assert lorentz['ok'] is True
+          assert lr['schema'] == 'OMEGA_LORENTZ_EVENT_R170'
+          assert lr['invariant_relative_residual'] < 1e-12
+          assert len(lorentz['receipt']['receiptSha256']) == 64
+          assert lorentz['receipt']['canonicalMutation'] is False
+
+          op = tmm['result']
+          assert tmm['ok'] is True
+          assert op['solver'] == 'NORMAL_INCIDENCE_TMM'
+          assert op['solverTier'] == 'REDUCED_ORDER_SCREENING'
+          assert op['fabricationGrade'] is False
+          assert op['reflectance'] < 1e-10
+          assert op['energy_balance_residual'] < 1e-12
+          assert len(tmm['receipt']['receiptSha256']) == 64
+
+          cr = continuity['result']
+          assert continuity['ok'] is True
+          assert cr['values_after'] == [2.75, 3.75, 2.25, 1.25]
+          assert cr['invariant_absolute_residual'] < 1e-12
+          assert cr['canonicalMutation'] is False
+
+          wr = wave['result']
+          assert wave['ok'] is True
+          assert abs(wr['cfl'] - 0.5) < 1e-15
+          assert wr['maxwellSolver'] is False
+          assert wr['solver'] == 'SECOND_ORDER_SCALAR_WAVE_FDTD_1D'
+          assert all(math.isfinite(x) for x in wr['final_state'])
+
+          assert 'OMEGA · R170 · computation truth' in lab
+          assert 'Reference computation you can inspect.' in lab
+          assert 'not labeled RCWA/FDTD/FEM' in lab
+
+          print(json.dumps({
+              'status': 'LIVE_R170_COMPUTATION_TRUTH_VERIFIED',
+              'lorentz_invariant_residual': lr['invariant_relative_residual'],
+              'tmm_reflectance': op['reflectance'],
+              'tmm_energy_residual': op['energy_balance_residual'],
+              'continuity_residual': cr['invariant_absolute_residual'],
+              'wave_cfl': wr['cfl'],
+          }, sort_keys=True))
