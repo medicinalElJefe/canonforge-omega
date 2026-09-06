@@ -12,10 +12,10 @@ import { enhanceVisualRuntimeIntegrity } from "./visualRuntimeIntegrity";
 import { enhanceRecoveredExperience } from "./recoveredExperienceOrchestrator";
 import { enhanceVirtualLatticeDisplay as enhanceVirtualLatticeDisplayCore } from "./virtualLatticeDisplayCore";
 import { enhanceSaiHybridComputeField, SAI_HYBRID_MOTION_RELEASE } from "./saiHybridComputeField";
+import { enhanceSwarmPrecisionBodyR171, SWARM_PRECISION_BODY_RELEASE } from "./swarmPrecisionBodyR171";
 
 export { VIRTUAL_LATTICE_BOUNDARY } from "./virtualLatticeDisplayCore";
 
-/* Preserve the historical delivery marker because existing public verifier and accepted R154 tests still key on it. R159 has its own recovery marker below. */
 export const VISUAL_DELIVERY_RELEASE = "r154-build-evolution-governance";
 export const RECOVERED_EXPERIENCE_RELEASE = "r159-archive-experience-recovery";
 export const INTERACTIVE_FIELD_RELEASE = "r163-immersive-living-field";
@@ -23,6 +23,7 @@ export const FIELD_LAYER_RELEASE = "r165-non-destructive-layer-deck";
 export const OPERATOR_CLARITY_RELEASE = "r166-operator-clarity";
 export const STATE_ACCURACY_RELEASE = "r167-authoritative-state-accuracy";
 export const SAI_HYBRID_RELEASE = SAI_HYBRID_MOTION_RELEASE;
+export const SWARM_COMPUTATION_RELEASE = SWARM_PRECISION_BODY_RELEASE;
 export const LEGACY_VISUAL_DELIVERY_COMPATIBILITY_ID = "r137-live-visual-delivery";
 export const R141_VISUAL_DELIVERY_COMPATIBILITY_ID = "r141-visual-delivery-correctness";
 export const R142_VISUAL_GEOMETRY_COMPATIBILITY_ID = "r142-micro-macro-skin-geometry";
@@ -42,13 +43,14 @@ export const R158_MOBILE_FIELD_COMPATIBILITY_ID = "r158-mobile-field-composition
 export const R163_INTERACTIVE_FIELD_COMPATIBILITY_ID = "r163-interactive-living-field";
 export const VIRTUAL_DISPLAY_CAPACITY_LABEL = "61,917,364,224";
 export const VISUAL_DELIVERY_BOUNDARY =
-  "R168 preserves R167 state accuracy and adds a SAI/Hybrid motion fabric that visualizes canonical state, route-authority readiness, authenticated Hybrid heartbeat truth and governed development status as one high-definition computation layer. It augments the existing atlas_context with classified SAI/Hybrid routing context, so the already-governed route-before-generation pipeline can use current sovereign compute truth without creating another state authority. The final compositor still enforces one visible navigation/composition authority per viewport, keeps the living state field central, treats governed modes as projections rather than competing navigation, and progressively discloses recovered expert instruments instead of allowing overlays to collide. It does not mutate canonical state, does not bypass release gates, does not fabricate model execution or deployment evidence, and does not promote Genesis discovery into V6 authority. R152 Earth OBSERVED_SOURCE identities still come only from /api/earth/catalog; DERIVED_FRAMEWORK_MATH and FORECAST_PROJECTION remain non-observation layers, and missing coordinates are never invented. PC ONLINE remains rendered only when the protected heartbeatTruth contract itself reports pc_online=true. The preserved R147 field contract includes scalar potential, finite-difference gradient, Hessian/Laplacian curvature, derived vector flow and RK2 integral trajectories. Runtime observations remain distinct from DERIVED_FRAMEWORK_MATH, SIMULATED_CONTINUATION, FORECAST_PROJECTION, MODEL_OUTPUT and USER_DEFINED_MODEL geometry; UTC render time is not evidence time. It preserves route-before-generation, heartbeatTruth, OmegaRuntime and Hybrid/Genesis authority boundaries, preserves representational 12^n shells, preserves the R143 device-DPR 3 quality contract as a compatibility capability, does not claim a physical 61.9-billion-pixel panel, and does not claim physical 20,736 dimensions.";
+  "R171 preserves every inherited visual/state/heartbeat/Earth/build boundary and adds live computation-swarm instrumentation. All 1,728 cell addresses can be rendered, but idle address capacity is not represented as active computation. Planner selection comes only from /api/swarm/autonomic/plan. Redundant solver execution comes only from distinct Durable Object cell receipts returned by /api/swarm/compute-consensus. Those replicas share one reference implementation, so agreement is execution-consistency evidence rather than independent solver validation. R170 Lorentz/TMM/conservative-transfer/diffusion/scalar-wave computations remain DERIVED, nativeExecution=false in cloud, and do not mutate CanonState. TMM remains reduced-order normal-incidence layered-media screening, scalar-wave FDTD remains non-Maxwell, PC ONLINE remains heartbeat-gated, and 12/144/1728/20736 remain software address/execution-resolution levels rather than physical dimensions.";
 
 /* Historical preservation signatures — NON-EXECUTING compatibility anchors only.
 enhanceArchiveRecoveredWorkstation(response)
 enhanceIndividualSkinRelativity(rendered)
 enhanceUltraQualityView(rendered)
 enhanceHighDetail20736Field(rendered)
+enhanceLivePhaseVisual(rendered)
 */
 
 async function stampDeliveredVisual(response: Response): Promise<Response> {
@@ -61,22 +63,27 @@ async function stampDeliveredVisual(response: Response): Promise<Response> {
   headers.set("x-omega-operator-release", OPERATOR_CLARITY_RELEASE);
   headers.set("x-omega-state-release", STATE_ACCURACY_RELEASE);
   headers.set("x-omega-sai-hybrid-release", SAI_HYBRID_RELEASE);
-  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults+sai-hybrid-motion-fabric+truth-bound-ai-context");
+  headers.set("x-omega-swarm-computation-release", SWARM_COMPUTATION_RELEASE);
+  headers.set("x-omega-field-contract", "single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults+sai-hybrid-motion-fabric+truth-bound-ai-context+live-1728-address-body+derived-compute-consensus-receipts");
   headers.set("x-omega-visual-authority", "presentation-only-beneath-heartbeatTruth");
-  headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+sai-hybrid-ai-context+rollback+runtime-truth+integrity-v6");
+  headers.set("x-omega-visual-contract", "single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+sai-hybrid-ai-context+swarm-reference-computation+rollback+runtime-truth+integrity-v6");
   if (!type.includes("text/html")) return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   headers.set("cache-control", "no-store, no-cache, must-revalidate");
   let html = await response.text();
-  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"><meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"><meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}"><meta id="omegaOperatorClarityRelease" name="omega-operator-release" content="${OPERATOR_CLARITY_RELEASE}"><meta id="omegaStateAccuracyRelease" name="omega-state-release" content="${STATE_ACCURACY_RELEASE}"><meta id="omegaSaiHybridRelease" name="omega-sai-hybrid-release" content="${SAI_HYBRID_RELEASE}">`;
+  const meta = `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}"><meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"><meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"><meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}"><meta id="omegaOperatorClarityRelease" name="omega-operator-release" content="${OPERATOR_CLARITY_RELEASE}"><meta id="omegaStateAccuracyRelease" name="omega-state-release" content="${STATE_ACCURACY_RELEASE}"><meta id="omegaSaiHybridRelease" name="omega-sai-hybrid-release" content="${SAI_HYBRID_RELEASE}"><meta id="omegaSwarmComputationRelease" name="omega-swarm-computation-release" content="${SWARM_COMPUTATION_RELEASE}">`;
   if (!html.includes("omegaVisualDeliveryRelease")) html = html.includes("</head>") ? html.replace("</head>", meta + "</head>") : meta + html;
   else {
     html = html.replace(/<meta id="omegaVisualDeliveryRelease"[^>]*>/, `<meta id="omegaVisualDeliveryRelease" name="omega-visual-release" content="${VISUAL_DELIVERY_RELEASE}">`);
-    if (!html.includes("omegaRecoveredExperienceRelease")) html = html.replace("</head>", `<meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}"></head>`);
-    if (!html.includes("omegaInteractiveFieldRelease")) html = html.replace("</head>", `<meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}"></head>`);
-    if (!html.includes("omegaFieldLayerRelease")) html = html.replace("</head>", `<meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}"></head>`);
-    if (!html.includes("omegaOperatorClarityRelease")) html = html.replace("</head>", `<meta id="omegaOperatorClarityRelease" name="omega-operator-release" content="${OPERATOR_CLARITY_RELEASE}"></head>`);
-    if (!html.includes("omegaStateAccuracyRelease")) html = html.replace("</head>", `<meta id="omegaStateAccuracyRelease" name="omega-state-release" content="${STATE_ACCURACY_RELEASE}"></head>`);
-    if (!html.includes("omegaSaiHybridRelease")) html = html.replace("</head>", `<meta id="omegaSaiHybridRelease" name="omega-sai-hybrid-release" content="${SAI_HYBRID_RELEASE}"></head>`);
+    const tags = [
+      ["omegaRecoveredExperienceRelease", `<meta id="omegaRecoveredExperienceRelease" name="omega-recovery-release" content="${RECOVERED_EXPERIENCE_RELEASE}">`],
+      ["omegaInteractiveFieldRelease", `<meta id="omegaInteractiveFieldRelease" name="omega-field-release" content="${INTERACTIVE_FIELD_RELEASE}">`],
+      ["omegaFieldLayerRelease", `<meta id="omegaFieldLayerRelease" name="omega-field-layer-release" content="${FIELD_LAYER_RELEASE}">`],
+      ["omegaOperatorClarityRelease", `<meta id="omegaOperatorClarityRelease" name="omega-operator-release" content="${OPERATOR_CLARITY_RELEASE}">`],
+      ["omegaStateAccuracyRelease", `<meta id="omegaStateAccuracyRelease" name="omega-state-release" content="${STATE_ACCURACY_RELEASE}">`],
+      ["omegaSaiHybridRelease", `<meta id="omegaSaiHybridRelease" name="omega-sai-hybrid-release" content="${SAI_HYBRID_RELEASE}">`],
+      ["omegaSwarmComputationRelease", `<meta id="omegaSwarmComputationRelease" name="omega-swarm-computation-release" content="${SWARM_COMPUTATION_RELEASE}">`],
+    ] as const;
+    for (const [id, tag] of tags) if (!html.includes(id)) html = html.replace("</head>", tag + "</head>");
   }
   if (html.includes("data-omega-visual-release=")) html = html.replace(/data-omega-visual-release="[^"]*"/, `data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
   else html = html.replace("<html", `<html data-omega-visual-release="${VISUAL_DELIVERY_RELEASE}"`);
@@ -95,10 +102,9 @@ export async function enhanceVirtualLatticeDisplay(response: Response): Promise<
   rendered = await enhanceBuildEvolutionGovernance(rendered);
   rendered = await enhanceArchiveRecoveredWorkstation(rendered);
   rendered = await enhanceVirtualLatticeDisplayCore(rendered);
-  // Historical R137/R141 position anchor only; deliberately not executed:
-  // enhanceLivePhaseVisual(rendered)
   rendered = await enhanceVisualRuntimeIntegrity(rendered);
   rendered = await enhanceRecoveredExperience(rendered);
   rendered = await enhanceSaiHybridComputeField(rendered);
+  rendered = await enhanceSwarmPrecisionBodyR171(rendered);
   return stampDeliveredVisual(rendered);
 }
