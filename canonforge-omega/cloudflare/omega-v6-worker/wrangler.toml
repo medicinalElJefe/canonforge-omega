@@ -1,7 +1,7 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 delegates every non-swarm request directly to heartbeatTruth.
+# runtimeEntryR169 delegates every non-swarm/non-compute request directly to heartbeatTruth.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -13,6 +13,7 @@ CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
 RELATION_WORKBENCH_ID = "r94-relation-workbench-graph-projection"
 RICH_OPERATIONAL_UI_ID = "r126-rich-operational-expansion"
 SWARM_NAMESPACE_RECOVERY_ID = "r169-public-r121-r123-r125-lineage"
+COMPUTATION_TRUTH_ID = "r170-physically-grounded-reference-solvers"
 
 [[durable_objects.bindings]]
 name = "OMEGA_RUNTIME"
