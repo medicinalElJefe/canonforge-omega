@@ -37,24 +37,36 @@ def evaluate(contract_path: Path, source_root: Path, wrangler_path: Path | None 
 
     binding_name = recovery.get("binding_name")
     migration_tag = recovery.get("migration_tag")
+    lifecycle_mode = str(recovery.get("lifecycle_mode") or "legacy-migrations")
+    storage_backend = str(recovery.get("storage_backend") or "sqlite")
     if wrangler_path is None:
         candidate = source_root.parent / "wrangler.toml"
         wrangler_path = candidate if candidate.exists() else None
     wrangler = wrangler_path.read_text(encoding="utf-8") if wrangler_path and wrangler_path.exists() else ""
     binding_preserved = True
-    migration_preserved = True
+    lifecycle_preserved = True
+    lifecycle_reason = "not declared by contract"
     if binding_name:
         binding_preserved = (
             f'name = "{binding_name}"' in wrangler
             and 'class_name = "OmegaRuntime"' in wrangler
         )
-    if migration_tag:
-        migration_preserved = (
+    if lifecycle_mode == "exports":
+        lifecycle_preserved = all((
+            '[exports.OmegaRuntime]' in wrangler,
+            'type = "durable-object"' in wrangler,
+            f'storage = "{storage_backend}"' in wrangler,
+            '[[migrations]]' not in wrangler,
+        ))
+        lifecycle_reason = f"declarative exports / {storage_backend}"
+    elif migration_tag:
+        lifecycle_preserved = (
             f'tag = "{migration_tag}"' in wrangler
             and 'new_sqlite_classes = ["OmegaRuntime"]' in wrangler
         )
+        lifecycle_reason = f"legacy migration {migration_tag}"
 
-    compatible = not missing and not missing_markers and binding_preserved and migration_preserved
+    compatible = not missing and not missing_markers and binding_preserved and lifecycle_preserved
     return {
         "status": "PASS" if compatible else "HOLD",
         "compatible": compatible,
@@ -64,8 +76,12 @@ def evaluate(contract_path: Path, source_root: Path, wrangler_path: Path | None 
         "required_behavior_markers": required_markers,
         "missing_behavior_markers": missing_markers,
         "binding_preserved": binding_preserved,
-        "migration_preserved": migration_preserved,
-        "boundary": "HOLD means do not deploy over the canonical Worker until live Durable Object exports, recovered behavior markers, binding identity, and migration identity are preserved.",
+        "lifecycle_mode": lifecycle_mode,
+        "lifecycle_preserved": lifecycle_preserved,
+        "lifecycle_reason": lifecycle_reason,
+        # Retained for older status consumers; now reflects the full lifecycle contract.
+        "migration_preserved": lifecycle_preserved,
+        "boundary": "HOLD means do not deploy over the canonical Worker until live Durable Object exports, recovered behavior markers, binding identity, and lifecycle/storage identity are preserved.",
     }
 
 
