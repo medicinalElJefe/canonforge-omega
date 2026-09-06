@@ -1,9 +1,11 @@
 import { AnyObj, DurableBinding, SwarmEnv, SWARM_CELL_COUNT, SWARM_LANE_COUNT, SWARM_MODEL_R121, clip, compactPlan, evidence, jsonResponse, modelText, num, planMission, publicMission, schedule, sha } from "./swarmCoreR169";
 
 const RETURNED_NOT_ADMITTED = { proofState: "RETURNED_NOT_ADMITTED" } as const;
+const INTEGRITY_REVISION = "R177";
 
 export class OmegaSwarmCoordinator {
   private storage: any; private env: SwarmEnv;
+  private processLocks = new Map<string, Promise<AnyObj | null>>();
   constructor(state: any, env: SwarmEnv) { this.storage = state.storage; this.env = env; }
   private async ids(): Promise<string[]> { return (await this.storage.get("mission_ids")) || []; }
   private async get(id: string): Promise<AnyObj | null> { return await this.storage.get(`mission:${id}`) || null; }
@@ -21,32 +23,72 @@ export class OmegaSwarmCoordinator {
     const executor = this.executor(cell, mission), stub = binding.get(binding.idFromName(cell.id)), task = { schema: "OMEGA_SWARM_TASK_R121", missionId: mission.id, taskId: `${mission.id}:${cell.order}`, cellId: cell.id, index: cell.index, lane: cell.lane, intent: mission.intent, mode: mission.mode, executor, computation: executor === "COMPUTE_R170" ? mission.computation : null, evidence: mission.evidence || [], lineage: [`omega-v6:swarm:${mission.id}`, `organ:${cell.profile.domainRole}`, `branch:${cell.profile.phaseRole}`, `cell:${cell.id}`] }, response = await stub.fetch(new Request("https://swarm-cell.internal/task", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(task) }));
     return { cell, executor, ok: response.ok, status: response.status, data: await response.json().catch(() => null) };
   }
-  private async process(id: string): Promise<AnyObj | null> {
+  private async processUnlocked(id: string): Promise<AnyObj | null> {
     let m = await this.get(id); if (!m || !["QUEUED", "RUNNING"].includes(m.status)) return m;
-    if (!this.env.OMEGA_SWARM_CELL) { m = { ...m, status: "FAILED", failed: m.total, proofState: "CELL_BINDING_UNAVAILABLE" }; return this.save(m); }
-    const batchSize = m.mode === "PIPELINE" ? 1 : Math.min(24, m.pending.length), batch = m.pending.splice(0, batchSize); m.status = "RUNNING"; m.startedAt = m.startedAt || Date.now(); await this.save(m);
-    const results = await Promise.all(batch.map((cell: AnyObj) => this.dispatch(m as AnyObj, cell).catch(error => ({ cell, executor: "UNKNOWN", ok: false, status: 500, data: { error: error instanceof Error ? error.message : String(error) } }))));
-    for (const x of results) {
-      m.completed += x.ok ? 1 : 0; m.failed += x.ok ? 0 : 1; m.organProcessed[x.cell.address.domain] = num(m.organProcessed[x.cell.address.domain]) + 1;
-      const result = x.data?.result, summary = clip(result?.summary || result?.truthBoundary || x.data?.error || x.data?.code, 1200);
-      m.recent.unshift({ cellId: x.cell.id, index: x.cell.index, organ: x.cell.profile.domainRole, phase: x.cell.profile.phaseRole, executor: x.executor, ok: x.ok, status: x.status, summary, receiptSha: x.data?.receipt?.resultSha256 || null, computeReceiptSha: result?.computeReceipt?.receiptSha256 || null }); m.recent = m.recent.slice(0, 36);
-      if (x.executor === "WORKERS_AI" && x.ok && summary) m.providerOutputs.push({ cellId: x.cell.id, role: x.cell.profile.domainRole, summary }); m.providerOutputs = m.providerOutputs.slice(0, 12);
-      if (x.executor === "COMPUTE_R170" && x.ok && result?.computation) m.computationOutputs.push({ cellId: x.cell.id, path: result.path, result: result.computation, computeReceipt: result.computeReceipt, authority: result.authority }); m.computationOutputs = m.computationOutputs.slice(0, 4);
+    m.pending = Array.isArray(m.pending) ? m.pending : [];
+    m.inflight = Array.isArray(m.inflight) ? m.inflight : [];
+    m.completed = num(m.completed);
+    m.failed = num(m.failed);
+    m.total = num(m.total);
+    m.integrityRevision = INTEGRITY_REVISION;
+    if (!this.env.OMEGA_SWARM_CELL) {
+      m.failed = Math.max(m.failed, Math.max(0, m.total - m.completed));
+      m.pending = [];
+      m.inflight = [];
+      m.status = "FAILED";
+      m.completedAt = Date.now();
+      m.proofState = "CELL_BINDING_UNAVAILABLE";
+      m.integrity = { strictTerminalAccounting: true, expected: m.total, accounted: m.completed + m.failed, valid: m.completed + m.failed === m.total };
+      return this.save(m);
     }
-    if (m.pending.length) { await this.save(m); await schedule(this.storage, 500); return m; }
+    if (!m.inflight.length && m.pending.length) {
+      const batchSize = m.mode === "PIPELINE" ? 1 : Math.min(24, m.pending.length);
+      m.inflight = m.pending.splice(0, batchSize);
+      m.status = "RUNNING";
+      m.startedAt = m.startedAt || Date.now();
+      await this.save(m);
+    }
+    const batch = [...m.inflight];
+    if (batch.length) {
+      const results = await Promise.all(batch.map((cell: AnyObj) => this.dispatch(m as AnyObj, cell).catch(error => ({ cell, executor: "UNKNOWN", ok: false, status: 500, data: { error: error instanceof Error ? error.message : String(error) } }))));
+      for (const x of results) {
+        m.completed += x.ok ? 1 : 0; m.failed += x.ok ? 0 : 1; m.organProcessed[x.cell.address.domain] = num(m.organProcessed[x.cell.address.domain]) + 1;
+        const result = x.data?.result, summary = clip(result?.summary || result?.truthBoundary || x.data?.error || x.data?.code, 1200);
+        m.recent.unshift({ cellId: x.cell.id, index: x.cell.index, organ: x.cell.profile.domainRole, phase: x.cell.profile.phaseRole, executor: x.executor, ok: x.ok, status: x.status, summary, receiptSha: x.data?.receipt?.resultSha256 || null, computeReceiptSha: result?.computeReceipt?.receiptSha256 || null, deduplicated: Boolean(x.data?.deduplicated) }); m.recent = m.recent.slice(0, 36);
+        if (x.executor === "WORKERS_AI" && x.ok && summary) m.providerOutputs.push({ cellId: x.cell.id, role: x.cell.profile.domainRole, summary }); m.providerOutputs = m.providerOutputs.slice(0, 12);
+        if (x.executor === "COMPUTE_R170" && x.ok && result?.computation) m.computationOutputs.push({ cellId: x.cell.id, path: result.path, result: result.computation, computeReceipt: result.computeReceipt, authority: result.authority }); m.computationOutputs = m.computationOutputs.slice(0, 4);
+      }
+      m.inflight = [];
+      m.integrity = { strictTerminalAccounting: true, expected: m.total, accounted: m.completed + m.failed, valid: m.completed + m.failed <= m.total };
+      await this.save(m);
+    }
+    if (m.pending.length) { await schedule(this.storage, 500); return m; }
+    const accounted = m.completed + m.failed;
+    if (m.inflight.length || accounted !== m.total) {
+      m.status = "INVARIANT_VIOLATION";
+      m.proofState = "INCOMPLETE_TERMINAL_REJECTED";
+      m.integrity = { strictTerminalAccounting: true, expected: m.total, accounted, delta: m.total - accounted, pending: m.pending.length, inflight: m.inflight.length, valid: false };
+      return this.save(m);
+    }
     m.status = m.completed ? "COMPLETE" : "FAILED"; m.completedAt = Date.now(); m.proofState = RETURNED_NOT_ADMITTED.proofState;
+    m.integrity = { strictTerminalAccounting: true, expected: m.total, accounted, delta: 0, pending: 0, inflight: 0, valid: true };
     if (m.providerOutputs.length && this.env?.AI?.run) {
       try { const contributions = m.providerOutputs.map((x: AnyObj) => `[${x.cellId} ${x.role}] ${x.summary}`).join("\n\n").slice(0, 16000), raw = await this.env.AI.run(SWARM_MODEL_R121, { messages: [{ role: "system", content: "Reconverge bounded OMEGA swarm contributions. Preserve contradictions and unresolved items. Do not convert interpretation into measurement, native execution, external evidence, or CanonState." }, { role: "user", content: `MISSION: ${m.intent}\n\nCONTRIBUTIONS:\n${contributions}` }], max_tokens: 700, temperature: 0.22, chat_template_kwargs: { enable_thinking: false } }), text = modelText(raw); if (text) m.finalSynthesis = { provider: SWARM_MODEL_R121, text: text.slice(0, 6000), authority: "MODEL_SYNTHESIS_NOT_CANON" }; }
       catch (error) { m.finalSynthesis = { provider: "FAILED", text: error instanceof Error ? error.message : String(error), authority: "NO_RESULT_FABRICATED" }; }
     }
     return this.save(m);
   }
+  private async process(id: string): Promise<AnyObj | null> {
+    const existing = this.processLocks.get(id); if (existing) return existing;
+    const run = this.processUnlocked(id).finally(() => { if (this.processLocks.get(id) === run) this.processLocks.delete(id); });
+    this.processLocks.set(id, run); return run;
+  }
   async alarm(): Promise<void> { for (const id of (await this.ids()).slice(0, 8)) { const m = await this.get(id); if (m && ["QUEUED", "RUNNING"].includes(m.status)) { await this.process(id); break; } } }
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url), parts = url.pathname.split("/").filter(Boolean);
-    if (request.method === "GET" && url.pathname === "/status") { const missions: AnyObj[] = []; for (const id of (await this.ids()).slice(0, 12)) { const m = await this.get(id); if (m) missions.push(publicMission(m) as AnyObj); } return jsonResponse({ ok: true, schema: "OMEGA_SWARM_STATUS_R121", runtimeRevision: "R121", recoveryRevision: "R169", computationRevision: "R170", cellCapacity: SWARM_CELL_COUNT, laneCapacity: SWARM_LANE_COUNT, active: missions.filter(x => ["QUEUED", "RUNNING"].includes(x.status)).length, missions, canonicalMutation: false }); }
+    if (request.method === "GET" && url.pathname === "/status") { const missions: AnyObj[] = []; for (const id of (await this.ids()).slice(0, 12)) { const m = await this.get(id); if (m) missions.push(publicMission(m) as AnyObj); } return jsonResponse({ ok: true, schema: "OMEGA_SWARM_STATUS_R121", runtimeRevision: "R121", recoveryRevision: "R169", integrityRevision: INTEGRITY_REVISION, computationRevision: "R170", cellCapacity: SWARM_CELL_COUNT, laneCapacity: SWARM_LANE_COUNT, active: missions.filter(x => ["QUEUED", "RUNNING"].includes(x.status)).length, missions, canonicalMutation: false }); }
     if (request.method === "POST" && url.pathname === "/missions") {
-      try { const body = await request.json().catch(() => ({})) as AnyObj, plan = planMission(body), computation = body.computation && typeof body.computation === "object" ? { path: clip(body.computation.path, 160), input: body.computation.input && typeof body.computation.input === "object" ? body.computation.input : {} } : null, id = `swarm_${Date.now().toString(36)}_${(await sha(`${plan.intent}|${Date.now()}|${plan.seed}`)).slice(0, 12)}`, m: AnyObj = { schema: "OMEGA_SWARM_MISSION_R121", id, status: "QUEUED", mode: plan.mode, intent: plan.intent, requestedCells: plan.requestedCells, providerBudget: plan.providerBudget, createdAt: Date.now(), total: plan.selected.length, pending: [...plan.selected], completed: 0, failed: 0, organCounts: plan.organCounts, organProcessed: Array(12).fill(0), recent: [], providerOutputs: [], computation, computationOutputs: [], evidence: evidence(body.evidence), truthBoundary: plan.truthBoundary, proofState: "QUEUED_NOT_ADMITTED", canonicalMutation: false }; await this.save(m); await schedule(this.storage, 100); return jsonResponse({ ok: true, mission: publicMission(m), plan: { ...compactPlan(plan), computation: computation ? { path: computation.path, executor: "COMPUTE_R170_ON_FIRST_SELECTED_CELL", authority: "DERIVED_REFERENCE_COMPUTATION_NOT_CANON" } : null } }, 202); }
+      try { const body = await request.json().catch(() => ({})) as AnyObj, plan = planMission(body), computation = body.computation && typeof body.computation === "object" ? { path: clip(body.computation.path, 160), input: body.computation.input && typeof body.computation.input === "object" ? body.computation.input : {} } : null, id = `swarm_${Date.now().toString(36)}_${(await sha(`${plan.intent}|${Date.now()}|${plan.seed}`)).slice(0, 12)}`, m: AnyObj = { schema: "OMEGA_SWARM_MISSION_R121", id, status: "QUEUED", mode: plan.mode, intent: plan.intent, requestedCells: plan.requestedCells, providerBudget: plan.providerBudget, createdAt: Date.now(), total: plan.selected.length, pending: [...plan.selected], inflight: [], completed: 0, failed: 0, organCounts: plan.organCounts, organProcessed: Array(12).fill(0), recent: [], providerOutputs: [], computation, computationOutputs: [], evidence: evidence(body.evidence), truthBoundary: plan.truthBoundary, proofState: "QUEUED_NOT_ADMITTED", integrityRevision: INTEGRITY_REVISION, integrity: { strictTerminalAccounting: true, expected: plan.selected.length, accounted: 0, valid: true }, canonicalMutation: false }; await this.save(m); await schedule(this.storage, 100); return jsonResponse({ ok: true, mission: publicMission(m), plan: { ...compactPlan(plan), integrityRevision: INTEGRITY_REVISION, computation: computation ? { path: computation.path, executor: "COMPUTE_R170_ON_FIRST_SELECTED_CELL", authority: "DERIVED_REFERENCE_COMPUTATION_NOT_CANON" } : null } }, 202); }
       catch (error) { return jsonResponse({ ok: false, code: error instanceof Error ? error.message : "MISSION_INVALID" }, 400); }
     }
     if (parts[0] === "missions" && parts[1]) { const id = parts[1]; if (request.method === "GET" && parts.length === 2) { const m = await this.get(id); return jsonResponse({ ok: Boolean(m), mission: publicMission(m) }, m ? 200 : 404); } if (request.method === "POST" && parts[2] === "tick") { const m = await this.process(id); return jsonResponse({ ok: Boolean(m), mission: publicMission(m) }, m ? 200 : 404); } }
