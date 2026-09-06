@@ -29,6 +29,7 @@ SAFE_JOB_KINDS = {
     "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
+    "compute_truth_suite",
     "run_tests",
     "build_vite",
     "wrangler_dry_run",
@@ -42,6 +43,7 @@ VALIDATION_SEQUENCE = [
     "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
+    "compute_truth_suite",
     "run_tests",
     "build_vite",
     "wrangler_dry_run",
@@ -140,6 +142,7 @@ class SovereignBuildController:
             "convergence_scan": "Inventory V6, Genesis, evolution and accepted donor branches; rebuild the governed capability genome before selecting the next repair.",
             "inspect_workspace": "Inspect the approved OMEGA workspace and report source/lineage/worktree state.",
             "inspect_runtime": "Inspect the sovereign runtime/toolchain before changing or promoting anything.",
+            "compute_truth_suite": "Run the physically grounded R170 reference computation suite and return invariant/error evidence before accepting advanced-computation claims.",
             "run_tests": "Run the complete Python runtime test suite and return executable evidence.",
             "build_vite": "Validate the Cloudflare/Vite interface toolchain and return build/type evidence.",
             "wrangler_dry_run": "Dry-run the Worker package before any production deployment authority is considered.",
@@ -151,6 +154,12 @@ class SovereignBuildController:
             "canonical_ref": "omega-v6-full-convergence",
             "genesis_ref": "omega-genesis-v1-full",
             "cycle": VALIDATION_SEQUENCE,
+            "computation_truth": {
+                "required": True,
+                "evidence_class": "DERIVED",
+                "physical_dimension_claim": False,
+                "optical_fullwave_claim": False,
+            },
         })
 
     def lease_next(self, agent_id: str) -> Optional[BuildJob]:
@@ -196,7 +205,7 @@ class SovereignBuildController:
                 "enabled": self.mode != BuildMode.MANUAL,
                 "canonical_ref": "omega-v6-full-convergence",
                 "genesis_ref": "omega-genesis-v1-full",
-                "rule": "discover -> prune -> prove -> build -> verify; never silently mutate production",
+                "rule": "discover -> prune -> prove -> compute-truth -> build -> verify; never silently mutate production",
             },
-            "promotion_boundary": "controller may converge/inspect/build/test candidates; release promotion requires separate proof and deployment authority",
+            "promotion_boundary": "controller may converge/inspect/compute/build/test candidates; release promotion requires separate proof and deployment authority",
         }
