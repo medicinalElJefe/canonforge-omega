@@ -8,6 +8,14 @@ from typing import Any, Dict, List, Optional
 import json
 import uuid
 
+from .warp_candidate import (
+    SAFE_CANDIDATE_JOB_KINDS,
+    WARP_BUILD_IMPORT_SCHEMA_R178,
+    WarpCandidateError,
+    candidate_job_payload,
+    validate_candidate_capsule,
+)
+
 
 class BuildMode(str, Enum):
     MANUAL = "MANUAL"
@@ -72,7 +80,9 @@ class SovereignBuildController:
 
     Jobs are typed and allow-listed. The controller continuously advances a real
     convergence + validation cycle after authenticated host execution returns proof.
-    It never emits arbitrary shell text and never grants release promotion by itself.
+    R178 can import a cryptographically identified, strictly accounted R177 warp
+    candidate, but only into a fixed local validation sequence. It never emits
+    arbitrary shell text and never grants release promotion by itself.
     """
 
     def __init__(self, state_path: Path, approved_root: Path) -> None:
@@ -126,8 +136,82 @@ class SovereignBuildController:
         self._save()
         return job
 
+    @staticmethod
+    def _is_candidate_job(job: BuildJob) -> bool:
+        return isinstance(job.payload, dict) and job.payload.get("schema") == WARP_BUILD_IMPORT_SCHEMA_R178
+
+    def _candidate_jobs(self, candidate_sha256: str) -> List[BuildJob]:
+        return [
+            job for job in self.jobs
+            if self._is_candidate_job(job) and job.payload.get("candidate_sha256") == candidate_sha256
+        ]
+
+    def enqueue_warp_candidate(self, candidate: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            valid = validate_candidate_capsule(candidate)
+        except WarpCandidateError as exc:
+            raise ValueError(str(exc)) from exc
+        candidate_sha = str(valid["capsuleSha256"])
+        existing = self._candidate_jobs(candidate_sha)
+        if existing:
+            latest = existing[-1]
+            return {
+                "accepted": True,
+                "deduplicated": True,
+                "candidate_id": valid["candidateId"],
+                "candidate_sha256": candidate_sha,
+                "job": asdict(latest),
+                "sequence": list(SAFE_CANDIDATE_JOB_KINDS),
+                "canonical_mutation": False,
+                "promotion_authorized": False,
+            }
+        payload = candidate_job_payload(valid, 0)
+        job = self.enqueue(
+            SAFE_CANDIDATE_JOB_KINDS[0],
+            "R178 materialize the strict R177 warp-derived candidate capsule as an immutable local artifact before any source change is considered.",
+            payload,
+        )
+        return {
+            "accepted": True,
+            "deduplicated": False,
+            "candidate_id": valid["candidateId"],
+            "candidate_sha256": candidate_sha,
+            "job": asdict(job),
+            "sequence": list(SAFE_CANDIDATE_JOB_KINDS),
+            "canonical_mutation": False,
+            "promotion_authorized": False,
+        }
+
+    def _advance_candidate(self, job: BuildJob) -> Optional[BuildJob]:
+        if not self._is_candidate_job(job) or job.state != JobState.VERIFIED.value:
+            return None
+        payload = job.payload
+        sequence = list(SAFE_CANDIDATE_JOB_KINDS)
+        try:
+            current_index = int(payload.get("sequence_index", -1))
+        except (TypeError, ValueError):
+            return None
+        next_index = current_index + 1
+        if next_index >= len(sequence):
+            return None
+        candidate = payload.get("candidate")
+        if not isinstance(candidate, dict):
+            return None
+        candidate_sha = str(payload.get("candidate_sha256") or "")
+        for existing in self._candidate_jobs(candidate_sha):
+            if int(existing.payload.get("sequence_index", -1)) == next_index:
+                return existing
+        next_kind = sequence[next_index]
+        reasons = {
+            "run_tests": "R178 execute the full sovereign Python regression suite for the warp-derived candidate lineage.",
+            "build_vite": "R178 typecheck the Cloudflare/Vite interface for the warp-derived candidate lineage.",
+            "wrangler_dry_run": "R178 package the Worker in dry-run mode only; deployment remains unauthorized.",
+            "verify_candidate": "R178 verify immutable candidate identity, local artifact, computation truth, tests and workspace state for human/release review.",
+        }
+        return self.enqueue(next_kind, reasons.get(next_kind, f"R178 governed candidate stage: {next_kind}"), candidate_job_payload(candidate, next_index))
+
     def _next_validation_kind(self) -> str:
-        verified = [j for j in self.jobs if j.state == JobState.VERIFIED.value and j.kind in VALIDATION_SEQUENCE]
+        verified = [j for j in self.jobs if j.state == JobState.VERIFIED.value and j.kind in VALIDATION_SEQUENCE and not self._is_candidate_job(j)]
         if not verified:
             return VALIDATION_SEQUENCE[0]
         last = verified[-1].kind
@@ -137,7 +221,7 @@ class SovereignBuildController:
     def ensure_next_job(self) -> Optional[BuildJob]:
         active = [j for j in self.jobs if j.state in {JobState.QUEUED.value, JobState.LEASED.value, JobState.RUNNING.value}]
         if active or self.mode == BuildMode.MANUAL:
-            return active[0] if active else None
+            return self._preferred_active(active)
         kind = self._next_validation_kind()
         reasons = {
             "convergence_scan": "Inventory V6, Genesis, evolution and accepted donor branches; rebuild the governed capability genome before selecting the next repair.",
@@ -163,15 +247,25 @@ class SovereignBuildController:
             },
         })
 
+    def _preferred_active(self, active: List[BuildJob]) -> Optional[BuildJob]:
+        if not active:
+            return None
+        running = [job for job in active if job.state in {JobState.LEASED.value, JobState.RUNNING.value}]
+        if running:
+            return running[0]
+        candidates = [job for job in active if self._is_candidate_job(job)]
+        return candidates[0] if candidates else active[0]
+
     def lease_next(self, agent_id: str) -> Optional[BuildJob]:
         self.ensure_next_job()
-        for job in self.jobs:
-            if job.state == JobState.QUEUED.value:
-                job.state = JobState.LEASED.value
-                job.lease_owner = agent_id
-                job.updated_at = self._now()
-                self._save()
-                return job
+        queued = [job for job in self.jobs if job.state == JobState.QUEUED.value]
+        candidate_first = [job for job in queued if self._is_candidate_job(job)] + [job for job in queued if not self._is_candidate_job(job)]
+        for job in candidate_first:
+            job.state = JobState.LEASED.value
+            job.lease_owner = agent_id
+            job.updated_at = self._now()
+            self._save()
+            return job
         return None
 
     def update_job(self, job_id: str, state: JobState, evidence: Optional[Dict[str, Any]] = None,
@@ -188,13 +282,46 @@ class SovereignBuildController:
         job.evidence = evidence or job.evidence
         job.error = error
         self._save()
-        if state in {JobState.VERIFIED, JobState.FAILED, JobState.BLOCKED, JobState.CANCELLED}:
+        if state == JobState.VERIFIED and self._is_candidate_job(job):
+            advanced = self._advance_candidate(job)
+            if advanced is None:
+                self.ensure_next_job()
+        elif state in {JobState.VERIFIED, JobState.FAILED, JobState.BLOCKED, JobState.CANCELLED}:
             self.ensure_next_job()
         return job
 
+    def _candidate_workflows(self) -> List[Dict[str, Any]]:
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for job in self.jobs:
+            if not self._is_candidate_job(job):
+                continue
+            candidate_sha = str(job.payload.get("candidate_sha256") or "")
+            candidate = job.payload.get("candidate") or {}
+            row = grouped.setdefault(candidate_sha, {
+                "candidate_id": candidate.get("candidateId"),
+                "candidate_sha256": candidate_sha,
+                "source_warp_id": job.payload.get("source_warp_id"),
+                "source_receipt_sha256": job.payload.get("source_receipt_sha256"),
+                "stages": [],
+                "ready_for_release_review": False,
+                "canonical_mutation": False,
+                "promotion_authorized": False,
+            })
+            row["stages"].append({
+                "kind": job.kind,
+                "sequence_index": job.payload.get("sequence_index"),
+                "state": job.state,
+                "job_id": job.id,
+                "updated_at": job.updated_at,
+            })
+            if job.kind == "verify_candidate" and job.state == JobState.VERIFIED.value:
+                row["ready_for_release_review"] = True
+        return list(grouped.values())[-12:]
+
     def status(self) -> Dict[str, Any]:
         self.ensure_next_job()
-        active = next((j for j in self.jobs if j.state in {JobState.QUEUED.value, JobState.LEASED.value, JobState.RUNNING.value}), None)
+        active_jobs = [j for j in self.jobs if j.state in {JobState.QUEUED.value, JobState.LEASED.value, JobState.RUNNING.value}]
+        active = self._preferred_active(active_jobs)
         return {
             "mode": self.mode.value,
             "approved_root": str(self.approved_root),
@@ -202,11 +329,18 @@ class SovereignBuildController:
             "recent_jobs": [asdict(job) for job in self.jobs[-20:]],
             "safe_job_kinds": sorted(SAFE_JOB_KINDS),
             "validation_sequence": VALIDATION_SEQUENCE,
+            "warp_candidate_r178": {
+                "enabled": True,
+                "schema": WARP_BUILD_IMPORT_SCHEMA_R178,
+                "fixed_sequence": list(SAFE_CANDIDATE_JOB_KINDS),
+                "workflows": self._candidate_workflows(),
+                "boundary": "strict R177 receipts may enqueue bounded candidate validation; they never grant source mutation, GitHub mutation, deployment or promotion authority",
+            },
             "recursive_convergence": {
                 "enabled": self.mode != BuildMode.MANUAL,
                 "canonical_ref": "omega-v6-full-convergence",
                 "genesis_ref": "omega-genesis-v1-full",
                 "rule": "discover -> prune -> prove -> compute-truth -> build -> verify; never silently mutate production",
             },
-            "promotion_boundary": "controller may converge/inspect/compute/build/test candidates; release promotion requires separate proof and deployment authority",
+            "promotion_boundary": "controller may converge/inspect/compute/materialize/build/test candidates; release promotion requires separate proof and deployment authority",
         }
