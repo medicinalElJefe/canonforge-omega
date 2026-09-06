@@ -11,9 +11,9 @@ export { OmegaSwarmAutonomicCoordinator } from "./swarm/swarmAutonomicR169";
 const canonical: any = canonicalRuntime;
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    const path = new URL(request.url).pathname;
-    if (path.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
-    if (path.startsWith("/api/compute/")) return handleComputeRequest(request);
+    const url = new URL(request.url);
+    if (url.pathname.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
+    if (url.pathname.startsWith("/api/compute/")) return handleComputeRequest(request);
     return canonical.fetch(request, env, ctx);
   },
 };
