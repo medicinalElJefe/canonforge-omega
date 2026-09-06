@@ -20,17 +20,30 @@ jobs:
     env:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
     steps:
-      - name: Wait for R176 public fabric after canonical deployment
+      - name: Wait for R176 fabric with R177 strict accounting
         shell: bash
         run: |
           set -euo pipefail
           for attempt in $(seq 1 90); do
             if curl --fail --silent --show-error "$V6_URL/api/swarm/warp/manifest" -o /tmp/r176-manifest.json \
-              && grep -q 'OMEGA_WARP_MANIFEST_R176' /tmp/r176-manifest.json; then
+              && python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r176-manifest.json').read_text())
+          assert d.get('ok') is True
+          assert d.get('schema') == 'OMEGA_WARP_MANIFEST_R176'
+          assert d.get('integrityRevision') == 'R177'
+          e=d.get('execution') or {}
+          assert e.get('serializedMissionProcessing') is True
+          assert e.get('inflightJournal') is True
+          assert e.get('idempotentCellTaskReplay') is True
+          assert e.get('strictTerminalAccounting') is True
+          PY
+            then
               break
             fi
             if [ "$attempt" -eq 90 ]; then
-              echo "R176 warp fabric did not settle on the public edge"
+              echo "R176/R177 strict warp fabric did not settle on the public edge"
               cat /tmp/r176-manifest.json || true
               exit 1
             fi
@@ -51,6 +64,7 @@ jobs:
           launch = json.loads(Path('/tmp/r176-launch.json').read_text())
           assert launch['ok'] is True, launch
           assert launch['schema'] == 'OMEGA_WARP_COMPUTATION_R176', launch
+          assert launch['integrityRevision'] == 'R177', launch
           assert launch['profile'] == 'WARP', launch
           assert launch['expectedCells'] == 576, launch
           assert len(launch['refs']) == 4, launch
@@ -100,18 +114,26 @@ jobs:
           lab = Path('/tmp/r176-lab.html').read_text()
           assert manifest['ok'] is True
           assert manifest['schema'] == 'OMEGA_WARP_MANIFEST_R176'
+          assert manifest['integrityRevision'] == 'R177'
           assert manifest['hierarchy']['cells'] == 1728
           assert manifest['hierarchy']['lanes'] == 20736
           assert manifest['execution']['maximumCoordinatorShards'] == 12
           assert manifest['execution']['dispatchFanoutCeilingFromCodePath'] == 288
           assert manifest['execution']['observedThroughputClaim'] is False
+          assert state['state'] == 'COMPLETE', state
+          assert state['integrityRevision'] == 'R177', state
           assert state['totalCells'] == 576, state
           assert state['shardCount'] == 4, state
-          assert state['completedCells'] + state['failedCells'] == 576, state
+          assert state['completedCells'] == 576, state
           assert state['failedCells'] == 0, state
+          inv = state['completionInvariant']
+          assert inv['strict'] is True and inv['allShardsAccounted'] is True, inv
+          assert inv['accountedCells'] == 576 and inv['delta'] == 0 and inv['invalidShardCount'] == 0, inv
           receipt = state['receipt']
           assert receipt and receipt['schema'] == 'OMEGA_WARP_EXECUTION_RECEIPT_R176', state
-          assert receipt['totalCells'] == 576, receipt
+          assert receipt['integrityRevision'] == 'R177', receipt
+          assert receipt['strictCompletionInvariant'] is True, receipt
+          assert receipt['totalCells'] == 576 and receipt['completedCells'] == 576 and receipt['failedCells'] == 0, receipt
           assert receipt['resultMerkleRoot'] == state['resultMerkleRoot'], receipt
           assert len(receipt['receiptSha256']) == 64, receipt
           assert receipt['proofState'] == 'RETURNED_NOT_ADMITTED', receipt
@@ -122,7 +144,7 @@ jobs:
           assert 'FULL · 1728' in lab
           assert 'AUTO-ADVANCE' in lab
           print(json.dumps({
-              'status':'LIVE_R176_576_CELL_WARP_RECEIPT_VERIFIED',
+              'status':'LIVE_R176_R177_576_OF_576_WARP_RECEIPT_VERIFIED',
               'warpId':state['warpId'],
               'completedCells':state['completedCells'],
               'failedCells':state['failedCells'],
