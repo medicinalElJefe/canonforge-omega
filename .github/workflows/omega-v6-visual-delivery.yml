@@ -57,12 +57,13 @@ jobs:
           EXPECTED_FIELD_LAYER_RELEASE: r165-non-destructive-layer-deck
           EXPECTED_OPERATOR_RELEASE: r166-operator-clarity
           EXPECTED_STATE_RELEASE: r167-authoritative-state-accuracy
+          EXPECTED_SAI_HYBRID_RELEASE: r168-sai-hybrid-motion-fabric
         run: |
           set -euo pipefail
           ok=false
           for attempt in $(seq 1 60); do
             curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors -D /tmp/v6-root.headers "$V6_URL/?view=Build&delivery_probe=$GITHUB_SHA" -o /tmp/v6-root.html || true
-            if EXPECTED_VISUAL_RELEASE="$EXPECTED_VISUAL_RELEASE" EXPECTED_FIELD_RELEASE="$EXPECTED_FIELD_RELEASE" EXPECTED_FIELD_LAYER_RELEASE="$EXPECTED_FIELD_LAYER_RELEASE" EXPECTED_OPERATOR_RELEASE="$EXPECTED_OPERATOR_RELEASE" EXPECTED_STATE_RELEASE="$EXPECTED_STATE_RELEASE" python - <<'PY'
+            if EXPECTED_VISUAL_RELEASE="$EXPECTED_VISUAL_RELEASE" EXPECTED_FIELD_RELEASE="$EXPECTED_FIELD_RELEASE" EXPECTED_FIELD_LAYER_RELEASE="$EXPECTED_FIELD_LAYER_RELEASE" EXPECTED_OPERATOR_RELEASE="$EXPECTED_OPERATOR_RELEASE" EXPECTED_STATE_RELEASE="$EXPECTED_STATE_RELEASE" EXPECTED_SAI_HYBRID_RELEASE="$EXPECTED_SAI_HYBRID_RELEASE" python - <<'PY'
           import os
           from pathlib import Path
           html = Path('/tmp/v6-root.html').read_text(errors='ignore') if Path('/tmp/v6-root.html').exists() else ''
@@ -72,12 +73,14 @@ jobs:
           field_layer_release = os.environ['EXPECTED_FIELD_LAYER_RELEASE']
           operator_release = os.environ['EXPECTED_OPERATOR_RELEASE']
           state_release = os.environ['EXPECTED_STATE_RELEASE']
+          sai_hybrid_release = os.environ['EXPECTED_SAI_HYBRID_RELEASE']
           required = [
               f'content="{release}"',
               f'content="{field_release}"',
               f'content="{field_layer_release}"',
               f'content="{operator_release}"',
               f'content="{state_release}"',
+              f'content="{sai_hybrid_release}"',
               'omegaRootSovereignField',
               '/api/omega/state',
               'omegaCanonicalState',
@@ -105,6 +108,13 @@ jobs:
               'omegaSovereignDevicesRuntime',
               'omegaEarthTruthLayersRuntime',
               'omegaBuildEvolutionGovernanceRuntime',
+              'omegaSaiHybridMotionRuntime',
+              'data-gma-layer',
+              'SAI / HYBRID',
+              'OMEGA_SAI_HYBRID_CONTEXT',
+              'sai_hybrid',
+              '/api/hybrid/status',
+              'route authority ready',
               'Build / Evolution',
               'Canonical candidate lifecycle',
               'EXACT-HEAD CI',
@@ -132,18 +142,19 @@ jobs:
           if f'x-omega-field-layer-release: {field_layer_release}' not in headers: raise SystemExit(1)
           if f'x-omega-operator-release: {operator_release}' not in headers: raise SystemExit(1)
           if f'x-omega-state-release: {state_release}' not in headers: raise SystemExit(1)
-          contract='single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+rollback+runtime-truth+integrity-v6'
-          field_contract='single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults'
+          if f'x-omega-sai-hybrid-release: {sai_hybrid_release}' not in headers: raise SystemExit(1)
+          contract='single-surface+recovered-experience-orchestration+native-20736-atlas+calculus-field+rk2-flow+memory-continuity+intelligence-route-mode-forecast-action-gate+create-simulate-branch-comparison+sovereign-device-heartbeat-truth+earth-observed-derived-forecast-truth+build-evolution-governance+sai-hybrid-ai-context+rollback+runtime-truth+integrity-v6'
+          field_contract='single-renderer+drag-pan+wheel-pinch-zoom+probe+pause-reset+progressive-controls+live-frame-integrity+independent-layer-deck+deduplicated-operator-surface+advanced-tools-drawer+canonical-state-binding+address-phase-semantics+no-synthetic-state-defaults+sai-hybrid-motion-fabric+truth-bound-ai-context'
           if f'x-omega-visual-contract: {contract}' not in headers: raise SystemExit(1)
           if f'x-omega-field-contract: {field_contract}' not in headers: raise SystemExit(1)
           if 'cache-control: no-store, no-cache, must-revalidate' not in headers: raise SystemExit(1)
           PY
             then
               ok=true
-              echo "PUBLIC_BUILD_EVOLUTION_AND_FIELD_VERIFIED visual=$EXPECTED_VISUAL_RELEASE field=$EXPECTED_FIELD_RELEASE layers=$EXPECTED_FIELD_LAYER_RELEASE operator=$EXPECTED_OPERATOR_RELEASE state=$EXPECTED_STATE_RELEASE sha=$GITHUB_SHA"
+              echo "PUBLIC_BUILD_EVOLUTION_AND_FIELD_VERIFIED visual=$EXPECTED_VISUAL_RELEASE field=$EXPECTED_FIELD_RELEASE layers=$EXPECTED_FIELD_LAYER_RELEASE operator=$EXPECTED_OPERATOR_RELEASE state=$EXPECTED_STATE_RELEASE sai_hybrid=$EXPECTED_SAI_HYBRID_RELEASE sha=$GITHUB_SHA"
               break
             fi
-            echo "Visual edge not settled on $EXPECTED_VISUAL_RELEASE yet ($attempt/60)."
+            echo "Visual edge not settled on $EXPECTED_SAI_HYBRID_RELEASE yet ($attempt/60)."
             sleep 2
           done
           if [ "$ok" != "true" ]; then
