@@ -40,8 +40,16 @@ async function sha(value: any): Promise<string> {
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return [...new Uint8Array(hash)].map(x => x.toString(16).padStart(2, "0")).join("");
 }
+const CORS_HEADERS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET,POST,OPTIONS",
+  "access-control-allow-headers": "content-type",
+};
 function json(value: any, status = 200): Response {
-  return new Response(JSON.stringify(value, null, 2), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*", "access-control-allow-methods": "GET,POST,OPTIONS", "access-control-allow-headers": "content-type" } });
+  return new Response(status === 204 ? null : JSON.stringify(value, null, 2), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS_HEADERS },
+  });
 }
 async function derivedReceipt(kind: string, input: any, result: any): Promise<Obj> {
   const payload = { schema: "OMEGA_COMPUTE_RECEIPT_R170", kind, inputSha256: await sha(input), resultSha256: await sha(result), evidenceClass: "DERIVED", canonicalMutation: false, nativeExecution: false, truthBoundary: TRUTH_BOUNDARY };
@@ -135,7 +143,7 @@ function scalarWave(body: Obj): Obj {
 }
 
 export async function handleComputeRequest(request: Request): Promise<Response> {
-  if (request.method === "OPTIONS") return json({ ok: true }, 204);
+  if (request.method === "OPTIONS") return json(null, 204);
   const path = new URL(request.url).pathname;
   if (request.method === "GET" && path === "/api/compute/manifest") return json({ ok: true, schema: COMPUTE_SCHEMA, revision: "R170", constants: { c_m_s: C_M_S, c_definition: "exact SI speed of light" }, solvers: { lorentz_event_3d: { physics: "special relativity", invariantCheck: "Minkowski interval" }, relativistic_velocity_3d: { physics: "special relativity", speedGuard: "strictly below c" }, normal_incidence_tmm: { physics: "1D electromagnetic layered-media screening", fabricationGrade: false }, conservative_transfer: { math: "finite conservative redistribution", invariant: "sum(values)" }, graph_diffusion: { math: "explicit graph Laplacian", guard: "diffusivity*dt*max_degree <= 1" }, scalar_wave_fdtd_1d: { physics: "scalar wave equation", guard: "CFL <= 1", maxwellSolver: false } }, hierarchy: { addressLevels: [12, 144, 1728, 20736], physicalDimensionClaim: false }, truthBoundary: TRUTH_BOUNDARY, nativeExecution: false, canonicalMutation: false });
   if (request.method !== "POST") return json({ ok: false, code: "NOT_FOUND" }, 404);
