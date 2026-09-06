@@ -63,8 +63,8 @@ def test_r173_job_kind_is_allowlisted_but_never_auto_queued_without_a_challenge(
     assert "cross_runtime_validate" not in VALIDATION_SEQUENCE
 
 
-def test_r173_agent_rejects_unbound_or_malformed_challenges(tmp_path: Path):
-    bad = cross_runtime_validate({"payload": {}}, tmp_path)
+def test_r173_agent_rejects_unbound_or_malformed_challenges():
+    bad = cross_runtime_validate({"payload": {}}, ROOT)
     assert bad["blocked"] is True
     payload = {
         "schema": CROSS_RUNTIME_CHALLENGE_SCHEMA,
@@ -76,7 +76,7 @@ def test_r173_agent_rejects_unbound_or_malformed_challenges(tmp_path: Path):
         "cloud_receipt_sha256": "3" * 64,
         "challenge_id": "fixture",
     }
-    mismatch = cross_runtime_validate({"payload": payload}, tmp_path)
+    mismatch = cross_runtime_validate({"payload": payload}, ROOT)
     assert mismatch["blocked"] is True
     assert "input hash" in mismatch["reason"]
 
