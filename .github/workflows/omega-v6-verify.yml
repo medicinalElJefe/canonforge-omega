@@ -206,7 +206,7 @@ jobs:
               verified=true
               break
             fi
-            echo "Edge or R174 federation not settled yet (attempt $attempt/30)."
+            echo "Edge not settled on expected role-separated V3 identity yet; R174 federation not settled yet (attempt $attempt/30)."
             sleep 2
           done
           if [ "$verified" != "true" ]; then
