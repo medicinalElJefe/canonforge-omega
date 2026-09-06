@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - 'canonforge-omega/**'
+      - 'docs/**'
       - '.github/workflows/omega-v6-verify.yml'
 
 jobs:
@@ -44,9 +45,39 @@ jobs:
           npm install
           npm run typecheck
 
+  federated-machine-services:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe deployed Genesis and Optical machine organs
+        shell: bash
+        env:
+          GENESIS_MACHINE_URL: https://omega-genesis-machine-r115.jeffdeweyeljefe.workers.dev
+          OPTICAL_MACHINE_URL: https://omega-optical-machine-r115.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$GENESIS_MACHINE_URL/api/health" -o /tmp/genesis-machine.json
+          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$OPTICAL_MACHINE_URL/api/health" -o /tmp/optical-machine.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          genesis = json.loads(Path('/tmp/genesis-machine.json').read_text())
+          optical = json.loads(Path('/tmp/optical-machine.json').read_text())
+          assert genesis.get('ok') is True, genesis
+          assert genesis.get('service') == 'omega-genesis-machine-r115', genesis
+          assert genesis.get('authority') == 'PROPOSE_ONLY', genesis
+          assert optical.get('ok') is True, optical
+          assert optical.get('service') == 'omega-optical-machine-r115', optical
+          assert optical.get('authority') == 'SCREEN_ONLY', optical
+          print(json.dumps({
+              'status': 'R174_MACHINE_ORGANS_REACHABLE',
+              'genesis': genesis.get('version'),
+              'optical': optical.get('version'),
+          }, sort_keys=True))
+          PY
+
   promotion-compatibility:
     if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
-    needs: [sovereign-core, cloudflare-interface]
+    needs: [sovereign-core, cloudflare-interface, federated-machine-services]
     runs-on: ubuntu-latest
     outputs:
       compatible: ${{ steps.contract.outputs.compatible }}
@@ -78,7 +109,7 @@ jobs:
 
   promote-canonical-worker:
     if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence' && needs.promotion-compatibility.outputs.compatible == 'true'
-    needs: [sovereign-core, cloudflare-interface, promotion-compatibility]
+    needs: [sovereign-core, cloudflare-interface, federated-machine-services, promotion-compatibility]
     runs-on: ubuntu-latest
     concurrency:
       group: omega-v6-production
@@ -105,7 +136,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run deploy
-      - name: Verify canonical public convergence
+      - name: Verify canonical public convergence and R174 federation
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
@@ -117,6 +148,7 @@ jobs:
           for attempt in $(seq 1 30); do
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json || true
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json || true
+            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/federation/r174/health" -o /tmp/r174-federation.json || true
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$GENESIS_URL/api/convergence/manifest" -o /tmp/genesis-manifest.json || true
             if EXPECTED_BUILD="$EXPECTED_BUILD" python - <<'PY'
           import json, os
@@ -124,6 +156,7 @@ jobs:
           try:
               health = json.loads(Path("/tmp/v6-health.json").read_text())
               edge = json.loads(Path("/tmp/v6-convergence.json").read_text())
+              federation = json.loads(Path("/tmp/r174-federation.json").read_text())
               manifest = json.loads(Path("/tmp/genesis-manifest.json").read_text())
           except Exception:
               raise SystemExit(1)
@@ -157,18 +190,27 @@ jobs:
           if manifest.get("manifest_digest") != peer_manifest.get("digest"): raise SystemExit(1)
           genome = manifest.get("capability_genome") or {}
           if int(genome.get("capability_count") or 0) < 32: raise SystemExit(1)
+          if federation.get("ok") is not True: raise SystemExit(1)
+          if federation.get("federationReady") is not True: raise SystemExit(1)
+          if federation.get("fullFederationProved") is not False: raise SystemExit(1)
+          services = federation.get("services") or {}
+          if (services.get("genesisMachine") or {}).get("reachable") is not True: raise SystemExit(1)
+          if (services.get("opticalMachine") or {}).get("reachable") is not True: raise SystemExit(1)
+          hierarchy = federation.get("hierarchy") or {}
+          if hierarchy.get("cells") != 1728 or hierarchy.get("lanes") != 20736: raise SystemExit(1)
           PY
             then
               verified=true
               break
             fi
-            echo "Edge not settled on expected role-separated V3 identity yet (attempt $attempt/30)."
+            echo "Edge or R174 federation not settled yet (attempt $attempt/30)."
             sleep 2
           done
           if [ "$verified" != "true" ]; then
-            echo "LIVE_CONVERGENCE_VERIFY_FAILED after role-contract edge-settle window."
+            echo "LIVE_CONVERGENCE_VERIFY_FAILED after role-contract/federation edge-settle window."
             echo "V6 health:"; cat /tmp/v6-health.json || true
             echo "V6 convergence:"; cat /tmp/v6-convergence.json || true
+            echo "R174 federation:"; cat /tmp/r174-federation.json || true
             echo "Genesis manifest:"; cat /tmp/genesis-manifest.json || true
             exit 1
           fi
@@ -177,16 +219,21 @@ jobs:
           from pathlib import Path
           health=json.loads(Path("/tmp/v6-health.json").read_text())
           edge=json.loads(Path("/tmp/v6-convergence.json").read_text())
+          federation=json.loads(Path("/tmp/r174-federation.json").read_text())
           manifest=json.loads(Path("/tmp/genesis-manifest.json").read_text())
           print(json.dumps({
-            "status":"LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3",
+            "status":"LIVE_CONVERGENCE_VERIFIED__R174_FEDERATED_ORGAN_FABRIC",
             "v6_build":health.get("build"),
             "authority_contract":manifest.get("authority_contract"),
             "genesis_manifest_digest":manifest.get("manifest_digest"),
             "v6_observed_manifest_digest":((edge.get("genesis") or {}).get("manifest") or {}).get("digest"),
             "genesis_capability_count":(manifest.get("capability_genome") or {}).get("capability_count"),
             "v6_release_authority":(edge.get("convergence") or {}).get("v6_release_authority"),
-            "genesis_may_deploy_v6":(edge.get("convergence") or {}).get("genesis_may_deploy_v6")
+            "genesis_may_deploy_v6":(edge.get("convergence") or {}).get("genesis_may_deploy_v6"),
+            "r174_federation_ready":federation.get("federationReady"),
+            "r174_full_federation_proved":federation.get("fullFederationProved"),
+            "r174_cells":(federation.get("hierarchy") or {}).get("cells"),
+            "r174_lanes":(federation.get("hierarchy") or {}).get("lanes"),
           }, sort_keys=True))
           PY
       - name: Record promoted SHA
