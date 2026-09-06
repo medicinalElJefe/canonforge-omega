@@ -17,9 +17,12 @@ RICH_OPERATIONAL_UI_ID = "r126-rich-operational-expansion"
 name = "OMEGA_RUNTIME"
 class_name = "OmegaRuntime"
 
-[[migrations]]
-tag = "r32-enacted-runtime"
-new_sqlite_classes = ["OmegaRuntime"]
+# Declarative Durable Object lifecycle. OmegaRuntime already exists as a
+# SQLite-backed namespace; this preserves that namespace without replaying
+# a stale legacy migration tag against live Durable Objects.
+[exports.OmegaRuntime]
+type = "durable-object"
+storage = "sqlite"
 
 [[services]]
 binding = "GENESIS"
