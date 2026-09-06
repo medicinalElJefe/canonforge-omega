@@ -6,6 +6,7 @@ WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 ENTRY = WORKER / "src" / "runtimeEntryR169.ts"
 COMPUTE = WORKER / "src" / "compute" / "computeTruthR170.ts"
 LAB = WORKER / "src" / "compute" / "computeLabR170.ts"
+SWARM_CORE = WORKER / "src" / "swarm" / "swarmCoreR169.ts"
 SWARM_CELL = WORKER / "src" / "swarm" / "swarmCellR169.ts"
 SWARM_COORDINATOR = WORKER / "src" / "swarm" / "swarmCoordinatorR169.ts"
 WRANGLER = WORKER / "wrangler.toml"
@@ -54,6 +55,8 @@ def test_r170_compute_surface_declares_real_equations_and_boundaries():
         "/api/compute/wave/fdtd1d",
     ):
         assert route in source
+    assert 'status === 204 ? null' in source
+    assert 'request.method === "OPTIONS"' in source
 
 
 def test_r170_computation_lab_is_driven_by_live_solver_responses_not_fake_visuals():
@@ -85,6 +88,16 @@ def test_r170_swarm_can_execute_structured_reference_computation_without_grantin
     assert 'COMPUTE_R170_ON_FIRST_SELECTED_CELL' in coordinator
     assert 'computationOutputs' in coordinator
     assert 'proofState: "RETURNED_NOT_ADMITTED"' in coordinator
+
+
+def test_r170_public_swarm_status_does_not_echo_structured_compute_inputs():
+    core = SWARM_CORE.read_text(encoding="utf-8")
+    assert 'providerContributions, computation, ...rest' in core
+    assert 'computationPath: computation?.path' in core
+    public_mission = core.split("export function publicMission", 1)[1].split("export const branchKey", 1)[0]
+    assert "...rest" in public_mission
+    assert "computationPath" in public_mission
+    assert "computation?.input" not in public_mission
 
 
 def test_r170_sovereign_agent_executes_truth_suite_as_governed_native_job():
