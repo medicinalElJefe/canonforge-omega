@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -11,6 +13,7 @@ import urllib.error
 import urllib.request
 
 CROSS_RUNTIME_CHALLENGE_SCHEMA = "OMEGA_CROSS_RUNTIME_CHALLENGE_R173"
+INDEPENDENT_SOLVER_CHALLENGE_SCHEMA = "OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175"
 
 SAFE_KINDS = {
     "convergence_scan",
@@ -51,6 +54,14 @@ def run(cmd: list[str], cwd: Path, timeout: int = 300) -> dict:
         "stderr_tail": proc.stderr[-12000:],
         "elapsed_seconds": round(time.time() - started, 3),
     }
+
+
+def canonical_json(value) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
+
+
+def sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def inspect_workspace(root: Path) -> dict:
@@ -115,8 +126,140 @@ def compute_truth_suite(root: Path) -> dict:
     }
 
 
+def rcwa_dependency_status(root: Path) -> dict:
+    execution = run([sys.executable, "-m", "omega_runtime.rcwa_solver", "--probe"], root, timeout=60)
+    parsed = None
+    try:
+        parsed = json.loads(execution["stdout_tail"])
+    except json.JSONDecodeError:
+        parsed = None
+    return {
+        "available": bool(execution["exit_code"] == 0 and parsed and parsed.get("available") is True),
+        "probe": parsed,
+        "exit_code": execution["exit_code"],
+    }
+
+
+def independent_fullwave_validate(job: dict, root: Path) -> dict:
+    payload = job.get("payload") if isinstance(job.get("payload"), dict) else {}
+    canonical_queue = payload.get("queue_job_canonical_json")
+    queue_sha = payload.get("queue_job_sha256")
+    challenge_sha = payload.get("challenge_sha256")
+    challenge_id = payload.get("challenge_id")
+    if payload.get("schema") != INDEPENDENT_SOLVER_CHALLENGE_SCHEMA:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R175 independent solver challenge schema is missing or invalid"}
+    if not isinstance(canonical_queue, str) or not canonical_queue:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R175 canonical full-wave queue is missing"}
+    if not all(isinstance(value, str) and len(value) == 64 for value in (queue_sha, challenge_sha)):
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R175 challenge hashes are incomplete"}
+    if sha256_text(canonical_queue) != queue_sha:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R175 canonical full-wave queue hash mismatch"}
+    try:
+        queue_job = json.loads(canonical_queue)
+    except json.JSONDecodeError:
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R175 canonical full-wave queue is not valid JSON"}
+    if queue_job.get("schema") != "OMEGA_FULLWAVE_QUEUE_v1" or str(queue_job.get("solver", "")).lower() != "rcwa":
+        return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R175 challenge is not an RCWA full-wave queue"}
+
+    dependencies = rcwa_dependency_status(root)
+    if not dependencies["available"]:
+        return {
+            "kind": "cross_runtime_validate",
+            "schema": "OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175",
+            "blocked": True,
+            "reason": "R175 RCWA dependencies are unavailable on the authenticated Sovereign host; no fallback is permitted",
+            "challenge_id": challenge_id,
+            "challenge_sha256": challenge_sha,
+            "queue_job_sha256": queue_sha,
+            "dependency_status": dependencies,
+            "independent_solver_family_claim": False,
+            "native_execution": False,
+            "canonical_mutation": False,
+        }
+
+    execution = run([
+        sys.executable,
+        "-m",
+        "omega_runtime.rcwa_solver",
+        "--input-json",
+        canonical_queue,
+    ], root, timeout=600)
+    try:
+        result = json.loads(execution["stdout_tail"])
+    except json.JSONDecodeError:
+        return {
+            "kind": "cross_runtime_validate",
+            "schema": "OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175",
+            "blocked": True,
+            "reason": "native R175 RCWA execution did not return a JSON result",
+            "native_executor": execution,
+            "independent_solver_family_claim": False,
+            "native_execution": False,
+            "canonical_mutation": False,
+        }
+    if execution["exit_code"] != 0 or result.get("converged") is not True:
+        return {
+            "kind": "cross_runtime_validate",
+            "schema": "OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175",
+            "blocked": True,
+            "reason": "native R175 RCWA execution failed or did not converge",
+            "challenge_id": challenge_id,
+            "challenge_sha256": challenge_sha,
+            "queue_job_sha256": queue_sha,
+            "native_result": result,
+            "native_executor": {"exit_code": execution["exit_code"], "elapsed_seconds": execution["elapsed_seconds"]},
+            "dependency_status": dependencies,
+            "independent_solver_family_claim": False,
+            "native_execution": False,
+            "canonical_mutation": False,
+        }
+    identity = result.get("numerical_identity") or {}
+    receipt = result.get("receipt") or {}
+    if identity.get("input_sha256") != queue_sha or receipt.get("input_sha256") != queue_sha:
+        return {
+            "kind": "cross_runtime_validate",
+            "blocked": True,
+            "reason": "native R175 RCWA input hash does not match the persisted full-wave challenge",
+            "native_result": result,
+            "independent_solver_family_claim": False,
+            "native_execution": False,
+            "canonical_mutation": False,
+        }
+    if result.get("solver") != "rcwa" or result.get("solver_family") != "MAXWELL_RCWA" or not str(result.get("solver_version", "")).startswith("grcwa:"):
+        return {
+            "kind": "cross_runtime_validate",
+            "blocked": True,
+            "reason": "native R175 result is not a grcwa Maxwell-RCWA receipt",
+            "native_result": result,
+            "independent_solver_family_claim": False,
+            "native_execution": False,
+            "canonical_mutation": False,
+        }
+    return {
+        "kind": "cross_runtime_validate",
+        "schema": "OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175",
+        "challenge_id": challenge_id,
+        "challenge_sha256": challenge_sha,
+        "queue_job_sha256": queue_sha,
+        "native_result": result,
+        "native_receipt": receipt,
+        "native_executor": {"exit_code": execution["exit_code"], "elapsed_seconds": execution["elapsed_seconds"]},
+        "dependency_status": dependencies,
+        "native_execution": True,
+        "blocked": False,
+        "authority": "AUTHENTICATED_INDEPENDENT_SOLVER_RECEIPT_NOT_CANON",
+        "canonical_mutation": False,
+        "independent_solver_family_claim": True,
+        "external_measurement_claim": False,
+        "physical_dimension_claim": False,
+        "approved_root": str(root),
+    }
+
+
 def cross_runtime_validate(job: dict, root: Path) -> dict:
     payload = job.get("payload") if isinstance(job.get("payload"), dict) else {}
+    if payload.get("schema") == INDEPENDENT_SOLVER_CHALLENGE_SCHEMA:
+        return independent_fullwave_validate(job, root)
     if payload.get("schema") != CROSS_RUNTIME_CHALLENGE_SCHEMA:
         return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R173 challenge schema is missing or invalid"}
     path = payload.get("path")
@@ -254,6 +397,12 @@ def main() -> int:
         "cross_runtime_validate", "lorentz_reference", "tmm_reference", "conservative_continuity", "scalar_wave_fdtd_1d",
         "atlas_reference_diffusion_20736", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate",
     ]
+    rcwa_probe = rcwa_dependency_status(root)
+    if rcwa_probe["available"]:
+        capabilities.extend(["independent_fullwave_rcwa", "maxwell_rcwa_grcwa"])
+    else:
+        capabilities.append("rcwa_dependency_probe")
+
     last_job_id = None
     sequence_seen = 0
     print(f"OMEGA sovereign agent starting: {args.agent_id}")
@@ -261,6 +410,8 @@ def main() -> int:
     print(f"Approved root: {root}")
     print("Recursive convergence is bounded: archive/branch discovery may propose candidates but cannot silently promote production.")
     print("R173 cross-runtime parity is receipt-bound: cloud challenges become L3 validation only after authenticated native execution is persisted and numerically compared.")
+    print("R175 independent-solver validation is no-fallback: L4 requires current authenticated native grcwa RCWA execution, numerical convergence, persisted receipt identity, and proof admission.")
+    print("R175 RCWA capability: " + ("AVAILABLE" if rcwa_probe["available"] else "DEPENDENCY MISSING / NO FALLBACK"))
     print("PC ONLINE will only be claimed after the server accepts a current authenticated heartbeat.")
 
     while True:
@@ -269,7 +420,8 @@ def main() -> int:
                 "agent_id": args.agent_id,
                 "approved_root": str(root),
                 "capabilities": capabilities,
-                "runtime_version": "r173-cross-runtime-parity-agent",
+                "runtime_version": "r175-independent-rcwa-validation-agent",
+                "rcwa": rcwa_probe,
                 "last_job_id": last_job_id,
             })
             proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
