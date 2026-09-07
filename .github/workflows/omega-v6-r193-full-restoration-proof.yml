@@ -1,0 +1,166 @@
+name: OMEGA V6 R193 full restoration proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/universalWorkspaceR193.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/workspaceManifestR193.ts'
+      - 'canonforge-omega/tests/test_r193_full_restoration_workspace.py'
+      - '.github/workflows/omega-v6-r193-full-restoration-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r193-full-restoration-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r193:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Verify R193 restoration plus cumulative predecessor stack
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r167_authoritative_state_accuracy.py \
+            tests/test_r163_interactive_living_field.py \
+            tests/test_r153_mobile_workspace_orchestration.py \
+            tests/test_r145_governed_mode_atlas.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and typecheck complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Prove Worker package dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r193-dry-run
+
+  prove-live-r193:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r193
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact canonical SHA and verify restored workspace matrix
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
+            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              d=json.loads(Path('/tmp/r191.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']:
+              raise SystemExit(1)
+          PY
+            then matched=true; break; fi
+            sleep 5
+          done
+          test "$matched" = true
+
+          routes=(
+            "/"
+            "/?app=Calculus&mode=dewey-calculus"
+            "/?app=Memory"
+            "/?app=Simulate"
+            "/?app=Earth"
+            "/?app=Assistant"
+            "/?app=Hybrid"
+            "/?app=Proof"
+            "/workbench"
+            "/relations"
+            "/memory"
+            "/calibration"
+            "/capabilities"
+            "/core"
+            "/sai"
+            "/compute"
+            "/validate"
+            "/validate/cross-runtime"
+            "/validate/independent"
+            "/clouds"
+            "/warp"
+            "/warp/build"
+            "/federation"
+            "/evolution"
+            "/truth"
+            "/convergence"
+            "/fabric"
+            "/instrument"
+          )
+          i=0
+          for route in "${routes[@]}"; do
+            i=$((i+1))
+            curl --fail --silent --show-error --max-time 25 -D "/tmp/r193-$i.headers" "$LIVE$route" -o "/tmp/r193-$i.html"
+            grep -qi '^content-type: text/html' "/tmp/r193-$i.headers"
+            grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/r193-$i.headers"
+            grep -qi '^x-omega-workspace: r193-full-restoration-workspace' "/tmp/r193-$i.headers"
+            grep -F 'id="omegaUniversalNavR192"' "/tmp/r193-$i.html"
+            grep -F 'id="omegaR193Rail"' "/tmp/r193-$i.html"
+          done
+
+          grep -F 'Living Operator Field' /tmp/r193-1.html
+          grep -F 'id="omegaLaunch" class="hidden"' /tmp/r193-1.html
+          grep -F 'data-gma-mode' /tmp/r193-1.html
+          grep -F 'applyMode(id)' /tmp/r193-1.html
+          grep -F 'applyShell(value)' /tmp/r193-1.html
+
+          curl --fail --silent --show-error --max-time 20 -D /tmp/r193-manifest.headers "$LIVE/api/workspace/r193/manifest" -o /tmp/r193-manifest.json
+          grep -qi '^content-type: application/json' /tmp/r193-manifest.headers
+          if grep -qi '^x-omega-workspace:' /tmp/r193-manifest.headers; then
+            echo 'R193 must not HTML-wrap JSON/API responses'
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r193-manifest.json').read_text())
+          assert d['ok'] is True
+          assert d['release']=='r193-full-restoration-workspace'
+          assert len(d['workspaces'])==8
+          assert len(d['systems'])==19
+          assert len(d['governed_modes'])==15
+          assert d['interactive_shells']==[144,1728,20736]
+          assert d['performance_policy']['duplicate_runtime_authority'] is False
+          assert d['performance_policy']['duplicate_state_authority'] is False
+          PY
+
+          curl --fail --silent --show-error --max-time 20 "$LIVE/api/workspace/r193/health" -o /tmp/r193-health.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r193-health.json').read_text())
+          assert d=={'ok': True, 'release': 'r193-full-restoration-workspace', 'schema': 'OMEGA_V6_R193_FULL_RESTORATION_V1', 'workspaces': 8, 'systems': 19, 'modes': 15, 'interactive_shells': [144,1728,20736]}
+          PY
+
+          echo "R193_FULL_RESTORATION_LIVE_VERIFIED $EXPECTED_SHA"
