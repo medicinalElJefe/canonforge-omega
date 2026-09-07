@@ -18,6 +18,8 @@ SNAPSHOT = SYSTEM / "driveCorpusSnapshotR195.ts"
 R195 = SRC / "acceptance" / "cumulativeCapabilityR195.ts"
 R193 = SRC / "workspaceManifestR193.ts"
 R194 = SRC / "evidencePlaneR194.ts"
+DEWEY = SRC / "compute" / "deweyWaterContinuityR195.ts"
+DEWEY_SURFACE = SRC / "deweyComputeSurfaceR195.ts"
 NAV195 = SYSTEM / "oneSystemNavigationR195.ts"
 EXPECTED = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655"
 
@@ -139,27 +141,34 @@ def test_r195_routes_existing_specialist_organs_instead_of_reimplementing_them()
     assert "canonicalMutation: true" not in router
 
 
-def test_r195_preserves_r192_r193_r194_wrapper_chain_exactly_and_adds_r195_last():
+def test_r195_preserves_r192_r193_r194_wrapper_chain_and_adds_both_r195_surfaces():
     entry = text(ENTRY)
     assert "const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname)" in entry
     assert "const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname)" in entry
     assert "const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname)" in entry
-    assert "return enhanceOneSystemNavigationR195(r194, new URL(request.url).pathname)" in entry
+    assert "const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname)" in entry
+    assert "return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname)" in entry
     assert "handleEvidencePlaneR194(request, env, ctx, runtimeFetch)" in entry
     assert "handleDriveCorpusSystemR195(request, env, ctx, runtimeFetch)" in entry
+    assert "handleRestorationPlannerR195(request, env, ctx, runtimeFetch)" in entry
+    assert "handleDeweyWaterContinuityR195(request)" in entry
+    assert entry.index("handleDeweyWaterContinuityR195(request)") < entry.index('url.pathname.startsWith("/api/compute/")')
     assert "return canonical.fetch(request, env, ctx)" in entry
     assert 'release: "r193-full-restoration-workspace"' in text(R193)
     assert 'EVIDENCE_PLANE_RELEASE_R194 = "r194-dual-plane-evidence-restoration"' in text(R194)
+    assert 'DEWEY_WATER_CONTINUITY_RELEASE_R195 = "r195-dewey-water-continuity-compute"' in text(DEWEY)
+    assert 'DEWEY_COMPUTE_SURFACE_RELEASE_R195 = "r195-dewey-compute-surface"' in text(DEWEY_SURFACE)
     assert 'ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system"' in text(NAV195)
 
 
-def test_r195_cumulative_truth_counts_r194_evidence_and_r195_execution_as_two_post_r191_organs():
+def test_r195_cumulative_truth_counts_three_distinct_post_r191_operational_organs():
     cumulative = text(R195)
     assert 'CUMULATIVE_SCHEMA_R195 = "OMEGA_CUMULATIVE_CAPABILITY_CANON_R195"' in cumulative
     assert 'id: "R194_DUAL_PLANE_EVIDENCE_RESTORATION"' in cumulative
     assert 'id: "R195_DRIVE_CORPUS_ONE_SYSTEM"' in cumulative
+    assert 'id: "R195_DEWEY_WATER_CONTINUITY_COMPUTE"' in cumulative
     assert "predecessor.totalCapabilityGroups + POST_R191_OPERATIONAL_ORGANS_R195.length" in cumulative
-    assert "POST_R191_OPERATIONAL_ORGANS_R195.length === 2" in cumulative
+    assert "POST_R191_OPERATIONAL_ORGANS_R195.length === 3" in cumulative
     assert 'executionTruth: "DISCOVERED_TO_AUTHORIZED_TO_AVAILABLE_TO_INVOKED_TO_RETURNED_TO_VERIFIED_WITH_FAILURE_STATES_VISIBLE"' in cumulative
     assert "canonicalMutation: false" in cumulative
     assert "promotionAuthorized: false" in cumulative
@@ -174,6 +183,7 @@ def test_r195_release_identity_is_additive_and_preserves_existing_runtime_namesp
         'UNIVERSAL_WORKSPACE_R193_ID = "r193-full-restoration-workspace"',
         'EVIDENCE_PLANE_R194_ID = "r194-dual-plane-evidence-restoration"',
         'DRIVE_CORPUS_ONE_SYSTEM_R195_ID = "r195-drive-corpus-one-system"',
+        'DEWEY_WATER_CONTINUITY_R195_ID = "r195-dewey-water-continuity-compute"',
         f'DRIVE_CORPUS_SHA256_R195 = "{EXPECTED}"',
     ):
         assert marker in wrangler
