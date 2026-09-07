@@ -1,4 +1,4 @@
-name: OMEGA V6 R198.2 guarded production deploy
+name: OMEGA V6 R200.1 exact-head guarded production promotion
 
 on:
   workflow_dispatch:
@@ -12,22 +12,69 @@ concurrency:
   group: omega-v6-production
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  R200_RUNTIME_BASE_SHA: 8f28b350f1c47974204beda484adbb88f9c06949
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
 jobs:
   verify-deploy-prove:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout exact promotion commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove canonical lineage and preserve exact R200 runtime tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$R200_RUNTIME_BASE_SHA^{commit}"
+          git merge-base --is-ancestor "$R200_RUNTIME_BASE_SHA" HEAD
+
+          mapfile -t changed < <(git diff --name-only "$R200_RUNTIME_BASE_SHA" HEAD)
+          allowed_workflow='.github/workflows/omega-v6-r198-production-deploy.yml'
+          allowed_test='canonforge-omega/tests/test_r200_production_promotion_gate.py'
+          for path in "${changed[@]}"; do
+            if [[ "$path" != "$allowed_workflow" && "$path" != "$allowed_test" ]]; then
+              echo "R200_RUNTIME_DRIFT_BLOCKED $path"
+              exit 1
+            fi
+          done
+
+          if git diff --quiet "$R200_RUNTIME_BASE_SHA" HEAD -- \
+            canonforge-omega/cloudflare/omega-v6-worker \
+            canonforge-omega/omega_runtime \
+            canonforge-omega/api \
+            canonforge-omega/config; then
+            echo "R200_RUNTIME_TREE_PRESERVED $R200_RUNTIME_BASE_SHA"
+          else
+            echo 'R200_RUNTIME_TREE_CHANGED_DURING_PROMOTION_CONTROL_PATCH'
+            git diff --name-only "$R200_RUNTIME_BASE_SHA" HEAD -- \
+              canonforge-omega/cloudflare/omega-v6-worker \
+              canonforge-omega/omega_runtime \
+              canonforge-omega/api \
+              canonforge-omega/config
+            exit 1
+          fi
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Full Sovereign preservation and R198.2 repair contract
+      - name: Full Sovereign preservation and cumulative R200 contract
         working-directory: canonforge-omega
         run: |
-          python -m pip install -U pip pytest
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
           python -m pytest -q
 
       - uses: actions/setup-node@v4
@@ -38,46 +85,152 @@ jobs:
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npm install
 
-      - name: Typecheck preserved Worker
+      - name: Typecheck preserved cumulative Worker
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npm run typecheck
 
-      - name: Wrangler dry run
+      - name: Materialize exact promotion identity without mutating source
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy --dry-run
-
-      - name: Deploy canonical Worker
-        working-directory: canonforge-omega/cloudflare/omega-v6-worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy
-
-      - name: Prove R198 source health truth
+        shell: bash
         run: |
           set -euo pipefail
-          for i in 1 2 3 4 5 6; do
-            BODY="$(curl -fsS --max-time 45 'https://omegav6.jeffdeweyeljefe.workers.dev/api/earth/sar/r198/sources' || true)"
-            if printf '%s' "$BODY" | grep -q 'r198-real-public-sar-truth-fusion' && printf '%s' "$BODY" | grep -q 'no_invented_coordinates'; then
-              printf '%s\n' "$BODY" > r198-live-proof.json
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          source = Path('wrangler.toml').read_text(encoding='utf-8')
+          marker = '[vars]\n'
+          assert marker in source, 'wrangler [vars] section missing'
+          assert 'CANONICAL_GIT_SHA =' not in source, 'source config must remain identity-neutral'
+          sha = os.environ['GITHUB_SHA']
+          promoted = source.replace(marker, marker + f'CANONICAL_GIT_SHA = "{sha}"\n', 1)
+          Path('wrangler.promotion.toml').write_text(promoted, encoding='utf-8')
+          print(f'PROMOTION_IDENTITY_BOUND {sha}')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.promotion.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Wrangler dry run of exact promotion config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.promotion.toml
+
+      - name: Re-prove exact canonical head immediately before mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          REMOTE_HEAD="$(git rev-parse "origin/$CANONICAL_BRANCH")"
+          LOCAL_HEAD="$(git rev-parse HEAD)"
+          printf 'LOCAL_HEAD=%s\nREMOTE_HEAD=%s\nEVENT_SHA=%s\n' "$LOCAL_HEAD" "$REMOTE_HEAD" "$GITHUB_SHA"
+          test "$LOCAL_HEAD" = "$GITHUB_SHA"
+          test "$REMOTE_HEAD" = "$GITHUB_SHA"
+
+      - name: Deploy exact canonical promotion commit
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.promotion.toml
+
+      - name: Prove live deployment identity is this exact canonical SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 20 "$V6_URL/api/fabric/r191/manifest" -o /tmp/r191-live.json || true
+            if EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              d = json.loads(Path('/tmp/r191-live.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_UNIVERSAL_SURFACE_FABRIC_R191', d
+          assert d.get('release') == 'r191-universal-surface-fabric', d
+          assert d.get('deploymentIdentityBound') is True, d
+          assert d.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], d
+          PY
+            then
+              matched=true
               break
             fi
             sleep 5
           done
-          test -s r198-live-proof.json
+          test "$matched" = true
+          echo "LIVE_CANONICAL_SHA_VERIFIED $GITHUB_SHA"
 
-      - name: Prove full SAR query survives canonical routing
+      - name: Prove cumulative R200 mission kernel is live without canon mutation authority
+        shell: bash
         run: |
           set -euo pipefail
-          curl -fsS --max-time 60 'https://omegav6.jeffdeweyeljefe.workers.dev/api/earth/sar/r198/search?days=7&limit=1&providers=sentinel1' > r198-query-proof.json
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/api/mission/r200/manifest" -o /tmp/r200-manifest.json
           python - <<'PY'
           import json
-          with open('r198-query-proof.json', encoding='utf-8') as f:
-              d=json.load(f)
-          q=d['query']
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r200-manifest.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_MISSION_KERNEL_MANIFEST_R200', d
+          assert d.get('release') == 'r200-canonical-mission-kernel', d
+          assert d.get('canonicalMutation') is False, d
+          assert d.get('promotionAuthorized') is False, d
+          assert 'R199_ONE_SYSTEM_OPERATOR' in d.get('upstreamAuthorities', []), d
+          assert 'R178_BUILD_CANDIDATE' in d.get('upstreamAuthorities', []), d
+          print('R200_MISSION_KERNEL_LIVE_VERIFIED')
+          PY
+
+      - name: Prove R192 navigation and primary human routes on exact deployed SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          routes=(/ /fabric /instrument /truth /clouds /sai /compute /validate /convergence)
+          for route in "${routes[@]}"; do
+            safe=$(printf '%s' "$route" | tr '/ ' '__')
+            curl --fail --silent --show-error --max-time 20 -D "/tmp/${safe}.headers" "$V6_URL$route" -o "/tmp/${safe}.html"
+            grep -qi '^content-type: text/html' "/tmp/${safe}.headers"
+            grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/${safe}.headers"
+            grep -F 'id="omegaUniversalNavR192"' "/tmp/${safe}.html"
+          done
+          grep -F 'Living Operator Field' /tmp/_.html
+          grep -F 'id="omegaLaunch" class="hidden"' /tmp/_.html
+          grep -F 'OMEGA · R191 SURFACE FABRIC' /tmp/_fabric.html
+
+          curl --fail --silent --show-error --max-time 20 -D /tmp/r192-api.headers "$V6_URL/api/fabric/r191/status" -o /tmp/r192-api.json
+          grep -qi '^content-type: application/json' /tmp/r192-api.headers
+          if grep -qi '^x-omega-navigation:' /tmp/r192-api.headers; then
+            echo 'R192_NAVIGATION_LEAKED_INTO_API_RESPONSE'
+            exit 1
+          fi
+          echo "R192_NAVIGATION_HOME_LIVE_VERIFIED $GITHUB_SHA"
+
+      - name: Prove R198 source health truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5 6; do
+            BODY="$(curl -fsS --max-time 45 "$V6_URL/api/earth/sar/r198/sources" || true)"
+            if printf '%s' "$BODY" | grep -q 'r198-real-public-sar-truth-fusion' && printf '%s' "$BODY" | grep -q 'no_invented_coordinates'; then
+              printf '%s\n' "$BODY" > /tmp/r198-live-proof.json
+              break
+            fi
+            sleep 5
+          done
+          test -s /tmp/r198-live-proof.json
+
+      - name: Prove full SAR query survives canonical routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 60 "$V6_URL/api/earth/sar/r198/search?days=7&limit=1&providers=sentinel1" > /tmp/r198-query-proof.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r198-query-proof.json').read_text())
+          q = d['query']
           assert q['days'] == 7, q
           assert q['limit_per_provider'] == 1, q
           assert q['providers'] == ['sentinel1'], q
@@ -87,41 +240,159 @@ jobs:
           PY
 
       - name: Prove NASA GIBS real Earth context source responds
+        shell: bash
         run: |
           set -euo pipefail
-          rm -f nasa-context.jpg nasa-context-date.txt
+          rm -f /tmp/nasa-context.jpg /tmp/nasa-context-date.txt
           for OFFSET in 1 2 3 4 5 6 7 8; do
             DATE="$(date -u -d "$OFFSET day ago" +%F)"
             URL="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1&LAYERS=VIIRS_SNPP_CorrectedReflectance_TrueColor&STYLES=&FORMAT=image%2Fjpeg&TRANSPARENT=false&SRS=EPSG%3A4326&BBOX=-180,-90,180,90&WIDTH=1024&HEIGHT=512&TIME=$DATE"
-            TYPE="$(curl -fsSL --max-time 60 -o nasa-context.jpg -w '%{content_type}' "$URL" || true)"
-            SIZE="$(wc -c < nasa-context.jpg 2>/dev/null || echo 0)"
+            TYPE="$(curl -fsSL --max-time 60 -o /tmp/nasa-context.jpg -w '%{content_type}' "$URL" || true)"
+            SIZE="$(wc -c < /tmp/nasa-context.jpg 2>/dev/null || echo 0)"
             if [[ "$TYPE" == image/* ]] && [[ "$SIZE" -gt 10000 ]]; then
-              printf '%s\n' "$DATE" > nasa-context-date.txt
+              printf '%s\n' "$DATE" > /tmp/nasa-context-date.txt
               echo "NASA_GIBS_CONTEXT_OK date=$DATE type=$TYPE bytes=$SIZE"
               break
             fi
           done
-          test -s nasa-context-date.txt
+          test -s /tmp/nasa-context-date.txt
 
       - name: Prove repaired Earth UI and R198.2 context are live
+        shell: bash
         run: |
           set -euo pipefail
-          curl -fsS --max-time 45 'https://omegav6.jeffdeweyeljefe.workers.dev/?app=Earth' > earth-r1982.html
-          grep -q 'omegaSarIntegratedR198_1Runtime' earth-r1982.html
-          grep -q 'omegaSarVisualContextR198_2Runtime' earth-r1982.html
-          grep -q 'NASA GIBS' earth-r1982.html
-          grep -q 'VIIRS_SNPP_CorrectedReflectance_TrueColor' earth-r1982.html
-          grep -q 'REAL SAR' earth-r1982.html
-          if grep -q 'omegaSarTruthR198Runtime' earth-r1982.html; then
+          curl -fsS --max-time 45 "$V6_URL/?app=Earth" > /tmp/earth-r1982.html
+          grep -q 'omegaSarIntegratedR198_1Runtime' /tmp/earth-r1982.html
+          grep -q 'omegaSarVisualContextR198_2Runtime' /tmp/earth-r1982.html
+          grep -q 'NASA GIBS' /tmp/earth-r1982.html
+          grep -q 'VIIRS_SNPP_CorrectedReflectance_TrueColor' /tmp/earth-r1982.html
+          grep -q 'REAL SAR' /tmp/earth-r1982.html
+          if grep -q 'omegaSarTruthR198Runtime' /tmp/earth-r1982.html; then
             echo 'OLD_INTRUSIVE_R198_PANEL_STILL_PRESENT'
             exit 1
           fi
 
       - name: Prove Earth-only visual layers do not leak into Hybrid
+        shell: bash
         run: |
           set -euo pipefail
-          curl -fsS --max-time 45 'https://omegav6.jeffdeweyeljefe.workers.dev/?app=Hybrid' > hybrid-r1982.html
-          if grep -q 'omegaSarIntegratedR198_1Runtime' hybrid-r1982.html || grep -q 'omegaSarVisualContextR198_2Runtime' hybrid-r1982.html; then
+          curl -fsS --max-time 45 "$V6_URL/?app=Hybrid" > /tmp/hybrid-r1982.html
+          if grep -q 'omegaSarIntegratedR198_1Runtime' /tmp/hybrid-r1982.html || grep -q 'omegaSarVisualContextR198_2Runtime' /tmp/hybrid-r1982.html; then
             echo 'EARTH_VISUAL_LAYER_LEAKED_INTO_HYBRID'
             exit 1
           fi
+
+      - name: Prove R178 strict 12-cell live execution transport and candidate path
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/api/swarm/build/manifest" -o /tmp/r178-manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r178-manifest.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_WARP_BUILD_CANDIDATE_MANIFEST_R178', d
+          assert d.get('revision') == 'R178', d
+          assert d.get('sourceIntegrityRevision') == 'R177', d
+          assert d.get('canonicalMutation') is False, d
+          assert d.get('deploymentAuthorized') is False, d
+          assert d.get('promotionAuthorized') is False, d
+          PY
+
+          curl --fail --silent --show-error --max-time 45 -X POST "$V6_URL/api/swarm/warp/launch" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"R200.1 production promotion proof: exact strict bounded software-build receipt.","profile":"PULSE","purpose":"BUILD","providerBudget":0}' \
+            -o /tmp/r178-launch.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r178-launch.json').read_text())
+          assert d['ok'] is True, d
+          assert d['integrityRevision'] == 'R177', d
+          assert d['profile'] == 'PULSE', d
+          assert d['expectedCells'] == 12, d
+          assert len(d['refs']) == 1, d
+          Path('/tmp/r178-session.json').write_text(json.dumps({
+              'warpId': d['warpId'],
+              'profile': d['profile'],
+              'purpose': d['purpose'],
+              'refs': d['refs'],
+          }))
+          print('R178_SOURCE_PULSE_LAUNCHED', d['warpId'])
+          PY
+
+          for wave in $(seq 1 12); do
+            curl --fail --silent --show-error --max-time 45 -X POST "$V6_URL/api/swarm/warp/tick" \
+              -H 'content-type: application/json' --data-binary @/tmp/r178-session.json \
+              -o /tmp/r178-source-state.json
+            if python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r178-source-state.json').read_text())
+          print({'state': d.get('state'), 'progress': d.get('progress'), 'completed': d.get('completedCells'), 'failed': d.get('failedCells'), 'receipt': bool(d.get('receipt'))})
+          sys.exit(0 if d.get('receipt') else 1)
+          PY
+            then
+              break
+            fi
+            sleep 1
+          done
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r178-source-state.json').read_text())
+          assert d['ok'] is True, d
+          assert d['state'] == 'COMPLETE', d
+          assert d['integrityRevision'] == 'R177', d
+          assert d['totalCells'] == 12 and d['completedCells'] == 12 and d['failedCells'] == 0, d
+          inv = d['completionInvariant']
+          assert inv['strict'] is True and inv['allShardsAccounted'] is True, inv
+          assert inv['accountedCells'] == 12 and inv['delta'] == 0 and inv['invalidShardCount'] == 0, inv
+          receipt = d['receipt']
+          assert receipt['strictCompletionInvariant'] is True, receipt
+          assert receipt['proofState'] == 'RETURNED_NOT_ADMITTED', receipt
+          assert receipt['canonicalMutation'] is False, receipt
+          session = json.loads(Path('/tmp/r178-session.json').read_text())
+          session['objective'] = 'Validate cumulative R200 production transport without authorizing canon mutation, deployment, or promotion from the R178 candidate plane.'
+          Path('/tmp/r178-candidate-request.json').write_text(json.dumps(session))
+          PY
+
+          curl --fail --silent --show-error --max-time 45 -X POST "$V6_URL/api/swarm/build/candidate" \
+            -H 'content-type: application/json' --data-binary @/tmp/r178-candidate-request.json \
+            -o /tmp/r178-candidate.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r178-candidate.json').read_text())
+          assert d['ok'] is True, d
+          assert d['schema'] == 'OMEGA_WARP_BUILD_CANDIDATE_RESPONSE_R178', d
+          assert d['revision'] == 'R178', d
+          gate = d['sourceGate']
+          assert gate['exactCompletion'] is True and gate['strictR177Integrity'] is True and gate['zeroFailedCells'] is True, gate
+          c = d['candidate']
+          assert c['authority'] == 'CANDIDATE_NOT_CANON', c
+          assert c['canonicalMutation'] is False, c
+          assert c['sourceMutationAuthorized'] is False, c
+          assert c['githubMutationAuthorized'] is False, c
+          assert c['deploymentAuthorized'] is False, c
+          assert c['promotionAuthorized'] is False, c
+          assert c['sourceReceipt']['proofState'] == 'RETURNED_NOT_ADMITTED', c
+          print('R178_LIVE_EXECUTION_AND_CANDIDATE_VERIFIED', c['candidateId'])
+          PY
+
+      - name: Publish promotion proof summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R200.1 production promotion'
+            echo
+            echo "- R200 runtime base: \`$R200_RUNTIME_BASE_SHA\`"
+            echo "- Promotion commit: \`$GITHUB_SHA\`"
+            echo "- Canonical branch: \`$CANONICAL_BRANCH\`"
+            echo '- Runtime mutation in promotion patch: **forbidden by pre-deploy diff gate**'
+            echo '- Deployment identity: bound through existing R191 `CANONICAL_GIT_SHA` contract'
+            echo '- Admission law: deployment does not itself authorize CanonState mutation or successor promotion'
+          } >> "$GITHUB_STEP_SUMMARY"
