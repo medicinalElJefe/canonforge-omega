@@ -37,6 +37,7 @@ const ACTIONS = {
 } as const;
 
 type MenuId = typeof MENUS[number]["id"];
+type SnapshotProfile = "mission" | "full";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data, null, 2), { status, headers: HEADERS });
@@ -102,6 +103,10 @@ async function manifest() {
     },
     menus: MENUS,
     actions: ACTIONS,
+    snapshotProfiles: {
+      mission: "FAST_INTERNAL_ONLY_CORE_PROOF_SNAPSHOT_FOR_R200_R201_MISSIONS",
+      full: "FULL_OPERATOR_SNAPSHOT_INCLUDING_CONVERGENCE_RECOVERY_AND_EARTH_SOURCE_HEALTH",
+    },
     boundaries: {
       returnedIsNotVerified: true,
       modelOutputIsNotCanonState: true,
@@ -117,32 +122,46 @@ async function manifest() {
   return { ...core, receiptSha256: await digest(core) };
 }
 
-async function snapshot(request: Request, env: any, ctx: any, canonicalFetch: CanonicalFetch) {
-  const probes = [
+function snapshotProbes(profile: SnapshotProfile) {
+  const core = [
     ["STATE", "/api/omega/state"],
-    ["CONVERGENCE", "/api/convergence/edge"],
     ["ONE_SYSTEM", "/api/system/r195/status"],
     ["WORKSPACE", "/api/workspace/r193/manifest"],
     ["FABRIC", "/api/fabric/r191/manifest"],
     ["SAI_AI", "/api/intelligence/r179/manifest"],
-    ["SWARM", "/api/clouds/r185/manifest"],
     ["BUILD", "/api/swarm/build/manifest"],
+  ] as const;
+  if (profile === "mission") return core;
+  return [
+    ...core,
+    ["CONVERGENCE", "/api/convergence/edge"],
+    ["SWARM", "/api/clouds/r185/manifest"],
     ["RECOVERY", "/api/system/r195/restoration?limit=1"],
     ["EARTH_SOURCES", "/api/earth/sar/r198/sources"],
   ] as const;
+}
+
+async function snapshot(request: Request, env: any, ctx: any, canonicalFetch: CanonicalFetch, profile: SnapshotProfile = "full") {
+  const probes = snapshotProbes(profile);
   const results = await Promise.all(probes.map(async ([id, path]) => ({ id, ...(await invoke(request, env, ctx, canonicalFetch, path)) })));
   const convergence = results.find(x => x.id === "CONVERGENCE")?.result || {};
   const pc = convergence?.topology?.sovereign_pc || {};
+  const requiredIds = profile === "mission"
+    ? new Set(["STATE", "ONE_SYSTEM", "WORKSPACE", "FABRIC", "SAI_AI", "BUILD"])
+    : new Set(results.map(x => x.id).filter(id => id !== "EARTH_SOURCES"));
+  const required = results.filter(x => requiredIds.has(x.id));
   const core = {
     schema: "OMEGA_ONE_SYSTEM_CORRELATED_SNAPSHOT_R199",
     release: ONE_SYSTEM_OPERATOR_RELEASE_R199,
     generatedAt: new Date().toISOString(),
-    runtimeReady: results.filter(x => !["EARTH_SOURCES"].includes(x.id as any)).every(x => x.ok),
-    pcOnline: Boolean(pc.pc_online),
-    heartbeatCurrent: Boolean(pc.heartbeat_current),
+    profile,
+    runtimeReady: required.every(x => x.ok),
+    pcOnline: profile === "full" ? Boolean(pc.pc_online) : false,
+    heartbeatCurrent: profile === "full" ? Boolean(pc.heartbeat_current) : false,
     results,
     truth: {
-      pcOnline: Boolean(pc.pc_online) ? "PROVEN_BY_CURRENT_CONVERGENCE_PACKET" : "UNPROVEN",
+      pcOnline: profile === "full" && Boolean(pc.pc_online) ? "PROVEN_BY_CURRENT_CONVERGENCE_PACKET" : profile === "mission" ? "NOT_PROBED_IN_FAST_MISSION_PROFILE" : "UNPROVEN",
+      missionSnapshotDoesNotClaimHostState: profile === "mission",
       returnedIsNotVerified: true,
       canonicalMutation: false,
     },
@@ -189,7 +208,7 @@ async function operate(request: Request, env: any, ctx: any, canonicalFetch: Can
     if (!selected.observe) return json({ ok: false, code: "R199_OBSERVE_ROUTE_UNAVAILABLE", menu: selected }, 409);
     downstream = await invoke(request, env, ctx, canonicalFetch, selected.observe);
   } else if (action === "snapshot") {
-    downstream = { status: 200, ok: true, result: await snapshot(request, env, ctx, canonicalFetch), path: "/api/system/r199/snapshot", method: "GET", elapsedMs: 0 };
+    downstream = { status: 200, ok: true, result: await snapshot(request, env, ctx, canonicalFetch, "mission"), path: "/api/system/r199/snapshot?profile=mission", method: "GET", elapsedMs: 0 };
     authority = ACTIONS.snapshot.authority;
   } else if (action === "specialist_execute") {
     if (!["MENU-05", "MENU-06", "MENU-07", "MENU-10"].includes(selected.id)) return json({ ok: false, code: "R199_SPECIALIST_EXECUTION_NOT_ALLOWED_FOR_MENU", menu: selected.id }, 422);
@@ -238,7 +257,10 @@ export async function handleOneSystemOperatorR199(request: Request, env: any, ct
   if (!path.startsWith("/api/system/r199")) return null;
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: HEADERS });
   if (path === "/api/system/r199/manifest" && request.method === "GET") return json(await manifest());
-  if (path === "/api/system/r199/snapshot" && request.method === "GET") return json(await snapshot(request, env, ctx, canonicalFetch));
+  if (path === "/api/system/r199/snapshot" && request.method === "GET") {
+    const profile: SnapshotProfile = url.searchParams.get("profile") === "mission" ? "mission" : "full";
+    return json(await snapshot(request, env, ctx, canonicalFetch, profile));
+  }
   if (path === "/api/system/r199/operate" && request.method === "POST") return operate(request, env, ctx, canonicalFetch);
   return json({ ok: false, code: "R199_OPERATOR_ROUTE_NOT_FOUND", routes: ["/api/system/r199/manifest", "/api/system/r199/snapshot", "/api/system/r199/operate"] }, 404);
 }
