@@ -1,0 +1,86 @@
+name: OMEGA V6 R195 fail-fast preflight
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyWaterContinuityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyComputeSurfaceR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/cumulativeCapabilityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/test_r195_*.py'
+      - '.github/workflows/omega-v6-r195-preflight.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: r195-preflight-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+
+      - name: Drive · lossless snapshot and table contract
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_snapshot_is_lossless_and_matches_drive_contract
+      - name: Drive · exact KEEP/MERGE/DONOR admission classes
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_registry_preserves_exact_keep_merge_donor_admission_classes
+      - name: Drive · measured digest and provenance
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_digest_is_measured_payload_not_stale_expected_value_and_has_drive_provenance
+      - name: Drive · Mode188 source-metric boundary
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_applies_mode188_only_when_source_metrics_exist
+      - name: Drive · RETURNED versus VERIFIED execution truth
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_execution_truth_separates_returned_from_verified
+      - name: Drive · specialist route delegation
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_routes_existing_specialist_organs_instead_of_reimplementing_them
+      - name: Drive · R192/R193/R194 wrapper and R195 surface preservation
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_preserves_r192_r193_r194_wrapper_chain_and_adds_both_r195_surfaces
+      - name: Drive · cumulative 66-group capability truth
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_cumulative_truth_counts_three_distinct_post_r191_operational_organs
+      - name: Drive · release identity and namespace preservation
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_release_identity_is_additive_and_preserves_existing_runtime_namespaces
+
+      - name: R195 residual restoration planner
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_residual_restoration_planner.py
+      - name: R195 Dewey calculus numerical and truth contracts
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_dewey_water_continuity_compute.py
+      - name: R195 predecessor non-regression
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r194_evidence_plane_restoration.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r167_authoritative_state_accuracy.py \
+            tests/test_r163_visual_delivery_contract.py \
+            tests/test_r153_mobile_workspace_orchestration.py \
+            tests/test_r145_governed_mode_atlas.py \
+            tests/test_role_separated_convergence_r128.py

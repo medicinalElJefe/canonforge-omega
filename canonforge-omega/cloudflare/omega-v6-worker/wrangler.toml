@@ -1,8 +1,8 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R192 only adds a final HTML
-# navigation/home projection after the existing R169-R191 dispatcher returns a response.
+# runtimeEntryR169 remains the preserved deployment entrypoint. R192 navigation, R193 workspace,
+# R194 evidence separation, R195 Drive execution truth, and R195 deterministic Dewey compute are additive successor layers.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -38,6 +38,11 @@ WHOLE_SYSTEM_ACCEPTANCE_R190_ID = "r190-capability-truth-admission"
 CAPABILITY_TRUTH_R190_ID = "r190-implemented-route-invoked-returned-verified"
 UNIVERSAL_SURFACE_FABRIC_R191_ID = "r191-universal-surface-fabric"
 UNIVERSAL_NAVIGATION_R192_ID = "r192-navigation-home-repair"
+UNIVERSAL_WORKSPACE_R193_ID = "r193-full-restoration-workspace"
+EVIDENCE_PLANE_R194_ID = "r194-dual-plane-evidence-restoration"
+DRIVE_CORPUS_ONE_SYSTEM_R195_ID = "r195-drive-corpus-one-system"
+DEWEY_WATER_CONTINUITY_R195_ID = "r195-dewey-water-continuity-compute"
+DRIVE_CORPUS_SHA256_R195 = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
