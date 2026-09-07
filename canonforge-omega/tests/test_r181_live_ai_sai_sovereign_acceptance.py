@@ -1,9 +1,11 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO = ROOT.parent
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 ACCEPTANCE = WORKER / "src" / "acceptance" / "liveAcceptanceR181.ts"
 ENTRY = WORKER / "src" / "runtimeEntryR169.ts"
+LIVE_WORKFLOW = REPO / ".github" / "workflows" / "omega-v6-r181-live-ai-sai-sovereign-proof.yml"
 
 
 def text(path: Path) -> str:
@@ -46,3 +48,15 @@ def test_r181_route_is_additive_to_existing_ai_sai_runtime():
     assert 'handleSaiAiFusionR179' in entry
     assert 'B059_SOVEREIGN_PATHS' in entry
     assert 'handleSaiRequest' in entry
+
+
+def test_r182_binds_r181_live_proof_to_exact_deployed_git_identity():
+    source = text(ACCEPTANCE)
+    workflow = text(LIVE_WORKFLOW)
+    assert 'CANONICAL_GIT_SHA' in source
+    assert 'canonicalGitSha' in source
+    assert 'deploymentIdentityBound' in source
+    assert 'deploymentShaMustMatchBeforePostDeployProof: true' in source
+    assert 'expected_sha:' in workflow
+    assert "d.get('canonicalGitSha') == expected" in workflow
+    assert "d.get('deploymentIdentityBound') is True" in workflow

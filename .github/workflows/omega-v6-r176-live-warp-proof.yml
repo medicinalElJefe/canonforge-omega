@@ -1,30 +1,28 @@
 name: OMEGA V6 R176 live warp proof
 
 on:
-  push:
-    branches: ["omega-v6-full-convergence"]
-    paths:
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpComputationR176.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpComputationLabR176.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
-      - '.github/workflows/omega-v6-r176-live-warp-proof.yml'
+  workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: omega-r176-live-warp
+  cancel-in-progress: true
+
 jobs:
   prove-live-warp-fabric:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     env:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
     steps:
-      - name: Wait for R176 fabric with R177 strict accounting
+      - name: Confirm R176 fabric with R177 strict accounting on deployed edge
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 90); do
+          for attempt in $(seq 1 45); do
             if curl --fail --silent --show-error "$V6_URL/api/swarm/warp/manifest" -o /tmp/r176-manifest.json \
               && python - <<'PY'
           import json
@@ -39,17 +37,16 @@ jobs:
           assert e.get('idempotentCellTaskReplay') is True
           assert e.get('strictTerminalAccounting') is True
           PY
-            then
-              break
-            fi
-            if [ "$attempt" -eq 90 ]; then
-              echo "R176/R177 strict warp fabric did not settle on the public edge"
+            then break; fi
+            if [ "$attempt" -eq 45 ]; then
+              echo "R176/R177 strict warp fabric unavailable after post-deploy settle window"
               cat /tmp/r176-manifest.json || true
               exit 1
             fi
             sleep 2
           done
           curl --fail --silent --show-error "$V6_URL/warp" -o /tmp/r176-lab.html
+
       - name: Launch real 576-cell build warp with zero model-provider budget
         shell: bash
         run: |
@@ -78,6 +75,7 @@ jobs:
           Path('/tmp/r176-session.json').write_text(json.dumps(session))
           print(json.dumps({'status':'R176_WARP_LAUNCHED','warpId':launch['warpId'],'refs':len(launch['refs'])}, sort_keys=True))
           PY
+
       - name: Advance parallel shard waves to terminal receipt
         shell: bash
         run: |
@@ -99,11 +97,10 @@ jobs:
           d=json.loads(Path('/tmp/r176-state.json').read_text())
           sys.exit(0 if d.get('receipt') else 1)
           PY
-            then
-              break
-            fi
+            then break; fi
             sleep 1
           done
+
       - name: Verify actual returned swarm receipt and boundaries
         shell: python
         run: |

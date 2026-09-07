@@ -1,60 +1,71 @@
 name: OMEGA V6 R181 live AI SAI Sovereign acceptance proof
 
 on:
-  push:
-    branches: [omega-v6-full-convergence]
-    paths:
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/liveAcceptanceR181.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/intelligence/saiAiFusionR179.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/sai/saiRuntimeR179.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmGovernorR180.ts'
-      - 'canonforge-omega/api/app.py'
-      - 'canonforge-omega/omega_runtime/sai_b059.py'
-      - 'canonforge-omega/scripts/omega_sovereign_agent.py'
-      - '.github/workflows/omega-v6-r181-live-ai-sai-sovereign-proof.yml'
+  workflow_call:
+    inputs:
+      expected_sha:
+        description: Exact canonical Git SHA expected on the deployed edge
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Optional exact canonical Git SHA expected on the deployed edge
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
+
+concurrency:
+  group: omega-r181-live-acceptance
+  cancel-in-progress: true
 
 jobs:
   prove-live-ai-sai-sovereign-acceptance:
     runs-on: ubuntu-latest
     env:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
     steps:
-      - name: Wait for exact R181 deployed acceptance surface
+      - name: Wait for exact R181 deployed acceptance surface and SHA
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 120); do
+          for attempt in $(seq 1 60); do
             if curl --fail --silent --show-error "$V6_URL/api/acceptance/r181/manifest" -o /tmp/r181-manifest.json \
               && python - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
           d=json.loads(Path('/tmp/r181-manifest.json').read_text())
           assert d.get('ok') is True, d
           assert d.get('schema') == 'OMEGA_LIVE_ACCEPTANCE_MANIFEST_R181', d
           assert d.get('release') == 'r181-live-ai-sai-sovereign-acceptance', d
+          expected=os.environ.get('EXPECTED_SHA','').strip()
+          if expected:
+              assert d.get('deploymentIdentityBound') is True, d
+              assert d.get('canonicalGitSha') == expected, (expected, d.get('canonicalGitSha'))
           b=d.get('hardBoundaries') or {}
           assert b.get('providerWeightsMayBeCalledOmegaTrained') is False, b
           assert b.get('quickB059PresenceMayBeCalledFullyTrained') is False, b
           assert b.get('b059DeepVerificationRequiredForFullyTrainedScope') is True, b
           assert b.get('b059GroundedQueryRequiredForFullAcceptance') is True, b
           assert b.get('currentAuthenticatedHeartbeatRequiredForSovereignAcceptance') is True, b
+          assert b.get('deploymentShaMustMatchBeforePostDeployProof') is True, b
           assert b.get('canonicalMutation') is False and b.get('promotionAuthorized') is False, b
           PY
             then exit 0; fi
-            if [ "$attempt" -eq 120 ]; then
-              echo "R181 acceptance surface did not settle on the public edge"
+            if [ "$attempt" -eq 60 ]; then
+              echo "R181 acceptance surface did not settle on the expected canonical SHA"
               cat /tmp/r181-manifest.json || true
               exit 1
             fi
             sleep 2
           done
 
-      - name: Verify R180 load governor is live before intelligence proof
+      - name: Verify R182 continuity-stabilized R180 governor before intelligence proof
         shell: bash
         run: |
           set -euo pipefail
@@ -66,8 +77,14 @@ jobs:
           assert d['ok'] is True, d
           assert d['schema'] == 'OMEGA_SWARM_LOAD_GOVERNOR_R180', d
           assert d['revision'] == 'R180', d
+          assert d['continuityRevision'] == 'R182', d
           p=d['policy']
-          assert p['backgroundPausesWhenSaturated'] is True, p
+          assert p['backgroundPausesWhenSaturated'] is False, p
+          assert p['backgroundContinuityFloorWhenSaturated'] is True, p
+          assert p['backgroundContinuityFloorCells'] == 12, p
+          assert p['backgroundContinuityFloorProviderBudget'] == 0, p
+          assert p['hysteresisUsesPriorPressureWhenProvided'] is True, p
+          assert p['scarCarryRecorded'] is True, p
           assert p['developmentIsClampedBeforeInteractiveWork'] is True, p
           assert p['automaticSelfDevelopmentDefaultCeiling'] == 144, p
           assert p['providerCallsRemainBounded'] is True, p
@@ -132,6 +149,10 @@ jobs:
           d=json.loads(Path('/tmp/r181-acceptance.json').read_text())
           assert d['ok'] is True, d
           assert d['schema'] == 'OMEGA_LIVE_AI_SAI_SOVEREIGN_ACCEPTANCE_R181', d
+          expected=os.environ.get('EXPECTED_SHA','').strip()
+          if expected:
+              assert d.get('deploymentIdentityBound') is True, d
+              assert d.get('canonicalGitSha') == expected, (expected, d.get('canonicalGitSha'))
           assert d['canonicalMutation'] is False and d['promotionAuthorized'] is False, d
           assert d['authority'] == 'LIVE_ACCEPTANCE_RECEIPT_NOT_CANON', d
           assert re.fullmatch(r'[a-f0-9]{64}', d['receiptSha256']), d
@@ -150,9 +171,10 @@ jobs:
               status='LIVE_R181_FULL_AI_SAI_SOVEREIGN_ACCEPTANCE_VERIFIED'
           else:
               status='LIVE_R181_CLOUD_SWARM_ACCEPTED_SOVEREIGN_B059_PENDING_OR_INCOMPLETE'
-          print(json.dumps({'status':status,'acceptanceState':d['acceptanceState'],'fullAcceptance':d['fullAcceptance'],'pcAccepted':d['hybrid']['accepted'],'b059State':d['b059Quick']['state'],'b059Verified':d['b059Verification']['fullyTrainedWithinDeclaredScope'],'groundedQuery':d['b059GroundedQuery']['grounded'],'receiptSha256':d['receiptSha256']}, sort_keys=True))
+          print(json.dumps({'status':status,'canonicalGitSha':d.get('canonicalGitSha'),'acceptanceState':d['acceptanceState'],'fullAcceptance':d['fullAcceptance'],'pcAccepted':d['hybrid']['accepted'],'b059State':d['b059Quick']['state'],'b059Verified':d['b059Verification']['fullyTrainedWithinDeclaredScope'],'groundedQuery':d['b059GroundedQuery']['grounded'],'receiptSha256':d['receiptSha256']}, sort_keys=True))
           Path(os.environ['GITHUB_STEP_SUMMARY']).write_text(
               '## OMEGA R181 live acceptance\n\n'
+              f"- Canonical SHA: `{d.get('canonicalGitSha')}`\n"
               f"- State: `{d['acceptanceState']}`\n"
               f"- Full acceptance: `{d['fullAcceptance']}`\n"
               f"- Sovereign current/authenticated: `{d['hybrid']['accepted']}`\n"

@@ -133,12 +133,12 @@ jobs:
       - name: Reconfirm interface type safety
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npm run typecheck
-      - name: Deploy exact verified canonical head
+      - name: Deploy exact verified canonical head with immutable Git identity
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npm run deploy
+        run: npm run deploy -- --var "CANONICAL_GIT_SHA:$GITHUB_SHA"
       - name: Verify canonical public convergence and R174 federation
         shell: bash
         env:
@@ -242,3 +242,87 @@ jobs:
           PY
       - name: Record promoted SHA
         run: echo "OMEGA V6 promoted exact verified SHA $GITHUB_SHA"
+
+  post-deploy-classify:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: [promote-canonical-worker]
+    runs-on: ubuntu-latest
+    outputs:
+      intelligence_changed: ${{ steps.frames.outputs.intelligence_changed }}
+      swarm_changed: ${{ steps.frames.outputs.swarm_changed }}
+      full_integrity_changed: ${{ steps.frames.outputs.full_integrity_changed }}
+      visual_changed: ${{ steps.frames.outputs.visual_changed }}
+    steps:
+      - name: Checkout exact deployed head with history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - id: frames
+        name: Classify changed proof frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          if [ -n "$before" ] && [ "$before" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$before^{commit}" 2>/dev/null; then
+            base="$before"
+          else
+            base="$(git rev-parse HEAD^ 2>/dev/null || printf '%s' "$GITHUB_SHA")"
+          fi
+          mapfile -t files < <(git diff --name-only "$base" "$GITHUB_SHA")
+          printf '%s\n' "${files[@]}"
+          intelligence=false
+          swarm=false
+          full=false
+          visual=false
+          for f in "${files[@]}"; do
+            case "$f" in
+              canonforge-omega/cloudflare/omega-v6-worker/src/sai/*|canonforge-omega/cloudflare/omega-v6-worker/src/intelligence/*|canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/*|canonforge-omega/omega_runtime/sai_b059.py|canonforge-omega/omega_sovereign_agent.py|canonforge-omega/api/app.py|.github/workflows/omega-v6-r179-live-sai-proof.yml|.github/workflows/omega-v6-r181-live-ai-sai-sovereign-proof.yml)
+                intelligence=true ;;
+            esac
+            case "$f" in
+              canonforge-omega/cloudflare/omega-v6-worker/src/swarm/*|canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts|canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml|.github/workflows/omega-v6-r176-live-warp-proof.yml|.github/workflows/omega-v6-r177-live-integrity-proof.yml)
+                swarm=true ;;
+            esac
+            case "$f" in
+              canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpComputationR176.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmCellR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmCoordinatorR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmOrganismR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmAutonomicR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpBuildCandidateR178.ts)
+                full=true ;;
+            esac
+            case "$f" in
+              canonforge-omega/cloudflare/omega-v6-worker/src/index.ts|canonforge-omega/cloudflare/omega-v6-worker/src/heartbeatTruth.ts|canonforge-omega/cloudflare/omega-v6-worker/src/sovereignVisualShell.ts|canonforge-omega/cloudflare/omega-v6-worker/src/*Visual*|.github/workflows/omega-v6-visual-delivery.yml)
+                visual=true ;;
+            esac
+          done
+          echo "intelligence_changed=$intelligence" >> "$GITHUB_OUTPUT"
+          echo "swarm_changed=$swarm" >> "$GITHUB_OUTPUT"
+          echo "full_integrity_changed=$full" >> "$GITHUB_OUTPUT"
+          echo "visual_changed=$visual" >> "$GITHUB_OUTPUT"
+          echo "R182 frames: intelligence=$intelligence swarm=$swarm full_integrity=$full visual=$visual"
+
+  post-deploy-r181-continuity:
+    needs: [post-deploy-classify]
+    uses: ./.github/workflows/omega-v6-r181-live-ai-sai-sovereign-proof.yml
+    with:
+      expected_sha: ${{ github.sha }}
+
+  post-deploy-r179-intelligence:
+    if: needs.post-deploy-classify.outputs.intelligence_changed == 'true'
+    needs: [post-deploy-classify, post-deploy-r181-continuity]
+    uses: ./.github/workflows/omega-v6-r179-live-sai-proof.yml
+
+  post-deploy-r176-swarm:
+    if: needs.post-deploy-classify.outputs.swarm_changed == 'true' && needs.post-deploy-classify.outputs.full_integrity_changed != 'true'
+    needs: [post-deploy-classify, post-deploy-r181-continuity]
+    uses: ./.github/workflows/omega-v6-r176-live-warp-proof.yml
+
+  post-deploy-r177-full-integrity:
+    if: needs.post-deploy-classify.outputs.full_integrity_changed == 'true'
+    needs: [post-deploy-classify, post-deploy-r181-continuity]
+    uses: ./.github/workflows/omega-v6-r177-live-integrity-proof.yml
+    with:
+      run_full: true
+
+  post-deploy-visual:
+    if: needs.post-deploy-classify.outputs.visual_changed == 'true'
+    needs: [post-deploy-classify, post-deploy-r181-continuity]
+    uses: ./.github/workflows/omega-v6-visual-delivery.yml

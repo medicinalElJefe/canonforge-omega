@@ -38,12 +38,19 @@ def test_b059_training_truth_remains_scope_bounded():
     assert 'OMEGA_SAI_B059_QUERY_RECEIPT_R179' in fusion
 
 
-def test_self_development_is_load_governed_before_mission_creation():
+def test_self_development_is_load_governed_without_stopping_continuity():
     governor = text(GOVERNOR)
     router = text(ROUTER)
     assert 'automaticSelfDevelopmentDefaultCeiling: 144' in governor
-    assert 'backgroundPausesWhenSaturated: true' in governor
+    assert 'backgroundPausesWhenSaturated: false' in governor
+    assert 'backgroundContinuityFloorWhenSaturated: true' in governor
+    assert 'backgroundContinuityFloorCells: 12' in governor
+    assert 'backgroundContinuityFloorProviderBudget: 0' in governor
+    assert 'hysteresisUsesPriorPressureWhenProvided: true' in governor
+    assert 'scarCarryRecorded: true' in governor
     assert 'developmentIsClampedBeforeInteractiveWork: true' in governor
+    assert 'SATURATED: { cells: 12, provider: 0, concurrency: 1 }' in governor
+    assert 'scar-carry hysteresis retained saturated state until recovery margin' in governor
     assert 'PREVIOUS_STAGE_VERIFIED' in governor
     assert 'OPERATOR_AUTHORIZED_FULL' in governor
     assert 'promotionAuthorized: false' in governor
