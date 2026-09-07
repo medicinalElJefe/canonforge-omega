@@ -10,6 +10,15 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def test_r201_pr_self_test_targets_deployed_canonical_base_not_candidate_sha():
+    text = read(R201)
+    assert "pull_request:" in text
+    assert "branches: [omega-v6-full-convergence]" in text
+    assert ".github/workflows/omega-v6-r201-live-continuity-proof.yml" in text
+    assert "canonforge-omega/tests/test_r205_live_proof_edge_coherence.py" in text
+    assert "EXPECTED_SHA: ${{ inputs.expected_sha || github.event.pull_request.base.sha || github.sha }}" in text
+
+
 def test_r201_waits_for_a_coherent_exact_sha_route_set_twice():
     text = read(R201)
     assert "Wait for exact deployed canonical SHA and coherent R201 route set" in text
