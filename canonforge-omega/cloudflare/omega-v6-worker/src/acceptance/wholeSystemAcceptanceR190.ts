@@ -1,3 +1,5 @@
+import { EARTH_TRUTH_LAYERS_BOUNDARY } from "../earthTruthLayers";
+
 export const WHOLE_SYSTEM_RELEASE_R190 = "r190-capability-truth-admission";
 export const WHOLE_SYSTEM_SCHEMA_R190 = "OMEGA_WHOLE_SYSTEM_ACCEPTANCE_R190";
 export const CAPABILITY_TRUTH_SCHEMA_R190 = "OMEGA_CAPABILITY_TRUTH_R190";
@@ -31,6 +33,7 @@ export const CAPABILITY_STAGES_R190 = Object.freeze([
 
 type Obj = Record<string, any>;
 type RouterFetch = (request: Request, env: any, ctx: any) => Promise<Response>;
+type AvailabilityClass = "LOCAL_CORE" | "EXTERNAL_EVIDENCE";
 type CapabilitySpec = {
   id: string;
   surface: string;
@@ -42,6 +45,8 @@ type CapabilitySpec = {
   requiredFull: boolean;
   evidenceClass: string;
   boundary: string;
+  availability: AvailabilityClass;
+  unavailableState?: string;
 };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
@@ -64,47 +69,41 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: true,
     requiredFull: true,
     evidenceClass: "ADMITTED_PREDECESSOR_CONTRACT",
+    availability: "LOCAL_CORE",
     boundary: "R190 must preserve the admitted R189 whole-instrument surface and its inherited routes; predecessor presence is not proof of every live subsystem.",
   },
   {
-    id: "CANONICAL_STATE",
+    id: "STATE_INSTRUMENT_CONTRACT",
     surface: "OMEGA",
-    revision: "R167+",
-    path: "/api/omega/state",
+    revision: "R169+",
+    path: "/api/state/workbench/schema",
     requiredQuick: true,
     requiredFull: true,
-    evidenceClass: "CANONICAL_RUNTIME",
-    boundary: "Must return sovereign state; no synthetic fallback is admissible.",
+    evidenceClass: "COMPILED_EXECUTABLE_SCHEMA",
+    availability: "LOCAL_CORE",
+    boundary: "The local Worker state instrument proves its executable state schema and truth boundary; it does not claim sovereign state is currently reachable.",
   },
   {
-    id: "PROOF_LEDGER",
+    id: "PROOF_EVIDENCE_FABRIC",
     surface: "PROOF",
-    revision: "R113+",
-    path: "/api/omega/proof?limit=2",
+    revision: "R169+",
+    path: "/api/core/evidence-ledger/schema",
     requiredQuick: true,
     requiredFull: true,
-    evidenceClass: "PROOF",
-    boundary: "Proof is evidence and provenance, not an alternate state authority.",
+    evidenceClass: "COMPILED_VALIDATION_SCHEMA",
+    availability: "LOCAL_CORE",
+    boundary: "The local evidence ledger proves validation/aggregation behavior while preserving failed and unauthenticated evidence; it is not sovereign proof history.",
   },
   {
-    id: "RESTORATION_RECOVERY",
+    id: "RECOVERY_REPLAY_CONTRACT",
     surface: "BUILD",
-    revision: "R85+",
-    path: "/api/restoration",
+    revision: "R169+",
+    path: "/api/core/replay/schema",
     requiredQuick: true,
     requiredFull: true,
-    evidenceClass: "RECOVERY",
-    boundary: "Recovery must preserve canonical authority and rollback identity.",
-  },
-  {
-    id: "EARTH_SOURCE_BOUNDARY",
-    surface: "EARTH",
-    revision: "R152+",
-    path: "/api/earth/catalog",
-    requiredQuick: true,
-    requiredFull: true,
-    evidenceClass: "OBSERVATION_CATALOG",
-    boundary: "Observed sources and derived interpretation remain separate.",
+    evidenceClass: "COMPILED_RECOVERY_VALIDATION_SCHEMA",
+    availability: "LOCAL_CORE",
+    boundary: "Replay/recovery preserves frozen forecasts, prevents future leakage, and cannot mutate production policy or execute actions.",
   },
   {
     id: "COMPUTATION_REFERENCE",
@@ -114,6 +113,7 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: true,
     requiredFull: true,
     evidenceClass: "DERIVED",
+    availability: "LOCAL_CORE",
     boundary: "Reference computation is not empirical observation or fabrication-grade validation.",
   },
   {
@@ -124,6 +124,7 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: true,
     requiredFull: true,
     evidenceClass: "DERIVED_VALIDATION",
+    availability: "LOCAL_CORE",
     boundary: "Replica, invariant, independent formulation, cross-runtime, solver-family and measurement tiers remain distinct.",
   },
   {
@@ -134,6 +135,7 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: true,
     requiredFull: true,
     evidenceClass: "SOLVER_CONTRACT",
+    availability: "LOCAL_CORE",
     boundary: "The RCWA manifest proves a validation contract, not a current native RCWA execution.",
   },
   {
@@ -144,6 +146,7 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: true,
     requiredFull: true,
     evidenceClass: "DISTRIBUTED_EXECUTION",
+    availability: "LOCAL_CORE",
     boundary: "172 stateful Worker nodes are not 172 provider accounts or physical machines.",
   },
   {
@@ -154,7 +157,67 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: true,
     requiredFull: true,
     evidenceClass: "SEQUENCE_CONTRACT",
+    availability: "LOCAL_CORE",
     boundary: "Logical-time advancement is not physical time acceleration.",
+  },
+  {
+    id: "TRUTH_SURFACE",
+    surface: "PROOF",
+    revision: "R190",
+    path: "/truth",
+    requiredQuick: true,
+    requiredFull: true,
+    evidenceClass: "OPERATOR_SURFACE",
+    availability: "LOCAL_CORE",
+    boundary: "The human-readable truth surface displays capability evidence; it is not itself execution evidence.",
+  },
+  {
+    id: "SOVEREIGN_CANONICAL_STATE",
+    surface: "SOVEREIGN",
+    revision: "R167+",
+    path: "/api/omega/state",
+    requiredQuick: false,
+    requiredFull: true,
+    evidenceClass: "SOVEREIGN_RUNTIME_STATE",
+    availability: "EXTERNAL_EVIDENCE",
+    unavailableState: "BLOCKED_SOVEREIGN_STATE_UNAVAILABLE",
+    boundary: "Sovereign canonical state is external runtime evidence. Its absence must not be misreported as a Worker-core defect.",
+  },
+  {
+    id: "SOVEREIGN_PROOF_LEDGER",
+    surface: "PROOF",
+    revision: "R113+",
+    path: "/api/omega/proof?limit=2",
+    requiredQuick: false,
+    requiredFull: true,
+    evidenceClass: "SOVEREIGN_PROOF",
+    availability: "EXTERNAL_EVIDENCE",
+    unavailableState: "BLOCKED_SOVEREIGN_PROOF_UNAVAILABLE",
+    boundary: "Sovereign proof history is upstream evidence; local validation schemas remain independently testable when the sovereign host is offline.",
+  },
+  {
+    id: "SOVEREIGN_RESTORATION",
+    surface: "BUILD",
+    revision: "R85+",
+    path: "/api/restoration",
+    requiredQuick: false,
+    requiredFull: true,
+    evidenceClass: "SOVEREIGN_RECOVERY",
+    availability: "EXTERNAL_EVIDENCE",
+    unavailableState: "BLOCKED_SOVEREIGN_RESTORATION_UNAVAILABLE",
+    boundary: "The sovereign restoration snapshot is an external recovery authority and must never be substituted by a fabricated local state.",
+  },
+  {
+    id: "EARTH_SOURCE_CATALOG",
+    surface: "EARTH",
+    revision: "R167+",
+    path: "/api/earth/catalog",
+    requiredQuick: false,
+    requiredFull: true,
+    evidenceClass: "OBSERVATION_CATALOG",
+    availability: "EXTERNAL_EVIDENCE",
+    unavailableState: "BLOCKED_EARTH_SOURCE_CATALOG_UNAVAILABLE",
+    boundary: "Observed Earth source identity and derived interpretation remain separate; missing source data is withheld rather than invented.",
   },
   {
     id: "SAI_B059",
@@ -164,6 +227,8 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: false,
     requiredFull: true,
     evidenceClass: "GROUNDED_CORPUS",
+    availability: "EXTERNAL_EVIDENCE",
+    unavailableState: "BLOCKED_B059_STATUS_UNAVAILABLE",
     boundary: "Only the declared deterministic B059 scope may be called OMEGA-trained; provider weights remain external pretraining.",
   },
   {
@@ -174,6 +239,8 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: false,
     requiredFull: true,
     evidenceClass: "AUTHENTICATED_HEARTBEAT",
+    availability: "EXTERNAL_EVIDENCE",
+    unavailableState: "BLOCKED_CURRENT_HEARTBEAT_REQUIRED",
     boundary: "PC ONLINE requires a current authenticated heartbeat.",
   },
   {
@@ -186,17 +253,9 @@ const CAPABILITIES: CapabilitySpec[] = [
     requiredQuick: false,
     requiredFull: true,
     evidenceClass: "LIVE_ACCEPTANCE",
+    availability: "EXTERNAL_EVIDENCE",
+    unavailableState: "BLOCKED_R181_FULL_ACCEPTANCE",
     boundary: "Full R181 acceptance requires current sovereign heartbeat plus exact B059 verification and grounded query evidence.",
-  },
-  {
-    id: "TRUTH_SURFACE",
-    surface: "PROOF",
-    revision: "R190",
-    path: "/truth",
-    requiredQuick: true,
-    requiredFull: true,
-    evidenceClass: "OPERATOR_SURFACE",
-    boundary: "The human-readable truth surface displays capability evidence; it is not itself execution evidence.",
   },
 ];
 
@@ -219,6 +278,10 @@ function deploymentIdentity(env: any): Obj {
 }
 
 function staticContracts(): Obj[] {
+  const earthBoundaryVerified = Boolean(
+    EARTH_TRUTH_LAYERS_BOUNDARY.includes("removes synthetic canonical-state fallbacks") &&
+    EARTH_TRUTH_LAYERS_BOUNDARY.includes("Missing coordinates and missing state are explicitly withheld")
+  );
   return [
     {
       id: "GOVERNED_MODE_ATLAS",
@@ -252,13 +315,40 @@ function staticContracts(): Obj[] {
       evidenceClass: "COMPILED_CONTRACT",
       boundary: "The authority contract constrains routing and promotion; live acceptance still requires runtime evidence.",
     },
+    {
+      id: "EARTH_TRUTH_BOUNDARY",
+      surface: "EARTH",
+      revision: "R167+",
+      requiredQuick: true,
+      requiredFull: true,
+      stages: earthBoundaryVerified ? ["IMPLEMENTED", "ROUTE_BOUND", "VERIFIED"] : ["IMPLEMENTED"],
+      state: earthBoundaryVerified ? "VERIFIED_STATIC_CONTRACT" : "FAILED_EARTH_TRUTH_BOUNDARY",
+      verified: earthBoundaryVerified,
+      evidenceClass: "COMPILED_TRUTH_BOUNDARY",
+      detail: { sourceEndpoint: "/api/earth/catalog", sourceDataRequiredForObservation: true },
+      boundary: EARTH_TRUTH_LAYERS_BOUNDARY,
+    },
   ];
 }
 
-function verifyCapability(id: string, response: Response, body: Obj | null, text: string): Obj {
-  const returned = response.ok;
-  if (!returned) return { verified: false, state: "FAILED_RETURN", detail: body?.code || body?.error || `HTTP_${response.status}` };
-  switch (id) {
+function blockedExternal(spec: CapabilitySpec, response: Response, body: Obj | null): Obj | null {
+  if (response.ok || spec.availability !== "EXTERNAL_EVIDENCE") return null;
+  return {
+    verified: false,
+    state: spec.unavailableState || "BLOCKED_EXTERNAL_EVIDENCE_UNAVAILABLE",
+    detail: {
+      httpStatus: response.status,
+      code: body?.code || body?.error || null,
+      availability: spec.availability,
+    },
+  };
+}
+
+function verifyCapability(spec: CapabilitySpec, response: Response, body: Obj | null, text: string): Obj {
+  const externalBlock = blockedExternal(spec, response, body);
+  if (externalBlock) return externalBlock;
+  if (!response.ok) return { verified: false, state: "FAILED_RETURN", detail: body?.code || body?.error || `HTTP_${response.status}` };
+  switch (spec.id) {
     case "R189_WHOLE_INSTRUMENT": {
       const preservation = body?.preservation || {};
       const verified = Boolean(
@@ -273,20 +363,17 @@ function verifyCapability(id: string, response: Response, body: Obj | null, text
       );
       return { verified, state: verified ? "VERIFIED_PREDECESSOR" : "FAILED_PREDECESSOR_CONTRACT", detail: { domains: body?.domains?.length || 0 } };
     }
-    case "CANONICAL_STATE": {
-      const verified = Boolean(body && (body.digest || body.state || body.mode188));
-      return { verified, state: verified ? "VERIFIED" : "FAILED_CANONICAL_STATE", detail: body?.digest || body?.state?.evidence_class || null };
+    case "STATE_INSTRUMENT_CONTRACT": {
+      const verified = body?.schema === "OMEGA_STATE_WORKBENCH_SCHEMA_V1" && body?.authority === "computation-only" && body?.mutation === false && body?.native_execution === false;
+      return { verified, state: verified ? "VERIFIED_LOCAL_STATE_CONTRACT" : "FAILED_LOCAL_STATE_CONTRACT", detail: body?.schema || null };
     }
-    case "PROOF_LEDGER":
-      return { verified: body?.ok !== false && body !== null, state: body?.ok !== false && body !== null ? "VERIFIED" : "FAILED_PROOF_LEDGER", detail: body?.schema || body?.authority || null };
-    case "RESTORATION_RECOVERY":
-      return { verified: body?.ok !== false && body !== null, state: body?.ok !== false && body !== null ? "VERIFIED" : "FAILED_RECOVERY", detail: body?.state || body?.schema || null };
-    case "EARTH_SOURCE_BOUNDARY": {
-      const coverages = Array.isArray(body?.coverages) ? body.coverages : Array.isArray(body?.catalog?.coverages) ? body.catalog.coverages : null;
-      const explicitCount = Number(body?.coverageCount ?? body?.catalog?.coverageCount);
-      const count = coverages ? coverages.length : Number.isFinite(explicitCount) ? explicitCount : null;
-      const verified = body !== null && body?.ok !== false && count !== null && count >= 0;
-      return { verified, state: verified ? "VERIFIED" : "FAILED_EARTH_CATALOG", detail: { coverageCount: count } };
+    case "PROOF_EVIDENCE_FABRIC": {
+      const verified = body?.schema === "OMEGA_BINDING_EVIDENCE_LEDGER_V1" && body?.authority === "validation-and-aggregation-only" && body?.mutation === false && body?.execution === false && body?.automatic_weight_change === false;
+      return { verified, state: verified ? "VERIFIED_LOCAL_PROOF_CONTRACT" : "FAILED_LOCAL_PROOF_CONTRACT", detail: body?.schema || null };
+    }
+    case "RECOVERY_REPLAY_CONTRACT": {
+      const verified = body?.schema === "OMEGA_UNIFIED_CORE_VALIDATION_REPLAY_V1" && body?.authority === "validation-only" && body?.mutation === false && body?.execution === false && body?.production_policy_mutation === false;
+      return { verified, state: verified ? "VERIFIED_LOCAL_REPLAY_CONTRACT" : "FAILED_LOCAL_REPLAY_CONTRACT", detail: body?.schema || null };
     }
     case "COMPUTATION_REFERENCE": {
       const verified = body?.ok === true && body?.revision === "R170" && body?.solvers?.normal_incidence_tmm?.fabricationGrade === false;
@@ -310,6 +397,30 @@ function verifyCapability(id: string, response: Response, body: Obj | null, text
       const verified = body?.ok === true && body?.revision === "R188" && Number(body?.cloudNodes) === 172 && phaseCount === 12 && noAccelerationClaim;
       return { verified, state: verified ? "VERIFIED" : "FAILED_MOTION_CONTRACT", detail: { cloudNodes: body?.cloudNodes, phases: phaseCount } };
     }
+    case "TRUTH_SURFACE": {
+      const ct = response.headers.get("content-type") || "";
+      const verified = ct.includes("text/html") && text.includes("Capability Truth") && text.includes("R190");
+      return { verified, state: verified ? "VERIFIED" : "FAILED_TRUTH_SURFACE", detail: ct };
+    }
+    case "SOVEREIGN_CANONICAL_STATE": {
+      const verified = Boolean(body && (body.digest || body.state || body.mode188));
+      return { verified, state: verified ? "VERIFIED_CURRENT_SOVEREIGN_STATE" : "BLOCKED_SOVEREIGN_STATE_UNPROVEN", detail: body?.digest || body?.state?.evidence_class || null };
+    }
+    case "SOVEREIGN_PROOF_LEDGER": {
+      const verified = body?.ok !== false && body !== null;
+      return { verified, state: verified ? "VERIFIED_CURRENT_SOVEREIGN_PROOF" : "BLOCKED_SOVEREIGN_PROOF_UNPROVEN", detail: body?.schema || body?.authority || null };
+    }
+    case "SOVEREIGN_RESTORATION": {
+      const verified = body?.ok !== false && body !== null;
+      return { verified, state: verified ? "VERIFIED_CURRENT_SOVEREIGN_RESTORATION" : "BLOCKED_SOVEREIGN_RESTORATION_UNPROVEN", detail: body?.state || body?.schema || null };
+    }
+    case "EARTH_SOURCE_CATALOG": {
+      const coverages = Array.isArray(body?.coverages) ? body.coverages : Array.isArray(body?.catalog?.coverages) ? body.catalog.coverages : null;
+      const explicitCount = Number(body?.coverageCount ?? body?.catalog?.coverageCount);
+      const count = coverages ? coverages.length : Number.isFinite(explicitCount) ? explicitCount : null;
+      const verified = body !== null && body?.ok !== false && count !== null && count >= 0;
+      return { verified, state: verified ? "VERIFIED_CURRENT_SOURCE_CATALOG" : "BLOCKED_EARTH_SOURCE_CATALOG_UNPROVEN", detail: { coverageCount: count } };
+    }
     case "SAI_B059": {
       const present = body?.state === "B059_PRESENT_VERIFICATION_REQUIRED" || body?.passed === true || body?.ok === true;
       return { verified: present, state: present ? "VERIFIED_PRESENT" : "BLOCKED_B059_NOT_PRESENT", detail: body?.state || body?.schema || null };
@@ -324,13 +435,8 @@ function verifyCapability(id: string, response: Response, body: Obj | null, text
       const verified = body?.fullAcceptance === true;
       return { verified, state: verified ? "VERIFIED" : "BLOCKED_R181_FULL_ACCEPTANCE", detail: body?.acceptanceState || null };
     }
-    case "TRUTH_SURFACE": {
-      const ct = response.headers.get("content-type") || "";
-      const verified = ct.includes("text/html") && text.includes("Capability Truth") && text.includes("R190");
-      return { verified, state: verified ? "VERIFIED" : "FAILED_TRUTH_SURFACE", detail: ct };
-    }
     default:
-      return { verified: false, state: "FAILED_UNKNOWN_CAPABILITY", detail: id };
+      return { verified: false, state: "FAILED_UNKNOWN_CAPABILITY", detail: spec.id };
   }
 }
 
@@ -352,7 +458,7 @@ async function invoke(request: Request, env: any, ctx: any, routerFetch: RouterF
     const text = await response.clone().text();
     let body: Obj | null = null;
     try { body = JSON.parse(text) as Obj; } catch { body = null; }
-    const verification = verifyCapability(spec.id, response, body, text);
+    const verification = verifyCapability(spec, response, body, text);
     return {
       id: spec.id,
       surface: spec.surface,
@@ -361,6 +467,7 @@ async function invoke(request: Request, env: any, ctx: any, routerFetch: RouterF
       method,
       requiredQuick: spec.requiredQuick,
       requiredFull: spec.requiredFull,
+      availability: spec.availability,
       stages: verification.verified ? CAPABILITY_STAGES_R190 : ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED", ...(response.ok ? ["RETURNED"] : [])],
       state: verification.state,
       verified: verification.verified,
@@ -371,6 +478,7 @@ async function invoke(request: Request, env: any, ctx: any, routerFetch: RouterF
       detail: verification.detail,
     };
   } catch (error) {
+    const external = spec.availability === "EXTERNAL_EVIDENCE";
     return {
       id: spec.id,
       surface: spec.surface,
@@ -379,8 +487,9 @@ async function invoke(request: Request, env: any, ctx: any, routerFetch: RouterF
       method,
       requiredQuick: spec.requiredQuick,
       requiredFull: spec.requiredFull,
+      availability: spec.availability,
       stages: ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED"],
-      state: "FAILED_INVOCATION",
+      state: external ? (spec.unavailableState || "BLOCKED_EXTERNAL_EVIDENCE_UNAVAILABLE") : "FAILED_INVOCATION",
       verified: false,
       httpStatus: 0,
       durationMs: Date.now() - startedAt,
@@ -398,6 +507,7 @@ async function verifyLatestNativeRcwa(request: Request, env: any, ctx: any, rout
     revision: "R175/R190",
     requiredQuick: false,
     requiredFull: true,
+    availability: "EXTERNAL_EVIDENCE",
     evidenceClass: "DERIVED_INDEPENDENT_NUMERICAL_VALIDATION",
     boundary: "Only a persisted VERIFIED native grcwa receipt from an authenticated sovereign lease can satisfy this capability. Contract presence alone is insufficient.",
   };
@@ -416,10 +526,11 @@ async function verifyLatestNativeRcwa(request: Request, env: any, ctx: any, rout
     if (!job?.id) {
       return {
         ...base,
-        stages: ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED", "RETURNED"],
+        stages: ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED", ...(statusResponse.ok ? ["RETURNED"] : [])],
         state: "BLOCKED_NO_VERIFIED_NATIVE_RCWA_JOB",
         verified: false,
-        detail: { recentJobsInspected: rows.length },
+        httpStatus: statusResponse.status,
+        detail: { recentJobsInspected: rows.length, developmentStatusReachable: statusResponse.ok },
       };
     }
 
@@ -442,7 +553,7 @@ async function verifyLatestNativeRcwa(request: Request, env: any, ctx: any, rout
     );
     return {
       ...base,
-      stages: verified ? CAPABILITY_STAGES_R190 : ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED", "RETURNED"],
+      stages: verified ? CAPABILITY_STAGES_R190 : ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED", ...(response.ok ? ["RETURNED"] : [])],
       state: verified ? "VERIFIED_NATIVE_RCWA" : "BLOCKED_RCWA_RECEIPT_REJECTED",
       verified,
       httpStatus: response.status,
@@ -454,7 +565,7 @@ async function verifyLatestNativeRcwa(request: Request, env: any, ctx: any, rout
     return {
       ...base,
       stages: ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED"],
-      state: "FAILED_INVOCATION",
+      state: "BLOCKED_NATIVE_RCWA_EVIDENCE_UNAVAILABLE",
       verified: false,
       detail: error instanceof Error ? error.message : String(error),
     };
@@ -463,9 +574,9 @@ async function verifyLatestNativeRcwa(request: Request, env: any, ctx: any, rout
 
 function truthHtml(): string {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OMEGA R190 · Capability Truth</title><style>
-:root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#05080d;color:#edf4fb}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 0,#16283b,#05080d 48%);min-height:100vh}.wrap{max-width:1450px;margin:auto;padding:28px 18px 70px}a{color:inherit;text-decoration:none}h1{font-size:clamp(36px,6vw,76px);line-height:.95;margin:.15em 0}.sub{color:#91a6b9;max-width:960px}.bar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.btn{border:1px solid #38526b;background:#0d1823;color:#edf4fb;border-radius:11px;padding:10px 13px;cursor:pointer}.btn.primary{background:#173451}.state{border:1px solid #2a4155;border-radius:16px;background:#09121b;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px}.card{border:1px solid #24384a;border-radius:13px;background:#081019;padding:13px}.ok{border-color:#2f7654}.bad{border-color:#79484a}.hold{border-color:#7a6637}.k{font:700 10px ui-monospace,monospace;letter-spacing:.1em;color:#7f96aa}.v{font-weight:800;margin-top:5px}.tiny{font-size:12px;color:#8297aa;word-break:break-word}.stages{display:flex;gap:4px;flex-wrap:wrap;margin-top:9px}.stage{font:700 9px ui-monospace,monospace;padding:4px 6px;border:1px solid #2b4053;border-radius:999px;color:#9aafc0}pre{white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;background:#050a10;border-radius:10px;padding:10px}</style></head><body><main class="wrap"><div class="k">R190 CAPABILITY TRUTH + ADMISSION</div><h1>What is actually working?</h1><p class="sub">R189 remains the whole instrument. R190 proves its live capability chain without turning code presence, a manifest, a heartbeat, or a visual into stronger evidence than it is.</p><div class="bar"><button class="btn primary" id="quick">Run core proof</button><button class="btn" id="full">Run full proof</button><a class="btn" href="/instrument">R189 Whole Instrument</a><a class="btn" href="/api/acceptance/r190/manifest">Manifest JSON</a></div><section class="state"><div class="k">OVERALL</div><div class="v" id="overall">Not probed</div><div class="tiny" id="meta"></div></section><div class="grid" id="grid"></div><details><summary>Receipt JSON</summary><pre id="raw">No receipt.</pre></details></main><script>
+:root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#05080d;color:#edf4fb}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 0,#16283b,#05080d 48%);min-height:100vh}.wrap{max-width:1450px;margin:auto;padding:28px 18px 70px}a{color:inherit;text-decoration:none}h1{font-size:clamp(36px,6vw,76px);line-height:.95;margin:.15em 0}.sub{color:#91a6b9;max-width:960px}.bar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.btn{border:1px solid #38526b;background:#0d1823;color:#edf4fb;border-radius:11px;padding:10px 13px;cursor:pointer}.btn.primary{background:#173451}.state{border:1px solid #2a4155;border-radius:16px;background:#09121b;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px}.card{border:1px solid #24384a;border-radius:13px;background:#081019;padding:13px}.ok{border-color:#2f7654}.bad{border-color:#79484a}.hold{border-color:#7a6637}.k{font:700 10px ui-monospace,monospace;letter-spacing:.1em;color:#7f96aa}.v{font-weight:800;margin-top:5px}.tiny{font-size:12px;color:#8297aa;word-break:break-word}.stages{display:flex;gap:4px;flex-wrap:wrap;margin-top:9px}.stage{font:700 9px ui-monospace,monospace;padding:4px 6px;border:1px solid #2b4053;border-radius:999px;color:#9aafc0}pre{white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;background:#050a10;border-radius:10px;padding:10px}</style></head><body><main class="wrap"><div class="k">R190 CAPABILITY TRUTH + ADMISSION</div><h1>What is actually working?</h1><p class="sub">R189 remains the whole instrument. R190 proves the Worker-local core independently from sovereign/source/native external evidence. Missing external evidence is BLOCKED, never fabricated and never mislabeled as a local runtime failure.</p><div class="bar"><button class="btn primary" id="quick">Run core proof</button><button class="btn" id="full">Run full proof</button><a class="btn" href="/instrument">R189 Whole Instrument</a><a class="btn" href="/api/acceptance/r190/manifest">Manifest JSON</a></div><section class="state"><div class="k">OVERALL</div><div class="v" id="overall">Not probed</div><div class="tiny" id="meta"></div></section><div class="grid" id="grid"></div><details><summary>Receipt JSON</summary><pre id="raw">No receipt.</pre></details></main><script>
 const esc=x=>String(x??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-async function run(depth){const overall=document.querySelector('#overall');overall.textContent='PROBING '+depth.toUpperCase()+'…';const r=await fetch('/api/acceptance/r190/probe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({depth})});const d=await r.json();overall.textContent=d.overallState||'UNKNOWN';document.querySelector('#meta').textContent='verified '+(d.summary?.verified||0)+' / '+(d.summary?.total||0)+' · required '+(d.summary?.requiredVerified||0)+' / '+(d.summary?.required||0)+' · receipt '+String(d.receiptSha256||'').slice(0,20);document.querySelector('#grid').innerHTML=(d.capabilities||[]).map(c=>'<article class="card '+(c.verified?'ok':String(c.state||'').startsWith('BLOCKED')?'hold':'bad')+'"><div class="k">'+esc(c.surface)+' · '+esc(c.revision)+'</div><div class="v">'+esc(c.id)+'</div><p>'+esc(c.state)+'</p><div class="tiny">'+esc(c.path||'compiled contract')+'<br>'+esc(c.boundary||'')+'</div><div class="stages">'+(c.stages||[]).map(s=>'<span class="stage">'+esc(s)+'</span>').join('')+'</div></article>').join('');document.querySelector('#raw').textContent=JSON.stringify(d,null,2)}
+async function run(depth){const overall=document.querySelector('#overall');overall.textContent='PROBING '+depth.toUpperCase()+'…';const r=await fetch('/api/acceptance/r190/probe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({depth})});const d=await r.json();overall.textContent=d.overallState||'UNKNOWN';document.querySelector('#meta').textContent='verified '+(d.summary?.verified||0)+' / '+(d.summary?.total||0)+' · required '+(d.summary?.requiredVerified||0)+' / '+(d.summary?.required||0)+' · receipt '+String(d.receiptSha256||'').slice(0,20);document.querySelector('#grid').innerHTML=(d.capabilities||[]).map(c=>'<article class="card '+(c.verified?'ok':String(c.state||'').startsWith('BLOCKED')?'hold':'bad')+'"><div class="k">'+esc(c.surface)+' · '+esc(c.revision)+' · '+esc(c.availability||'compiled')+'</div><div class="v">'+esc(c.id)+'</div><p>'+esc(c.state)+'</p><div class="tiny">'+esc(c.path||'compiled contract')+'<br>'+esc(c.boundary||'')+'</div><div class="stages">'+(c.stages||[]).map(s=>'<span class="stage">'+esc(s)+'</span>').join('')+'</div></article>').join('');document.querySelector('#raw').textContent=JSON.stringify(d,null,2)}
 document.querySelector('#quick').onclick=()=>run('quick');document.querySelector('#full').onclick=()=>run('full');run('quick');
 </script></body></html>`;
 }
@@ -502,12 +613,15 @@ export async function handleWholeSystemAcceptanceR190(
       fullAcceptanceRequires: [
         "verified R189 whole-instrument predecessor",
         "exact deployed Git identity",
-        "all core runtime routes verified",
+        "all Worker-local core runtime contracts verified",
+        "current sovereign state/proof/restoration evidence",
+        "current Earth source catalog when Earth observation is claimed",
         "current authenticated sovereign heartbeat",
         "exact B059 verification plus grounded query via R181",
         "persisted VERIFIED native grcwa RCWA receipt revalidated through R175",
       ],
       truthBoundaries: {
+        localCoreIsNotExternalEvidence: true,
         sourcePresenceIsNotExecution: true,
         routeReturnIsNotVerification: true,
         manifestIsNotNativeExecution: true,
@@ -536,6 +650,7 @@ export async function handleWholeSystemAcceptanceR190(
     revision: "R175/R190",
     requiredQuick: false,
     requiredFull: true,
+    availability: "EXTERNAL_EVIDENCE",
     evidenceClass: "DERIVED_INDEPENDENT_NUMERICAL_VALIDATION",
     state: "REQUIRES_FULL_PROBE",
     verified: false,
@@ -575,7 +690,7 @@ export async function handleWholeSystemAcceptanceR190(
       blocked: blocked.length,
     },
     capabilities,
-    truthBoundary: "R190 reports execution truth only. Source presence, a route manifest, a current heartbeat, a grounded SAI query, and an independently validated native RCWA result are separate evidence states and are never collapsed into one implied capability.",
+    truthBoundary: "R190 separates Worker-local core truth from sovereign, source, heartbeat and native-solver evidence. External unavailability is BLOCKED rather than fabricated or mislabeled as a local runtime defect.",
     canonicalMutation: false,
     promotionAuthorized: false,
   };
