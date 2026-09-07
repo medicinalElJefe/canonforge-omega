@@ -51,6 +51,20 @@ def test_r209_bounded_retry_and_blocker_taxonomy_are_explicit():
         assert blocker in source, blocker
 
 
+def test_r209_rejects_stale_r208_receipts_between_attempts():
+    source = text(R209)
+    required = [
+        "Remove-Item $R208ReceiptPath -Force -ErrorAction SilentlyContinue",
+        "[DateTimeOffset]::Parse",
+        "r208ReceiptCapturedAt",
+        "R208_RECEIPT_PARSE_OR_FRESHNESS_FAILED",
+        "R208_RECEIPT_MISSING",
+        "staleR208ReceiptsRejected = $true",
+    ]
+    for token in required:
+        assert token in source, token
+
+
 def test_r209_does_not_install_or_mutate_machine_state():
     source = text(R209).lower()
     forbidden = [
@@ -77,7 +91,6 @@ def test_r208_truth_prover_remains_present_and_unchanged_as_authority_layer():
 
 def test_launcher_is_expected_to_wire_r209_without_removing_r208():
     launcher = text(LAUNCHER)
-    # Updated by the R209 launcher commit. This test intentionally fails until wiring is complete.
     assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in launcher
     assert "r209_sovereign_convergence_latest.json" in launcher
     assert "R209" in launcher
