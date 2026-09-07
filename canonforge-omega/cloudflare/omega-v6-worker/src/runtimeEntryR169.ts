@@ -12,6 +12,7 @@ import { handleSourcePatchR187 } from "./swarm/sourcePatchR187";
 import { handleMotionTimeR188 } from "./swarm/motionTimeR188";
 import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
+import { handleDeweyWaterSaiR195 } from "./sai/deweyWaterSaiR195";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
@@ -19,6 +20,7 @@ import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabil
 import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilityR191";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
+import { handleDeweyWaterMotionR195 } from "./compute/deweyWaterMotionR195";
 import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
@@ -34,6 +36,7 @@ import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
+import { enhanceDeweyWaterMotionSurfaceR195 } from "./deweyWaterMotionSurfaceR195";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -110,6 +113,8 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) {
     return handleSaiAiFusionR179(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
   }
+  const deweyWaterSai = await handleDeweyWaterSaiR195(request, env);
+  if (deweyWaterSai) return deweyWaterSai;
   if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
   if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
   if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
@@ -128,6 +133,8 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (url.pathname.startsWith("/api/validate/independent/")) return handleIndependentSolverValidationRequest(request);
   if (url.pathname.startsWith("/api/validate/cross-runtime/")) return handleCrossRuntimeValidationRequest(request);
   if (url.pathname.startsWith("/api/validate/")) return handleValidationRequest(request);
+  const deweyWaterMotion = await handleDeweyWaterMotionR195(request);
+  if (deweyWaterMotion) return deweyWaterMotion;
   if (url.pathname.startsWith("/api/compute/atlas/")) return handleAtlasComputeRequest(request);
   if (url.pathname.startsWith("/api/compute/")) return handleComputeRequest(request);
   return canonical.fetch(request, env, ctx);
@@ -137,7 +144,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const response = await runtimeFetch(request, env, ctx);
   const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
   const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
-  return enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  return enhanceDeweyWaterMotionSurfaceR195(r194, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };

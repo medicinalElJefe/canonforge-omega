@@ -1,0 +1,213 @@
+name: OMEGA V6 R195 Dewey water motion proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyWaterMotionR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyWaterMotionSurfaceR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/sai/deweyWaterSaiR195.ts'
+      - 'canonforge-omega/tests/test_r195_dewey_water_motion_kernel.py'
+      - 'canonforge-omega/tests/test_r195_dewey_water_sai.py'
+      - '.github/workflows/omega-v6-r195-dewey-water-motion-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r195-dewey-water-motion-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r195:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Verify R195 plus inherited whole-system stack
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r195_dewey_water_motion_kernel.py \
+            tests/test_r195_dewey_water_sai.py \
+            tests/test_r194_evidence_plane_restoration.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r167_authoritative_state_accuracy.py \
+            tests/test_r163_interactive_living_field.py \
+            tests/test_r153_mobile_workspace_orchestration.py \
+            tests/test_r145_governed_mode_atlas.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck and Worker dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir .r195-dry-run
+
+  prove-live-r195:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r195
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact canonical SHA
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
+            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try: d=json.loads(Path('/tmp/r191.json').read_text())
+          except Exception: raise SystemExit(1)
+          if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']: raise SystemExit(1)
+          PY
+            then matched=true; break; fi
+            sleep 5
+          done
+          test "$matched" = true
+
+      - name: Prove R195 manifest, zero-free tie, T12 turn, water conservation and trajectory
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 25 "$LIVE/api/compute/dewey/r195/manifest" -o /tmp/manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/manifest.json').read_text())
+          assert d['ok'] is True
+          assert d['release']=='r195-dewey-water-motion-kernel'
+          assert d['operatorCanon']['construct']=='011'
+          assert d['operatorCanon']['prune']=='01-1'
+          assert d['operatorCanon']['turnGroup']=='T12'
+          assert d['operatorCanon']['autoTurnDefault'] is False
+          assert d['operatorCanon']['antipodalAutoTurnPolicyWhenEnabled']==6
+          assert d['dimensions']['addressLevels']==[12,144,1728,20736,248832]
+          assert d['dimensions']['physicalDimensionClaim'] is False
+          assert len(d['waterGeometry'])==12
+          assert len(d['modeLenses'])==15
+          assert d['mode188']['epsilon']==0.05
+          assert d['mode188']['gammaLambdaQ']==0.35
+          assert d['canonicalMutation'] is False
+          assert d['nativeExecution'] is False
+          PY
+
+          cat >/tmp/tie.json <<'JSON'
+          {"values":[0,0,0,0,0,0,0,0,0,0,0,0],"construct_011":[1,0,0,0,0,0,0,0,0,0,0,0],"prune_01m1":[1,0,0,0,0,0,0,0,0,0,0,0],"water_mode":1,"transport":0,"turn_k":0,"auto_turn":false,"address":{"domain":1,"phase":1,"regulation":1,"lens":1,"context":1}}
+          JSON
+          curl --fail --silent --show-error --max-time 25 -H 'content-type: application/json' --data @/tmp/tie.json "$LIVE/api/compute/dewey/r195/step" -o /tmp/tie.out.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/tie.out.json').read_text())
+          r=d['result']; rails=r['state']['rails']; z=r['state']['zeroFree']
+          assert d['ok'] is True
+          assert abs(z['netProjection']) < 1e-12
+          assert rails[0]['outverse'] > 0 and rails[0]['inverse'] > 0
+          assert rails[0]['scar'] > 0
+          assert r['metrics']['q'] > 0.99
+          assert r['operation']['turn']['required'] is True
+          assert r['operation']['turn']['appliedK'] == 0
+          assert r['nextAction']=='TURN_REQUIRED_OR_EXPLICITLY_WITHHELD'
+          assert r['operation']['invariantResidual']['aggregate'] < 1e-10
+          assert d['receipt']['canonicalMutation'] is False
+          assert len(d['receipt']['receiptSha256'])==64
+          PY
+
+          python - <<'PY' >/tmp/turn.json
+          import json
+          d=json.load(open('/tmp/tie.json'))
+          d['auto_turn']=True
+          print(json.dumps(d))
+          PY
+          curl --fail --silent --show-error --max-time 25 -H 'content-type: application/json' --data @/tmp/turn.json "$LIVE/api/compute/dewey/r195/step" -o /tmp/turn.out.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/turn.out.json')); r=d['result']
+          assert r['operation']['turn']['appliedK']==6
+          assert r['state']['address']['phase']==7
+          assert r['state']['address']['lens']==7
+          assert abs(r['state']['zeroFree']['netProjection']) < 1e-12
+          assert r['operation']['invariantResidual']['aggregate'] < 1e-10
+          PY
+
+          cat >/tmp/traj.json <<'JSON'
+          {"values":[1,0,0,0,0,0,0,0,0,0,0,0],"construct_011":0.03,"prune_01m1":0.01,"water_mode":6,"transport":0.7,"turn_k":1,"steps":24,"address":{"domain":2,"phase":1,"regulation":6,"lens":7,"context":1},"frame":{"phase_offset":2,"lens_offset":3}}
+          JSON
+          curl --fail --silent --show-error --max-time 30 -H 'content-type: application/json' --data @/tmp/traj.json "$LIVE/api/compute/dewey/r195/trajectory" -o /tmp/traj.out.json
+          python - <<'PY'
+          import json, math
+          d=json.load(open('/tmp/traj.out.json')); r=d['result']
+          assert d['ok'] is True
+          assert r['steps']==24 and len(r['trace'])==24
+          assert r['compounding']['type']=='OPERATOR_COMPOSITION_NOT_FINANCIAL_COMPOUNDING'
+          assert r['compounding']['maxInvariantResidual'] < 1e-8
+          assert math.isfinite(r['compounding']['finalOmegaScore'])
+          assert 0 <= r['compounding']['finalInevitabilityProxy'] < 1
+          assert len(d['receipt']['receiptSha256'])==64
+          PY
+
+      - name: Prove source-bound R195 SAI adapter and integrated Calculus UI
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 25 "$LIVE/api/sai/r195/manifest" -o /tmp/sai-manifest.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/sai-manifest.json'))
+          assert d['ok'] is True
+          assert d['release']=='r195-source-bound-dewey-water-sai'
+          assert len(d['sources'])==3
+          assert len(d['rules'])>=10
+          assert len(d['sourceBoundContextSha256'])==64
+          assert d['providerWeightsModified'] is False
+          assert d['fineTuneClaim'] is False
+          assert d['canonicalMutation'] is False
+          PY
+          curl --fail --silent --show-error --max-time 60 -H 'content-type: application/json' --data '{"prompt":"Analyze one conservative 011/01-1 tie through the Dewey water kernel and state the truth boundary.","depth":2,"maxTokens":320}' "$LIVE/api/sai/r195/infer" -o /tmp/sai-infer.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/sai-infer.json'))
+          assert d['ok'] is True
+          assert d['r195']['sourceCount']==3
+          assert d['r195']['providerWeightsModified'] is False
+          assert d['r195']['fineTuneClaim'] is False
+          assert len(d['r195']['sourceBoundContextSha256'])==64
+          assert d['receipt']['providerBacked'] is True
+          assert d['receipt']['swarmBacked'] is True
+          assert d['result']['canonicalMutation'] is False
+          PY
+          curl --fail --silent --show-error --max-time 30 -D /tmp/root.headers "$LIVE/?app=Calculus&mode=dewey-calculus" -o /tmp/root.html
+          grep -qi '^x-omega-workspace: r193-full-restoration-workspace' /tmp/root.headers
+          grep -qi '^x-omega-evidence-plane: r194-dual-plane-evidence-restoration' /tmp/root.headers
+          grep -qi '^x-omega-dewey-water: r195-dewey-water-motion-surface' /tmp/root.headers
+          grep -F 'id="omegaDeweyWaterR195"' /tmp/root.html
+          grep -F '/api/compute/dewey/r195/step' /tmp/root.html
+          grep -F 'net zero ≠ erased state' /tmp/root.html
+          echo R195_DEWEY_WATER_MOTION_LIVE_VERIFIED
