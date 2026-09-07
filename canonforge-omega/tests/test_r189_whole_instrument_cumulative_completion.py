@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WHOLE = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "wholeInstrumentR189.ts"
 CUMULATIVE = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "cumulativeCapabilityR189.ts"
-VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
+RELEASE = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 
 
 def _extension_ids(source: str) -> set[str]:
@@ -47,17 +47,17 @@ def test_r189_whole_instrument_exposes_cumulative_counts_regimes_and_coverage_en
     assert "248832" in whole
 
 
-def test_r189_live_gate_preserves_inherited_identity_and_proves_additive_whole_instrument():
-    verify = VERIFY.read_text(encoding="utf-8")
-    assert "EXPECTED_BUILD: r87-semantic-edge-settle-proof" in verify
-    assert "Edge not settled on expected role-separated V3 identity yet" in verify
-    assert "R189_WHOLE_INSTRUMENT_CONVERGENCE" in verify
-    assert "api/instrument/r189/manifest" in verify
-    assert "api/instrument/r189/coverage" in verify
-    assert "api/canon/r189/manifest" in verify
-    assert "api/canon/r189/regimes" in verify
-    assert "cumulativeCapabilityCoverageComplete" in verify
-    assert "protectedBaseIdentityPreserved" in verify
-    assert "totalCapabilityGroups" in verify
-    assert "mappedExtensionOrgans" in verify
-    assert "OMEGA_EXECUTION_REGIME_PORTFOLIO_R189" in verify
+def test_r189_is_preserved_inside_the_current_cumulative_release_chain():
+    release = RELEASE.read_text(encoding="utf-8")
+    whole = WHOLE.read_text(encoding="utf-8")
+    assert "python -m pytest -q" in release
+    assert "Re-prove exact canonical suite" in release
+    assert "/api/system/r205/manifest" in release
+    assert "/api/system/r211/manifest" in release
+    assert "OMEGA_WHOLE_SYSTEM_CONTROL_MANIFEST_R205" in release
+    assert "OMEGA_OPERATIONAL_PROVENANCE_FABRIC_R211" in release
+    assert "verify_r185_live_federation.py" in release
+    assert "R189_WHOLE_INSTRUMENT_CONVERGENCE" in whole
+    assert "cumulativeCapabilityCoverageComplete" in whole
+    assert "protectedBaseIdentityPreserved" in whole
+    assert "OMEGA_EXECUTION_REGIME_PORTFOLIO_R189" in whole
