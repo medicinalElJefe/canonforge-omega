@@ -2,18 +2,28 @@ name: OMEGA V6 R192 navigation home proof
 
 on:
   pull_request:
+    branches: [omega-v6-full-convergence]
     paths:
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/universalNavigationR192.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
       - 'canonforge-omega/tests/test_r192_navigation_home_repair.py'
+      - 'canonforge-omega/tests/test_r206_live_proof_coherence.py'
       - '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
   push:
     branches: [omega-v6-full-convergence]
     paths:
       - 'canonforge-omega/**'
       - '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+      - 'canonforge-omega/tests/test_r206_live_proof_coherence.py'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r192-live-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify-r192:
@@ -33,6 +43,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_r192_navigation_home_repair.py \
+            tests/test_r206_live_proof_coherence.py \
             tests/test_r191_universal_surface_fabric.py \
             tests/test_r190_whole_system_acceptance.py \
             tests/test_r189_whole_instrument_convergence.py \
@@ -51,53 +62,136 @@ jobs:
         run: npx wrangler deploy --dry-run --outdir .r192-dry-run
 
   prove-live-r192:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
     needs: verify-r192
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for exact canonical SHA and verify every primary human route
-        env:
-          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
-          EXPECTED_SHA: ${{ github.sha }}
+      - name: Checkout proof source with canonical history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve currently deployed canonical authority
+        id: authority
         shell: bash
         run: |
           set -euo pipefail
-          matched=false
-          for attempt in $(seq 1 60); do
-            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
-            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            git fetch --no-tags origin "$GITHUB_BASE_REF"
+            expected_sha="$(git rev-parse FETCH_HEAD)"
+            basis="CURRENT_PR_BASE_CANONICAL_HEAD"
+          else
+            expected_sha="$GITHUB_SHA"
+            basis="CANONICAL_PUSH_HEAD"
+          fi
+          echo "expected_sha=$expected_sha" >> "$GITHUB_OUTPUT"
+          echo "basis=$basis" >> "$GITHUB_OUTPUT"
+          echo "R192 live proof expects $basis at $expected_sha"
+
+      - name: Wait for two consecutive coherent R192 edge snapshots
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ steps.authority.outputs.expected_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          stable=0
+          for attempt in $(seq 1 90); do
+            proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}"
+            rm -f /tmp/r191.json /tmp/r192-root.headers /tmp/r192-root.html /tmp/r192-api.headers /tmp/r192-api.json
+            if curl --fail --silent --show-error --max-time 20 \
+                "$LIVE/api/fabric/r191/manifest?edgeProof=$proof" -o /tmp/r191.json \
+              && curl --fail --silent --show-error --max-time 20 -D /tmp/r192-root.headers \
+                "$LIVE/?edgeProof=$proof" -o /tmp/r192-root.html \
+              && curl --fail --silent --show-error --max-time 20 -D /tmp/r192-api.headers \
+                "$LIVE/api/fabric/r191/status?edgeProof=$proof" -o /tmp/r192-api.json \
+              && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
           import json, os
           from pathlib import Path
-          try:
-              d=json.loads(Path('/tmp/r191.json').read_text())
-          except Exception:
-              raise SystemExit(1)
-          if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']:
-              raise SystemExit(1)
+          r191=json.loads(Path('/tmp/r191.json').read_text())
+          api=json.loads(Path('/tmp/r192-api.json').read_text())
+          headers=Path('/tmp/r192-root.headers').read_text(errors='replace').lower()
+          api_headers=Path('/tmp/r192-api.headers').read_text(errors='replace').lower()
+          html=Path('/tmp/r192-root.html').read_text(errors='replace')
+          assert r191.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], r191
+          assert 'content-type: text/html' in headers, headers
+          assert 'x-omega-navigation: r192-navigation-home-repair' in headers, headers
+          assert 'id="omegaUniversalNavR192"' in html, html[:1200]
+          assert 'Living Operator Field' in html, html[:1200]
+          assert 'id="omegaLaunch" class="hidden"' in html, html[:1200]
+          assert 'content-type: application/json' in api_headers, api_headers
+          assert 'x-omega-navigation:' not in api_headers, api_headers
+          assert isinstance(api, dict), api
           PY
-            then matched=true; break; fi
-            sleep 5
+            then
+              stable=$((stable + 1))
+              echo "R192 coherent edge snapshot observed ($stable/2) on attempt $attempt."
+              if [ "$stable" -ge 2 ]; then
+                echo "R192_EDGE_COHERENCE_SETTLED $EXPECTED_SHA"
+                break
+              fi
+            else
+              stable=0
+              echo "R192 edge not coherent yet (attempt $attempt/90)."
+            fi
+            if [ "$attempt" -eq 90 ]; then
+              echo 'R192_EDGE_COHERENCE_PROOF_FAILED'
+              for f in /tmp/r191.json /tmp/r192-root.headers /tmp/r192-root.html /tmp/r192-api.headers /tmp/r192-api.json; do
+                echo "--- $f"; cat "$f" 2>/dev/null || true
+              done
+              exit 1
+            fi
+            sleep 2
           done
-          test "$matched" = true
 
+      - name: Verify every primary human route with bounded per-route settle
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ steps.authority.outputs.expected_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
           routes=(/ /fabric /instrument /truth /clouds /sai /compute /validate /convergence)
+          i=0
           for route in "${routes[@]}"; do
-            safe=$(printf '%s' "$route" | tr '/ ' '__')
-            curl --fail --silent --show-error --max-time 20 -D "/tmp/${safe}.headers" "$LIVE$route" -o "/tmp/${safe}.html"
-            grep -qi '^content-type: text/html' "/tmp/${safe}.headers"
-            grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/${safe}.headers"
-            grep -F 'id="omegaUniversalNavR192"' "/tmp/${safe}.html"
+            i=$((i+1))
+            ok=false
+            for attempt in $(seq 1 20); do
+              proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-route-${i}-${attempt}"
+              if [[ "$route" == *\?* ]]; then target="$LIVE$route&edgeProof=$proof"; else target="$LIVE$route?edgeProof=$proof"; fi
+              rm -f "/tmp/r192-$i.headers" "/tmp/r192-$i.html"
+              if curl --fail --silent --show-error --max-time 20 -D "/tmp/r192-$i.headers" "$target" -o "/tmp/r192-$i.html" \
+                && grep -qi '^content-type: text/html' "/tmp/r192-$i.headers" \
+                && grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/r192-$i.headers" \
+                && grep -Fq 'id="omegaUniversalNavR192"' "/tmp/r192-$i.html"; then
+                ok=true
+                break
+              fi
+              sleep 2
+            done
+            if [ "$ok" != true ]; then
+              echo "R192_ROUTE_NOT_COHERENT $route"
+              exit 1
+            fi
           done
 
-          grep -F 'Living Operator Field' /tmp/_.html
-          grep -F 'id="omegaLaunch" class="hidden"' /tmp/_.html
-          grep -F 'OMEGA · R191 SURFACE FABRIC' /tmp/_fabric.html
-
-          curl --fail --silent --show-error --max-time 20 -D /tmp/api.headers "$LIVE/api/fabric/r191/status" -o /tmp/api.json
-          grep -qi '^content-type: application/json' /tmp/api.headers
-          if grep -qi '^x-omega-navigation:' /tmp/api.headers; then
-            echo 'R192 must not inject navigation into JSON/API responses'
-            exit 1
-          fi
-
+          grep -F 'Living Operator Field' /tmp/r192-1.html
+          grep -F 'id="omegaLaunch" class="hidden"' /tmp/r192-1.html
+          grep -F 'OMEGA · R191 SURFACE FABRIC' /tmp/r192-2.html
           echo "R192_NAVIGATION_HOME_LIVE_VERIFIED $EXPECTED_SHA"
+
+      - name: Publish R192 coherent live proof summary
+        if: always()
+        env:
+          EXPECTED_SHA: ${{ steps.authority.outputs.expected_sha }}
+          BASIS: ${{ steps.authority.outputs.basis }}
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA R192 coherent navigation proof'
+            echo
+            echo "- Authority basis: \`$BASIS\`"
+            echo "- Expected deployed SHA: \`$EXPECTED_SHA\`"
+            echo '- Exact R191 identity + root HTML + API JSON coherence: 2 consecutive snapshots required'
+            echo '- Primary human routes: individually settled and navigation-proven'
+            echo '- JSON/API wrapping boundary: preserved'
+          } >> "$GITHUB_STEP_SUMMARY"
