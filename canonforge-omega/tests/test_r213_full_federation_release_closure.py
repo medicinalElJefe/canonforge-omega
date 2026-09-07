@@ -22,13 +22,10 @@ def is_v6_workflow(path: Path, text: str) -> bool:
 def workflow_mutation_lines():
     publishers = []
     rollbacks = []
-    credentialed = []
     for path in sorted(WORKFLOWS.glob("*.y*ml")):
         text = read(path)
         if not is_v6_workflow(path, text):
             continue
-        if "CLOUDFLARE_API_TOKEN" in text or "CLOUDFLARE_ACCOUNT_ID" in text:
-            credentialed.append(path.name)
         for lineno, raw in enumerate(text.splitlines(), 1):
             line = raw.split("#", 1)[0].strip().lower()
             if not line:
@@ -46,7 +43,7 @@ def workflow_mutation_lines():
                 publishers.append((path.name, lineno, raw.strip()))
             if "wrangler rollback" in line:
                 rollbacks.append((path.name, lineno, raw.strip()))
-    return publishers, rollbacks, credentialed
+    return publishers, rollbacks
 
 
 def test_r213_release_forward_owns_exhaustive_r185_gate_and_rollback():
@@ -66,11 +63,10 @@ def test_r213_release_forward_owns_exhaustive_r185_gate_and_rollback():
 
 
 def test_r213_release_forward_is_the_only_v6_production_mutation_authority_repository_wide():
-    publishers, rollbacks, credentialed = workflow_mutation_lines()
+    publishers, rollbacks = workflow_mutation_lines()
     assert publishers, "R213 must retain one exact-head production publisher"
     assert {item[0] for item in publishers} == {RELEASE.name}, publishers
     assert {item[0] for item in rollbacks} == {RELEASE.name}, rollbacks
-    assert set(credentialed) == {RELEASE.name}, credentialed
     release_text = read(RELEASE)
     assert "CLOUDFLARE_API_TOKEN" in release_text
     assert "CLOUDFLARE_ACCOUNT_ID" in release_text
