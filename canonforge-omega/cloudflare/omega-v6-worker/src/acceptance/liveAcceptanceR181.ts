@@ -129,6 +129,8 @@ export async function handleLiveAcceptanceR181(
         canonicalMutation: false,
         promotionAuthorized: false,
       },
+      canonicalMutation: false,
+      promotionAuthorized: false,
     });
   }
   if (request.method !== "POST" || url.pathname !== "/api/acceptance/r181/probe") {
