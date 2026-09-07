@@ -22,6 +22,22 @@ DEWEY = SRC / "compute" / "deweyWaterContinuityR195.ts"
 DEWEY_SURFACE = SRC / "deweyComputeSurfaceR195.ts"
 NAV195 = SYSTEM / "oneSystemNavigationR195.ts"
 EXPECTED = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655"
+REGISTRY_COLUMNS = (
+    "ID",
+    "Family",
+    "Software / Artifact",
+    "One-System Role",
+    "Menu Setting",
+    "Primary Capability",
+    "Disposition",
+    "Wiring Notes",
+    "Menu ID",
+    "Growth Tier",
+    "Runtime Port",
+    "Input Contract",
+    "Output Contract",
+    "Upgrade Sequence",
+)
 
 
 def text(path: Path) -> str:
@@ -56,11 +72,18 @@ def table(data: dict, *aliases: str):
     raise AssertionError(f"missing {aliases}; keys={list(data)}")
 
 
-def value(row: dict, *aliases: str):
+def value(row, *aliases: str):
     wanted = {nk(alias) for alias in aliases}
-    for key, cell in row.items():
-        if nk(str(key)) in wanted:
-            return cell
+    if isinstance(row, dict):
+        for key, cell in row.items():
+            if nk(str(key)) in wanted:
+                return cell
+        return None
+    if isinstance(row, list):
+        for index, column in enumerate(REGISTRY_COLUMNS):
+            if nk(column) in wanted:
+                return row[index] if index < len(row) else None
+        return None
     return None
 
 
@@ -91,6 +114,9 @@ def test_r195_digest_is_measured_payload_not_stale_expected_value_and_has_drive_
     assert "d80267761320c3bf3d219b38b6293fc52a02e09182fa0825853c7202131f2746" not in decoder
     assert 'primaryLedgerId: "1tvDDlPxHFTXMPN43-rE1kPKdmJW5uYj6"' in decoder
     assert 'corroboratingLedgerId: "12w_vkhiXU1RUx5YU4C4M232fyvoqx_XN"' in decoder
+    assert "DRIVE_REGISTRY_COLUMNS_R195" in decoder
+    assert "normalizeRegistryRowsR195" in decoder
+    assert 'registryEncoding: "14_COLUMN_ROW_ARRAY_NORMALIZED_TO_NAMED_RECORDS_AT_READ_BOUNDARY"' in decoder
     assert "crypto.subtle.digest" in decoder
     assert "R195_DRIVE_CORPUS_HASH_MISMATCH" in decoder
     assert 'DecompressionStream("gzip")' in decoder
