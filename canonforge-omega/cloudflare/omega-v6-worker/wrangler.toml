@@ -57,6 +57,10 @@ name = "OMEGA_RUNTIME"
 class_name = "OmegaRuntime"
 
 [[durable_objects.bindings]]
+name = "OMEGA_MISSION_LEDGER_R201"
+class_name = "OmegaMissionLedgerR201"
+
+[[durable_objects.bindings]]
 name = "OMEGA_SWARM_CELL"
 class_name = "OmegaSwarmCell"
 
@@ -80,9 +84,13 @@ class_name = "OmegaSwarmOrganismCoordinator"
 name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
-# These namespaces already exist in production. Declarative exports preserve
-# them without replaying historical class-creation migrations or deleting state.
+# Existing namespaces remain live. R201 is a new evidence-only SQLite namespace;
+# declarative exports provision it without replaying historical migration tags.
 [exports.OmegaRuntime]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.OmegaMissionLedgerR201]
 type = "durable-object"
 storage = "sqlite"
 
