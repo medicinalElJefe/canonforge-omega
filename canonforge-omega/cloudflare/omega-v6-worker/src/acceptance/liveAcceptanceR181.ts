@@ -103,11 +103,14 @@ export async function handleLiveAcceptanceR181(
   canonicalFetch: CanonicalFetch,
 ): Promise<Response> {
   const url = new URL(request.url);
+  const canonicalGitSha = String(env?.CANONICAL_GIT_SHA || "").trim() || null;
   if (request.method === "GET" && url.pathname === "/api/acceptance/r181/manifest") {
     return json({
       ok: true,
       schema: "OMEGA_LIVE_ACCEPTANCE_MANIFEST_R181",
       release: LIVE_ACCEPTANCE_RELEASE_R181,
+      canonicalGitSha,
+      deploymentIdentityBound: Boolean(canonicalGitSha),
       acceptanceLevels: [
         "CLOUD_SWARM_OPERATIONAL",
         "SOVEREIGN_HEARTBEAT_ACCEPTED",
@@ -122,6 +125,7 @@ export async function handleLiveAcceptanceR181(
         b059DeepVerificationRequiredForFullyTrainedScope: true,
         b059GroundedQueryRequiredForFullAcceptance: true,
         currentAuthenticatedHeartbeatRequiredForSovereignAcceptance: true,
+        deploymentShaMustMatchBeforePostDeployProof: true,
         canonicalMutation: false,
         promotionAuthorized: false,
       },
@@ -186,6 +190,8 @@ export async function handleLiveAcceptanceR181(
   const core = {
     schema: LIVE_ACCEPTANCE_SCHEMA_R181,
     release: LIVE_ACCEPTANCE_RELEASE_R181,
+    canonicalGitSha,
+    deploymentIdentityBound: Boolean(canonicalGitSha),
     timestamp: new Date().toISOString(),
     acceptanceState,
     fullAcceptance,
