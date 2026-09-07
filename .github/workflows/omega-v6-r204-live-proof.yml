@@ -1,0 +1,192 @@
+name: OMEGA V6 R204 live verified-return proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR204.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/scripts/check_cloudflare_contract.py
+      - .github/workflows/omega-v6-r204-live-proof.yml
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR204.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/scripts/check_cloudflare_contract.py
+      - .github/workflows/omega-v6-r204-live-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r204-live-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prove-r204-live-exact-sha:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proof source with canonical history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve live authority SHA
+        id: authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            git fetch origin "${GITHUB_BASE_REF}:refs/remotes/origin/${GITHUB_BASE_REF}"
+            expected_sha="$(git rev-parse "refs/remotes/origin/${GITHUB_BASE_REF}")"
+            basis="CURRENT_PR_BASE_CANONICAL_HEAD"
+          else
+            expected_sha="$GITHUB_SHA"
+            basis="CANONICAL_PUSH_HEAD"
+          fi
+          echo "expected_sha=$expected_sha" >> "$GITHUB_OUTPUT"
+          echo "basis=$basis" >> "$GITHUB_OUTPUT"
+          echo "R204 live proof expects $basis at $expected_sha"
+
+      - name: Prove source keeps R169 authority and R204 identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          WRANGLER=canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          ALIAS=canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
+          RUNTIME=canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR204.ts
+          grep -F 'main = "src/runtimeEntryR169.ts"' "$WRANGLER"
+          grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' "$WRANGLER"
+          grep -F 'HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"' "$WRANGLER"
+          grep -F 'export { OmegaRuntime } from "./omegaRuntimeR204"' "$ALIAS"
+          grep -F '/api/system/r204/manifest' "$ALIAS"
+          grep -F 'OMEGA_SERVER_RETURN_ADMISSION_CORE_R204' "$RUNTIME"
+          grep -F 'RETURN_VERIFIED_SUCCESS_R204' "$RUNTIME"
+          grep -F 'RETURN_VERIFIED_FAILURE_R204' "$RUNTIME"
+          grep -F 'RETURN_REJECTED_R204' "$RUNTIME"
+          grep -F 'RESULT_CONFLICT' "$RUNTIME"
+
+      - name: Wait for and prove live R204 manifest on exact canonical SHA
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ steps.authority.outputs.expected_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          live=false
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+              "$V6_URL/api/system/r204/manifest" -o /tmp/r204-manifest.json; then
+              if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+
+          manifest = json.loads(Path('/tmp/r204-manifest.json').read_text())
+          expected = os.environ['EXPECTED_SHA']
+          if manifest.get('ok') is not True: raise SystemExit(1)
+          if manifest.get('schema') != 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204': raise SystemExit(1)
+          if manifest.get('release') != 'r204-verified-hybrid-return-admission': raise SystemExit(1)
+          if manifest.get('verificationSchema') != 'OMEGA_HYBRID_RETURN_VERIFICATION_R204': raise SystemExit(1)
+          if manifest.get('canonicalGitSha') != expected: raise SystemExit(1)
+
+          architecture = manifest.get('architecture') or {}
+          if architecture.get('canonicalEntrypoint') != 'src/runtimeEntryR169.ts': raise SystemExit(1)
+          if architecture.get('underlyingConvergencePreserved') is not True: raise SystemExit(1)
+          if architecture.get('durableBinding') != 'OMEGA_RUNTIME': raise SystemExit(1)
+          if architecture.get('durableClass') != 'OmegaRuntime': raise SystemExit(1)
+          if architecture.get('storageIdentityChanged') is not False: raise SystemExit(1)
+          if architecture.get('newDurableNamespaceCreated') is not False: raise SystemExit(1)
+          if architecture.get('r201EvidenceLedgerPreserved') is not True: raise SystemExit(1)
+          if architecture.get('r203HybridMissionLedgerPreserved') is not True: raise SystemExit(1)
+
+          law = manifest.get('returnLaw') or []
+          required_law = {
+              'AUTHENTICATED_BRIDGE',
+              'EXPLICIT_BOOLEAN_OUTCOME',
+              'FULL_QUEUED_STEP_LINEAGE_FOR_SUCCESS',
+              'ORDERED_STEP_IDENTITY_AND_OPERATION',
+              'RELATIVE_OUTPUT_CONFINEMENT',
+              'SERVER_CANONICAL_SHA256_RECEIPT',
+              'OPTIONAL_HOST_CANONICAL_RECEIPT_CROSS_CHECK',
+              'REPLAY_CONFLICT_DETECTION',
+              'VERIFIED_SUCCESS_ONLY_MISSION_COMPLETION',
+          }
+          if not required_law.issubset(set(law)): raise SystemExit(1)
+
+          boundaries = manifest.get('truthBoundaries') or {}
+          for key in (
+              'authenticatedAgentIsNotHardwareAttestation',
+              'hostHashAloneIsNotAuthority',
+              'returnedIsNotVerified',
+              'verifiedReturnIsNotCanonState',
+              'verifiedReturnIsNotPromotion',
+              'verifiedFailureDoesNotCompleteMission',
+          ):
+              if boundaries.get(key) is not True: raise SystemExit(1)
+          if manifest.get('authority') != 'AUTHENTICATED_EXECUTION_RETURN_EVIDENCE_NOT_CANONSTATE': raise SystemExit(1)
+          if manifest.get('canonicalMutation') is not False: raise SystemExit(1)
+          if manifest.get('hostStateMutation') is not False: raise SystemExit(1)
+          if manifest.get('promotionAuthorized') is not False: raise SystemExit(1)
+
+          receipt = manifest.get('receiptSha256')
+          if not isinstance(receipt, str) or re.fullmatch(r'[0-9a-f]{64}', receipt) is None: raise SystemExit(1)
+          PY
+              then
+                live=true
+                break
+              fi
+            fi
+            echo "R204 exact-SHA manifest not settled yet (attempt $attempt/60)."
+            sleep 2
+          done
+          if [ "$live" != "true" ]; then
+            echo "R204_LIVE_EXACT_SHA_PROOF_FAILED"
+            cat /tmp/r204-manifest.json 2>/dev/null || true
+            exit 1
+          fi
+
+      - name: Prove inherited live runtime remains coherent
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json
+          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          health = json.loads(Path('/tmp/v6-health.json').read_text())
+          edge = json.loads(Path('/tmp/v6-convergence.json').read_text())
+          if health.get('ok') is not True: raise SystemExit(1)
+          if health.get('authority') != 'public-interface-only': raise SystemExit(1)
+          if edge.get('ok') is not True: raise SystemExit(1)
+          convergence = edge.get('convergence') or {}
+          if convergence.get('authority_contract_ready') is not True: raise SystemExit(1)
+          if convergence.get('v6_release_authority') != 'omega-v6-full-convergence': raise SystemExit(1)
+          if convergence.get('genesis_may_deploy_v6') is not False: raise SystemExit(1)
+          PY
+
+      - name: Publish exact live R204 proof summary
+        if: always()
+        env:
+          EXPECTED_SHA: ${{ steps.authority.outputs.expected_sha }}
+          BASIS: ${{ steps.authority.outputs.basis }}
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R204 live verified-return proof'
+            echo
+            echo "- Authority basis: \`$BASIS\`"
+            echo "- Expected canonical SHA: \`$EXPECTED_SHA\`"
+            echo '- R169 deployment entrypoint: preserved'
+            echo '- R204 live manifest: exact-SHA bound'
+            echo '- R204 verified-return truth boundaries: live-proven'
+            echo '- R201/R203 durable evidence continuity: manifest-proven preserved'
+            echo '- CanonState / HostState / promotion authority: not granted by R204'
+            echo '- Inherited V6/Genesis role-separated convergence: rechecked'
+          } >> "$GITHUB_STEP_SUMMARY"
