@@ -69,9 +69,9 @@ async function manifest(env: any): Promise<Response> {
 }
 
 export default {
-  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
+  async fetch(request: Request, env: any, _ctx?: any): Promise<Response> {
     const path = new URL(request.url).pathname.replace(/\/$/, "");
     if (path === "/api/system/r204/manifest" && request.method === "GET") return manifest(env);
-    return convergence.fetch(request, env, ctx);
+    return convergence.fetch(request, env);
   },
 };
