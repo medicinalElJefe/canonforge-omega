@@ -4,7 +4,8 @@ import {MODES,MENUS,GATES,CAPABILITIES} from "./catalog.js";
 export {OmegaGenesisState};
 
 const V6_URL="https://omegav6.jeffdeweyeljefe.workers.dev";
-const OPTICAL_MACHINE_URL="https://omega-optical-machine-r115.jeffdeweyeljefe.workers.dev";
+const OPTICAL_MACHINE_URL="https://omega-optical-machine-r1532.jeffdeweyeljefe.workers.dev";
+const OPTICAL_MACHINE_GENERATION="R153.2";
 const OPTICAL_HUMAN_URL="https://omega-living-light-etching-private-woven2.vercel.app";
 const SOVEREIGN_HUMAN_URL="https://omega-sovereign-convergence.foundasound.chatgpt.site";
 const R191_FABRIC_URL=V6_URL+"/api/fabric/r191/status";
@@ -26,7 +27,7 @@ const FEDERATION_R102={
   handoff_order:["PROPOSE","SCREEN","SOLVE","ADMIT"],
   peers:{
     "omega-v6":{verb:"ADMIT",url:V6_URL+"/",transport:"CLOUDFLARE_SERVICE_BINDING",binding:"OMEGA_V6",scope:"GLOBAL_FEDERATION_CANONSTATE"},
-    "omega-optical":{verb:"SCREEN",url:OPTICAL_MACHINE_URL+"/",transport:"CLOUDFLARE_SERVICE_BINDING",binding:"OMEGA_OPTICAL",human_surface:OPTICAL_HUMAN_URL+"/",scope:"WORKER_RETURN_PACKET_ONLY"},
+    "omega-optical":{verb:"SCREEN",url:OPTICAL_MACHINE_URL+"/",machine_generation:OPTICAL_MACHINE_GENERATION,transport:"CLOUDFLARE_SERVICE_BINDING",binding:"OMEGA_OPTICAL",human_surface:OPTICAL_HUMAN_URL+"/",scope:"WORKER_RETURN_PACKET_ONLY"},
     "omega-sovereign":{verb:"SOLVE",url:null,human_surface:SOVEREIGN_HUMAN_URL+"/",scope:"AUTHENTICATED_WORKER_RESULT_RETURN_ONLY"}
   },
   input:["intent","project context","canonical snapshot"],
@@ -43,10 +44,12 @@ const SURFACE_FABRIC_R191={
   canonical_fabric:R191_FABRIC_URL,
   canonical_canon:R191_CANON_URL,
   optical_machine:OPTICAL_MACHINE_URL+"/",
+  optical_machine_generation:OPTICAL_MACHINE_GENERATION,
   optical_human_target:OPTICAL_HUMAN_URL+"/",
   sovereign_human_target:SOVEREIGN_HUMAN_URL+"/",
   machine_transport:"CLOUDFLARE_SERVICE_BINDINGS",
   required_bindings:["OMEGA_V6","OMEGA_OPTICAL"],
+  optical_truth_boundary:"SCREEN_ONLY; adaptive search is deterministic decision support; full-wave execution and Canon admission remain false without authenticated downstream receipts.",
   may_mutate_global_canon_state:false,
   may_promote_v6:false,
   may_claim_vercel_same_url_promotion:false,
@@ -100,19 +103,28 @@ async function surfaceFabricSnapshot(env){
   const canonicalSha=fabric.body?.canonicalGitSha||canon.body?.canonicalGitSha||null;
   const canonicalGroups=canon.body?.totalCapabilityGroups||null;
   const opticalAuthority=optical.body?.authority||null;
+  const opticalMachineVersion=optical.body?.machineVersion||null;
+  const opticalToolVersion=optical.body?.externalTool?.version||null;
+  const opticalAdaptiveCycle=optical.body?.externalTool?.adaptiveCycle===true;
+  const opticalCanonicalMutation=optical.body?.externalTool?.canonicalMutation===true;
   const bindingTransport=fabric.transport==="cloudflare_service_binding"&&canon.transport==="cloudflare_service_binding"&&optical.transport==="cloudflare_service_binding";
+  const opticalContract=opticalAuthority==="SCREEN_ONLY"&&opticalMachineVersion===OPTICAL_MACHINE_GENERATION&&opticalToolVersion===OPTICAL_MACHINE_GENERATION&&opticalAdaptiveCycle&&!opticalCanonicalMutation;
   return{
     ...SURFACE_FABRIC_R191,
     observed_at:new Date().toISOString(),
-    ok:Boolean(bindingTransport&&fabric.reachable&&canon.reachable&&optical.reachable),
+    ok:Boolean(bindingTransport&&fabric.reachable&&canon.reachable&&optical.reachable&&opticalContract),
     service_bindings_active:bindingTransport,
     canonical_git_sha:canonicalSha,
     canonical_capability_groups:canonicalGroups,
     canonical_fabric_ready:fabric.body?.canonicalFabricReady===true,
     everywhere_promotion_proved:fabric.body?.everywherePromotionProved===true,
     optical_machine_authority:opticalAuthority,
+    optical_machine_version:opticalMachineVersion,
+    optical_tool_version:opticalToolVersion,
+    optical_adaptive_cycle:opticalAdaptiveCycle,
+    optical_canonical_mutation:opticalCanonicalMutation,
     observations:{fabric,canon,optical},
-    authority_boundary:"Observed R191 state is peer evidence only. Genesis may generate proposals but cannot mutate, deploy, or admit OMEGA V6 Canon."
+    authority_boundary:"Observed R191 state is peer evidence only. Genesis may generate proposals but cannot mutate, deploy, or admit OMEGA V6 Canon. Optical R153.2 may rank/refine and prepare full-wave handoff only; it cannot claim full-wave execution or Canon admission."
   };
 }
 async function manifest(env){
@@ -184,7 +196,7 @@ async function reciprocalSnapshot(env){
   };
 }
 function surfaceBar(){
-  return `<div id="omega-r191-genesis-bar" style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483000;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 11px;border:1px solid rgba(126,151,190,.42);border-radius:13px;background:rgba(5,10,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 44px rgba(0,0,0,.45);font:12px/1.3 Inter,system-ui;color:#d8e2f2"><b style="letter-spacing:.09em">GENESIS · PROPOSE</b><span style="color:#91a3bc">R191 surface-aware · Canon remains OMEGA V6</span><span style="flex:1"></span><a href="${V6_URL}/fabric" style="color:#d8e2f2;text-decoration:none;border:1px solid #3a4e6d;border-radius:8px;padding:6px 8px">Fabric</a><a href="${V6_URL}/instrument" style="color:#d8e2f2;text-decoration:none;border:1px solid #3a4e6d;border-radius:8px;padding:6px 8px">Instrument</a><a href="${V6_URL}/truth" style="color:#d8e2f2;text-decoration:none;border:1px solid #3a4e6d;border-radius:8px;padding:6px 8px">Truth</a></div><style>@media(max-width:620px){#omega-r191-genesis-bar{left:7px!important;right:7px!important;bottom:7px!important}#omega-r191-genesis-bar span:not(:first-of-type){display:none}}</style>`;
+  return `<div id="omega-r191-genesis-bar" style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483000;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 11px;border:1px solid rgba(126,151,190,.42);border-radius:13px;background:rgba(5,10,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 44px rgba(0,0,0,.45);font:12px/1.3 Inter,system-ui;color:#d8e2f2"><b style="letter-spacing:.09em">GENESIS · PROPOSE</b><span style="color:#91a3bc">R191 + Optical R153.2 · Canon remains OMEGA V6</span><span style="flex:1"></span><a href="${V6_URL}/fabric" style="color:#d8e2f2;text-decoration:none;border:1px solid #3a4e6d;border-radius:8px;padding:6px 8px">Fabric</a><a href="${V6_URL}/instrument" style="color:#d8e2f2;text-decoration:none;border:1px solid #3a4e6d;border-radius:8px;padding:6px 8px">Instrument</a><a href="${V6_URL}/truth" style="color:#d8e2f2;text-decoration:none;border:1px solid #3a4e6d;border-radius:8px;padding:6px 8px">Truth</a></div><style>@media(max-width:620px){#omega-r191-genesis-bar{left:7px!important;right:7px!important;bottom:7px!important}#omega-r191-genesis-bar span:not(:first-of-type){display:none}}</style>`;
 }
 async function injectVisual(response){
   const type=response.headers.get("content-type")||"";
@@ -199,6 +211,7 @@ async function injectVisual(response){
   headers.set("x-omega-federation-role","PROPOSE");
   headers.set("x-omega-federation-revision","R102");
   headers.set("x-omega-surface-fabric","R191_OBSERVER");
+  headers.set("x-omega-optical-peer","R153.2_SCREEN_ONLY");
   return new Response(html,{status:response.status,headers});
 }
 
@@ -209,7 +222,7 @@ export default{
       return Response.json(await federationManifest(),{headers:{"cache-control":"no-store","x-omega-federation-role":"PROPOSE","x-omega-federation-revision":"R102"}});
     }
     if(url.pathname==="/api/fabric/r191"||url.pathname==="/_omega/fabric/r191"){
-      return Response.json(await surfaceFabricSnapshot(env),{headers:{"cache-control":"no-store","access-control-allow-origin":"*","x-omega-authority":"genesis-r191-observer-only","x-omega-federation-role":"PROPOSE","x-omega-surface-fabric":"R191_OBSERVER"}});
+      return Response.json(await surfaceFabricSnapshot(env),{headers:{"cache-control":"no-store","access-control-allow-origin":"*","x-omega-authority":"genesis-r191-observer-only","x-omega-federation-role":"PROPOSE","x-omega-surface-fabric":"R191_OBSERVER","x-omega-optical-peer":"R153.2_SCREEN_ONLY"}});
     }
     if(url.pathname==="/api/convergence/manifest"){
       return Response.json(await manifest(env),{headers:{"cache-control":"no-store","x-omega-authority":"genesis-discovery-evolution-manifest","x-omega-federation-role":"PROPOSE","x-omega-federation-revision":"R102","x-omega-surface-fabric":"R191_OBSERVER"}});
