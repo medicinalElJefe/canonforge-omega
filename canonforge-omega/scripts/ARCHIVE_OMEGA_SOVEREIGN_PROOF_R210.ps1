@@ -24,7 +24,7 @@ $expectedSchema = if ($Kind -eq 'R208_ATTEMPT') {
   'OMEGA_SOVEREIGN_CONVERGENCE_R209'
 }
 if ([string]$receipt.schema -ne $expectedSchema) {
-  throw "Receipt schema mismatch for $Kind: $($receipt.schema)"
+  throw "Receipt schema mismatch for ${Kind}: $($receipt.schema)"
 }
 if ([bool]$receipt.canonicalMutation -ne $false) {
   throw 'Only non-Canon receipts may enter the R210 local proof archive.'
