@@ -146,6 +146,10 @@ async function snapshot(request: Request, env: any, ctx: any, canonicalFetch: Ca
   const results = await Promise.all(probes.map(async ([id, path]) => ({ id, ...(await invoke(request, env, ctx, canonicalFetch, path)) })));
   const convergence = results.find(x => x.id === "CONVERGENCE")?.result || {};
   const pc = convergence?.topology?.sovereign_pc || {};
+  const fullHostTruth = {
+    pcOnline: Boolean(pc.pc_online),
+    heartbeatCurrent: Boolean(pc.heartbeat_current),
+  };
   const requiredIds = profile === "mission"
     ? new Set(["STATE", "ONE_SYSTEM", "WORKSPACE", "FABRIC", "SAI_AI", "BUILD"])
     : new Set(results.map(x => x.id).filter(id => id !== "EARTH_SOURCES"));
@@ -156,11 +160,11 @@ async function snapshot(request: Request, env: any, ctx: any, canonicalFetch: Ca
     generatedAt: new Date().toISOString(),
     profile,
     runtimeReady: required.every(x => x.ok),
-    pcOnline: profile === "full" ? Boolean(pc.pc_online) : false,
-    heartbeatCurrent: profile === "full" ? Boolean(pc.heartbeat_current) : false,
+    pcOnline: profile === "full" ? fullHostTruth.pcOnline : false,
+    heartbeatCurrent: profile === "full" ? fullHostTruth.heartbeatCurrent : false,
     results,
     truth: {
-      pcOnline: profile === "full" && Boolean(pc.pc_online) ? "PROVEN_BY_CURRENT_CONVERGENCE_PACKET" : profile === "mission" ? "NOT_PROBED_IN_FAST_MISSION_PROFILE" : "UNPROVEN",
+      pcOnline: profile === "full" && fullHostTruth.pcOnline ? "PROVEN_BY_CURRENT_CONVERGENCE_PACKET" : profile === "mission" ? "NOT_PROBED_IN_FAST_MISSION_PROFILE" : "UNPROVEN",
       missionSnapshotDoesNotClaimHostState: profile === "mission",
       returnedIsNotVerified: true,
       canonicalMutation: false,
