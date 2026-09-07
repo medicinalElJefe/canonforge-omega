@@ -20,7 +20,7 @@ concurrency:
 
 env:
   CANONICAL_BRANCH: omega-v6-full-convergence
-  R204_RUNTIME_BASE_SHA: 086a5eeb92487d8354542b56a16d9884eb154022
+  R204_RUNTIME_BASE_SHA: 95e7a452bc4b2f4adb1b61f59a68feca2f0ec673
   CONTROL_PATH: .github/workflows/omega-v6-r204-production-promotion.yml
   V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
 
