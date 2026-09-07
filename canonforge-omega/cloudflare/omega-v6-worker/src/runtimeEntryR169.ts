@@ -23,6 +23,9 @@ import { handleRestorationPlannerR195 } from "./system/restorationRouteR195";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
+import { handleDeweyCalibrationR196 } from "./compute/deweyCalibrationR196";
+import { handleDeweyCalibrationGuardR196 } from "./compute/deweyCalibrationGuardR196";
+import { handleDeweyRepresentationR196 } from "./compute/deweyRepresentationR196";
 import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
@@ -39,6 +42,7 @@ import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
 import { enhanceDeweyComputeSurfaceR195 } from "./deweyComputeSurfaceR195";
+import { enhanceDeweyCalibrationSurfaceR196 } from "./deweyCalibrationSurfaceR196";
 import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195";
 
 export { OmegaRuntime } from "./heartbeatTruth";
@@ -79,6 +83,15 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 
   const r195Canon = handleCumulativeCapabilityR195(request);
   if (r195Canon) return r195Canon;
+
+  const deweyCalibrationGuard = await handleDeweyCalibrationGuardR196(request);
+  if (deweyCalibrationGuard) return deweyCalibrationGuard;
+
+  const deweyRepresentation = await handleDeweyRepresentationR196(request);
+  if (deweyRepresentation) return deweyRepresentation;
+
+  const deweyCalibration = await handleDeweyCalibrationR196(request);
+  if (deweyCalibration) return deweyCalibration;
 
   const deweyCompute = await handleDeweyWaterContinuityR195(request);
   if (deweyCompute) return deweyCompute;
@@ -157,6 +170,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
   const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
   const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
+  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, new URL(request.url).pathname);
+  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
   return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
 }
 

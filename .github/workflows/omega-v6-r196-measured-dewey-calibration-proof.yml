@@ -1,0 +1,68 @@
+name: OMEGA V6 R196 measured Dewey calibration proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyCalibrationR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyCalibrationGuardR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyRepresentationR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyWaterContinuityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyCalibrationSurfaceR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/tests/test_r196_measured_dewey_calibration.py'
+      - 'canonforge-omega/tests/test_r196_calibration_surface.py'
+      - 'canonforge-omega/tests/test_r195_dewey_water_continuity_compute.py'
+      - 'canonforge-omega/tests/test_r195_drive_corpus_one_system.py'
+      - '.github/workflows/omega-v6-r196-measured-dewey-calibration-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyCalibrationR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyCalibrationGuardR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyRepresentationR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyCalibrationSurfaceR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/tests/test_r196_measured_dewey_calibration.py'
+      - 'canonforge-omega/tests/test_r196_calibration_surface.py'
+      - '.github/workflows/omega-v6-r196-measured-dewey-calibration-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r196:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Verify R196 calibration truth and R195 predecessor invariants
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r196_measured_dewey_calibration.py \
+            tests/test_r196_calibration_surface.py \
+            tests/test_r195_dewey_water_continuity_compute.py \
+            tests/test_r195_drive_corpus_one_system.py \
+            tests/test_r195_residual_restoration_planner.py \
+            tests/test_r194_evidence_plane_restoration.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r175_independent_solver_validation.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Wrangler dry-run complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r196-dry-run
