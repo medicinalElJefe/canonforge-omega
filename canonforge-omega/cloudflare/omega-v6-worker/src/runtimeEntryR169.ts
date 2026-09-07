@@ -171,7 +171,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
   const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
   const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, new URL(request.url).pathname);
-  return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
+  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
+  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };
