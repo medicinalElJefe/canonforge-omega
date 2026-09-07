@@ -7,6 +7,7 @@ import { warpBuildCandidateLabResponse } from "./swarm/warpBuildCandidateLabR178
 import { handleSuccessorGateR183 } from "./swarm/successorGateR183";
 import { handleImprovementDiscoveryR184 } from "./swarm/improvementDiscoveryR184";
 import { handleCloudSwarmR185 } from "./swarm/cloudSwarmR185";
+import { handleSuccessorEvidenceR186 } from "./swarm/successorEvidenceR186";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
@@ -74,6 +75,7 @@ export default {
     if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
     if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
+    if (url.pathname.startsWith("/api/swarm/evidence/r186/")) return handleSuccessorEvidenceR186(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
     if (url.pathname.startsWith("/api/swarm/improvement/r184/")) return handleImprovementDiscoveryR184(request);
     if (url.pathname.startsWith("/api/swarm/successor/r183/")) return handleSuccessorGateR183(request);
     if (url.pathname.startsWith("/api/swarm/build/")) return handleWarpBuildCandidateRequest(request, env);
