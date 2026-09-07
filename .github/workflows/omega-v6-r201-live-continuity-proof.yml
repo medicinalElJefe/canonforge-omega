@@ -1,6 +1,11 @@
 name: OMEGA V6 R201 live durable mission continuity proof
 
 on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r201-live-continuity-proof.yml
+      - canonforge-omega/tests/test_r205_live_proof_edge_coherence.py
   push:
     branches: [omega-v6-full-convergence]
   workflow_call:
@@ -30,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-      EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+      EXPECTED_SHA: ${{ inputs.expected_sha || github.event.pull_request.base.sha || github.sha }}
     steps:
       - name: Wait for exact deployed canonical SHA and coherent R201 route set
         shell: bash
