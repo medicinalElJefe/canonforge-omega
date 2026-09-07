@@ -4,8 +4,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "config" / "capability_truth_r190.json
-"
+CONFIG = ROOT / "config" / "capability_truth_r190.json"
 ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "runtimeEntryR169.ts"
 R190 = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "acceptance" / "wholeSystemAcceptanceR190.ts"
 R189 = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "wholeInstrumentR189.ts"
