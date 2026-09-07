@@ -1,5 +1,6 @@
 param(
-  [switch]$NoBrowser
+  [switch]$NoBrowser,
+  [switch]$SkipAcceptanceProof
 )
 
 $ErrorActionPreference = 'Stop'
@@ -8,12 +9,14 @@ Set-StrictMode -Version Latest
 $Root = Split-Path -Parent $PSScriptRoot
 $Vpy = Join-Path $Root '.venv\Scripts\python.exe'
 $AgentScript = Join-Path $Root 'scripts\omega_sovereign_agent.py'
+$AcceptanceProver = Join-Path $Root 'scripts\PROVE_OMEGA_V6_WINDOWS.ps1'
 $LogDir = Join-Path $Root 'logs'
 $RuntimeStdout = Join-Path $LogDir 'runtime_stdout.log'
 $RuntimeStderr = Join-Path $LogDir 'runtime_stderr.log'
 $AgentStdout = Join-Path $LogDir 'agent_stdout.log'
 $AgentStderr = Join-Path $LogDir 'agent_stderr.log'
 $Log = Join-Path $LogDir 'launcher.log'
+$AcceptanceReceipt = Join-Path $LogDir 'r208_physical_acceptance_latest.json'
 $Port = 8127
 $Base = "http://127.0.0.1:$Port"
 $Health = "$Base/api/health"
@@ -57,8 +60,11 @@ if (-not (Test-Path $Vpy)) {
 if (-not (Test-Path $AgentScript)) {
   throw "Canonical sovereign agent missing: $AgentScript"
 }
+if (-not (Test-Path $AcceptanceProver)) {
+  throw "R208 physical acceptance prover missing: $AcceptanceProver"
+}
 
-Write-OmegaLog "R207 launch requested root=$Root canonical_port=$Port"
+Write-OmegaLog "R208 launch requested root=$Root canonical_port=$Port"
 
 $runtimeProcess = $null
 if (Get-HealthyOmegaRuntime) {
@@ -157,6 +163,27 @@ for ($i = 0; $i -lt 40; $i++) {
 
 if (-not $heartbeatCurrent) {
   Write-OmegaLog 'runtime is healthy; sovereign heartbeat is still pending and is not being promoted to PC ONLINE'
+} elseif (-not $SkipAcceptanceProof) {
+  # R208 closes the one-click loop after the heartbeat is current. This probe is read/proof
+  # oriented: it cannot mutate Canon or authorize promotion. Full acceptance still requires
+  # the production R181 conjunction of current authenticated physical heartbeat, exact deep
+  # B059 verification, and a grounded B059 query.
+  Write-OmegaLog 'running R208 physical sovereign acceptance proof against deployed production truth'
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $AcceptanceProver
+  $proofExit = $LASTEXITCODE
+  if (Test-Path $AcceptanceReceipt) {
+    try {
+      $receipt = Get-Content -Raw -Path $AcceptanceReceipt | ConvertFrom-Json
+      Write-OmegaLog "R208 acceptance receipt full=$($receipt.fullAcceptance) state=$($receipt.acceptanceState) sha=$($receipt.production.canonicalGitSha) upstream=$($receipt.upstreamReceiptSha256)"
+    } catch {
+      Write-OmegaLog "R208 receipt parse failed: $($_.Exception.Message)"
+    }
+  }
+  if ($proofExit -ne 0) {
+    Write-OmegaLog "R208 acceptance prover returned exit=$proofExit; no success claim promoted"
+  }
+} else {
+  Write-OmegaLog 'R208 deep acceptance proof skipped for headless continuity launch; current heartbeat remains the only PC ONLINE gate'
 }
 
 if (-not $NoBrowser) {
