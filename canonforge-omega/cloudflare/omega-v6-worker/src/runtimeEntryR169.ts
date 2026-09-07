@@ -15,6 +15,7 @@ import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
+import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabilityR190";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -48,6 +49,13 @@ function b059ManifestAlias(request: Request): Request {
   return new Request(target.toString(), { method: "GET", headers: request.headers });
 }
 
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data, null, 2), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+  });
+}
+
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
 
@@ -60,6 +68,13 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (url.pathname === "/truth" || url.pathname === "/truth/") return wholeSystemTruthR190();
   if (url.pathname.startsWith("/api/acceptance/r190/")) {
     return handleWholeSystemAcceptanceR190(request, env, ctx, runtimeFetch);
+  }
+
+  // R190 cumulative Canon extends the immutable R189 61-group predecessor with
+  // the capability-truth admission organ. It is read-only and has no promotion authority.
+  if (url.pathname === "/api/canon/r190/manifest" || url.pathname === "/api/canon/r190/manifest/") {
+    if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
+    return json(cumulativeCapabilityManifestR190());
   }
 
   if (url.pathname === "/compute" || url.pathname === "/compute/") return computeLabResponse();
@@ -90,7 +105,7 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
   if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
-  // Preserve R189 accumulated capability canon unchanged.
+  // Preserve R189 accumulated capability canon unchanged as predecessor history.
   if (url.pathname.startsWith("/api/canon/r189/")) return handleCumulativeCapabilityR189(request);
 
   if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);

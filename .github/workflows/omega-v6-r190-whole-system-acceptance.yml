@@ -26,12 +26,14 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -e '.[dev]'
-      - name: R190 plus predecessor regression proof
+      - name: R190 plus cumulative predecessor regression proof
         working-directory: canonforge-omega
         run: |
           python -m pytest -q \
             tests/test_r190_whole_system_acceptance.py \
+            tests/test_r190_cumulative_capability_completion.py \
             tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r189_whole_instrument_cumulative_completion.py \
             tests/test_r189_cumulative_capability_canon.py \
             tests/test_r188_motion_time.py \
             tests/test_r185_172_cloud_federation.py \
@@ -53,7 +55,7 @@ jobs:
     needs: exact-head-verify
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for canonical deployment of this exact Git head
+      - name: Wait for canonical deployment of this exact Git head and cumulative Canon
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
@@ -62,17 +64,36 @@ jobs:
           for attempt in $(seq 1 60); do
             curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
               "$LIVE/api/acceptance/r190/manifest" -o /tmp/r190-manifest.json || true
+            curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+              "$LIVE/api/canon/r190/manifest" -o /tmp/r190-cumulative.json || true
+            curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+              "$LIVE/api/instrument/r189/coverage" -o /tmp/r189-coverage.json || true
             if GITHUB_SHA="$GITHUB_SHA" python - <<'PY'
           import json, os
           from pathlib import Path
           try:
               p=json.loads(Path('/tmp/r190-manifest.json').read_text())
+              cumulative=json.loads(Path('/tmp/r190-cumulative.json').read_text())
+              r189=json.loads(Path('/tmp/r189-coverage.json').read_text())
           except Exception:
               raise SystemExit(1)
           if p.get('release') != 'r190-capability-truth-admission': raise SystemExit(1)
           if p.get('canonicalGitSha') != os.environ['GITHUB_SHA']: raise SystemExit(1)
           if p.get('deploymentIdentityBound') is not True: raise SystemExit(1)
           if p.get('predecessorRevision') != 'R189_WHOLE_INSTRUMENT_CONVERGENCE': raise SystemExit(1)
+          if r189.get('schema') != 'OMEGA_R189_CUMULATIVE_SURFACE_COVERAGE_v1': raise SystemExit(1)
+          if r189.get('complete') is not True or r189.get('totalCapabilityGroups') != 61: raise SystemExit(1)
+          if r189.get('mappedExtensionOrgans') != 37: raise SystemExit(1)
+          if cumulative.get('schema') != 'OMEGA_CUMULATIVE_CAPABILITY_CANON_R190': raise SystemExit(1)
+          if cumulative.get('predecessorCapabilityGroups') != 61: raise SystemExit(1)
+          if cumulative.get('baseFamilyCount') != 24: raise SystemExit(1)
+          if cumulative.get('inheritedExtensionOrganCount') != 37: raise SystemExit(1)
+          if cumulative.get('currentOrganCount') != 1: raise SystemExit(1)
+          if cumulative.get('totalCapabilityGroups') != 62: raise SystemExit(1)
+          if cumulative.get('complete') is not True: raise SystemExit(1)
+          current=cumulative.get('currentOrgans') or []
+          if len(current) != 1 or current[0].get('id') != 'R190_CAPABILITY_TRUTH_ADMISSION': raise SystemExit(1)
+          if cumulative.get('canonicalMutation') is not False or cumulative.get('promotionAuthorized') is not False: raise SystemExit(1)
           PY
             then
               matched=true
@@ -81,7 +102,7 @@ jobs:
             sleep 5
           done
           if [ "$matched" != true ]; then
-            echo "R190 exact-head live deployment identity did not converge to $GITHUB_SHA"
+            echo "R190 exact-head deployment/cumulative identity did not converge to $GITHUB_SHA"
             exit 1
           fi
 
@@ -140,6 +161,8 @@ jobs:
           name: r190-live-capability-truth-${{ github.sha }}
           path: |
             /tmp/r190-manifest.json
+            /tmp/r190-cumulative.json
+            /tmp/r189-coverage.json
             /tmp/r190-quick.json
             /tmp/r190-full.json
             /tmp/r190-truth.html
