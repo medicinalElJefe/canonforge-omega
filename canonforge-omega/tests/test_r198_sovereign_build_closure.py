@@ -102,7 +102,7 @@ def test_served_agent_digest_is_exactly_pinned_and_route_is_successor_owned():
     ts = TS_AGENT_PATH.read_text(encoding="utf-8")
     runtime = RUNTIME_ENTRY_PATH.read_text(encoding="utf-8")
     wrangler = WRANGLER_PATH.read_text(encoding="utf-8")
-    assert digest == "1d90b82422c4b7b9f4cfd216a3704d6a3f53b43a6fda520b24e2766242fd3760"
+    assert digest == "945f3e1fe9e9acf67691a9eaecf4afe5d43f9df317aed036bc50f99f27546082"
     assert digest in ts
     assert "omega_hybrid_agent_r198.py" in ts
     assert 'url.pathname === "/omega-hybrid-agent.py"' in runtime
