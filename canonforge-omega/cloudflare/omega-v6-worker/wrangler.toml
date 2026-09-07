@@ -1,7 +1,8 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 delegates every non-swarm/non-compute/non-validate/non-federation/non-SAI request directly to heartbeatTruth.
+# runtimeEntryR169 delegates every unhandled request directly to heartbeatTruth while preserving
+# cloud SAI, Sovereign B059 SAI, AI+SAI fusion, swarm, compute, validation and federation namespaces.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -24,6 +25,9 @@ WARP_COMPUTATION_ID = "r176-sharded-warp-computation"
 WARP_INTEGRITY_ID = "r177-strict-terminal-accounting"
 WARP_BUILD_CANDIDATE_ID = "r178-warp-self-build-candidate"
 SAI_INTELLIGENCE_RUNTIME_ID = "r179-real-provider-backed-multi-agent-sai"
+SAI_B059_TRAINING_ID = "r179-exact-15-authority-compiled-indexed-calibrated-sai"
+SAI_AI_FUSION_ID = "r179-workers-ai-plus-verified-b059-grounding"
+SWARM_GOVERNOR_ID = "r180-adaptive-interactive-reserve-self-development-governor"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
