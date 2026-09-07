@@ -4,7 +4,7 @@ import c2 from "./r194SnapshotChunk2";
 import c3 from "./r194SnapshotChunk3";
 import c4 from "./r194SnapshotChunk4";
 
-export const DRIVE_CORPUS_SNAPSHOT_SHA256_R194 = "d80267761320c3bf3d219b38b6293fc52a02e09182fa0825853c7202131f2746";
+export const DRIVE_CORPUS_SNAPSHOT_SHA256_R194 = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655";
 
 let cached: any | null = null;
 let cachedText: string | null = null;
@@ -39,6 +39,12 @@ export async function driveCorpusIntegrityR194() {
     observedSha256: cachedDigest,
     compression: "gzip+base64-chunks",
     chunks: 5,
+    driveEvidence: {
+      primaryLedgerId: "1tvDDlPxHFTXMPN43-rE1kPKdmJW5uYj6",
+      primaryLedgerTitle: "OMEGA_ONE_SYSTEM_FULL_SOFTWARE_MENU_LEDGER.xlsx",
+      corroboratingLedgerId: "12w_vkhiXU1RUx5YU4C4M232fyvoqx_XN",
+      corroboratingLedgerTitle: "OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx",
+    },
     canonicalMutation: false,
   };
 }
