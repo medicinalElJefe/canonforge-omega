@@ -21,7 +21,11 @@ function registryRows(snapshot: any): Record<string, any>[] {
   if (!snapshot || typeof snapshot !== "object") return [];
   const aliases = new Set(["registry", "softwareRegistry", "software_registry", "software"].map(nk));
   for (const [key, value] of Object.entries(snapshot)) {
-    if (aliases.has(nk(key)) && Array.isArray(value)) return value as Record<string, any>[];
+    if (!aliases.has(nk(key))) continue;
+    if (Array.isArray(value)) return value as Record<string, any>[];
+    if (value && typeof value === "object" && Array.isArray((value as any).rows)) {
+      return (value as any).rows as Record<string, any>[];
+    }
   }
   return [];
 }
@@ -42,7 +46,7 @@ export async function handleRestorationPlannerR195(
     const plan = buildResidualRestorationPlanR195(registry, probes);
     const state = (url.searchParams.get("state") || "").trim();
     const disposition = (url.searchParams.get("disposition") || "").trim().toUpperCase();
-    const limit = Math.min(100, Math.max(1, Math.trunc(Number(url.searchParams.get("limit") || 100) || 100));
+    const limit = Math.min(100, Math.max(1, Math.trunc(Number(url.searchParams.get("limit") || 100) || 100)));
     const offset = Math.max(0, Math.trunc(Number(url.searchParams.get("offset") || 0) || 0));
     const selected = plan.artifacts.filter(artifact => (!state || artifact.state === state) && (!disposition || artifact.disposition === disposition));
     return json({
