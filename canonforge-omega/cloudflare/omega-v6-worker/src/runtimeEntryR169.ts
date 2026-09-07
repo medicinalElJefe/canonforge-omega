@@ -20,6 +20,7 @@ import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilit
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
+import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
 import { handleCrossRuntimeValidationRequest } from "./validation/crossRuntimeParityR173";
@@ -70,6 +71,9 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 
   const workspaceManifest = handleWorkspaceManifestR193(request);
   if (workspaceManifest) return workspaceManifest;
+
+  const deweyCompute = await handleDeweyWaterContinuityR195(request);
+  if (deweyCompute) return deweyCompute;
 
   const universalSurfaceFabric = await handleUniversalSurfaceFabricR191(request, env);
   if (universalSurfaceFabric) return universalSurfaceFabric;
