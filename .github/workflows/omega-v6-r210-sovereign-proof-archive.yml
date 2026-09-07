@@ -103,8 +103,22 @@ jobs:
           $stored = Join-Path (Join-Path $archive 'R208_ATTEMPT') ($first.sha256 + '.json')
           if (-not (Test-Path $stored)) { throw 'content-addressed archive file missing' }
           Add-Content -Path $stored -Value 'corruption'
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $archiver -ReceiptPath $receipt -Kind R208_ATTEMPT -Attempt 1 -ArchiveRoot $archive *> $null
-          if ($LASTEXITCODE -eq 0) { throw 'corrupted archive entry was not rejected' }
+
+          # Corruption rejection is expected to return nonzero. Capture that child exit
+          # explicitly instead of letting pwsh's native-command error preference abort
+          # this harness before the assertion can inspect it.
+          $corruptOut = Join-Path $work 'corrupt.stdout.log'
+          $corruptErr = Join-Path $work 'corrupt.stderr.log'
+          $child = Start-Process -FilePath 'powershell.exe' -ArgumentList @(
+            '-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$archiver`"",
+            '-ReceiptPath',"`"$receipt`"",
+            '-Kind','R208_ATTEMPT','-Attempt','1','-ArchiveRoot',"`"$archive`""
+          ) -RedirectStandardOutput $corruptOut -RedirectStandardError $corruptErr -Wait -PassThru
+          if ($child.ExitCode -eq 0) { throw 'corrupted archive entry was not rejected' }
+          $corruptText = (Get-Content -Raw -Path $corruptErr -ErrorAction SilentlyContinue) + (Get-Content -Raw -Path $corruptOut -ErrorAction SilentlyContinue)
+          if ($corruptText -notmatch 'Content-address collision or archive corruption') {
+            throw "corruption rejection returned the wrong failure: $corruptText"
+          }
 
       - name: State authority boundary
         shell: pwsh
