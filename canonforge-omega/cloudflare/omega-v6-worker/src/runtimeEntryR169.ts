@@ -19,6 +19,7 @@ import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabil
 import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilityR191";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
+import { handleDeweyWaterMotionR195 } from "./compute/deweyWaterMotionR195";
 import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
@@ -128,6 +129,8 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (url.pathname.startsWith("/api/validate/independent/")) return handleIndependentSolverValidationRequest(request);
   if (url.pathname.startsWith("/api/validate/cross-runtime/")) return handleCrossRuntimeValidationRequest(request);
   if (url.pathname.startsWith("/api/validate/")) return handleValidationRequest(request);
+  const deweyWaterMotion = await handleDeweyWaterMotionR195(request);
+  if (deweyWaterMotion) return deweyWaterMotion;
   if (url.pathname.startsWith("/api/compute/atlas/")) return handleAtlasComputeRequest(request);
   if (url.pathname.startsWith("/api/compute/")) return handleComputeRequest(request);
   return canonical.fetch(request, env, ctx);
