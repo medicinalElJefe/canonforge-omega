@@ -17,6 +17,8 @@ import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
 import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabilityR190";
 import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilityR191";
+import { handleCumulativeCapabilityR192 } from "./acceptance/cumulativeCapabilityR192";
+import { handleDriveCorpusSystemR192 } from "./system/driveCorpusSystemR192";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -60,6 +62,15 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  // R192 restores the sorted Drive One-System corpus as a hash-verified, queryable
+  // control plane while delegating execution to the existing specialist organs.
+  // It is additive and cannot shadow or rebrand inherited authority.
+  const driveCorpusSystem = await handleDriveCorpusSystemR192(request, env, ctx, runtimeFetch);
+  if (driveCorpusSystem) return driveCorpusSystem;
+
+  const r192Canon = handleCumulativeCapabilityR192(request);
+  if (r192Canon) return r192Canon;
 
   // R191 is an additive universal surface registry. It does not create another
   // Canon authority or shadow any inherited specialized route.
