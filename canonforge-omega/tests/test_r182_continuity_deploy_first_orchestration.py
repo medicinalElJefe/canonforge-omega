@@ -5,7 +5,7 @@ REPO = ROOT.parent
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 GOVERNOR = WORKER / "src" / "swarm" / "swarmGovernorR180.ts"
 ACCEPTANCE = WORKER / "src" / "acceptance" / "liveAcceptanceR181.ts"
-VERIFY = REPO / ".github" / "workflows" / "omega-v6-verify.yml"
+RELEASE = REPO / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 R176 = REPO / ".github" / "workflows" / "omega-v6-r176-live-warp-proof.yml"
 R177 = REPO / ".github" / "workflows" / "omega-v6-r177-live-integrity-proof.yml"
 R179 = REPO / ".github" / "workflows" / "omega-v6-r179-live-sai-proof.yml"
@@ -40,33 +40,29 @@ def test_r182_live_proofs_are_reusable_not_blind_push_pollers():
         assert '\n  push:' not in trigger, path
 
 
-def test_r182_deploys_exact_sha_before_post_deploy_proof_expansion():
-    verify = text(VERIFY)
-    assert 'Deploy exact verified canonical head with immutable Git identity' in verify
-    assert 'CANONICAL_GIT_SHA:$GITHUB_SHA' in verify
-    assert 'post-deploy-classify:' in verify
-    assert 'needs: [promote-canonical-worker]' in verify
-    assert 'post-deploy-r181-continuity:' in verify
-    assert 'expected_sha: ${{ github.sha }}' in verify
-    assert 'post-deploy-r179-intelligence:' in verify
-    assert 'post-deploy-r176-swarm:' in verify
-    assert 'post-deploy-r177-full-integrity:' in verify
-    assert 'post-deploy-visual:' in verify
+def test_r182_exact_sha_deploy_precedes_current_post_deploy_proof_and_rollback_gate():
+    release = text(RELEASE)
+    assert 'Checkout exact canonical SHA' in release
+    assert 'CANONICAL_GIT_SHA = "{sha}"' in release
+    assert 'Final exact-head lock before production mutation' in release
+    deploy = release.index('Deploy exact canonical Worker to Cloudflare')
+    proof = release.index('Prove live exact identity, cumulative truth, and all 172 R185 nodes')
+    rollback = release.index('Roll back immediately if any live exact-head proof failed')
+    assert deploy < proof < rollback
+    assert '--expected-sha "$GITHUB_SHA"' in release
+    assert 'test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"' in release
 
 
-def test_r182_escalates_proof_by_changed_frame_and_keeps_1728_demand_driven():
-    verify = text(VERIFY)
+def test_r182_keeps_full_integrity_demand_driven_while_r213_uses_bounded_release_proof():
+    release = text(RELEASE)
     r177 = text(R177)
-    assert 'intelligence_changed' in verify
-    assert 'swarm_changed' in verify
-    assert 'full_integrity_changed' in verify
-    assert 'visual_changed' in verify
-    assert "needs.post-deploy-classify.outputs.full_integrity_changed != 'true'" in verify
-    assert "needs.post-deploy-classify.outputs.full_integrity_changed == 'true'" in verify
-    assert 'run_full: true' in verify
     assert 'run_full:' in r177
     assert 'default: false' in r177
     assert 'if: ${{ inputs.run_full == true }}' in r177
+    assert '--workers 12' in release
+    assert 'verify_r185_live_federation.py' in release
+    assert 'R185 172 advertised public routes: LIVE VERIFIED' in release
+    assert 'R185 172 machine routes and Durable Object runtimes: LIVE VERIFIED' in release
 
 
 def test_r182_acceptance_rejects_stale_edge_identity():
