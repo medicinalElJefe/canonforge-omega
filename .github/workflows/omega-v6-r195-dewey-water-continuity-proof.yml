@@ -1,0 +1,160 @@
+name: OMEGA V6 R195 Dewey water-continuity proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyWaterContinuityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyComputeSurfaceR195.ts'
+      - 'canonforge-omega/tests/test_r195_dewey_water_continuity_compute.py'
+      - '.github/workflows/omega-v6-r195-dewey-water-continuity-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r195-dewey-water-continuity-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r195:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Prove Dewey calculus invariants plus cumulative stack
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r195_dewey_water_continuity_compute.py \
+            tests/test_r194_evidence_plane_restoration.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r167_authoritative_state_accuracy.py \
+            tests/test_r163_interactive_living_field.py \
+            tests/test_r153_mobile_workspace_orchestration.py \
+            tests/test_r145_governed_mode_atlas.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck and package dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir .r195-dry-run
+
+  prove-live-r195:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r195
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact canonical deployment
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
+            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try: d=json.loads(Path('/tmp/r191.json').read_text())
+          except Exception: raise SystemExit(1)
+          if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']: raise SystemExit(1)
+          PY
+            then matched=true; break; fi
+            sleep 5
+          done
+          test "$matched" = true
+
+      - name: Prove live R195 computation and surface
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 20 "$LIVE/api/compute/dewey/r195/manifest" -o /tmp/manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/manifest.json').read_text())
+          assert d['ok'] is True
+          assert d['release']=='r195-dewey-water-continuity-compute'
+          assert len(d['modes'])==15
+          assert d['shells']==[12,144,1728,20736,248832]
+          assert d['waterGeometry']['analyticalDivergence']==0
+          assert d['waterGeometry']['physicalClaim'] is False
+          assert d['noZeroMath']['epsilon']==1e-12
+          PY
+
+          curl --fail --silent --show-error --max-time 25 -X POST \
+            -H 'content-type: application/json' \
+            -d '{"b":37,"c":73}' \
+            "$LIVE/api/compute/dewey/r195/pair" -o /tmp/pair.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/pair.json').read_text())
+          assert d['ok'] is True
+          assert d['reconstructionError'] < 1e-12
+          assert abs(d['output']['relationalEnergyBefore']-d['output']['relationalEnergyAfter']) < 1e-10
+          PY
+
+          curl --fail --silent --show-error --max-time 30 -X POST \
+            -H 'content-type: application/json' \
+            -d '{"mode":"dewey-calculus","steps":512,"tracePoints":128,"state":{"continuity":0.72,"plasticity":0.68,"burden":0.24,"contradiction":0.18,"orientation":1,"scar":0.08,"shell":20736},"params":{"curvature":0.42,"circulation":0.55}}' \
+            "$LIVE/api/compute/dewey/r195/solve" -o /tmp/solve.json
+          python - <<'PY'
+          import json, math
+          from pathlib import Path
+          d=json.loads(Path('/tmp/solve.json').read_text())
+          assert d['ok'] is True
+          assert d['mode']['id']=='dewey-calculus'
+          assert d['shell']['shell']==20736
+          assert d['shell']['boundary']=='address/resolution only'
+          assert d['canonicalMutation'] is False
+          assert d['physicalMeasurement'] is False
+          assert math.isfinite(d['omega']) and d['omega'] > 0
+          assert 0 <= d['coherence'] <= 1
+          assert d['diagnostics']['steps']==512
+          assert d['diagnostics']['maxPairEnergyError'] < 1e-9
+          PY
+
+          curl --fail --silent --show-error --max-time 30 -X POST \
+            -H 'content-type: application/json' \
+            -d '{"mode":"unified-coherence","steps":256,"ensemble":64,"amplitude":0.03}' \
+            "$LIVE/api/compute/dewey/r195/ensemble" -o /tmp/ensemble.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/ensemble.json').read_text())
+          assert d['ok'] is True
+          assert 0 <= d['result']['inevitabilityIndex'] <= 1
+          assert d['result']['interpretation']=='MODEL_CONVERGENCE_INDEX_NOT_FATE'
+          assert d['canonicalMutation'] is False
+          PY
+
+          curl --fail --silent --show-error --max-time 25 -D /tmp/root.headers "$LIVE/?app=Calculus&mode=dewey-calculus" -o /tmp/root.html
+          grep -qi '^x-omega-dewey-compute: r195-dewey-compute-surface' /tmp/root.headers
+          grep -F 'id="odc195"' /tmp/root.html
+          grep -F '/api/compute/dewey/r195/solve' /tmp/root.html
+          grep -F '64× STABILITY' /tmp/root.html
+          echo R195_DEWEY_WATER_CONTINUITY_LIVE_VERIFIED
