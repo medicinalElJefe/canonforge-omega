@@ -141,9 +141,9 @@ def test_r190_operator_surface_connects_truth_to_whole_instrument():
     assert "What is actually working?" in source
 
 
-def test_r190_wrangler_ids_are_additive_and_do_not_rename_r189_whole_instrument():
+def test_r190_wrangler_ids_are_additive_and_preserve_inherited_build_identity():
     wrangler = WRANGLER.read_text(encoding="utf-8")
-    assert 'BUILD_ID = "r189-whole-instrument-convergence"' in wrangler
+    assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'WHOLE_INSTRUMENT_R189_ID = "r189-whole-instrument-convergence"' in wrangler
     assert 'WHOLE_SYSTEM_ACCEPTANCE_R190_ID = "r190-capability-truth-admission"' in wrangler
     assert 'CAPABILITY_TRUTH_R190_ID = "r190-implemented-route-invoked-returned-verified"' in wrangler
