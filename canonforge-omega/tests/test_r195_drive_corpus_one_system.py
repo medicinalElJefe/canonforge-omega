@@ -47,8 +47,12 @@ def snapshot():
 def table(data: dict, *aliases: str):
     wanted = {nk(alias) for alias in aliases}
     for key, value in data.items():
-        if nk(str(key)) in wanted and isinstance(value, list):
+        if nk(str(key)) not in wanted:
+            continue
+        if isinstance(value, list):
             return value
+        if isinstance(value, dict) and isinstance(value.get("rows"), list):
+            return value["rows"]
     raise AssertionError(f"missing {aliases}; keys={list(data)}")
 
 
@@ -114,7 +118,7 @@ def test_r195_execution_truth_separates_returned_from_verified():
         '"VERIFICATION_PENDING_OR_FAILED"',
         'class: "INVARIANT_CONSERVATION"',
         'class: "SOURCE_GROUNDED_RECEIPT"',
-        'class: "RETURNED_NOT_YET_INDEPENDENTLY_VERIFIED"',
+        '"RETURNED_NOT_YET_INDEPENDENTLY_VERIFIED"',
         "returnedIsNotVerified: true",
     ):
         assert marker in router
