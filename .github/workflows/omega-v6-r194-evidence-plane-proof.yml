@@ -1,0 +1,125 @@
+name: OMEGA V6 R194 evidence-plane proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/evidencePlaneR194.ts'
+      - 'canonforge-omega/tests/test_r194_evidence_plane_restoration.py'
+      - '.github/workflows/omega-v6-r194-evidence-plane-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r194-evidence-plane-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r194:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Verify R194 and cumulative restoration stack
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r194_evidence_plane_restoration.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r167_authoritative_state_accuracy.py \
+            tests/test_r163_interactive_living_field.py \
+            tests/test_r153_mobile_workspace_orchestration.py \
+            tests/test_r145_governed_mode_atlas.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck and package dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir .r194-dry-run
+
+  prove-live-r194:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r194
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact canonical deployment
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
+            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try: d=json.loads(Path('/tmp/r191.json').read_text())
+          except Exception: raise SystemExit(1)
+          if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']: raise SystemExit(1)
+          PY
+            then matched=true; break; fi
+            sleep 5
+          done
+          test "$matched" = true
+
+      - name: Verify live dual-plane status and root repair
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 -D /tmp/r194.headers "$LIVE/api/workspace/r194/status" -o /tmp/r194.json
+          grep -qi '^content-type: application/json' /tmp/r194.headers
+          if grep -qi '^x-omega-evidence-plane:' /tmp/r194.headers; then
+            echo 'R194 API was incorrectly HTML wrapped'
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r194.json').read_text())
+          assert d['ok'] is True
+          assert d['schema']=='OMEGA_V6_EVIDENCE_PLANE_R194'
+          assert d['release']=='r194-dual-plane-evidence-restoration'
+          assert d['summary']['localVerified'] >= 4
+          assert d['summary']['localTotal'] == 5
+          assert d['summary']['externalTotal'] == 6
+          assert d['truth']['localWorkerContractIsNotSovereignState'] is True
+          assert d['truth']['earthCatalogMissingMeansObservationWithheld'] in (True, False)
+          assert d['truth']['pcOnlineRequiresCurrentHeartbeat'] is True
+          assert d['truth']['nativeRcwaNotInferred'] is True
+          assert d['local']['state']['verified'] is True
+          assert d['local']['proof']['verified'] is True
+          assert d['local']['recovery']['verified'] is True
+          assert d['local']['sai']['verified'] is True
+          assert d['local']['convergence']['verified'] is True
+          PY
+          curl --fail --silent --show-error --max-time 30 -D /tmp/root.headers "$LIVE/" -o /tmp/root.html
+          grep -qi '^x-omega-workspace: r193-full-restoration-workspace' /tmp/root.headers
+          grep -qi '^x-omega-evidence-plane: r194-dual-plane-evidence-restoration' /tmp/root.headers
+          grep -F 'id="omegaEvidencePlaneR194Runtime"' /tmp/root.html
+          grep -F 'Local state instrument live · sovereign packet unavailable' /tmp/root.html
+          grep -F 'EARTH TRUTH LAYER LIVE · SOURCE CATALOG BLOCKED' /tmp/root.html
+          grep -F 'SOVEREIGN CONTROL LIVE · PC NOT PROVEN' /tmp/root.html
+          echo R194_DUAL_PLANE_LIVE_VERIFIED
