@@ -26,6 +26,7 @@ import { handleMissionKernelR200 } from "./system/missionKernelR200";
 import { handleDurableMissionR201 } from "./system/durableMissionRouteR201";
 import { handleContinuityPotentialR202 } from "./system/continuityPotentialR202";
 import { handleHybridMissionR203 } from "./system/hybridMissionRouteR203";
+import { handleWholeSystemControlR204 } from "./system/wholeSystemControlR204";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -53,6 +54,7 @@ import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195
 import { handleEarthSarFusionR198 } from "./earthSarTruthFusionR198";
 import { enhanceEarthSarIntegratedRepairR198_1 } from "./earthSarIntegratedRepairR198_1";
 import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_2";
+import { enhanceWholeSystemSurfaceR204 } from "./wholeSystemSurfaceR204";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201";
@@ -85,6 +87,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const wholeSystemR204 = await handleWholeSystemControlR204(request, env, ctx, runtimeFetch);
+  if (wholeSystemR204) return wholeSystemR204;
 
   const hybridMissionContinuity = await handleHybridMissionR203(request, env, ctx, runtimeFetch);
   if (hybridMissionContinuity) return hybridMissionContinuity;
@@ -212,15 +217,17 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
 
   const requestUrl = new URL(request.url);
   const earthApp = (requestUrl.searchParams.get("app") || "").toLowerCase() === "earth" || requestUrl.pathname === "/earth" || requestUrl.pathname.startsWith("/earth/");
+  let finalResponse: Response;
   if (earthApp) {
     const earthBase = calibrated !== dewey ? calibrated : dewey;
-    const oneSystemEarth = await enhanceOneSystemNavigationR195(earthBase, new URL(request.url).pathname);
+    const oneSystemEarth = await enhanceOneSystemNavigationR195(earthBase, requestUrl.pathname);
     const nativeSarEarth = await enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);
-    return enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
+    finalResponse = await enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
+  } else {
+    const base = calibrated !== dewey ? calibrated : dewey;
+    finalResponse = await enhanceOneSystemNavigationR195(base, requestUrl.pathname);
   }
-
-  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
-  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
+  return enhanceWholeSystemSurfaceR204(finalResponse);
 }
 
 export default { fetch: publicFetch };
