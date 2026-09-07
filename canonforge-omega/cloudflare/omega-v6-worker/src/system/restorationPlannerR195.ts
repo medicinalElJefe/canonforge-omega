@@ -160,13 +160,14 @@ export function buildResidualRestorationPlanR195(registry: Record<string, any>[]
   const stateCounts: Record<string, number> = {};
   for (const artifact of artifacts) stateCounts[artifact.state] = (stateCounts[artifact.state] || 0) + 1;
   const cohortReady = probes.filter(probe => probe.bodyOk).length;
-  const unresolved = artifacts.filter(artifact => artifact.state !== "KEEP_COHORT_ROUTE_VERIFIED_ARTIFACT_RECEIPT_REQUIRED").length;
+  const individuallyVerifiedArtifacts = 0;
+  const unresolved = artifacts.length - individuallyVerifiedArtifacts;
   return {
     ok: true,
     schema: "OMEGA_RESIDUAL_RESTORATION_PLAN_R195",
     release: RESTORATION_PLANNER_RELEASE_R195,
     totalArtifacts: artifacts.length,
-    individuallyVerifiedArtifacts: 0,
+    individuallyVerifiedArtifacts,
     individuallyVerifiedBoundary: "R195 intentionally reports zero artifact-level admissions unless an artifact-specific execution/verification receipt exists. Cohort reachability is not upgraded into artifact proof.",
     cohortProof: {
       total: probes.length,
