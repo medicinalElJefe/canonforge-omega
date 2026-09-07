@@ -32,6 +32,7 @@ import { independentSolverLabResponse } from "./validation/independentSolverLabR
 import { handleWholeInstrumentR189 } from "./wholeInstrumentR189";
 import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
+import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -62,6 +63,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const workspaceManifest = handleWorkspaceManifestR193(request);
+  if (workspaceManifest) return workspaceManifest;
 
   const universalSurfaceFabric = await handleUniversalSurfaceFabricR191(request, env);
   if (universalSurfaceFabric) return universalSurfaceFabric;
