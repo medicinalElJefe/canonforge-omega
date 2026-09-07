@@ -11,6 +11,14 @@ class_name = "OmegaGenesisState"
 type = "durable-object"
 storage = "sqlite"
 
+[[services]]
+binding = "OMEGA_V6"
+service = "omega-v6-full-convergence"
+
+[[services]]
+binding = "OMEGA_OPTICAL"
+service = "omega-optical-machine-r115"
+
 [assets]
 directory = "../../web"
 binding = "ASSETS"
