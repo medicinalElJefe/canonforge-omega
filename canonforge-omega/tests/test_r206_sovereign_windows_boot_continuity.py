@@ -19,21 +19,24 @@ def test_r206_launcher_keeps_one_canonical_localhost_identity():
     assert "will not silently move the canonical Hybrid endpoint" in text
 
 
-def test_r206_approved_repository_root_binding_survives_r207_successor():
+def test_r206_approved_repository_root_binding_survives_r207_r208_r209_successors():
     text = read(LAUNCHER)
     assert '"$Base/api/hybrid/launcher"' in text
-    assert "Join-Path $Root '.omega_pairing_once.cmd'" in text
+    assert "$PairingEnvelope" in text
     assert "OMEGA Sovereign PC Link" in text
     assert "/api/hybrid/agent" in text
     assert "omega_sovereign_agent\\.py" in text
     assert "'--root', \"`\"$Root`\"\"" in text
     assert "-WorkingDirectory $Root" in text
+    assert "Remove-Item $PairingEnvelope" in text
 
 
-def test_r206_launcher_never_promotes_pending_heartbeat_to_online():
+def test_r206_launcher_never_promotes_unproved_heartbeat_to_online():
     text = read(LAUNCHER)
-    assert "$hybrid.heartbeatCurrent -or $hybrid.pcOnline" in text
-    assert "sovereign heartbeat is still pending and is not being promoted to PC ONLINE" in text
+    assert "PC ONLINE is still proof-gated" in text
+    assert "PC ONLINE is not claimed" in text
+    assert "authenticated generation-bound heartbeat did not become current" in text
+    assert "R208 deep acceptance is withheld" in text
 
 
 def test_r206_installer_requires_native_rcwa_and_persists_same_entry_point():
