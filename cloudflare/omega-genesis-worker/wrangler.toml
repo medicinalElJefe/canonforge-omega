@@ -19,3 +19,4 @@ run_worker_first = [ "/api/*", "/_omega/*" ]
 
 [vars]
 BUILD_ID = "omega-genesis-v1-convergence-g2"
+GENESIS_SURFACE_FABRIC_R191_ID = "r191-genesis-surface-observer"
