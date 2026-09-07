@@ -18,7 +18,7 @@ def test_genesis_r191_preserves_role_separation_and_routes_screen_to_machine_org
     assert 'may_claim_vercel_same_url_promotion:false' in source
     assert 'OPTICAL_MACHINE_URL="https://omega-optical-machine-r115.jeffdeweyeljefe.workers.dev"' in source
     assert 'OPTICAL_HUMAN_URL="https://omega-living-light-etching-private-woven2.vercel.app"' in source
-    assert '"omega-optical":{verb:"SCREEN",url:OPTICAL_MACHINE_URL+"/",human_surface:OPTICAL_HUMAN_URL+"/",scope:"WORKER_RETURN_PACKET_ONLY"}' in source
+    assert '"omega-optical":{verb:"SCREEN",url:OPTICAL_MACHINE_URL+"/",transport:"CLOUDFLARE_SERVICE_BINDING",binding:"OMEGA_OPTICAL"' in source
     assert 'global_canonical_authority:"omega-v6"' in source
     assert 'genesis_may_deploy_v6:false' in source
 
@@ -29,16 +29,33 @@ def test_genesis_observes_canonical_r191_without_copying_authority():
         'R191_FABRIC_URL=V6_URL+"/api/fabric/r191/status"',
         'R191_CANON_URL=V6_URL+"/api/canon/r191/manifest"',
         'schema:"OMEGA_GENESIS_SURFACE_FABRIC_OBSERVER_R191"',
+        'machine_transport:"CLOUDFLARE_SERVICE_BINDINGS"',
+        'required_bindings:["OMEGA_V6","OMEGA_OPTICAL"]',
         '"/api/fabric/r191"',
         '"/_omega/fabric/r191"',
         'canonical_git_sha:canonicalSha',
         'canonical_capability_groups:canonicalGroups',
         'canonical_fabric_ready:fabric.body?.canonicalFabricReady===true',
         'everywhere_promotion_proved:fabric.body?.everywherePromotionProved===true',
+        'service_bindings_active:bindingTransport',
         'x-omega-authority":"genesis-r191-observer-only"',
     ):
         assert marker in source
     assert 'Reachability does not imply write authority, execution proof, or Canon admission.' in source
+
+
+def test_genesis_uses_service_bindings_not_same_account_workers_dev_loopback():
+    source = CONVERGENCE.read_text(encoding="utf-8")
+    wrangler = WRANGLER.read_text(encoding="utf-8")
+    assert 'binding = "OMEGA_V6"' in wrangler
+    assert 'service = "omega-v6-full-convergence"' in wrangler
+    assert 'binding = "OMEGA_OPTICAL"' in wrangler
+    assert 'service = "omega-optical-machine-r115"' in wrangler
+    assert 'probePeer(env?.OMEGA_V6,R191_FABRIC_URL,"/api/fabric/r191/status","omega-v6")' in source
+    assert 'probePeer(env?.OMEGA_V6,R191_CANON_URL,"/api/canon/r191/manifest","omega-v6")' in source
+    assert 'probePeer(env?.OMEGA_OPTICAL,OPTICAL_MACHINE_URL+"/api/health","/api/health","omega-optical")' in source
+    assert 'transport:"cloudflare_service_binding"' in source
+    assert 'binding.fetch(request)' in source
 
 
 def test_genesis_r191_surface_bar_is_additive_responsive_and_non_authoritative():
