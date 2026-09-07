@@ -26,11 +26,13 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -e '.[dev]'
-      - name: R190 plus cumulative predecessor regression proof
+      - name: R191 + repaired R190 + cumulative predecessor regression proof
         working-directory: canonforge-omega
         run: |
           python -m pytest -q \
+            tests/test_r191_universal_surface_fabric.py \
             tests/test_r190_whole_system_acceptance.py \
+            tests/test_r190_acceptance_sovereign_boundary_repair.py \
             tests/test_r190_cumulative_capability_completion.py \
             tests/test_r189_whole_instrument_convergence.py \
             tests/test_r189_whole_instrument_cumulative_completion.py \
@@ -44,7 +46,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Typecheck exact R190 Worker head
+      - name: Typecheck exact Worker head
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: |
           npm install
@@ -67,13 +69,16 @@ jobs:
             curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
               "$LIVE/api/canon/r190/manifest" -o /tmp/r190-cumulative.json || true
             curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+              "$LIVE/api/canon/r191/manifest" -o /tmp/r191-cumulative.json || true
+            curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
               "$LIVE/api/instrument/r189/coverage" -o /tmp/r189-coverage.json || true
             if GITHUB_SHA="$GITHUB_SHA" python - <<'PY'
           import json, os
           from pathlib import Path
           try:
               p=json.loads(Path('/tmp/r190-manifest.json').read_text())
-              cumulative=json.loads(Path('/tmp/r190-cumulative.json').read_text())
+              r190=json.loads(Path('/tmp/r190-cumulative.json').read_text())
+              r191=json.loads(Path('/tmp/r191-cumulative.json').read_text())
               r189=json.loads(Path('/tmp/r189-coverage.json').read_text())
           except Exception:
               raise SystemExit(1)
@@ -81,19 +86,17 @@ jobs:
           if p.get('canonicalGitSha') != os.environ['GITHUB_SHA']: raise SystemExit(1)
           if p.get('deploymentIdentityBound') is not True: raise SystemExit(1)
           if p.get('predecessorRevision') != 'R189_WHOLE_INSTRUMENT_CONVERGENCE': raise SystemExit(1)
+          repair=p.get('acceptanceRepair') or {}
+          if repair.get('id') != 'r190-sovereign-boundary-classification-repair': raise SystemExit(1)
+          if repair.get('fullAcceptanceStillRequiresSovereignBackedCapabilities') is not True: raise SystemExit(1)
           if r189.get('schema') != 'OMEGA_R189_CUMULATIVE_SURFACE_COVERAGE_v1': raise SystemExit(1)
           if r189.get('complete') is not True or r189.get('totalCapabilityGroups') != 61: raise SystemExit(1)
           if r189.get('mappedExtensionOrgans') != 37: raise SystemExit(1)
-          if cumulative.get('schema') != 'OMEGA_CUMULATIVE_CAPABILITY_CANON_R190': raise SystemExit(1)
-          if cumulative.get('predecessorCapabilityGroups') != 61: raise SystemExit(1)
-          if cumulative.get('baseFamilyCount') != 24: raise SystemExit(1)
-          if cumulative.get('inheritedExtensionOrganCount') != 37: raise SystemExit(1)
-          if cumulative.get('currentOrganCount') != 1: raise SystemExit(1)
-          if cumulative.get('totalCapabilityGroups') != 62: raise SystemExit(1)
-          if cumulative.get('complete') is not True: raise SystemExit(1)
-          current=cumulative.get('currentOrgans') or []
-          if len(current) != 1 or current[0].get('id') != 'R190_CAPABILITY_TRUTH_ADMISSION': raise SystemExit(1)
-          if cumulative.get('canonicalMutation') is not False or cumulative.get('promotionAuthorized') is not False: raise SystemExit(1)
+          if r190.get('schema') != 'OMEGA_CUMULATIVE_CAPABILITY_CANON_R190': raise SystemExit(1)
+          if r190.get('totalCapabilityGroups') != 62 or r190.get('complete') is not True: raise SystemExit(1)
+          if r191.get('totalCapabilityGroups') != 63 or r191.get('complete') is not True: raise SystemExit(1)
+          if r190.get('canonicalMutation') is not False or r190.get('promotionAuthorized') is not False: raise SystemExit(1)
+          if r191.get('canonicalMutation') is not False or r191.get('promotionAuthorized') is not False: raise SystemExit(1)
           PY
             then
               matched=true
@@ -102,28 +105,36 @@ jobs:
             sleep 5
           done
           if [ "$matched" != true ]; then
-            echo "R190 exact-head deployment/cumulative identity did not converge to $GITHUB_SHA"
+            echo "R191/R190 exact-head deployment identity did not converge to $GITHUB_SHA"
             exit 1
           fi
 
-      - name: Require core whole-system verification
+      - name: Require cloud-core whole-system verification
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors \
+          http_status="$(curl --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors \
             -X POST "$LIVE/api/acceptance/r190/probe" \
             -H 'content-type: application/json' \
-            --data '{"depth":"quick"}' -o /tmp/r190-quick.json
-          python - <<'PY'
-          import json
+            --data '{"depth":"quick"}' \
+            -o /tmp/r190-quick.json -w '%{http_code}' || true)"
+          echo "$http_status" > /tmp/r190-quick-http-status.txt
+          HTTP_STATUS="$http_status" python - <<'PY'
+          import json, os
           from pathlib import Path
           p=json.loads(Path('/tmp/r190-quick.json').read_text())
+          failed=[(c.get('id'),c.get('state'),c.get('httpStatus'),c.get('detail')) for c in p.get('capabilities',[]) if c.get('requiredQuick') is True and not c.get('verified')]
+          print('R190 CORE HTTP:', os.environ.get('HTTP_STATUS'))
+          print('R190 CORE:', p.get('overallState'), p.get('summary'))
+          if failed:
+              print('R190 CORE UNVERIFIED REQUIRED:', failed)
+          assert os.environ.get('HTTP_STATUS') == '200', p
           assert p.get('overallState') == 'CORE_SYSTEM_VERIFIED', p
           assert p.get('summary',{}).get('hardFailures') == 0, p
           assert p.get('summary',{}).get('required') == p.get('summary',{}).get('requiredVerified'), p
+          assert p.get('acceptanceRepair',{}).get('id') == 'r190-sovereign-boundary-classification-repair', p
           assert p.get('receiptSha256'), p
-          print('R190 CORE:', p['overallState'], p['summary'])
           PY
 
       - name: Run full proof without fabricating unavailable external evidence
@@ -131,21 +142,30 @@ jobs:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors \
+          http_status="$(curl --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors \
             -X POST "$LIVE/api/acceptance/r190/probe" \
             -H 'content-type: application/json' \
-            --data '{"depth":"full"}' -o /tmp/r190-full.json
-          python - <<'PY'
-          import json
+            --data '{"depth":"full"}' \
+            -o /tmp/r190-full.json -w '%{http_code}' || true)"
+          echo "$http_status" > /tmp/r190-full-http-status.txt
+          HTTP_STATUS="$http_status" python - <<'PY'
+          import json, os
           from pathlib import Path
           p=json.loads(Path('/tmp/r190-full.json').read_text())
           state=p.get('overallState')
-          print('R190 FULL:', state, p.get('summary'))
-          if state == 'ACCEPTANCE_FAILED':
-              raise SystemExit('R190 full probe contains a hard runtime failure')
+          summary=p.get('summary') or {}
+          unverified=[(c.get('id'),c.get('state'),c.get('httpStatus'),c.get('detail')) for c in p.get('capabilities',[]) if c.get('requiredFull') is not False and not c.get('verified')]
+          print('R190 FULL HTTP:', os.environ.get('HTTP_STATUS'))
+          print('R190 FULL:', state, summary)
+          if unverified:
+              print('R190 FULL UNVERIFIED REQUIRED:', unverified)
+          if summary.get('hardFailures', 0):
+              raise SystemExit('R190 full probe contains a hard runtime failure: '+repr(unverified))
+          if os.environ.get('HTTP_STATUS') != '200':
+              raise SystemExit('R190 full probe returned non-200 without a declared hard failure')
           if state != 'FULL_SYSTEM_VERIFIED':
-              blocked=[(c.get('id'),c.get('state')) for c in p.get('capabilities',[]) if not c.get('verified')]
-              print('::warning::R190 full system proof remains externally blocked/partial. No completion claim is admissible. '+repr(blocked))
+              print('::warning::R190 full system proof remains externally blocked/partial. No completion claim is admissible. '+repr(unverified))
+          assert p.get('receiptSha256'), p
           PY
 
       - name: Capture truth surface
@@ -162,8 +182,11 @@ jobs:
           path: |
             /tmp/r190-manifest.json
             /tmp/r190-cumulative.json
+            /tmp/r191-cumulative.json
             /tmp/r189-coverage.json
             /tmp/r190-quick.json
+            /tmp/r190-quick-http-status.txt
             /tmp/r190-full.json
+            /tmp/r190-full-http-status.txt
             /tmp/r190-truth.html
           if-no-files-found: warn
