@@ -32,6 +32,10 @@ jobs:
             tests/test_r179_ai_sai_fusion.py \
             tests/test_r180_b059_sai_swarm_governor_convergence.py
 
+      - name: Full Sovereign non-regression suite
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
