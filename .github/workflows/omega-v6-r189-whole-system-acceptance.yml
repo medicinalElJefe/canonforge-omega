@@ -1,0 +1,120 @@
+name: OMEGA V6 R189 whole-system acceptance
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python verification dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip pytest
+      - name: R189 convergence and regression proof
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r189_whole_system_acceptance.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_system_alignment_contract.py \
+            tests/test_omega_runtime.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+      - name: Typecheck exact R189 Worker head
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+
+  deploy-exact-head:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: exact-head-verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+      - name: Deploy exact Git head with deployment identity
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy -- --var "CANONICAL_GIT_SHA:${GITHUB_SHA}"
+      - name: Prove deployed R189 identity and core acceptance
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS "$LIVE/api/acceptance/r189/manifest" > /tmp/r189-manifest.json; then
+              if python - <<'PY'
+import json, os
+p=json.load(open('/tmp/r189-manifest.json'))
+assert p.get('release') == 'r189-whole-system-canonical-acceptance', p
+assert p.get('canonicalGitSha') == os.environ['GITHUB_SHA'], (p.get('canonicalGitSha'), os.environ['GITHUB_SHA'])
+assert p.get('deploymentIdentityBound') is True, p
+PY
+              then break; fi
+            fi
+            if [ "$attempt" = 6 ]; then echo "R189 exact-head deployment identity did not converge"; exit 1; fi
+            sleep 5
+          done
+          curl -fsS -X POST "$LIVE/api/acceptance/r189/probe" \
+            -H 'content-type: application/json' \
+            --data '{"depth":"quick"}' > /tmp/r189-quick.json
+          python - <<'PY'
+import json
+p=json.load(open('/tmp/r189-quick.json'))
+assert p.get('overallState') == 'CORE_SYSTEM_VERIFIED', p
+assert p.get('summary',{}).get('hardFailures') == 0, p
+assert p.get('receiptSha256'), p
+print('R189 QUICK:', p['overallState'], p['summary'])
+PY
+      - name: Run full acceptance and preserve external proof boundaries
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$LIVE/api/acceptance/r189/probe" \
+            -H 'content-type: application/json' \
+            --data '{"depth":"full"}' > /tmp/r189-full.json
+          python - <<'PY'
+import json
+p=json.load(open('/tmp/r189-full.json'))
+state=p.get('overallState')
+print('R189 FULL:', state, p.get('summary'))
+if state == 'ACCEPTANCE_FAILED':
+    raise SystemExit('R189 full probe contains a hard runtime failure')
+if state != 'FULL_SYSTEM_VERIFIED':
+    print('::warning::R189 full system proof is externally blocked or partial; inspect SAI/heartbeat/native RCWA capability states. No completion claim will be emitted.')
+PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r189-live-acceptance-${{ github.sha }}
+          path: |
+            /tmp/r189-manifest.json
+            /tmp/r189-quick.json
+            /tmp/r189-full.json
+          if-no-files-found: warn
