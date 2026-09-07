@@ -32,31 +32,62 @@ jobs:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
       EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
     steps:
-      - name: Wait for exact deployed canonical SHA
+      - name: Wait for exact deployed canonical SHA and coherent R201 route set
         shell: bash
         run: |
           set -euo pipefail
+          stable=0
           for attempt in $(seq 1 90); do
-            if curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
-              "$V6_URL/api/acceptance/r181/manifest" -o /tmp/r181-manifest.json \
+            proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}"
+            rm -f /tmp/r181-manifest.json /tmp/r201-manifest.json /tmp/r201-summary-coherent.json /tmp/r201-verify-coherent.json
+            if curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/acceptance/r181/manifest?edgeProof=$proof" -o /tmp/r181-manifest.json \
+              && curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/mission/r201/manifest?edgeProof=$proof" -o /tmp/r201-manifest.json \
+              && curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/mission/r201/summary?edgeProof=$proof" -o /tmp/r201-summary-coherent.json \
+              && curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/mission/r201/verify?edgeProof=$proof" -o /tmp/r201-verify-coherent.json \
               && python - <<'PY'
           import json, os
           from pathlib import Path
-          d = json.loads(Path('/tmp/r181-manifest.json').read_text())
-          expected = os.environ['EXPECTED_SHA'].strip()
-          assert d.get('ok') is True, d
-          assert d.get('schema') == 'OMEGA_LIVE_ACCEPTANCE_MANIFEST_R181', d
-          assert d.get('deploymentIdentityBound') is True, d
-          assert d.get('canonicalGitSha') == expected, (expected, d.get('canonicalGitSha'))
-          assert d.get('canonicalMutation') is False, d
-          assert d.get('promotionAuthorized') is False, d
+          r181=json.loads(Path('/tmp/r181-manifest.json').read_text())
+          manifest=json.loads(Path('/tmp/r201-manifest.json').read_text())
+          summary=json.loads(Path('/tmp/r201-summary-coherent.json').read_text())
+          verify=json.loads(Path('/tmp/r201-verify-coherent.json').read_text())
+          expected=os.environ['EXPECTED_SHA'].strip()
+          assert r181.get('ok') is True, r181
+          assert r181.get('schema') == 'OMEGA_LIVE_ACCEPTANCE_MANIFEST_R181', r181
+          assert r181.get('deploymentIdentityBound') is True, r181
+          assert r181.get('canonicalGitSha') == expected, (expected,r181.get('canonicalGitSha'))
+          assert r181.get('canonicalMutation') is False, r181
+          assert r181.get('promotionAuthorized') is False, r181
+          assert manifest.get('ok') is True, manifest
+          assert manifest.get('schema') == 'OMEGA_DURABLE_MISSION_ROUTE_MANIFEST_R201', manifest
+          assert manifest.get('release') == 'r201-durable-mission-execution-route', manifest
+          assert summary.get('ok') is True, summary
+          assert summary.get('release') == 'r201-durable-mission-evidence-ledger', summary
+          assert summary.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', summary
+          assert verify.get('ok') is True and verify.get('verified') is True, verify
+          assert verify.get('schema') == 'OMEGA_DURABLE_MISSION_CHAIN_VERIFICATION_R201', verify
+          assert verify.get('failures') == [], verify
           PY
             then
-              exit 0
+              stable=$((stable + 1))
+              echo "R201 coherent exact-SHA route set observed ($stable/2) on attempt $attempt."
+              if [ "$stable" -ge 2 ]; then
+                echo "R201_EDGE_COHERENCE_SETTLED $EXPECTED_SHA"
+                break
+              fi
+            else
+              stable=0
+              echo "R201 route set not coherent yet (attempt $attempt/90)."
             fi
             if [ "$attempt" -eq 90 ]; then
-              echo "R201 proof never observed the expected deployed canonical SHA: $EXPECTED_SHA"
-              cat /tmp/r181-manifest.json || true
+              echo "R201 proof never observed two consecutive coherent route sets for: $EXPECTED_SHA"
+              for f in /tmp/r181-manifest.json /tmp/r201-manifest.json /tmp/r201-summary-coherent.json /tmp/r201-verify-coherent.json; do
+                echo "--- $f"; cat "$f" 2>/dev/null || true
+              done
               exit 1
             fi
             sleep 2
@@ -66,8 +97,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors \
-            "$V6_URL/api/mission/r201/manifest" -o /tmp/r201-manifest.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -96,12 +125,12 @@ jobs:
           ], d
           PY
 
-      - name: Capture pre-execution durable state
+      - name: Capture pre-execution durable state from coherent snapshot
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "$V6_URL/api/mission/r201/summary" -o /tmp/r201-summary-before.json
-          curl --fail --silent --show-error "$V6_URL/api/mission/r201/verify" -o /tmp/r201-verify-before.json
+          cp /tmp/r201-summary-coherent.json /tmp/r201-summary-before.json
+          cp /tmp/r201-verify-coherent.json /tmp/r201-verify-before.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -113,6 +142,7 @@ jobs:
           assert s.get('canonicalMutation') is False and s.get('hostStateMutation') is False and s.get('promotionAuthorized') is False, s
           assert v.get('ok') is True and v.get('verified') is True, v
           assert v.get('schema') == 'OMEGA_DURABLE_MISSION_CHAIN_VERIFICATION_R201', v
+          assert v.get('failures') == [], v
           Path('/tmp/r201-before-count.txt').write_text(str(int(s.get('entryCount') or 0)))
           Path('/tmp/r201-before-head.txt').write_text(str(s.get('headSha256') or ''))
           PY
@@ -132,7 +162,7 @@ jobs:
               'allDomains': False,
           }))
           PY
-          curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+          curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors --max-time 45 \
             -X POST "$V6_URL/api/mission/r201/execute" \
             -H 'content-type: application/json' \
             --data-binary @/tmp/r201-payload.json \
@@ -176,15 +206,48 @@ jobs:
           Path('/tmp/r201-proof-mission-id.txt').write_text(str(m.get('missionId')))
           Path('/tmp/r201-proof-mission-receipt.txt').write_text(str(m.get('missionReceiptSha256')))
           Path('/tmp/r201-proof-entry-sha.txt').write_text(str(record.get('entrySha256')))
+          Path('/tmp/r201-proof-prev-entry-sha.txt').write_text(str(record.get('prevEntrySha256') or ''))
           PY
 
-      - name: Re-read public history and independently bind the durable head
+      - name: Re-read public history and independently bind durable membership plus current head
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "$V6_URL/api/mission/r201/summary" -o /tmp/r201-summary-after.json
-          curl --fail --silent --show-error "$V6_URL/api/mission/r201/history?limit=12" -o /tmp/r201-history-after.json
-          curl --fail --silent --show-error "$V6_URL/api/mission/r201/verify" -o /tmp/r201-verify-after.json
+          settled=false
+          for attempt in $(seq 1 45); do
+            proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-post-${attempt}"
+            if curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/mission/r201/summary?edgeProof=$proof" -o /tmp/r201-summary-after.json \
+              && curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/mission/r201/history?limit=48&edgeProof=$proof" -o /tmp/r201-history-after.json \
+              && curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/mission/r201/verify?edgeProof=$proof" -o /tmp/r201-verify-after.json \
+              && python - <<'PY'
+          import json
+          from pathlib import Path
+          mission_receipt=Path('/tmp/r201-proof-mission-receipt.txt').read_text().strip()
+          entry_sha=Path('/tmp/r201-proof-entry-sha.txt').read_text().strip()
+          s=json.loads(Path('/tmp/r201-summary-after.json').read_text())
+          h=json.loads(Path('/tmp/r201-history-after.json').read_text())
+          v=json.loads(Path('/tmp/r201-verify-after.json').read_text())
+          assert s.get('ok') is True, s
+          assert h.get('ok') is True, h
+          assert v.get('ok') is True and v.get('verified') is True and v.get('failures') == [], v
+          entries=h.get('entries') or []
+          assert any(e.get('missionReceiptSha256') == mission_receipt and e.get('entrySha256') == entry_sha for e in entries), (mission_receipt,entry_sha)
+          assert v.get('headSha256') == s.get('headSha256'), (v,s)
+          PY
+            then
+              settled=true
+              break
+            fi
+            echo "R201 post-write durable view not coherent yet (attempt $attempt/45)."
+            sleep 2
+          done
+          if [ "$settled" != true ]; then
+            echo 'R201_POST_WRITE_COHERENCE_FAILED'
+            exit 1
+          fi
           python - <<'PY'
           import json, re, os
           from pathlib import Path
@@ -193,16 +256,12 @@ jobs:
           mission_id=Path('/tmp/r201-proof-mission-id.txt').read_text().strip()
           mission_receipt=Path('/tmp/r201-proof-mission-receipt.txt').read_text().strip()
           entry_sha=Path('/tmp/r201-proof-entry-sha.txt').read_text().strip()
+          recorded_prev=Path('/tmp/r201-proof-prev-entry-sha.txt').read_text().strip() or None
           s=json.loads(Path('/tmp/r201-summary-after.json').read_text())
           h=json.loads(Path('/tmp/r201-history-after.json').read_text())
           v=json.loads(Path('/tmp/r201-verify-after.json').read_text())
           assert s.get('ok') is True, s
           assert int(s.get('entryCount') or 0) >= before_count + 1, (before_count,s)
-          assert s.get('headSha256') == entry_sha, (entry_sha,s.get('headSha256'))
-          latest=s.get('latest') or {}
-          assert latest.get('missionId') == mission_id, latest
-          assert latest.get('missionReceiptSha256') == mission_receipt, latest
-          assert latest.get('entrySha256') == entry_sha, latest
           assert h.get('ok') is True, h
           assert h.get('schema') == 'OMEGA_DURABLE_MISSION_PUBLIC_HISTORY_R201', h
           assert h.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', h
@@ -215,22 +274,27 @@ jobs:
           assert e.get('entrySha256') == entry_sha, e
           assert e.get('receiptIntegrityVerified') is True, e
           assert 'intent' not in e and 'taskReceipts' not in e and 'residuals' not in e, e
-          if before_head:
-              assert e.get('prevEntrySha256') == before_head, (before_head,e)
+          assert (e.get('prevEntrySha256') or None) == recorded_prev, (recorded_prev,e)
           assert v.get('ok') is True and v.get('verified') is True, v
           assert v.get('failures') == [], v
-          assert v.get('headSha256') == entry_sha, (entry_sha,v)
+          assert v.get('headSha256') == s.get('headSha256'), (v,s)
           assert int(v.get('entryCount') or 0) == int(s.get('entryCount') or 0), (v,s)
           assert re.fullmatch(r'[0-9a-f]{64}', entry_sha), entry_sha
+          current_head=s.get('headSha256')
+          our_entry_is_head=current_head == entry_sha
           Path(os.environ['GITHUB_STEP_SUMMARY']).write_text(
               '## OMEGA R201 live durable mission continuity\n\n'
               f"- Canonical SHA: `{os.environ['EXPECTED_SHA']}`\n"
               f"- Mission: `{mission_id}`\n"
               f"- R200 mission receipt: `{mission_receipt}`\n"
               f"- R201 durable entry: `{entry_sha}`\n"
-              f"- Prior head: `{before_head or 'GENESIS'}`\n"
+              f"- Entry previous hash: `{recorded_prev or 'GENESIS'}`\n"
+              f"- Pre-proof observed head: `{before_head or 'GENESIS'}`\n"
+              f"- Current durable head: `{current_head}`\n"
+              f"- Our entry remains current head: `{our_entry_is_head}`\n"
               f"- Durable entries after proof: `{s.get('entryCount')}`\n"
-              f"- Chain verified: `{v.get('verified')}`\n"
+              f"- Current whole chain verified: `{v.get('verified')}`\n"
+              '- Concurrent verified writes are permitted and do not invalidate persisted membership proof.\n'
               '- Canon mutation: `false`\n'
               '- Host-state mutation: `false`\n'
               '- Promotion authorized: `false`\n',
@@ -242,7 +306,10 @@ jobs:
               'missionId':mission_id,
               'missionReceiptSha256':mission_receipt,
               'entrySha256':entry_sha,
-              'priorHeadSha256':before_head,
+              'entryPrevSha256':recorded_prev,
+              'preProofObservedHeadSha256':before_head,
+              'currentHeadSha256':current_head,
+              'ourEntryIsCurrentHead':our_entry_is_head,
               'entryCount':s.get('entryCount'),
               'chainVerified':v.get('verified'),
           }, sort_keys=True))
