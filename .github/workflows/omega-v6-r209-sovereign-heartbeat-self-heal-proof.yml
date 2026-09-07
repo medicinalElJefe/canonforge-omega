@@ -1,0 +1,497 @@
+name: OMEGA V6 R209 sovereign heartbeat self-heal proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/scripts/INSTALL_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/sovereignHeartbeatRecoveryR209.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/test_r206_sovereign_windows_boot_continuity.py'
+      - 'canonforge-omega/tests/test_r207_windows_verified_venv_launch.py'
+      - 'canonforge-omega/tests/test_r208_physical_sovereign_acceptance.py'
+      - 'canonforge-omega/tests/test_r209_sovereign_heartbeat_self_heal.py'
+      - '.github/workflows/omega-v6-r209-sovereign-heartbeat-self-heal-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/scripts/INSTALL_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/sovereignHeartbeatRecoveryR209.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/test_r206_sovereign_windows_boot_continuity.py'
+      - 'canonforge-omega/tests/test_r207_windows_verified_venv_launch.py'
+      - 'canonforge-omega/tests/test_r208_physical_sovereign_acceptance.py'
+      - 'canonforge-omega/tests/test_r209_sovereign_heartbeat_self_heal.py'
+      - '.github/workflows/omega-v6-r209-sovereign-heartbeat-self-heal-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r209-sovereign-heartbeat-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  R208_MIN_CANONICAL_SHA: d156a60861fc3ad898dd8388a5b5b0553fefcfd3
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  cumulative-source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact R209 candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove canonical R208 ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$R208_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R208_MIN_CANONICAL_SHA" HEAD
+          grep -F 'R209 launch requested' canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1
+          grep -F 'OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208' canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1
+          grep -F 'SOVEREIGN_HEARTBEAT_RECOVERY_R209_ID = "r209-sovereign-heartbeat-self-heal"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'handleSovereignHeartbeatRecoveryR209' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install governed runtime test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+
+      - name: Prove R206-R209 sovereign lineage and R208 acceptance preservation
+        working-directory: canonforge-omega
+        run: |
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q \
+            tests/test_r206_sovereign_windows_boot_continuity.py \
+            tests/test_r207_windows_verified_venv_launch.py \
+            tests/test_r208_physical_sovereign_acceptance.py \
+            tests/test_r209_sovereign_heartbeat_self_heal.py \
+            tests/test_pairing_and_agent.py \
+            tests/test_omega_runtime.py
+
+      - name: Full cumulative Sovereign regression suite
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck complete cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Prove Cloudflare package and Durable Object contract dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r209-dry-run
+
+  windows-self-heal-proof:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+    steps:
+      - name: Checkout exact R209 candidate
+        uses: actions/checkout@v4
+
+      - name: Set up supported Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Parse installer, launcher, and preserved R208 prover
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($file in @(
+            'scripts\INSTALL_OMEGA_V6_WINDOWS.ps1',
+            'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1',
+            'scripts\PROVE_OMEGA_V6_WINDOWS.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell syntax rejected: $file"
+            }
+          }
+          Write-Host 'R209_POWERSHELL_PARSE_VERIFIED'
+
+      - name: Build installer-equivalent verified venv
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev,rcwa]'
+          if ($LASTEXITCODE -ne 0) { throw 'R209 Windows dependency installation failed' }
+
+      - name: Prove native grcwa and R206-R209 source invariants on Windows
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          $raw = & $py -m omega_runtime.rcwa_solver --probe
+          if ($LASTEXITCODE -ne 0) { throw 'R209 native RCWA probe process failed' }
+          $raw | Set-Content -Encoding utf8 'r209-rcwa-probe.json'
+          $probe = ($raw -join "`n") | ConvertFrom-Json
+          if (-not $probe.available) { throw 'R209 native grcwa RCWA is unavailable on Windows' }
+          & $py -m pytest -q `
+            tests\test_omega_runtime.py `
+            tests\test_pairing_and_agent.py `
+            tests\test_r175_independent_solver_validation.py `
+            tests\test_r206_sovereign_windows_boot_continuity.py `
+            tests\test_r207_windows_verified_venv_launch.py `
+            tests\test_r208_physical_sovereign_acceptance.py `
+            tests\test_r209_sovereign_heartbeat_self_heal.py
+          if ($LASTEXITCODE -ne 0) { throw 'R209 Windows invariant suite failed' }
+
+      - name: Execute healthy reuse then pairing-generation drift self-heal
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path '.').Path
+          $base = 'http://127.0.0.1:8127'
+          $env:OMEGA_PUBLIC_URL = $base
+          $env:OMEGA_APPROVED_ROOT = $root
+          $generationFile = Join-Path $env:LOCALAPPDATA 'OMEGA\agent-pairing-generation.txt'
+          $rotateFile = Join-Path $env:TEMP 'omega-r209-ci-rotation.cmd'
+
+          function Get-CanonicalAgent {
+            return Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.Name -match '^python' -and $_.CommandLine -and
+                $_.CommandLine -match 'omega_sovereign_agent\.py' -and
+                $_.CommandLine -like "*$root*"
+              } |
+              Select-Object -First 1
+          }
+
+          function Assert-Current([string]$Stage) {
+            $status = Invoke-RestMethod -Uri "$base/api/hybrid/status" -TimeoutSec 5
+            if (-not $status.heartbeatCurrent) { throw "$Stage heartbeat is not current" }
+            if (-not $status.authenticated) { throw "$Stage heartbeat is not authenticated" }
+            if (-not $status.pcOnline) { throw "$Stage PC state is not online" }
+            if (-not $status.proof) { throw "$Stage heartbeat proof is missing" }
+            if (-not (Test-Path $generationFile)) { throw "$Stage pairing-generation sidecar missing" }
+            $stored = [int64](Get-Content -Raw $generationFile).Trim()
+            if ($stored -ne [int64]$status.pairingGeneration) { throw "$Stage pairing generation is not bound" }
+            return $status
+          }
+
+          $passed = $false
+          try {
+            Remove-Item $generationFile -Force -ErrorAction SilentlyContinue
+
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof -ForceRepair
+            if ($LASTEXITCODE -ne 0) { throw "R209 initial recovery launch exited $LASTEXITCODE" }
+            $firstStatus = Assert-Current 'initial recovery'
+            $firstAgent = Get-CanonicalAgent
+            if (-not $firstAgent) { throw 'R209 initial canonical agent process missing' }
+            $firstPid = [int]$firstAgent.ProcessId
+            $firstGeneration = [int64]$firstStatus.pairingGeneration
+
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof
+            if ($LASTEXITCODE -ne 0) { throw "R209 healthy reuse launch exited $LASTEXITCODE" }
+            $reuseStatus = Assert-Current 'healthy reuse'
+            $reuseAgent = Get-CanonicalAgent
+            if (-not $reuseAgent -or [int]$reuseAgent.ProcessId -ne $firstPid) {
+              throw 'R209 replaced a healthy generation-bound agent instead of reusing it'
+            }
+            if ([int64]$reuseStatus.pairingGeneration -ne $firstGeneration) {
+              throw 'R209 healthy reuse unexpectedly rotated pairing generation'
+            }
+
+            Invoke-WebRequest -UseBasicParsing -Uri "$base/api/hybrid/launcher" -OutFile $rotateFile -TimeoutSec 10
+            Remove-Item $rotateFile -Force -ErrorAction SilentlyContinue
+            $rotated = Invoke-RestMethod -Uri "$base/api/hybrid/status" -TimeoutSec 5
+            if ([int64]$rotated.pairingGeneration -le $firstGeneration) {
+              throw 'R209 test failed to create pairing-generation drift'
+            }
+            $externallyRotatedGeneration = [int64]$rotated.pairingGeneration
+
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof
+            if ($LASTEXITCODE -ne 0) { throw "R209 generation-drift repair launch exited $LASTEXITCODE" }
+            $repairedStatus = Assert-Current 'generation drift repair'
+            $repairedAgent = Get-CanonicalAgent
+            if (-not $repairedAgent) { throw 'R209 repaired canonical agent process missing' }
+            if ([int]$repairedAgent.ProcessId -eq $firstPid) {
+              throw 'R209 failed to replace the generation-unbound agent'
+            }
+            if ([int64]$repairedStatus.pairingGeneration -le $externallyRotatedGeneration) {
+              throw 'R209 repair did not rotate a fresh one-time pairing generation'
+            }
+
+            [ordered]@{
+              schema = 'OMEGA_WINDOWS_SOVEREIGN_HEARTBEAT_SELF_HEAL_PROOF_R209'
+              initialAgentPid = $firstPid
+              reusedAgentPid = [int]$reuseAgent.ProcessId
+              repairedAgentPid = [int]$repairedAgent.ProcessId
+              initialGeneration = $firstGeneration
+              externallyRotatedGeneration = $externallyRotatedGeneration
+              repairedGeneration = [int64]$repairedStatus.pairingGeneration
+              heartbeatCurrent = [bool]$repairedStatus.heartbeatCurrent
+              authenticated = [bool]$repairedStatus.authenticated
+              pcOnline = [bool]$repairedStatus.pcOnline
+              r208AcceptanceExecuted = $false
+              authority = 'WINDOWS_CI_TRANSPORT_SELF_HEAL_PROOF_NOT_OPERATOR_PC_ACCEPTANCE'
+              canonicalMutation = $false
+              promotionAuthorized = $false
+            } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 'r209-self-heal-proof.json'
+            $passed = $true
+            Write-Host 'R209_WINDOWS_GENERATION_DRIFT_SELF_HEAL_VERIFIED_NOT_USER_PC'
+          }
+          finally {
+            Remove-Item $rotateFile -Force -ErrorAction SilentlyContinue
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.Name -match '^python' -and $_.CommandLine -and
+                ($_.CommandLine -match 'omega_sovereign_agent\.py' -or $_.CommandLine -match 'omega_runtime\.cli') -and
+                $_.CommandLine -like "*$root*"
+              } |
+              ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+            Remove-Item $generationFile -Force -ErrorAction SilentlyContinue
+          }
+          if (-not $passed) { throw 'R209 Windows self-heal proof did not complete' }
+
+      - name: Record physical-PC authority boundary
+        if: always()
+        run: |
+          @'
+          ## OMEGA R209 Windows heartbeat self-heal proof
+
+          This runner proves Windows transport/recovery mechanics: the installer-equivalent verified `.venv`, native `grcwa`, current authenticated localhost heartbeat, healthy-agent reuse, pairing-generation drift detection, scoped stale-agent replacement, fresh one-time pairing, and fail-closed recovery.
+
+          R208 physical acceptance is deliberately skipped in this CI integration step. This runner is not the operator's physical Sovereign PC and cannot satisfy R181 user-device acceptance.
+          '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload R209 Windows proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r209-windows-heartbeat-self-heal-proof
+          if-no-files-found: warn
+          path: |
+            canonforge-omega/r209-rcwa-probe.json
+            canonforge-omega/r209-self-heal-proof.json
+            canonforge-omega/logs/
+
+  deploy-and-prove-live-r209:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: [cumulative-source-proof, windows-self-heal-proof]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: omega-v6-production
+      cancel-in-progress: false
+    steps:
+      - name: Checkout exact canonical R209 merge
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact canonical lineage and bounded R209 delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$R208_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R208_MIN_CANONICAL_SHA" HEAD
+          mapfile -t parents < <(git show -s --format='%P' "$GITHUB_SHA" | tr ' ' '\n')
+          test "${#parents[@]}" -eq 2
+          PREVIOUS_CANONICAL="${parents[0]}"
+          git merge-base --is-ancestor "$R208_MIN_CANONICAL_SHA" "$PREVIOUS_CANONICAL"
+          mapfile -t changed < <(git diff --name-only "$PREVIOUS_CANONICAL" HEAD)
+          allowed=(
+            '.github/workflows/omega-v6-r209-sovereign-heartbeat-self-heal-proof.yml'
+            'canonforge-omega/scripts/INSTALL_OMEGA_V6_WINDOWS.ps1'
+            'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+            'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/system/sovereignHeartbeatRecoveryR209.ts'
+            'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+            'canonforge-omega/tests/test_r206_sovereign_windows_boot_continuity.py'
+            'canonforge-omega/tests/test_r207_windows_verified_venv_launch.py'
+            'canonforge-omega/tests/test_r209_sovereign_heartbeat_self_heal.py'
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for candidate in "${allowed[@]}"; do [[ "$path" = "$candidate" ]] && ok=true; done
+            if [[ "$ok" != true ]]; then echo "R209_UNEXPECTED_CANONICAL_DELTA $path"; exit 1; fi
+          done
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+          echo "R209_EXACT_CANONICAL_HEAD_VERIFIED $GITHUB_SHA"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Re-prove full cumulative runtime before production mutation
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and typecheck exact canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Bind exact canonical SHA without source mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          source=Path('wrangler.toml').read_text(encoding='utf-8')
+          marker='[vars]\n'
+          assert marker in source
+          assert 'CANONICAL_GIT_SHA =' not in source
+          sha=os.environ['GITHUB_SHA']
+          Path('wrangler.r209-closure.toml').write_text(source.replace(marker, marker+f'CANONICAL_GIT_SHA = "{sha}"\n',1), encoding='utf-8')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.r209-closure.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Dry-run exact R209 production config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.r209-closure.toml
+
+      - name: Final exact-head check before deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+
+      - name: Deploy exact canonical R209 SHA
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.r209-closure.toml
+
+      - name: Prove exact-SHA R209 manifest, token-free launcher, and inherited authorities live
+        id: liveproof
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r209-live
+          settled=false
+          for attempt in $(seq 1 90); do
+            rm -f /tmp/r209-live/r209.json /tmp/r209-live/r205.json /tmp/r209-live/r204.json /tmp/r209-live/r181.json /tmp/r209-live/launcher.headers /tmp/r209-live/launcher.cmd
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r209/manifest" -o /tmp/r209-live/r209.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/r209-live/r205.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r204/manifest" -o /tmp/r209-live/r204.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/acceptance/r181/manifest" -o /tmp/r209-live/r181.json \
+              && curl --fail --silent --show-error --max-time 30 -D /tmp/r209-live/launcher.headers "$V6_URL/api/hybrid/launcher" -o /tmp/r209-live/launcher.cmd \
+              && EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          expected=os.environ['EXPECTED_SHA']
+          r209=json.loads(Path('/tmp/r209-live/r209.json').read_text())
+          r205=json.loads(Path('/tmp/r209-live/r205.json').read_text())
+          r204=json.loads(Path('/tmp/r209-live/r204.json').read_text())
+          r181=json.loads(Path('/tmp/r209-live/r181.json').read_text())
+          headers=Path('/tmp/r209-live/launcher.headers').read_text(errors='replace').lower()
+          launcher=Path('/tmp/r209-live/launcher.cmd').read_text(errors='replace')
+
+          assert r209.get('ok') is True, r209
+          assert r209.get('schema') == 'OMEGA_SOVEREIGN_HEARTBEAT_RECOVERY_MANIFEST_R209', r209
+          assert r209.get('release') == 'r209-sovereign-heartbeat-self-heal', r209
+          assert r209.get('deploymentIdentityBound') is True, r209
+          assert r209.get('canonicalGitSha') == expected, (expected, r209.get('canonicalGitSha'))
+          b=r209.get('boundaries') or {}
+          assert b.get('currentAuthenticatedHeartbeatRequiredForPcOnline') is True, b
+          assert b.get('r208FullAcceptanceStillRequiresR181RcwaB059Conjunction') is True, b
+          assert b.get('cloudBootstrapDoesNotIssuePairingCredential') is True, b
+          assert b.get('cloudBootstrapDoesNotExecuteOnUserPcByItself') is True, b
+          assert b.get('canonicalMutation') is False and b.get('promotionAuthorized') is False, b
+
+          assert r205.get('canonicalGitSha') == expected, r205
+          assert r204.get('canonicalGitSha') == expected, r204
+          assert r181.get('canonicalGitSha') == expected and r181.get('deploymentIdentityBound') is True, r181
+
+          assert 'x-omega-hybrid-bootstrap: r209-sovereign-heartbeat-self-heal' in headers, headers
+          assert f'x-omega-canonical-sha: {expected}' in headers, headers
+          assert 'start_omega_pc_link_r209.cmd' in headers, headers
+          assert expected in launcher, launcher[:1500]
+          raw=f'raw.githubusercontent.com/medicinalElJefe/canonforge-omega/{expected}/canonforge-omega'
+          assert raw in launcher, launcher[:3000]
+          assert '-RootOverride' in launcher and '-AgentScriptOverride' in launcher and '-AcceptanceProverOverride' in launcher and '-ForceRepair' in launcher, launcher[:4000]
+          assert 'OMEGA_TOKEN=' not in launcher, 'public R209 bootstrap must never contain a pairing credential'
+          assert 'OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208' in launcher, launcher[:4000]
+          PY
+            then
+              settled=true
+              break
+            fi
+            echo "R209 exact-SHA production not settled yet (attempt $attempt/90)."
+            sleep 3
+          done
+          if [ "$settled" != true ]; then
+            echo 'R209_LIVE_EXACT_SHA_PROOF_NOT_SETTLED'
+            cat /tmp/r209-live/r209.json 2>/dev/null || true
+            cat /tmp/r209-live/launcher.headers 2>/dev/null || true
+            head -c 4000 /tmp/r209-live/launcher.cmd 2>/dev/null || true
+            exit 1
+          fi
+          echo "R209_LIVE_EXACT_SHA_TOKEN_FREE_SELF_HEAL_BOOTSTRAP_VERIFIED $GITHUB_SHA"
+
+      - name: Roll back R209 if live exact-SHA proof fails
+        if: steps.liveproof.outcome != 'success'
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler rollback --message 'OMEGA R209 rollback: exact-SHA heartbeat self-heal live proof failed'
+          exit 1
+
+      - name: Upload R209 live closure proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r209-live-closure-${{ github.run_id }}
+          path: /tmp/r209-live/
+          if-no-files-found: ignore
