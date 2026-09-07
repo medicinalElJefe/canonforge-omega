@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR199.ts"
-# R199 wraps the preserved R169-R198 public runtime rather than replacing it.
-# Only the OmegaRuntime Durable Object and Hybrid execution routes are upgraded;
-# all previously admitted Earth/SAR, SAI, swarm, computation and UI layers remain intact.
+main = "src/runtimeEntryR169.ts"
+# R199 is integrated additively into the established canonical R169 entrypoint.
+# Existing public capability identities remain stable while Hybrid execution gains
+# project-aware verified-return semantics.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -12,7 +12,7 @@ globs = ["**/*.py"]
 fallthrough = true
 
 [vars]
-BUILD_ID = "r199-sovereign-pc-full-runtime"
+BUILD_ID = "r87-semantic-edge-settle-proof"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
