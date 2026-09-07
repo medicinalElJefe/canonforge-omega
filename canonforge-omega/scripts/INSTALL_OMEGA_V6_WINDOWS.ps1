@@ -12,7 +12,7 @@ function Log([string]$Text) {
   $line | Tee-Object -FilePath $Log -Append
 }
 
-Log "OMEGA V6 R207 install root=$Root"
+Log "OMEGA V6 R208 install root=$Root"
 
 if (-not (Get-Command py -ErrorAction SilentlyContinue) -and -not (Get-Command python -ErrorAction SilentlyContinue)) {
   throw 'Python 3.10+ is required. Install Python and rerun this installer.'
@@ -74,13 +74,14 @@ if ($LASTEXITCODE -ne 0 -or ($RcwaProbe -join "`n") -notmatch '"available"\s*:\s
   throw 'Native grcwa RCWA probe failed. Installation is not promoted.'
 }
 
-Log 'running sovereign runtime, pairing, independent-solver, and R207 launch verification'
+Log 'running sovereign runtime, pairing, independent-solver, R207 launch, and R208 recovery verification'
 & $Vpy -m pytest -q `
   (Join-Path $Root 'tests\test_omega_runtime.py') `
   (Join-Path $Root 'tests\test_pairing_and_agent.py') `
   (Join-Path $Root 'tests\test_r175_independent_solver_validation.py') `
   (Join-Path $Root 'tests\test_r206_sovereign_windows_boot_continuity.py') `
-  (Join-Path $Root 'tests\test_r207_windows_verified_venv_launch.py') |
+  (Join-Path $Root 'tests\test_r207_windows_verified_venv_launch.py') `
+  (Join-Path $Root 'tests\test_r208_sovereign_heartbeat_self_heal.py') |
   Tee-Object -FilePath $Log -Append
 if ($LASTEXITCODE -ne 0) { throw 'OMEGA verification failed; installation not promoted.' }
 
@@ -100,12 +101,13 @@ $Shortcut = $Shell.CreateShortcut($DesktopShortcut)
 $Shortcut.TargetPath = 'powershell.exe'
 $Shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$Launcher`""
 $Shortcut.WorkingDirectory = $Root
-$Shortcut.Description = 'OMEGA V6 Sovereign Runtime + authenticated PC link'
+$Shortcut.Description = 'OMEGA V6 Sovereign Runtime + authenticated self-healing PC link'
 $Shortcut.Save()
 Log "desktop shortcut created: $DesktopShortcut"
 
 # Continuity across Windows logins: use the exact same canonical entry point, but do not
-# open a browser every time Windows starts.
+# open a browser every time Windows starts. R208 will replace a stale/generation-unbound
+# matching agent before requesting a new one-time pairing credential.
 $StartupDir = [Environment]::GetFolderPath('Startup')
 if ($StartupDir) {
   $StartupShortcut = Join-Path $StartupDir 'OMEGA V6 Sovereign Continuity.lnk'
@@ -113,11 +115,11 @@ if ($StartupDir) {
   $Auto.TargetPath = 'powershell.exe'
   $Auto.Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Launcher`" -NoBrowser"
   $Auto.WorkingDirectory = $Root
-  $Auto.Description = 'Start canonical OMEGA V6 runtime and authenticated sovereign heartbeat after Windows login'
+  $Auto.Description = 'Start canonical OMEGA V6 runtime and self-heal authenticated sovereign heartbeat after Windows login'
   $Auto.Save()
   Log "startup continuity shortcut created: $StartupShortcut"
 }
 
-Log 'PASS dependencies, native RCWA, targeted tests, verified-venv launch contract, and Windows continuity'
+Log 'PASS dependencies, native RCWA, targeted tests, verified-venv launch contract, R208 heartbeat self-heal, and Windows continuity'
 Write-Host 'OMEGA V6 installation verified. Starting the canonical runtime and sovereign PC link now.'
 Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$Launcher`"") -WorkingDirectory $Root
