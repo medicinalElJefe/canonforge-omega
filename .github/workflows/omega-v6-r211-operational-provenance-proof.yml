@@ -57,27 +57,9 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -e '.[dev]'
-      - name: R211 plus cumulative R175-R210 authority regression
+      - name: Full cumulative Python regression including R211
         working-directory: canonforge-omega
-        run: |
-          python -m pytest -q \
-            tests/test_r211_operational_provenance_fabric.py \
-            tests/test_r210_sovereign_proof_archive.py \
-            tests/test_r209_sovereign_convergence_diagnostics.py \
-            tests/test_r208_physical_sovereign_acceptance.py \
-            tests/test_r207_windows_verified_venv_launch.py \
-            tests/test_r206_sovereign_windows_boot_continuity.py \
-            tests/test_r205_whole_system_professional_control.py \
-            tests/test_r204_verified_hybrid_return_admission.py \
-            tests/test_r201_durable_mission_continuity.py \
-            tests/test_r198_earth_sar_truth_fusion.py \
-            tests/test_r197_source_grounding_runtime.py \
-            tests/test_r195_one_system_drive_corpus.py \
-            tests/test_r193_full_restoration_workspace.py \
-            tests/test_r190_whole_system_acceptance.py \
-            tests/test_r185_172_cloud_federation.py \
-            tests/test_r175_independent_solver_validation.py \
-            tests/test_role_separated_convergence_r128.py
+        run: python -m pytest -q
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
