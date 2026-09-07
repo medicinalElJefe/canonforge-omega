@@ -1,5 +1,6 @@
 import { AnyObj, DurableBinding, SwarmEnv, AUTONOMIC_REVISION, CONTINUITY_LAW, ORGANISM_REVISION, SWARM_CELL_COUNT, SWARM_DOMAIN_ROLES, SWARM_LANE_COUNT, SWARM_PHASE_ROLES, SWARM_RECOVERY_REVISION, SWARM_REGULATION_ROLES, SWARM_SOURCE_COMMIT, TRUTH_BOUNDARY, cellId, cellIndex, jsonResponse, laneIndex, sha } from "./swarmCoreR169";
 import { SWARM_MODEL_R171, SWARM_MODEL_R171_AUTHORITY } from "./swarmCellR169";
+import { governAutonomicMissionR180, swarmGovernorManifestR180 } from "./swarmGovernorR180";
 
 const COMPUTE_PATHS = new Set([
   "/api/compute/relativity/event",
@@ -22,6 +23,18 @@ async function forward(binding: DurableBinding | undefined, name: string, path: 
   const stub = binding.get(binding.idFromName(name)), init: RequestInit = { method: request.method, headers: request.headers };
   if (!["GET", "HEAD"].includes(request.method)) init.body = await request.text();
   return stub.fetch(new Request(`https://swarm.internal${path}`, init));
+}
+async function autonomicStatus(env: SwarmEnv): Promise<AnyObj> {
+  if (!env.OMEGA_SWARM_AUTONOMIC) return { bindingAvailable: false, activeMissionCount: 0, queueDepth: 0 };
+  try {
+    const binding = env.OMEGA_SWARM_AUTONOMIC;
+    const stub = binding.get(binding.idFromName("omega-swarm-autonomic-root"));
+    const response = await stub.fetch(new Request("https://swarm.internal/status", { method: "GET" }));
+    const data = await response.json().catch(() => ({})) as AnyObj;
+    return { ...data, bindingAvailable: response.ok };
+  } catch (error) {
+    return { bindingAvailable: false, statusReadError: error instanceof Error ? error.message : String(error), activeMissionCount: 0, queueDepth: 0 };
+  }
 }
 function residualOf(computation: AnyObj): number | null {
   for (const key of ["invariant_relative_residual", "invariant_absolute_residual", "energy_balance_residual"]) {
@@ -78,8 +91,15 @@ export async function handleSwarmRequest(request: Request, env: SwarmEnv): Promi
   if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }));
   const path = new URL(request.url).pathname;
   if (request.method === "POST" && path === "/api/swarm/compute-consensus") return withCors(await computeConsensus(request, env));
+  if (request.method === "GET" && path === "/api/swarm/governor/manifest") return withCors(swarmGovernorManifestR180());
+  if (request.method === "POST" && path === "/api/swarm/governor/preflight") {
+    const body = await request.json().catch(() => ({})) as AnyObj;
+    const status = await autonomicStatus(env);
+    const governed = governAutonomicMissionR180(body, status);
+    return withCors(jsonResponse({ ok: governed.admitted, ...governed, statusSnapshot: status }, governed.admitted ? 200 : 429));
+  }
   if (path === "/api/swarm/manifest") return withCors(jsonResponse({
-    ok: true, schema: "OMEGA_SWARM_COMPUTATION_CONVERGENCE_R171", recoveryRevision: SWARM_RECOVERY_REVISION, operatorRevision: "R171",
+    ok: true, schema: "OMEGA_SWARM_COMPUTATION_CONVERGENCE_R171", recoveryRevision: SWARM_RECOVERY_REVISION, operatorRevision: "R171", governorRevision: "R180",
     historicalRuntime: { cell: "R121", organism: ORGANISM_REVISION, autonomic: AUTONOMIC_REVISION, sourceRepo: "medicinalElJefe/OMEGAv6", sourceCommit: SWARM_SOURCE_COMMIT },
     hierarchy: { seed: 1, organs: 12, branches: 144, cells: SWARM_CELL_COUNT, lanes: SWARM_LANE_COUNT },
     roles: { domains: SWARM_DOMAIN_ROLES, phases: SWARM_PHASE_ROLES, regulations: SWARM_REGULATION_ROLES },
@@ -91,8 +111,23 @@ export async function handleSwarmRequest(request: Request, env: SwarmEnv): Promi
     },
     continuityLaw: CONTINUITY_LAW,
     preservedNamespaces: ["OmegaSwarmCell", "OmegaSwarmCoordinator", "OmegaSwarmBranch", "OmegaSwarmOrgan", "OmegaSwarmOrganismCoordinator", "OmegaSwarmAutonomicCoordinator"],
-    truthBoundary: `${TRUTH_BOUNDARY} R171 can redundantly execute the bounded R170 reference solvers across distinct swarm cells; identical implementation agreement is a consistency check, not independent physical validation.`, canonicalMutation: false,
+    loadGovernance: { route: "/api/swarm/governor/manifest", missionAdmission: "MANDATORY_FOR_AUTONOMIC_MISSION_CREATE", automaticSelfDevelopmentDefaultCeiling: 144, full1728RequiresProof: true },
+    truthBoundary: `${TRUTH_BOUNDARY} R171 can redundantly execute bounded R170 reference solvers across distinct swarm cells. R180 adds load admission before autonomic mission creation; it never converts execution into Canon authority.`, canonicalMutation: false,
   }));
+  if (request.method === "POST" && path === "/api/swarm/autonomic/missions") {
+    const original = await request.json().catch(() => ({})) as AnyObj;
+    const status = await autonomicStatus(env);
+    const governed = governAutonomicMissionR180(original, status);
+    if (!governed.admitted) return withCors(jsonResponse({ ok: false, code: "SWARM_GOVERNOR_LOAD_SHED", receipt: governed.receipt, statusSnapshot: status, canonicalMutation: false }, 429));
+    const headers = new Headers(request.headers);
+    headers.set("content-type", "application/json");
+    const governedRequest = new Request(request.url, { method: "POST", headers, body: JSON.stringify(governed.rewritten) });
+    const response = await forward(env.OMEGA_SWARM_AUTONOMIC, "omega-swarm-autonomic-root", "/missions", governedRequest);
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.set("x-omega-swarm-governor", "R180");
+    responseHeaders.set("x-omega-swarm-pressure", String(governed.receipt.pressure));
+    return withCors(new Response(response.body, { status: response.status, statusText: response.statusText, headers: responseHeaders }));
+  }
   let response: Response;
   if (path.startsWith("/api/swarm/autonomic")) response = await forward(env.OMEGA_SWARM_AUTONOMIC, "omega-swarm-autonomic-root", path.slice("/api/swarm/autonomic".length) || "/status", request);
   else if (path.startsWith("/api/swarm/organism")) response = await forward(env.OMEGA_SWARM_ORGANISM, "omega-swarm-organism-root", path.slice("/api/swarm/organism".length) || "/status", request);
