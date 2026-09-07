@@ -1,13 +1,18 @@
 name = "omegav6"
-main = "src/runtimeEntryR169.ts"
-# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R198 is integrated additively through
-# the existing R195 final navigation/enhancement chain and does not replace the canonical entrypoint.
+main = "src/runtimeEntryR199.ts"
+# R199 wraps the preserved R169-R198 public runtime rather than replacing it.
+# Only the OmegaRuntime Durable Object and Hybrid execution routes are upgraded;
+# all previously admitted Earth/SAR, SAI, swarm, computation and UI layers remain intact.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
+[[rules]]
+type = "Text"
+globs = ["**/*.py"]
+fallthrough = true
+
 [vars]
-BUILD_ID = "r87-semantic-edge-settle-proof"
+BUILD_ID = "r199-sovereign-pc-full-runtime"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
@@ -44,6 +49,7 @@ DRIVE_CORPUS_ONE_SYSTEM_R195_ID = "r195-drive-corpus-one-system"
 DEWEY_WATER_CONTINUITY_R195_ID = "r195-dewey-water-continuity-compute"
 DRIVE_CORPUS_SHA256_R195 = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655"
 EARTH_SAR_TRUTH_R198_ID = "r198-real-public-sar-truth-fusion"
+SOVEREIGN_PC_R199_ID = "r199-project-aware-verified-return-runtime"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
