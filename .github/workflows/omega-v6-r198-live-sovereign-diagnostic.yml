@@ -32,12 +32,6 @@ jobs:
           for p in paths:
               if any(k in p.lower() for k in ['hybrid','mission','return','job','build','project','agent','execution','convergence']):
                   print('PATH',p[:220])
-          for needle in ['RUN FULL SOVEREIGN BUILD','HOLD_PROJECT_NOT_FOUND','Execution proof closure']:
-              i=h.find(needle)
-              if i>=0:
-                  excerpt=h[max(0,i-1500):min(len(h),i+2200)]
-                  excerpt=re.sub(r'(?i)(token|secret|authorization)([^\n<]{0,10})[^\s"\'<>]{8,}',r'\1\2[REDACTED]',excerpt)
-                  print('\nEXCERPT',needle,'\n',excerpt)
           PY
           echo '=== PUBLIC JSON SHAPES ==='
           for path in /api/hybrid/status /api/development/status /api/convergence/edge; do
@@ -59,12 +53,25 @@ jobs:
               echo UNAVAILABLE
             fi
           done
-          echo '=== CANDIDATE AGENT ROUTES ==='
-          for path in /omega-hybrid-agent.py /api/hybrid/agent.py /api/hybrid/agent /api/agent/download /api/hybrid/download-agent; do
-            code=$(curl --silent --show-error --max-time 20 -o /tmp/agent.out -w '%{http_code}' "$LIVE$path" || true)
-            bytes=$(wc -c < /tmp/agent.out 2>/dev/null || echo 0)
-            echo "$path $code $bytes"
-            if [ "$code" = 200 ] && [ "$bytes" -gt 1000 ]; then
-              head -c 240 /tmp/agent.out | tr '\n' ' '; echo
-            fi
-          done
+          echo '=== LIVE R132 AGENT ==='
+          curl --fail --silent --show-error --max-time 25 "$LIVE/omega-hybrid-agent.py" -o /tmp/agent.py
+          sha256sum /tmp/agent.py
+          wc -c /tmp/agent.py
+          python - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/agent.py').read_text(errors='replace').splitlines()
+          keys=('project','approved_root','return','result','mission','job','poll','build','package','sha256','heartbeat')
+          hits=[]
+          for i,line in enumerate(lines,1):
+              low=line.lower()
+              if any(k in low for k in keys): hits.append(i)
+          ranges=[]
+          for i in hits:
+              a=max(1,i-4); b=min(len(lines),i+8)
+              if ranges and a <= ranges[-1][1]+1: ranges[-1]=(ranges[-1][0],max(ranges[-1][1],b))
+              else:ranges.append((a,b))
+          for a,b in ranges:
+              if b-a > 80: b=a+80
+              print(f'--- agent lines {a}-{b} ---')
+              for n in range(a,b+1): print(f'{n:04d}: {lines[n-1]}')
+          PY
