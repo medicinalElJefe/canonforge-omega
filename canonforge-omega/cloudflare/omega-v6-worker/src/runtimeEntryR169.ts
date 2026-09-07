@@ -7,7 +7,7 @@ import { warpBuildCandidateLabResponse } from "./swarm/warpBuildCandidateLabR178
 import { handleSuccessorGateR183 } from "./swarm/successorGateR183";
 import { handleImprovementDiscoveryR184 } from "./swarm/improvementDiscoveryR184";
 import { handleCloudSwarmR185 } from "./swarm/cloudSwarmR185";
-import { handleSuccessorEvidenceR186 } from "./swarm/sourcePatchR187";
+import { handleSuccessorEvidenceR186 } from "./swarm/successorEvidenceR186";
 import { handleSourcePatchR187 } from "./swarm/sourcePatchR187";
 import { handleMotionTimeR188 } from "./swarm/motionTimeR188";
 import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
