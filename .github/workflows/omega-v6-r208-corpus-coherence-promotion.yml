@@ -1,0 +1,314 @@
+name: OMEGA V6 R208 corpus coherence production promotion
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - '.github/workflows/omega-v6-r208-corpus-coherence-promotion.yml'
+      - '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/universalNavigationR192.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/corpusCoverageR208.ts'
+      - 'canonforge-omega/tests/test_r208_r192_edge_coherence.py'
+      - 'canonforge-omega/tests/test_r208_corpus_coverage.py'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - '.github/workflows/omega-v6-r208-corpus-coherence-promotion.yml'
+      - '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/universalNavigationR192.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/corpusCoverageR208.ts'
+      - 'canonforge-omega/tests/test_r208_r192_edge_coherence.py'
+      - 'canonforge-omega/tests/test_r208_corpus_coverage.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-v6-production
+  cancel-in-progress: false
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  R207_MIN_CANONICAL_SHA: 187b3d9471f0e0369d82e1dfd7f3990af7c92ac2
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  prove-r208-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate with canonical history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove R207 ancestry and R208 additive scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$R207_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R207_MIN_CANONICAL_SHA" HEAD
+          test -f canonforge-omega/cloudflare/omega-v6-worker/src/system/corpusCoverageR208.ts
+          grep -F 'CORPUS_COVERAGE_RELEASE_R208 = "r208-whole-corpus-coverage-truth"' canonforge-omega/cloudflare/omega-v6-worker/src/system/corpusCoverageR208.ts
+          grep -F 'enhanceCorpusCoverageR208' canonforge-omega/cloudflare/omega-v6-worker/src/universalNavigationR192.ts
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          test "$(grep -c 'name = \"OMEGA_RUNTIME\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
+          ! grep -q 'OMEGA_CORPUS_COVERAGE_R208' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove R208 truth, R192 repair and cumulative runtime
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q \
+            tests/test_r208_r192_edge_coherence.py \
+            tests/test_r208_corpus_coverage.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r195_drive_corpus_one_system.py \
+            tests/test_r198_earth_sar_truth_fusion.py \
+            tests/test_r201_durable_mission_execution.py \
+            tests/test_r204_verified_hybrid_return_admission.py \
+            tests/test_r205_whole_system_professional_bridge.py \
+            tests/test_r206_sovereign_windows_boot_continuity.py \
+            tests/test_r207_windows_verified_venv_launch.py
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck and dry-run cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir .r208-dry-run
+
+  deploy-exact-canonical-r208:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: prove-r208-candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact canonical promotion commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact canonical head and bounded R208 merge delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$R207_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R207_MIN_CANONICAL_SHA" HEAD
+          mapfile -t parents < <(git show -s --format='%P' "$GITHUB_SHA" | tr ' ' '\n')
+          test "${#parents[@]}" -eq 2
+          PREVIOUS_CANONICAL="${parents[0]}"
+          git merge-base --is-ancestor "$R207_MIN_CANONICAL_SHA" "$PREVIOUS_CANONICAL"
+          mapfile -t changed < <(git diff --name-only "$PREVIOUS_CANONICAL" HEAD)
+          allowed=(
+            '.github/workflows/omega-v6-r208-corpus-coherence-promotion.yml'
+            '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/universalNavigationR192.ts'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/system/corpusCoverageR208.ts'
+            'canonforge-omega/tests/test_r208_r192_edge_coherence.py'
+            'canonforge-omega/tests/test_r208_corpus_coverage.py'
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for candidate in "${allowed[@]}"; do [[ "$path" = "$candidate" ]] && ok=true; done
+            if [[ "$ok" != true ]]; then echo "R208_UNEXPECTED_PROMOTION_DELTA $path"; exit 1; fi
+          done
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+          echo "R208_EXACT_CANONICAL_HEAD_VERIFIED $GITHUB_SHA"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Re-prove full cumulative regression before production mutation
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r208_r192_edge_coherence.py tests/test_r208_corpus_coverage.py
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and typecheck exact canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Capture pre-deploy production state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r208-proof
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/_omega/health?r208Pre=$GITHUB_RUN_ID" -o /tmp/r208-proof/pre-health.json
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/api/system/r204/manifest?r208Pre=$GITHUB_RUN_ID" -o /tmp/r208-proof/pre-r204.json
+
+      - name: Bind deployment identity to exact canonical SHA without source mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          source=Path('wrangler.toml').read_text(encoding='utf-8')
+          marker='[vars]\n'
+          assert marker in source
+          assert 'CANONICAL_GIT_SHA =' not in source
+          sha=os.environ['GITHUB_SHA']
+          Path('wrangler.r208-promotion.toml').write_text(source.replace(marker, marker+f'CANONICAL_GIT_SHA = "{sha}"\n',1), encoding='utf-8')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.r208-promotion.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Dry-run exact R208 promotion config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.r208-promotion.toml
+
+      - name: Final exact-head check immediately before production mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+
+      - name: Deploy exact canonical R208 Worker to Cloudflare
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.r208-promotion.toml
+
+      - name: Prove live R208 corpus, R192 navigation and inherited authority chain
+        id: liveproof
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          stable=0
+          for attempt in $(seq 1 90); do
+            proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}"
+            rm -f /tmp/r208-proof/r205.json /tmp/r208-proof/r204.json /tmp/r208-proof/r201.json /tmp/r208-proof/r193.json /tmp/r208-proof/system.headers /tmp/r208-proof/system.html /tmp/r208-proof/root.headers /tmp/r208-proof/root.html
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r205/manifest?edgeProof=$proof" -o /tmp/r208-proof/r205.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r204/manifest?edgeProof=$proof" -o /tmp/r208-proof/r204.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/mission/r201/verify?edgeProof=$proof" -o /tmp/r208-proof/r201.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/workspace/r193/manifest?edgeProof=$proof" -o /tmp/r208-proof/r193.json \
+              && curl --fail --silent --show-error --max-time 30 -D /tmp/r208-proof/system.headers "$V6_URL/system?edgeProof=$proof" -o /tmp/r208-proof/system.html \
+              && curl --fail --silent --show-error --max-time 30 -D /tmp/r208-proof/root.headers "$V6_URL/?edgeProof=$proof" -o /tmp/r208-proof/root.html \
+              && EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          sha=os.environ['EXPECTED_SHA']
+          def load(p): return json.loads(Path(p).read_text())
+          r205=load('/tmp/r208-proof/r205.json')
+          r204=load('/tmp/r208-proof/r204.json')
+          r201=load('/tmp/r208-proof/r201.json')
+          r193=load('/tmp/r208-proof/r193.json')
+          sh=Path('/tmp/r208-proof/system.headers').read_text(errors='replace').lower()
+          sy=Path('/tmp/r208-proof/system.html').read_text(errors='replace')
+          rh=Path('/tmp/r208-proof/root.headers').read_text(errors='replace').lower()
+          ro=Path('/tmp/r208-proof/root.html').read_text(errors='replace')
+          assert r205.get('ok') is True and r205.get('canonicalGitSha') == sha, r205
+          assert r204.get('ok') is True and r204.get('canonicalGitSha') == sha, r204
+          assert r204.get('schema') == 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204', r204
+          assert r201.get('ok') is True and r201.get('verified') is True and r201.get('failures') == [], r201
+          assert r193.get('ok') is True and r193.get('release') == 'r193-full-restoration-workspace', r193
+          assert 'content-type: text/html' in sh, sh
+          assert 'x-omega-navigation: r192-navigation-home-repair' in sh, sh
+          assert 'x-omega-corpus-coverage: r208-whole-corpus-coverage-truth' in sh, sh
+          assert 'id="omegaUniversalNavR192"' in sy, sy[:1200]
+          assert 'id="omegaCorpusCoverageR208"' in sy, sy[:1200]
+          assert 'id="omegaCorpusCoverageR208Data"' in sy, sy[:1200]
+          assert '"id":"S17"' in sy and '"integration":"ARCHIVE_RESIDUAL"' in sy, sy[:1600]
+          assert 'rather than fabricate integration' in sy, sy[:1600]
+          assert 'authenticated heartbeat ≠ hardware attestation' in sy, sy[:1600]
+          assert 'verified return ≠ CanonState' in sy, sy[:1600]
+          assert '12→144→1728→20,736→248,832' in sy, sy[:1600]
+          assert 'x-omega-navigation: r192-navigation-home-repair' in rh, rh
+          assert 'id="omegaUniversalNavR192"' in ro, ro[:1000]
+          PY
+            then
+              stable=$((stable + 1))
+              echo "R208 coherent exact-SHA whole-system snapshot observed ($stable/2) on attempt $attempt."
+              if [ "$stable" -ge 2 ]; then
+                echo "R208_LIVE_CORPUS_COHERENCE_VERIFIED $GITHUB_SHA"
+                break
+              fi
+            else
+              stable=0
+              echo "R208 live route set not coherent yet (attempt $attempt/90)."
+            fi
+            if [ "$attempt" -eq 90 ]; then
+              echo 'R208_LIVE_PROOF_FAILED'
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Roll back immediately if R208 live proof failed
+        if: steps.liveproof.outcome != 'success'
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R208_POST_DEPLOY_PROOF_FAILED: rolling back immediately.'
+          npx wrangler rollback --message 'OMEGA R208 automatic rollback: corpus/navigation coherence live proof failed'
+          curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors --max-time 30 "$V6_URL/_omega/health?r208Rollback=$GITHUB_RUN_ID" -o /tmp/r208-proof/rollback-health.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r208-proof/rollback-health.json').read_text())
+          assert d.get('ok') is True, d
+          PY
+
+      - name: Fail promotion after rollback if live proof did not close
+        if: steps.liveproof.outcome != 'success'
+        shell: bash
+        run: |
+          echo 'R208 production promotion failed live proof and was rolled back.'
+          exit 1
+
+      - name: Publish admitted R208 release summary
+        if: steps.liveproof.outcome == 'success'
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R208 corpus coherence production admission'
+            echo
+            echo "- Exact canonical SHA: \`$GITHUB_SHA\`"
+            echo '- R207 lineage and Windows sovereign contract: preserved'
+            echo '- R192 navigation: coherent exact-SHA live proof'
+            echo '- R208 whole-corpus coverage: 24 charted families mapped to source/live/host/residual truth'
+            echo '- R193 full-restoration workspace: preserved'
+            echo '- R201 durable chain: verified'
+            echo '- R204 verified-return admission: preserved on exact SHA'
+            echo '- Physical PC ONLINE: never inferred from CI or public cloud reachability'
+            echo '- Archive / Drive data: evidence and donor corpus, not automatic canonical authority'
+          } >> "$GITHUB_STEP_SUMMARY"
