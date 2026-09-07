@@ -1,0 +1,90 @@
+name: OMEGA V6 R211 sovereign proof index
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1'
+      - 'canonforge-omega/tests/test_r211_sovereign_proof_index.py'
+      - '.github/workflows/omega-v6-r211-sovereign-proof-index.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1'
+      - 'canonforge-omega/tests/test_r211_sovereign_proof_index.py'
+      - '.github/workflows/omega-v6-r211-sovereign-proof-index.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-r211-proof-index:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Parse R211 PowerShell
+        shell: pwsh
+        run: |
+          $tokens=$null; $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1'),
+            [ref]$tokens,[ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) { $errors | Format-List | Out-String | Write-Error; throw 'R211 parse failed' }
+
+      - name: Enforce source invariants
+        working-directory: canonforge-omega
+        shell: pwsh
+        run: |
+          @'
+          import runpy
+          ns=runpy.run_path('tests/test_r211_sovereign_proof_index.py')
+          tests=sorted((n,v) for n,v in ns.items() if n.startswith('test_') and callable(v))
+          for name,test in tests:
+              test(); print(f'PASS {name}')
+          '@ | python -
+
+      - name: Prove deterministic archive indexing and corruption rejection
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $indexer=(Resolve-Path 'canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1').Path
+          $work=Join-Path $env:RUNNER_TEMP 'r211-index-proof'
+          $archive=Join-Path $work 'archive'
+          $r208Dir=Join-Path $archive 'R208_ATTEMPT'
+          New-Item -ItemType Directory -Force -Path $r208Dir | Out-Null
+          $receipt=[ordered]@{
+            schema='OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208'
+            capturedAt='2026-09-07T22:58:25Z'
+            acceptanceState='CLOUD_OPERATIONAL_SOVEREIGN_ACCEPTANCE_PENDING_CURRENT_HEARTBEAT'
+            fullAcceptance=$false
+            canonicalMutation=$false
+            promotionAuthorized=$false
+            production=[ordered]@{ canonicalGitSha='797cfe9698d0a3084ad6afb12cb18a7ed1030c94' }
+          }
+          $tmp=Join-Path $work 'receipt.json'
+          $receipt | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 -Path $tmp
+          $bytes=[System.IO.File]::ReadAllBytes($tmp)
+          $sha=[System.Security.Cryptography.SHA256]::Create()
+          try { $hash=([System.BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
+          Copy-Item $tmp (Join-Path $r208Dir ($hash + '.json'))
+          $out=Join-Path $work 'index.json'
+          $raw=& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $indexer -ArchiveRoot $archive -OutputPath $out
+          if ($LASTEXITCODE -ne 0) { throw 'R211 indexer failed' }
+          $index=($raw -join "`n") | ConvertFrom-Json
+          if ($index.schema -ne 'OMEGA_SOVEREIGN_PROOF_INDEX_R211') { throw 'bad schema' }
+          if ($index.recordCount -ne 1 -or $index.fullAcceptanceRecordCount -ne 0) { throw 'bad counts' }
+          if ($index.latest.sha256 -ne $hash) { throw 'bad latest content address' }
+          if ($index.latest.canonicalGitSha -ne '797cfe9698d0a3084ad6afb12cb18a7ed1030c94') { throw 'bad canonical identity' }
+          Add-Content -Path (Join-Path $r208Dir ($hash + '.json')) -Value 'corruption'
+          $child=Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$indexer`"",'-ArchiveRoot',"`"$archive`"",'-OutputPath',"`"$out`"") -Wait -PassThru
+          if ($child.ExitCode -eq 0) { throw 'R211 accepted corrupted archive' }
+
+      - name: State boundary
+        shell: pwsh
+        run: |
+          Write-Host 'R211 indexes verified local R210 evidence only; source receipts remain acceptance authority.'
