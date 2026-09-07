@@ -7,7 +7,7 @@ compatibility_date = "2026-08-29"
 workers_dev = true
 
 [vars]
-BUILD_ID = "r87-semantic-edge-settle-proof"
+BUILD_ID = "r189-whole-instrument-convergence"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
@@ -31,6 +31,9 @@ SWARM_GOVERNOR_ID = "r180-adaptive-interactive-reserve-self-development-governor
 LIVE_ACCEPTANCE_ID = "r181-current-heartbeat-exact-b059-grounded-query-acceptance"
 CLOUD_SWARM_R185_ID = "r185-172-addressable-durable-cloud-federation"
 SUCCESSOR_EVIDENCE_R186_ID = "r186-execution-derived-live-connection-successor-evidence"
+SOURCE_PATCH_R187_ID = "r187-bounded-source-patch-materialization"
+MOTION_TIME_R188_ID = "r188-synchronous-12-phase-motion-barrier"
+WHOLE_INSTRUMENT_R189_ID = "r189-whole-instrument-convergence"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
