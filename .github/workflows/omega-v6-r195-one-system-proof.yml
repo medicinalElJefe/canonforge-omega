@@ -4,11 +4,14 @@ on:
   pull_request:
     paths:
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyWaterContinuityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyComputeSurfaceR195.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/cumulativeCapabilityR195.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
       - 'canonforge-omega/tests/test_r195_drive_corpus_one_system.py'
       - 'canonforge-omega/tests/test_r195_residual_restoration_planner.py'
+      - 'canonforge-omega/tests/test_r195_dewey_water_continuity_compute.py'
       - '.github/workflows/omega-v6-r195-one-system-proof.yml'
   push:
     branches: [omega-v6-full-convergence]
@@ -30,12 +33,13 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -e '.[dev]'
-      - name: Verify R195 through preserved R194-R188 chain
+      - name: Verify unified R195 through preserved predecessor chain
         working-directory: canonforge-omega
         run: |
           python -m pytest -q \
             tests/test_r195_drive_corpus_one_system.py \
             tests/test_r195_residual_restoration_planner.py \
+            tests/test_r195_dewey_water_continuity_compute.py \
             tests/test_r194_evidence_plane_restoration.py \
             tests/test_r193_full_restoration_workspace.py \
             tests/test_r192_navigation_home_repair.py \
@@ -43,6 +47,13 @@ jobs:
             tests/test_r190_whole_system_acceptance.py \
             tests/test_r189_whole_instrument_convergence.py \
             tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r167_authoritative_state_accuracy.py \
+            tests/test_r163_visual_delivery_contract.py \
+            tests/test_r153_mobile_workspace_orchestration.py \
+            tests/test_r145_governed_mode_atlas.py \
             tests/test_role_separated_convergence_r128.py
       - uses: actions/setup-node@v4
         with:
@@ -82,7 +93,7 @@ jobs:
             sleep 5
           done
           test "$matched" = true
-      - name: Prove corpus, predecessor evidence, residual planner, cumulative truth and visible One-System workspace
+      - name: Prove corpus, evidence, residual restoration, cumulative truth and One-System workspace
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
           SHA256: 8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655
@@ -118,19 +129,22 @@ jobs:
           assert p.get('schema')=='OMEGA_RESIDUAL_RESTORATION_PLAN_R195',p
           assert p.get('totalArtifacts')==100,p
           assert p.get('individuallyVerifiedArtifacts')==0,p
+          assert p.get('residual',{}).get('unresolved')==100,p
           assert p.get('truth',{}).get('menuReachabilityIsNotArtifactProof') is True,p
           assert p.get('truth',{}).get('donorNeverBecomesAuthorityWithoutAdmission') is True,p
           assert p.get('cohortProof',{}).get('total')==12,p
           assert len(p.get('residual',{}).get('weakestFirst') or [])<=24,p
-          assert c.get('schema')=='OMEGA_CUMULATIVE_CAPABILITY_CANON_R195' and c.get('totalCapabilityGroups')==65
-          assert c.get('postR191OperationalOrganCount')==2
+          assert c.get('schema')=='OMEGA_CUMULATIVE_CAPABILITY_CANON_R195' and c.get('totalCapabilityGroups')==66,c
+          assert c.get('postR191OperationalOrganCount')==3,c
+          ids={x.get('id') for x in c.get('postR191OperationalOrgans') or []}
+          assert {'R194_DUAL_PLANE_EVIDENCE_RESTORATION','R195_DRIVE_CORPUS_ONE_SYSTEM','R195_DEWEY_WATER_CONTINUITY_COMPUTE'} <= ids
           assert c.get('canonicalMutation') is False and c.get('promotionAuthorized') is False
           assert r.get('ok') is True and r.get('total')==100
           assert a.get('ok') is True and a.get('formula')=='S188=CΩ/(Λ+q+0.35Λq+0.05)'
           for marker in ('OMEGA ONE SYSTEM','EXECUTION TRUTH CONSOLE','RECOVERED DRIVE CORPUS','data-r195-one-system="true"','id="omegaR193Rail"','RESIDUAL RESTORATION / WEAKEST-LINK QUEUE'): assert marker in h,marker
           PY
           grep -qi '^x-omega-one-system: r195-drive-corpus-one-system' /tmp/system.headers
-      - name: Prove invariant-preserving computation reaches VERIFIED state
+      - name: Prove invariant-preserving One-System computation reaches VERIFIED
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
@@ -141,7 +155,42 @@ jobs:
           from pathlib import Path
           p=json.loads(Path('/tmp/compute.json').read_text());assert p.get('schema')=='OMEGA_ONE_SYSTEM_EXECUTION_RECEIPT_R195';assert p.get('downstreamOk') is True,p;state=p.get('executionState') or {};assert state.get('returned') is True and state.get('verified') is True,state;assert state.get('progression')[-1]=='VERIFIED';v=p.get('verification') or {};assert v.get('class')=='INVARIANT_CONSERVATION' and float(v.get('residual'))<=1e-12;assert p.get('receiptSha256')
           PY
-      - name: Prove grounded B059 SAI reaches VERIFIED state
+      - name: Prove deterministic Dewey pair, neutral orientation, solve, ensemble and live Calculus surface
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/manifest" -o /tmp/dewey-manifest.json
+          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/pair" -H 'content-type: application/json' --data '{"b":37,"c":73}' -o /tmp/dewey-pair.json
+          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/solve" -H 'content-type: application/json' --data '{"mode":"full-overall-canon","steps":512,"state":{"continuity":0.72,"plasticity":0.68,"burden":0.24,"contradiction":0.18,"orientation":0,"scar":0.08,"shell":1728}}' -o /tmp/dewey-neutral.json
+          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/solve" -H 'content-type: application/json' --data '{"mode":"mode-188","steps":512,"state":{"continuity":0.72,"plasticity":0.68,"burden":0.24,"contradiction":0.18,"orientation":1,"scar":0.08,"shell":20736}}' -o /tmp/dewey-solve.json
+          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/ensemble" -H 'content-type: application/json' --data '{"mode":"unified-coherence","steps":256,"ensemble":64,"amplitude":0.03}' -o /tmp/dewey-ensemble.json
+          curl --fail --silent --show-error -D /tmp/dewey.headers "$LIVE/?app=Calculus&mode=dewey-calculus" -o /tmp/dewey.html
+          python - <<'PY'
+          import json, math
+          from pathlib import Path
+          m=json.loads(Path('/tmp/dewey-manifest.json').read_text());p=json.loads(Path('/tmp/dewey-pair.json').read_text());n=json.loads(Path('/tmp/dewey-neutral.json').read_text());s=json.loads(Path('/tmp/dewey-solve.json').read_text());e=json.loads(Path('/tmp/dewey-ensemble.json').read_text());h=Path('/tmp/dewey.html').read_text()
+          assert m.get('release')=='r195-dewey-water-continuity-compute',m
+          assert len(m.get('modes') or [])==15,m
+          assert m.get('shells')==[12,144,1728,20736,248832],m
+          assert m.get('physicalClaim') is False,m
+          assert float(m.get('epsilon'))==1e-12,m
+          assert float(p.get('reconstructionError'))<1e-12,p
+          out=p.get('output') or {};assert abs(float(out.get('relationalEnergyAfter'))-float(out.get('relationalEnergyBefore')))<1e-10,p
+          assert (n.get('initial') or {}).get('orientation')==0,n
+          nz=n.get('noZero') or {};assert nz.get('neutralOrientationAllowed') is True and nz.get('neutralOrientationCreatesNoSignedDirectionalDrive') is True,n
+          assert s.get('canonicalMutation') is False and s.get('physicalMeasurement') is False,s
+          assert math.isfinite(float(s.get('omega',0))) and float(s.get('omega',0))>0,s
+          assert 0<=float(s.get('coherence',0))<=1,s
+          d=s.get('diagnostics') or {};assert float(d.get('maxPairEnergyError',0))<1e-9,s
+          result=e.get('result') or {};idx=float(result.get('convergenceIndex', result.get('index', -1)));assert 0<=idx<=1,e
+          assert 'MODEL_CONVERGENCE_INDEX_NOT_FATE' in json.dumps(e),e
+          assert '37/73' not in json.dumps(m)
+          for marker in ('id="odc195"','/api/compute/dewey/r195/solve','64× STABILITY'): assert marker in h,marker
+          PY
+          grep -qi '^x-omega-dewey-compute: r195-dewey-compute-surface' /tmp/dewey.headers
+      - name: Prove grounded B059 SAI reaches VERIFIED
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
