@@ -82,7 +82,7 @@ jobs:
       - name: Prove exact corpus, all live organ probes, cumulative Canon and visible One-System navigation
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
-          SHA256: d80267761320c3bf3d219b38b6293fc52a02e09182fa0825853c7202131f2746
+          SHA256: 8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655
         shell: bash
         run: |
           set -euo pipefail
