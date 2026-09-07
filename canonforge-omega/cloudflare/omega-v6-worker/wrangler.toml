@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR169.ts"
-# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R199/R200 correlate established organs
-# above that entry without replacing Durable Objects, specialist engines, or the canonical heartbeat authority.
+main = "src/runtimeEntryR201.ts"
+# Protected canonical implementation remains the R169→R200.1 public runtime stack.
+# R201 delegates that stack unchanged and replaces only OmegaRuntime return admission
+# with authenticated full-step verification and server-bound receipt hashing.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -46,6 +46,7 @@ DRIVE_CORPUS_SHA256_R195 = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353
 EARTH_SAR_TRUTH_R198_ID = "r198-real-public-sar-truth-fusion"
 ONE_SYSTEM_CORRELATION_R199_ID = "r199-one-system-reconstitution"
 MISSION_KERNEL_R200_ID = "r200-canonical-mission-kernel"
+HYBRID_RETURN_ADMISSION_R201_ID = "r201-authenticated-full-step-server-hash-admission"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
