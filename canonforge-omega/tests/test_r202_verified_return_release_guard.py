@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 SRC = WORKER / "src"
 ENTRY = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
+CONVERGENCE = (SRC / "convergence.ts").read_text(encoding="utf-8")
 RUNTIME = (SRC / "omegaRuntimeR202.ts").read_text(encoding="utf-8")
 R201_RUNTIME = (SRC / "system" / "omegaRuntimeR201.ts").read_text(encoding="utf-8")
 WRANGLER = (WORKER / "wrangler.toml").read_text(encoding="utf-8")
@@ -28,7 +29,8 @@ def test_r202_binds_only_the_historical_omega_runtime_export_beneath_canonical_r
     assert 'main = "src/runtimeEntryR169.ts"' in WRANGLER
     assert 'main = "src/heartbeatTruth.ts"' in WRANGLER  # preserved semantic authority marker
     assert 'import canonicalRuntime from "./heartbeatTruth"' in ENTRY
-    assert 'export { OmegaRuntime } from "./omegaRuntimeR202"' in ENTRY
+    assert 'export { OmegaRuntime } from "./heartbeatTruth"' in ENTRY
+    assert 'export { OmegaRuntime } from "./omegaRuntimeR202"' in CONVERGENCE
     assert 'export { OmegaRuntime as OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201"' in ENTRY
     assert 'return canonical.fetch(request, env, ctx)' in ENTRY
     for export in (
