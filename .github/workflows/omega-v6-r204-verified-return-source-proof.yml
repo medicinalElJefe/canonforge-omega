@@ -5,7 +5,7 @@ on:
     branches: [omega-v6-full-convergence]
     paths:
       - canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR204.ts
-      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR204.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
       - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
       - canonforge-omega/scripts/check_cloudflare_contract.py
       - canonforge-omega/tests/test_r204_verified_return_admission.py
@@ -14,7 +14,7 @@ on:
     branches: [omega-v6-full-convergence]
     paths:
       - canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR204.ts
-      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR204.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
       - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
       - canonforge-omega/scripts/check_cloudflare_contract.py
       - canonforge-omega/tests/test_r204_verified_return_admission.py
@@ -36,22 +36,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prove additive R204 entry and R203 preservation
+      - name: Prove canonical R169 entrypoint, scoped alias and R203 preservation
         shell: bash
         run: |
           set -euo pipefail
-          grep -F 'main = "src/runtimeEntryR204.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
-          grep -F 'import runtime from "./runtimeEntryR169"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR204.ts
-          grep -F 'export { OmegaRuntime } from "./omegaRuntimeR204"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR204.ts
-          grep -F 'export { OmegaHybridMissionLedgerR203 } from "./system/hybridMissionLedgerR203"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR204.ts
-          grep -F 'handleHybridMissionR203' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
-          grep -F 'HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
-          test "$(grep -c 'name = \"OMEGA_RUNTIME\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
-          test "$(grep -c 'name = \"OMEGA_MISSION_LEDGER_R201\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
-          test "$(grep -c 'name = \"OMEGA_HYBRID_MISSION_LEDGER_R203\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
-          ! grep -q '^\[\[migrations\]\]' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
-          ! grep -q 'new_sqlite_classes' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
-          ! grep -q 'state = "deleted"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          WRANGLER=canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          ALIAS=canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
+          ENTRY=canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          HEARTBEAT=canonforge-omega/cloudflare/omega-v6-worker/src/heartbeatTruth.ts
+          grep -F 'main = "src/runtimeEntryR169.ts"' "$WRANGLER"
+          grep -F '[alias]' "$WRANGLER"
+          grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' "$WRANGLER"
+          grep -F 'import convergence, { OmegaRuntime } from "./convergence"' "$HEARTBEAT"
+          grep -F 'import convergence from "./system/../convergence"' "$ALIAS"
+          grep -F 'export { OmegaRuntime } from "./omegaRuntimeR204"' "$ALIAS"
+          grep -F 'return convergence.fetch(request, env, ctx)' "$ALIAS"
+          grep -F 'export { OmegaRuntime } from "./heartbeatTruth"' "$ENTRY"
+          grep -F 'handleHybridMissionR203' "$ENTRY"
+          grep -F 'HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"' "$WRANGLER"
+          test "$(grep -c 'name = \"OMEGA_RUNTIME\"' "$WRANGLER")" -eq 1
+          test "$(grep -c 'name = \"OMEGA_MISSION_LEDGER_R201\"' "$WRANGLER")" -eq 1
+          test "$(grep -c 'name = \"OMEGA_HYBRID_MISSION_LEDGER_R203\"' "$WRANGLER")" -eq 1
+          ! grep -q '^\[\[migrations\]\]' "$WRANGLER"
+          ! grep -q 'new_sqlite_classes' "$WRANGLER"
+          ! grep -q 'state = "deleted"' "$WRANGLER"
 
       - uses: actions/setup-python@v5
         with:
@@ -87,7 +95,7 @@ jobs:
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npm run typecheck
 
-      - name: Wrangler dry-run complete R204 Worker
+      - name: Wrangler dry-run proves module alias resolves without changing entrypoint
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npx wrangler deploy --dry-run
 
@@ -96,7 +104,7 @@ jobs:
         run: |
           set -euo pipefail
           FILE=canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR204.ts
-          ENTRY=canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR204.ts
+          ALIAS=canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
           grep -F 'explicit boolean ok outcome required' "$FILE"
           grep -F 'successful return requires proof for every queued step' "$FILE"
           grep -F 'RETURN_VERIFIED_SUCCESS_R204' "$FILE"
@@ -106,8 +114,8 @@ jobs:
           grep -F 'hostFingerprintAloneIsAuthority: false' "$FILE"
           grep -F 'hostCryptographicAttestationClaimed: false' "$FILE"
           grep -F 'const complete = finalStatus === "COMPLETE" && verification.verified === true;' "$FILE"
-          grep -F 'verifiedReturnIsNotCanonState: true' "$ENTRY"
-          grep -F 'verifiedReturnIsNotPromotion: true' "$ENTRY"
+          grep -F 'verifiedReturnIsNotCanonState: true' "$ALIAS"
+          grep -F 'verifiedReturnIsNotPromotion: true' "$ALIAS"
 
       - name: Publish R204 source proof summary
         if: always()
@@ -117,6 +125,8 @@ jobs:
             echo '## OMEGA V6 R204 source proof'
             echo
             echo "- SHA: \`$GITHUB_SHA\`"
+            echo '- Canonical R169 deployment entrypoint: preserved'
+            echo '- Scoped convergence alias: Wrangler dry-run verified'
             echo '- R169→R203 public runtime and mission continuity: preserved'
             echo '- Existing Durable Object namespaces/storage identities: preserved'
             echo '- Successful Hybrid return requires full ordered step proof: checked'
