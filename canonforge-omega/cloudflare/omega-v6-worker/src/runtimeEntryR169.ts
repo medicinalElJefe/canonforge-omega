@@ -14,6 +14,7 @@ import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
+import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -47,61 +48,66 @@ function b059ManifestAlias(request: Request): Request {
   return new Request(target.toString(), { method: "GET", headers: request.headers });
 }
 
-export default {
-  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    const url = new URL(request.url);
+async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
+  const url = new URL(request.url);
 
-    // R189 is an additive whole-instrument surface. It does not replace or shadow
-    // inherited application, compute, validation, federation, swarm, SAI or Canon routes.
-    const wholeInstrument = handleWholeInstrumentR189(request);
-    if (wholeInstrument) return wholeInstrument;
+  // R189 remains the admitted additive whole-instrument surface.
+  const wholeInstrument = handleWholeInstrumentR189(request);
+  if (wholeInstrument) return wholeInstrument;
 
-    if (url.pathname === "/compute" || url.pathname === "/compute/") return computeLabResponse();
-    if (url.pathname === "/warp" || url.pathname === "/warp/") return warpComputationLabResponse();
-    if (url.pathname === "/warp/build" || url.pathname === "/warp/build/") return warpBuildCandidateLabResponse();
-    if (url.pathname === "/sai" || url.pathname === "/sai/") return saiLabResponse();
-    if (url.pathname === "/validate" || url.pathname === "/validate/") return validationLabResponse();
-    if (url.pathname === "/validate/cross-runtime" || url.pathname === "/validate/cross-runtime/") return crossRuntimeLabResponse();
-    if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
-    if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
+  // R190 does not create another runtime. It proves the existing dispatcher and
+  // exposes its capability truth through the same route authority.
+  if (url.pathname === "/truth" || url.pathname === "/truth/") return wholeSystemTruthR190();
+  if (url.pathname.startsWith("/api/acceptance/r190/")) {
+    return handleWholeSystemAcceptanceR190(request, env, ctx, runtimeFetch);
+  }
 
-    // R185 exposes the 172-cloud federation as both human-readable node links and machine surfaces.
-    if (url.pathname === "/cloud" || url.pathname === "/clouds" || url.pathname.startsWith("/cloud/") || url.pathname.startsWith("/api/clouds/r185/")) {
-      return handleCloudSwarmR185(request, env);
-    }
+  if (url.pathname === "/compute" || url.pathname === "/compute/") return computeLabResponse();
+  if (url.pathname === "/warp" || url.pathname === "/warp/") return warpComputationLabResponse();
+  if (url.pathname === "/warp/build" || url.pathname === "/warp/build/") return warpBuildCandidateLabResponse();
+  if (url.pathname === "/sai" || url.pathname === "/sai/") return saiLabResponse();
+  if (url.pathname === "/validate" || url.pathname === "/validate/") return validationLabResponse();
+  if (url.pathname === "/validate/cross-runtime" || url.pathname === "/validate/cross-runtime/") return crossRuntimeLabResponse();
+  if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
+  if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
 
-    if (url.pathname.startsWith("/api/acceptance/r181/")) {
-      return handleLiveAcceptanceR181(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
-    }
+  // R185 exposes the 172-cloud federation as both human-readable node links and machine surfaces.
+  if (url.pathname === "/cloud" || url.pathname === "/clouds" || url.pathname.startsWith("/cloud/") || url.pathname.startsWith("/api/clouds/r185/")) {
+    return handleCloudSwarmR185(request, env);
+  }
 
-    // R179 provider-backed cloud SAI remains a first-class organ.
-    // B059 deterministic SAI remains Sovereign authority and must not be shadowed
-    // by the cloud /api/sai namespace.
-    if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) {
-      return handleSaiAiFusionR179(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
-    }
-    if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
-    if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
-    if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
+  if (url.pathname.startsWith("/api/acceptance/r181/")) {
+    return handleLiveAcceptanceR181(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
+  }
 
-    // R189 is additive governance: it exposes the full accumulated capability canon
-    // and execution-regime portfolio without replacing any earlier route.
-    if (url.pathname.startsWith("/api/canon/r189/")) return handleCumulativeCapabilityR189(request);
+  // R179 provider-backed cloud SAI remains a first-class organ.
+  // B059 deterministic SAI remains Sovereign authority and must not be shadowed
+  // by the cloud /api/sai namespace.
+  if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) {
+    return handleSaiAiFusionR179(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
+  }
+  if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
+  if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
+  if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
-    if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
-    if (url.pathname.startsWith("/api/swarm/motion/r188/")) return handleMotionTimeR188(request, env);
-    if (url.pathname.startsWith("/api/swarm/patch/r187/")) return handleSourcePatchR187(request, env);
-    if (url.pathname.startsWith("/api/swarm/evidence/r186/")) return handleSuccessorEvidenceR186(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
-    if (url.pathname.startsWith("/api/swarm/improvement/r184/")) return handleImprovementDiscoveryR184(request);
-    if (url.pathname.startsWith("/api/swarm/successor/r183/")) return handleSuccessorGateR183(request);
-    if (url.pathname.startsWith("/api/swarm/build/")) return handleWarpBuildCandidateRequest(request, env);
-    if (url.pathname.startsWith("/api/swarm/warp/")) return handleWarpComputationRequest(request, env);
-    if (url.pathname.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
-    if (url.pathname.startsWith("/api/validate/independent/")) return handleIndependentSolverValidationRequest(request);
-    if (url.pathname.startsWith("/api/validate/cross-runtime/")) return handleCrossRuntimeValidationRequest(request);
-    if (url.pathname.startsWith("/api/validate/")) return handleValidationRequest(request);
-    if (url.pathname.startsWith("/api/compute/atlas/")) return handleAtlasComputeRequest(request);
-    if (url.pathname.startsWith("/api/compute/")) return handleComputeRequest(request);
-    return canonical.fetch(request, env, ctx);
-  },
-};
+  // Preserve R189 accumulated capability canon unchanged.
+  if (url.pathname.startsWith("/api/canon/r189/")) return handleCumulativeCapabilityR189(request);
+
+  if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
+  if (url.pathname.startsWith("/api/swarm/motion/r188/")) return handleMotionTimeR188(request, env);
+  if (url.pathname.startsWith("/api/swarm/patch/r187/")) return handleSourcePatchR187(request, env);
+  if (url.pathname.startsWith("/api/swarm/evidence/r186/")) return handleSuccessorEvidenceR186(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
+  if (url.pathname.startsWith("/api/swarm/improvement/r184/")) return handleImprovementDiscoveryR184(request);
+  if (url.pathname.startsWith("/api/swarm/successor/r183/")) return handleSuccessorGateR183(request);
+  if (url.pathname.startsWith("/api/swarm/build/")) return handleWarpBuildCandidateRequest(request, env);
+  if (url.pathname.startsWith("/api/swarm/warp/")) return handleWarpComputationRequest(request, env);
+  if (url.pathname.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
+  if (url.pathname.startsWith("/api/validate/independent/")) return handleIndependentSolverValidationRequest(request);
+  if (url.pathname.startsWith("/api/validate/cross-runtime/")) return handleCrossRuntimeValidationRequest(request);
+  if (url.pathname.startsWith("/api/validate/")) return handleValidationRequest(request);
+  if (url.pathname.startsWith("/api/compute/atlas/")) return handleAtlasComputeRequest(request);
+  if (url.pathname.startsWith("/api/compute/")) return handleComputeRequest(request);
+  return canonical.fetch(request, env, ctx);
+}
+
+export default { fetch: runtimeFetch };
