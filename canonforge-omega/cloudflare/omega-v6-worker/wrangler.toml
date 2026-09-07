@@ -4,6 +4,7 @@ main = "src/runtimeEntryR169.ts"
 # R204 preserves the canonical R169 deployment entrypoint. Wrangler substitutes only
 # heartbeatTruth's ./convergence module with an additive alias that delegates original
 # convergence behavior and exports the stronger OmegaRuntime return-admission class.
+# R202 adds no Durable Object; R205 also adds no Durable Object and only correlates preserved authorities/presentation.
 # R205 adds no Durable Object; it correlates the preserved R169-R204 authorities and presentation.
 compatibility_date = "2026-08-29"
 workers_dev = true
