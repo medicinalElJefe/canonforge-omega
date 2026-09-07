@@ -22,6 +22,7 @@ import { handleCumulativeCapabilityR195 } from "./acceptance/cumulativeCapabilit
 import { handleDriveCorpusSystemR195 } from "./system/driveCorpusSystemR195";
 import { handleRestorationPlannerR195 } from "./system/restorationRouteR195";
 import { handleOneSystemOperatorR199 } from "./system/oneSystemOperatorR199";
+import { handleMissionKernelR200 } from "./system/missionKernelR200";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -79,6 +80,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const missionKernel = await handleMissionKernelR200(request, env, ctx, runtimeFetch);
+  if (missionKernel) return missionKernel;
 
   const oneSystemOperator = await handleOneSystemOperatorR199(request, env, ctx, runtimeFetch);
   if (oneSystemOperator) return oneSystemOperator;
