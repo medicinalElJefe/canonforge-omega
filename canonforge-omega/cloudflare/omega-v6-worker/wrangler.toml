@@ -37,6 +37,8 @@ WHOLE_INSTRUMENT_R189_ID = "r189-whole-instrument-convergence"
 WHOLE_SYSTEM_ACCEPTANCE_R190_ID = "r190-capability-truth-admission"
 CAPABILITY_TRUTH_R190_ID = "r190-implemented-route-invoked-returned-verified"
 UNIVERSAL_SURFACE_FABRIC_R191_ID = "r191-universal-surface-fabric"
+DRIVE_CORPUS_ONE_SYSTEM_R192_ID = "r192-drive-corpus-one-system"
+DRIVE_CORPUS_SHA256_R192 = "d80267761320c3bf3d219b38b6293fc52a02e09182fa0825853c7202131f2746"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
