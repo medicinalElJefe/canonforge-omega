@@ -6,7 +6,7 @@ WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 HEARTBEAT = WORKER / "src" / "heartbeatTruth.ts"
 ENTRY = WORKER / "src" / "runtimeEntryR169.ts"
 WRANGLER = WORKER / "wrangler.toml"
-VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
+RELEASE = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 
 
 def test_r128_preserves_canonical_entrypoint_and_durable_object_contract():
@@ -47,13 +47,17 @@ def test_r128_negotiates_role_separated_genesis_v3_inside_heartbeat_truth():
     assert 'pc_online_requires_current_heartbeat = true' in source
 
 
-def test_r128_production_verifier_requires_roles_digest_and_v3_without_rebranding_health():
-    source = VERIFY.read_text(encoding="utf-8")
-    assert 'EXPECTED_BUILD: r87-semantic-edge-settle-proof' in source
-    assert 'OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3' in source
-    assert 'OMEGA_ROLE_SEPARATED_CONVERGENCE_V1' in source
-    assert 'GENESIS_DISCOVERY_EVOLUTION_AUTHORITY' in source
-    assert 'V6_CANONICAL_OPERATIONAL_RUNTIME' in source
-    assert 'manifest.get("manifest_digest") != peer_manifest.get("digest")' in source
-    assert 'genesis_may_deploy_v6' in source
-    assert 'LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3' in source
+def test_r128_current_production_verifier_preserves_role_separated_runtime_without_second_publisher():
+    source = RELEASE.read_text(encoding="utf-8")
+    heartbeat = HEARTBEAT.read_text(encoding="utf-8")
+    assert 'release-forward exact-head production' in source
+    assert 'MIN_CANONICAL_SHA:' in source
+    assert 'CANONICAL_GIT_SHA' in source
+    assert '/api/acceptance/r181/manifest' in source
+    assert '/api/system/r211/manifest' in source
+    assert 'verify_r185_live_federation.py' in source
+    assert 'OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3' in heartbeat
+    assert 'OMEGA_ROLE_SEPARATED_CONVERGENCE_V1' in heartbeat
+    assert 'GENESIS_DISCOVERY_EVOLUTION_AUTHORITY' in heartbeat
+    assert 'V6_CANONICAL_OPERATIONAL_RUNTIME' in heartbeat
+    assert 'genesis_may_deploy_v6' in heartbeat
