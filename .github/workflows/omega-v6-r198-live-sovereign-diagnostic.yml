@@ -5,11 +5,30 @@ on:
     paths:
       - '.github/workflows/omega-v6-r198-live-sovereign-diagnostic.yml'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
       - 'canonforge-omega/scripts/**'
       - 'canonforge-omega/tests/test_r198_sovereign_build_closure.py'
   workflow_dispatch:
 
 jobs:
+  r198-closure-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test sovereign Hybrid closure
+        run: |
+          set -euo pipefail
+          python -m py_compile canonforge-omega/scripts/omega_hybrid_agent_r198.py
+          python -m pytest -q canonforge-omega/tests/test_r198_sovereign_build_closure.py
+      - name: Typecheck and dry-bundle canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir /tmp/r198-worker-dry-run
+          test -s /tmp/r198-worker-dry-run/runtimeEntryR169.js || find /tmp/r198-worker-dry-run -maxdepth 2 -type f -print
+
   inspect-live-public-contract:
     runs-on: ubuntu-latest
     steps:
@@ -53,28 +72,12 @@ jobs:
               echo UNAVAILABLE
             fi
           done
-          echo '=== LIVE R132 AGENT ==='
+          echo '=== LIVE AGENT BEFORE R198 DEPLOYMENT ==='
           curl --fail --silent --show-error --max-time 25 -D /tmp/agent.headers "$LIVE/omega-hybrid-agent.py" -o /tmp/agent.py
           cat /tmp/agent.headers
           sha256sum /tmp/agent.py
           wc -c /tmp/agent.py
-          python - <<'PY'
-          from pathlib import Path
-          lines=Path('/tmp/agent.py').read_text(errors='replace').splitlines()
-          keys=('project','approved_root','return','result','mission','job','poll','build','package','sha256','heartbeat')
-          hits=[]
-          for i,line in enumerate(lines,1):
-              if any(k in line.lower() for k in keys): hits.append(i)
-          ranges=[]
-          for i in hits:
-              a=max(1,i-4); b=min(len(lines),i+8)
-              if ranges and a <= ranges[-1][1]+1: ranges[-1]=(ranges[-1][0],max(ranges[-1][1],b))
-              else:ranges.append((a,b))
-          for a,b in ranges:
-              if b-a > 80: b=a+80
-              print(f'--- agent lines {a}-{b} ---')
-              for n in range(a,b+1): print(f'{n:04d}: {lines[n-1]}')
-          PY
+          grep -E "^(VERSION|CAPABILITY_REVISION|SOVEREIGN_CLOSURE_REVISION)=" /tmp/agent.py || true
       - uses: actions/upload-artifact@v4
         with:
           name: r198-live-agent-source
