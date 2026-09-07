@@ -12,6 +12,7 @@ import { handleSourcePatchR187 } from "./swarm/sourcePatchR187";
 import { handleMotionTimeR188 } from "./swarm/motionTimeR188";
 import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
+import { handleSourceGroundingR197, sourceGroundedQueryR197 } from "./sai/sourceGroundingR197";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
@@ -81,6 +82,9 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   const driveCorpusSystem = await handleDriveCorpusSystemR195(request, env, ctx, runtimeFetch);
   if (driveCorpusSystem) return driveCorpusSystem;
 
+  const sourceGrounding = await handleSourceGroundingR197(request, env, ctx, runtimeFetch);
+  if (sourceGrounding) return sourceGrounding;
+
   const r195Canon = handleCumulativeCapabilityR195(request);
   if (r195Canon) return r195Canon;
 
@@ -142,6 +146,12 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
     return handleSaiAiFusionR179(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
   }
   if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
+  if (url.pathname === "/api/sai/query") {
+    const fallbackRequest = request.clone();
+    const b059 = await canonical.fetch(request, env, ctx);
+    if (b059.status !== 503) return b059;
+    return sourceGroundedQueryR197(fallbackRequest, env, ctx, runtimeFetch, b059.status);
+  }
   if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
   if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
