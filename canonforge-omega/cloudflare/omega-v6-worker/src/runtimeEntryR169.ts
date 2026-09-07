@@ -17,13 +17,15 @@ import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
 import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabilityR190";
 import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilityR191";
+import { handleCumulativeCapabilityR193 } from "./acceptance/cumulativeCapabilityR193";
+import { handleDriveCorpusSystemR193 } from "./system/driveCorpusSystemR193";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
 import { handleCrossRuntimeValidationRequest } from "./validation/crossRuntimeParityR173";
-import { crossRuntimeLabResponse } from "./validation/crossRuntimeLabR173";
+import { crossRuntimeLabResponse } from "./validation/crossRuntimeParityR173";
 import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR174";
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
 import { handleUniversalSurfaceFabricR191 } from "./federation/universalSurfaceFabricR191";
@@ -31,6 +33,7 @@ import { handleIndependentSolverValidationRequest } from "./validation/independe
 import { independentSolverLabResponse } from "./validation/independentSolverLabR175";
 import { handleWholeInstrumentR189 } from "./wholeInstrumentR189";
 import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
+import { enhanceSystemNavigationR193 } from "./system/systemNavigationR193";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -61,6 +64,12 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const driveCorpusSystem = await handleDriveCorpusSystemR193(request, env, ctx, runtimeFetch);
+  if (driveCorpusSystem) return driveCorpusSystem;
+
+  const r193Canon = handleCumulativeCapabilityR193(request);
+  if (r193Canon) return r193Canon;
 
   const universalSurfaceFabric = await handleUniversalSurfaceFabricR191(request, env);
   if (universalSurfaceFabric) return universalSurfaceFabric;
@@ -125,8 +134,10 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 }
 
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
+  const pathname = new URL(request.url).pathname;
   const response = await runtimeFetch(request, env, ctx);
-  return enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
+  const navigated = await enhanceUniversalNavigationR192(response, pathname);
+  return enhanceSystemNavigationR193(navigated, pathname);
 }
 
 export default { fetch: publicFetch };
