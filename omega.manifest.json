@@ -41,8 +41,8 @@
     },
     {
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
-      "sha256": "a02233efc124c271feb919e1a9d4d452c99de5b47a6daefabfd770c5091e71e9",
-      "bytes": 6413
+      "sha256": "6238f9aa27cbb36496fb9da31dcabc29dafd9ce1c4ef1e0f1cd25f5c212255d3",
+      "bytes": 8250
     },
     {
       "path": ".github/workflows/deploy-v6-cloudflare.yml",
@@ -146,13 +146,13 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "2bbd83f320f4094e97f5841918367749b081ba2271b60245116511a3d0259ef3",
-      "bytes": 6813
+      "sha256": "94ed5c97680d46224a8b9c4c37392012ca17568abaf9c97a194675630f077816",
+      "bytes": 7051
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/convergence.js",
-      "sha256": "dbf288da6b625ae481f654e8dc999a02c68243ecb72683333b91d447a090d743",
-      "bytes": 8017
+      "sha256": "6c42c4c9885f809446a6ef7d30fbee212192eb99adbd276ee20bd3ca92c093ea",
+      "bytes": 12181
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -181,8 +181,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/wrangler.toml",
-      "sha256": "54148d1d331eb4396df2a4f381b21bc014d128186e4c4ea5a26588b8e95ac986",
-      "bytes": 461
+      "sha256": "ebf2f88894e947658ef9643c3ebb5735f1c882a938b948b461fc9e84b0ddc7f6",
+      "bytes": 526
     },
     {
       "path": "cloudflare/omegav6-worker/package.json",
@@ -401,8 +401,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "ef79a14bea838662d1039cd8e3aef2182ecd1441c48bcd23d5794e2f92fe7a52",
-      "bytes": 6547
+      "sha256": "d61eece4cbb438382a6b5ac770cdd4067197f38a477fb22c658580839dffd5b2",
+      "bytes": 6799
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -788,6 +788,11 @@
       "path": "tests/test_genesis.py",
       "sha256": "5567691d97d515cc90fa55736a885c847a4d3983d9a9f5ede5303bc870ea7e65",
       "bytes": 14598
+    },
+    {
+      "path": "tests/test_genesis_r191_surface_convergence.py",
+      "sha256": "69ad6897148f98482467e52f61a50d69c58458c8fbb7a14b028d3d7197b920af",
+      "bytes": 4202
     },
     {
       "path": "tests/test_host_bootstrap.py",
