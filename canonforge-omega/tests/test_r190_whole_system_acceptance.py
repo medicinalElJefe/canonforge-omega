@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config" / "capability_truth_r190.json"
 ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "runtimeEntryR169.ts"
 R190 = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "acceptance" / "wholeSystemAcceptanceR190.ts"
+R190_REPAIR = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "acceptance" / "r190AcceptanceRepair.ts"
 R189 = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "wholeInstrumentR189.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
@@ -59,7 +60,7 @@ def test_r190_uses_explicit_truth_progression_and_preserves_all_modes():
         assert f'"{mode}"' in source
 
 
-def test_r190_core_probe_requires_r189_and_all_core_runtime_families():
+def test_r190_historical_core_contract_retains_all_original_runtime_families():
     c = contract()
     routes = set(c["quick_required_routes"])
     required = {
@@ -109,13 +110,16 @@ def test_r190_native_rcwa_requires_persisted_verified_job_and_r175_revalidation(
     assert c["truth_boundaries"]["heartbeat_is_not_solver_validation"] is True
 
 
-def test_r190_single_dispatcher_preserves_r189_and_inherited_routes():
+def test_r190_single_dispatcher_preserves_history_and_applies_current_truth_repair():
     entry = ENTRY.read_text(encoding="utf-8")
     assert 'from "./wholeInstrumentR189"' in entry
     assert "handleWholeInstrumentR189(request)" in entry
+    assert 'wholeSystemTruthR190' in entry
     assert 'from "./acceptance/wholeSystemAcceptanceR190"' in entry
+    assert R190_REPAIR.exists()
+    assert 'from "./acceptance/r190AcceptanceRepair"' in entry
     assert 'url.pathname.startsWith("/api/acceptance/r190/")' in entry
-    assert "handleWholeSystemAcceptanceR190(request, env, ctx, runtimeFetch)" in entry
+    assert "handleWholeSystemAcceptanceR190Repaired(request, env, ctx, runtimeFetch)" in entry
     assert 'url.pathname === "/truth"' in entry
     for marker in [
         "/api/canon/r189/",
@@ -152,7 +156,10 @@ def test_r190_wrangler_ids_are_additive_and_preserve_inherited_build_identity():
 def test_r190_acceptance_layer_cannot_autonomously_promote():
     c = contract()
     source = R190.read_text(encoding="utf-8")
+    repair = R190_REPAIR.read_text(encoding="utf-8")
     assert c["promotion"]["acceptance_layer_may_promote"] is False
     assert c["truth_boundaries"]["automatic_production_mutation"] is False
     assert "canonicalMutation: false" in source
     assert "promotionAuthorized: false" in source
+    assert "canonicalMutation: false" in repair
+    assert "promotionAuthorized: false" in repair
