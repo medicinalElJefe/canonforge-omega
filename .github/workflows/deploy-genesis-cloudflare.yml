@@ -68,7 +68,7 @@ jobs:
       - name: Check Worker syntax
         working-directory: cloudflare/omega-genesis-worker
         run: npm run check
-      - name: Deploy, prove live health plus R191 service-bound alignment, or automatically roll back
+      - name: Deploy and prove service-bound R191 + Optical R153.2, or roll back safely
         id: deploy
         working-directory: cloudflare/omega-genesis-worker
         env:
@@ -78,7 +78,7 @@ jobs:
           set -uo pipefail
 
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "BLOCKED_CREDENTIALS: core + Worker checks passed; add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository Actions secrets to deploy omega-genesis-v1." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "BLOCKED_CREDENTIALS: core + Worker checks passed; Cloudflare credentials are required to promote omega-genesis-v1." | tee -a "$GITHUB_STEP_SUMMARY"
             echo "deployment_status=BLOCKED_CREDENTIALS" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -96,7 +96,7 @@ jobs:
           fi
 
           echo "public_url=$PUBLIC_URL" >> "$GITHUB_OUTPUT"
-          echo "OMEGA public candidate: $PUBLIC_URL" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "OMEGA Genesis candidate: $PUBLIC_URL" | tee -a "$GITHUB_STEP_SUMMARY"
 
           verify_core() {
             local health_file api_file
@@ -149,32 +149,39 @@ jobs:
           assert fabric.get("canonical_fabric_ready") is True, fabric
           assert fabric.get("canonical_capability_groups") == 63, fabric
           assert isinstance(fabric.get("canonical_git_sha"), str) and len(fabric["canonical_git_sha"]) == 40, fabric
+          assert fabric.get("optical_machine_generation") == "R153.2", fabric
           assert fabric.get("optical_machine_authority") == "SCREEN_ONLY", fabric
+          assert fabric.get("optical_machine_version") == "R153.2", fabric
+          assert fabric.get("optical_tool_version") == "R153.2", fabric
+          assert fabric.get("optical_adaptive_cycle") is True, fabric
+          assert fabric.get("optical_canonical_mutation") is False, fabric
+          assert "SCREEN_ONLY" in fabric.get("optical_truth_boundary", ""), fabric
           for key in ("fabric", "canon", "optical"):
               assert fabric["observations"][key].get("transport") == "cloudflare_service_binding", fabric
               assert fabric["observations"][key].get("reachable") is True, fabric
           assert "omega-r191-genesis-bar" in page, page[:500]
           assert "GENESIS · PROPOSE" in page, page[:500]
+          assert "Optical R153.2" in page, page[:500]
           assert "Canon remains OMEGA V6" in page, page[:500]
           PY
           }
 
           if verify_candidate; then
             echo "deployment_status=LIVE_VERIFIED" >> "$GITHUB_OUTPUT"
-            echo "LIVE_VERIFIED: $PUBLIC_URL passed core state/proof/replay plus native service-bound R191 V6/Optical observation and Genesis PROPOSE UI checks." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "LIVE_VERIFIED: $PUBLIC_URL passed inherited state/proof/replay plus native service-bound R191 V6 and live-proven Optical R153.2 SCREEN_ONLY/adaptive-tool checks." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           echo "POST_DEPLOY_VERIFY_FAILED: attempting bounded rollback to the immediately previous Worker version." | tee -a "$GITHUB_STEP_SUMMARY"
-          if ! npx wrangler rollback --message "OMEGA automatic rollback: post-deploy R191 service-bound verification failed"; then
+          if ! npx wrangler rollback --message "OMEGA automatic rollback: R191 + R153.2 service-bound verification failed"; then
             echo "QUARANTINE: candidate failed verification and automatic rollback could not be completed." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
           if verify_core; then
             echo "deployment_status=ROLLBACK_VERIFIED" >> "$GITHUB_OUTPUT"
-            echo "ROLLBACK_VERIFIED: previous Worker version restored and passed its inherited core health/proof/replay contract." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "ROLLBACK_VERIFIED: predecessor restored and passed its inherited core health/proof/replay contract." | tee -a "$GITHUB_STEP_SUMMARY"
           else
-            echo "QUARANTINE: rollback completed but the restored Worker failed its inherited core health/proof/replay contract." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "QUARANTINE: rollback completed but the restored predecessor failed its inherited core health/proof/replay contract." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
           exit 1
