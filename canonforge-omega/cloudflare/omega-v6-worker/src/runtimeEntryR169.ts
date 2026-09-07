@@ -207,6 +207,15 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   return canonical.fetch(request, env, ctx);
 }
 
+async function enhanceOneSystemNavigationR195Preserved(dewey: Response, calibrated: Response, request: Request): Promise<Response> {
+  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
+  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
+}
+
+async function enhanceEarthSarVisualContextR198_2Preserved(nativeSarEarth: Response, request: Request): Promise<Response> {
+  return enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
+}
+
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const response = await runtimeFetch(request, env, ctx);
   const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
@@ -222,10 +231,9 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
     const earthBase = calibrated !== dewey ? calibrated : dewey;
     const oneSystemEarth = await enhanceOneSystemNavigationR195(earthBase, requestUrl.pathname);
     const nativeSarEarth = await enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);
-    finalResponse = await enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
+    finalResponse = await enhanceEarthSarVisualContextR198_2Preserved(nativeSarEarth, request);
   } else {
-    const base = calibrated !== dewey ? calibrated : dewey;
-    finalResponse = await enhanceOneSystemNavigationR195(base, requestUrl.pathname);
+    finalResponse = await enhanceOneSystemNavigationR195Preserved(dewey, calibrated, request);
   }
   return enhanceWholeSystemSurfaceR205(finalResponse);
 }
