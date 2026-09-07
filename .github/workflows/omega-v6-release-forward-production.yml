@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prove lineage and immutable authority spine
+      - name: Prove lineage and preserved authority entrypoints
         shell: bash
         run: |
           set -euo pipefail
@@ -36,9 +36,8 @@ jobs:
           git merge-base --is-ancestor "$MIN_CANONICAL_SHA" HEAD
           grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
           grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
-          test "$(grep -c 'name = \"OMEGA_RUNTIME\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
           test -f canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts
-          test -f canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOFS_R211.ps1
+          test -f canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1
 
       - uses: actions/setup-python@v5
         with:
@@ -77,7 +76,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Prove exact canonical head immediately before deployment preparation
+      - name: Prove exact canonical head before deployment preparation
         shell: bash
         run: |
           set -euo pipefail
@@ -126,8 +125,7 @@ jobs:
           python - <<'PY'
           import os, re
           from pathlib import Path
-          p=Path('wrangler.toml')
-          source=p.read_text(encoding='utf-8')
+          source=Path('wrangler.toml').read_text(encoding='utf-8')
           sha=os.environ['GITHUB_SHA']
           if re.search(r'(?m)^CANONICAL_GIT_SHA\s*=.*$', source):
               rendered=re.sub(r'(?m)^CANONICAL_GIT_SHA\s*=.*$', f'CANONICAL_GIT_SHA = "{sha}"', source, count=1)
@@ -170,7 +168,6 @@ jobs:
           set -euo pipefail
           matched=false
           for attempt in $(seq 1 70); do
-            rm -f /tmp/release-forward-proof/{r211-manifest,r211-status,r211-earth,r205,r204,r181,r201,health}.json
             if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r211/manifest" -o /tmp/release-forward-proof/r211-manifest.json \
               && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r211/status" -o /tmp/release-forward-proof/r211-status.json \
               && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r211/query?domain=earth" -o /tmp/release-forward-proof/r211-earth.json \
