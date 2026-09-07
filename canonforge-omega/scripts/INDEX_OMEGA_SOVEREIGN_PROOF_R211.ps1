@@ -19,6 +19,17 @@ function Get-OmegaSha256([string]$Path) {
   } finally { $stream.Dispose() }
 }
 
+function Get-OmegaRelativePath([string]$BasePath, [string]$TargetPath) {
+  $baseFull = [System.IO.Path]::GetFullPath($BasePath)
+  $separator = [string][System.IO.Path]::DirectorySeparatorChar
+  if (-not $baseFull.EndsWith($separator)) { $baseFull = $baseFull + $separator }
+  $targetFull = [System.IO.Path]::GetFullPath($TargetPath)
+  $baseUri = New-Object System.Uri($baseFull)
+  $targetUri = New-Object System.Uri($targetFull)
+  $relative = [System.Uri]::UnescapeDataString($baseUri.MakeRelativeUri($targetUri).ToString())
+  return $relative.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+}
+
 $records = @()
 foreach ($kind in @('R208_ATTEMPT','R209_CONVERGENCE')) {
   $dir = Join-Path $ArchiveRoot $kind
@@ -51,7 +62,7 @@ foreach ($kind in @('R208_ATTEMPT','R209_CONVERGENCE')) {
       canonicalGitSha = $canonicalSha
       acceptanceState = $state
       fullAcceptance = $full
-      relativePath = [System.IO.Path]::GetRelativePath($Root, $file.FullName)
+      relativePath = Get-OmegaRelativePath $Root $file.FullName
     }
   }
 }
