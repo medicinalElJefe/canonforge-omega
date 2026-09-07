@@ -1,0 +1,70 @@
+name: OMEGA V6 R198 sovereign closure diagnostic
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/omega-v6-r198-live-sovereign-diagnostic.yml'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/**'
+      - 'canonforge-omega/scripts/**'
+      - 'canonforge-omega/tests/test_r198_sovereign_build_closure.py'
+  workflow_dispatch:
+
+jobs:
+  inspect-live-public-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect live public sovereign closure contract
+        shell: bash
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 25 "$LIVE/" -o /tmp/root.html
+          echo '=== ROOT CONTRACT ==='
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('/tmp/root.html').read_text(errors='replace')
+          for n in ['RUN FULL SOVEREIGN BUILD','HOLD_PROJECT_NOT_FOUND','HELD_R141_RETURN_NOT_VERIFIED','Execution proof closure','omega-hybrid-agent']:
+              print(n, '=>', n in h)
+          paths=sorted(set(re.findall(r'/api/[A-Za-z0-9_./?=&${}-]+', h)))
+          for p in paths:
+              if any(k in p.lower() for k in ['hybrid','mission','return','job','build','project','agent','execution','convergence']):
+                  print('PATH',p[:220])
+          for needle in ['RUN FULL SOVEREIGN BUILD','HOLD_PROJECT_NOT_FOUND','Execution proof closure']:
+              i=h.find(needle)
+              if i>=0:
+                  excerpt=h[max(0,i-1500):min(len(h),i+2200)]
+                  excerpt=re.sub(r'(?i)(token|secret|authorization)([^\n<]{0,10})[^\s"\'<>]{8,}',r'\1\2[REDACTED]',excerpt)
+                  print('\nEXCERPT',needle,'\n',excerpt)
+          PY
+          echo '=== PUBLIC JSON SHAPES ==='
+          for path in /api/hybrid/status /api/development/status /api/convergence/edge; do
+            echo "-- $path"
+            if curl --fail --silent --show-error --max-time 25 "$LIVE$path" -o /tmp/body.json; then
+              python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/body.json').read_text())
+          def shape(x, depth=0):
+              if depth>3:return type(x).__name__
+              if isinstance(x,dict):return {k:shape(v,depth+1) for k,v in list(x.items())[:80] if not any(s in k.lower() for s in ['token','secret','authorization'])}
+              if isinstance(x,list):return [shape(v,depth+1) for v in x[:8]]
+              if isinstance(x,str):return x[:180]
+              return x
+          print(json.dumps(shape(d),indent=2)[:24000])
+          PY
+            else
+              echo UNAVAILABLE
+            fi
+          done
+          echo '=== CANDIDATE AGENT ROUTES ==='
+          for path in /omega-hybrid-agent.py /api/hybrid/agent.py /api/hybrid/agent /api/agent/download /api/hybrid/download-agent; do
+            code=$(curl --silent --show-error --max-time 20 -o /tmp/agent.out -w '%{http_code}' "$LIVE$path" || true)
+            bytes=$(wc -c < /tmp/agent.out 2>/dev/null || echo 0)
+            echo "$path $code $bytes"
+            if [ "$code" = 200 ] && [ "$bytes" -gt 1000 ]; then
+              head -c 240 /tmp/agent.out | tr '\n' ' '; echo
+            fi
+          done
