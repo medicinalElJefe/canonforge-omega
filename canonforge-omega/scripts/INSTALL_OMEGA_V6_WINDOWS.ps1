@@ -12,7 +12,7 @@ function Log([string]$Text) {
   $line | Tee-Object -FilePath $Log -Append
 }
 
-Log "OMEGA V6 R208 install root=$Root"
+Log "OMEGA V6 R209 install root=$Root"
 
 if (-not (Get-Command py -ErrorAction SilentlyContinue) -and -not (Get-Command python -ErrorAction SilentlyContinue)) {
   throw 'Python 3.10+ is required. Install Python and rerun this installer.'
@@ -74,21 +74,24 @@ if ($LASTEXITCODE -ne 0 -or ($RcwaProbe -join "`n") -notmatch '"available"\s*:\s
   throw 'Native grcwa RCWA probe failed. Installation is not promoted.'
 }
 
-Log 'running sovereign runtime, pairing, independent-solver, R207 launch, and R208 acceptance-closure verification'
+Log 'running sovereign runtime, pairing, independent-solver, R207 launch, R208 acceptance, and R209 convergence verification'
 & $Vpy -m pytest -q `
   (Join-Path $Root 'tests\test_omega_runtime.py') `
   (Join-Path $Root 'tests\test_pairing_and_agent.py') `
   (Join-Path $Root 'tests\test_r175_independent_solver_validation.py') `
   (Join-Path $Root 'tests\test_r206_sovereign_windows_boot_continuity.py') `
   (Join-Path $Root 'tests\test_r207_windows_verified_venv_launch.py') `
-  (Join-Path $Root 'tests\test_r208_physical_sovereign_acceptance.py') |
+  (Join-Path $Root 'tests\test_r208_physical_sovereign_acceptance.py') `
+  (Join-Path $Root 'tests\test_r209_sovereign_convergence_diagnostics.py') |
   Tee-Object -FilePath $Log -Append
 if ($LASTEXITCODE -ne 0) { throw 'OMEGA verification failed; installation not promoted.' }
 
 $Launcher = Join-Path $Root 'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1'
-$AcceptanceProver = Join-Path $Root 'scripts\PROVE_OMEGA_V6_WINDOWS.ps1'
+$R208Prover = Join-Path $Root 'scripts\PROVE_OMEGA_V6_WINDOWS.ps1'
+$R209Prover = Join-Path $Root 'scripts\PROVE_OMEGA_V6_R209_WINDOWS.ps1'
 if (-not (Test-Path $Launcher)) { throw "Canonical launcher missing: $Launcher" }
-if (-not (Test-Path $AcceptanceProver)) { throw "R208 physical acceptance prover missing: $AcceptanceProver" }
+if (-not (Test-Path $R208Prover)) { throw "R208 physical acceptance prover missing: $R208Prover" }
+if (-not (Test-Path $R209Prover)) { throw "R209 sovereign convergence prover missing: $R209Prover" }
 
 # Persist only the non-secret canonical root pointer. Pairing tokens remain ephemeral.
 $OmegaLocal = Join-Path $env:LOCALAPPDATA 'OMEGA'
@@ -103,7 +106,7 @@ $Shortcut = $Shell.CreateShortcut($DesktopShortcut)
 $Shortcut.TargetPath = 'powershell.exe'
 $Shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$Launcher`""
 $Shortcut.WorkingDirectory = $Root
-$Shortcut.Description = 'OMEGA V6 Sovereign Runtime + authenticated PC link + R208 acceptance proof'
+$Shortcut.Description = 'OMEGA V6 Sovereign Runtime + authenticated PC link + R209 convergence proof'
 $Shortcut.Save()
 Log "desktop shortcut created: $DesktopShortcut"
 
@@ -121,6 +124,6 @@ if ($StartupDir) {
   Log "startup continuity shortcut created: $StartupShortcut"
 }
 
-Log 'PASS dependencies, native RCWA, targeted tests, verified-venv launch, R208 acceptance closure, and bounded Windows continuity'
-Write-Host 'OMEGA V6 installation verified. Starting the canonical runtime, sovereign PC link, and physical acceptance proof now.'
+Log 'PASS dependencies, native RCWA, targeted tests, verified-venv launch, R208 truth acceptance, R209 bounded convergence, and Windows continuity'
+Write-Host 'OMEGA V6 installation verified. Starting the canonical runtime, sovereign PC link, and bounded convergence proof now.'
 Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$Launcher`"") -WorkingDirectory $Root
