@@ -18,7 +18,7 @@ SNAPSHOT=SYSTEM/"driveCorpusSnapshotR194.ts"
 R194=SRC/"acceptance"/"cumulativeCapabilityR194.ts"
 R193=SRC/"workspaceManifestR193.ts"
 NAV194=SYSTEM/"oneSystemNavigationR194.ts"
-EXPECTED="d80267761320c3bf3d219b38b6293fc52a02e09182fa0825853c7202131f2746"
+EXPECTED="8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655"
 
 def text(path:Path)->str:return path.read_text(encoding="utf-8")
 def nk(v:str)->str:return re.sub(r"[^a-z0-9]","",v.lower())
@@ -86,8 +86,8 @@ def test_r194_preserves_r192_navigation_r193_workspace_and_all_inherited_dispatc
     assert 'data-r194-one-system="true"' in nav
     for marker in ("handleDriveCorpusSystemR194","handleCumulativeCapabilityR194","handleWorkspaceManifestR193","handleUniversalSurfaceFabricR191","handleWholeInstrumentR189","handleWholeSystemAcceptanceR190","handleSaiAiFusionR179","handleComputeRequest","handleValidationRequest","handleFederatedOrganRequest","handleSwarmRequest","enhanceUniversalNavigationR192","enhanceUniversalWorkspaceR193","enhanceOneSystemNavigationR194","return canonical.fetch(request, env, ctx)"):
         assert marker in entry
-    assert "const r192 = await enhanceUniversalNavigationR192" in entry
-    assert "const r193 = await enhanceUniversalWorkspaceR193" in entry
+    assert "const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname)" in entry
+    assert "const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname)" in entry
 
 def test_r194_cumulative_truth_extends_r191_63_to_64_and_records_r193_predecessor():
     r=text(R194)
@@ -111,4 +111,6 @@ def test_decoder_verifies_uncompressed_corpus_before_json_admission():
     assert "crypto.subtle.digest" in d
     assert "R194_DRIVE_CORPUS_HASH_MISMATCH" in d
     assert 'DecompressionStream("gzip")' in d
+    assert 'primaryLedgerId: "1tvDDlPxHFTXMPN43-rE1kPKdmJW5uYj6"' in d
+    assert 'corroboratingLedgerId: "12w_vkhiXU1RUx5YU4C4M232fyvoqx_XN"' in d
     assert EXPECTED in d
