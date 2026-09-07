@@ -1,7 +1,10 @@
 from pathlib import Path
 
+from omega_genesis.capabilities import CAPABILITIES
+
 ROOT = Path(__file__).resolve().parents[1]
 CONVERGENCE = ROOT / "cloudflare" / "omega-genesis-worker" / "src" / "convergence.js"
+CATALOG = ROOT / "cloudflare" / "omega-genesis-worker" / "src" / "catalog.js"
 WRANGLER = ROOT / "cloudflare" / "omega-genesis-worker" / "wrangler.toml"
 
 
@@ -59,3 +62,22 @@ def test_genesis_r191_keeps_existing_durable_object_and_build_identity():
     assert 'class_name = "OmegaGenesisState"' in wrangler
     assert 'BUILD_ID = "omega-genesis-v1-convergence-g2"' in wrangler
     assert 'GENESIS_SURFACE_FABRIC_R191_ID = "r191-genesis-surface-observer"' in wrangler
+
+
+def test_genesis_r191_is_registered_as_measurable_live_core_capability():
+    cap = next(item for item in CAPABILITIES if item["id"] == "CAP-033")
+    assert cap == {
+        "id": "CAP-033",
+        "name": "R191 universal surface observer and machine-screen authority alignment",
+        "menu": "02 Proof & Governance",
+        "gate": "Canonical R191 observation + Optical SCREEN machine routing + no cross-runtime promotion",
+        "status": "LIVE_CORE",
+    }
+    catalog = CATALOG.read_text(encoding="utf-8")
+    assert 'id:"CAP-033"' in catalog
+    assert 'name:"R191 universal surface observer and machine-screen authority alignment"' in catalog
+    assert 'status:"LIVE_CORE"' in catalog
+    source = CONVERGENCE.read_text(encoding="utf-8")
+    assert 'surfaceFabricSnapshot' in source
+    assert 'optical_machine_authority:opticalAuthority' in source
+    assert 'may_promote_v6:false' in source
