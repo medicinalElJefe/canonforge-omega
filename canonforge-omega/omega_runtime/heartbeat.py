@@ -17,7 +17,6 @@ class HeartbeatProof:
     capabilities: list[str]
     runtime_version: str | None = None
     last_job_id: str | None = None
-    pairing_generation: int | None = None
 
 
 class HeartbeatRegistry:
@@ -25,8 +24,6 @@ class HeartbeatRegistry:
 
     A browser credential is not device proof. PC ONLINE requires a heartbeat
     recorded through authenticated sovereign ingress and still within ttl_seconds.
-    Pairing generation is retained when supplied so higher layers can invalidate
-    a heartbeat immediately after credential rotation instead of waiting for TTL.
     """
 
     def __init__(self, state_path: Path, ttl_seconds: int = 45) -> None:
@@ -58,7 +55,6 @@ class HeartbeatRegistry:
 
     def record(self, *, agent_id: str, approved_root: str, capabilities: list[str],
                runtime_version: str | None = None, last_job_id: str | None = None,
-               pairing_generation: int | None = None,
                authenticated: bool = True) -> Dict[str, Any]:
         previous_sequence = self._proof.sequence if self._proof and self._proof.agent_id == agent_id else 0
         self._proof = HeartbeatProof(
@@ -70,7 +66,6 @@ class HeartbeatRegistry:
             capabilities=sorted(set(capabilities)),
             runtime_version=runtime_version,
             last_job_id=last_job_id,
-            pairing_generation=pairing_generation,
         )
         self._save()
         return self.status()
@@ -95,5 +90,5 @@ class HeartbeatRegistry:
             "heartbeat_age_seconds": round(age, 3),
             "ttl_seconds": self.ttl_seconds,
             "proof": asdict(self._proof),
-            "boundary": "PC_ONLINE requires authenticated current heartbeat proof; pairing-generation validity is enforced by the sovereign API layer",
+            "boundary": "PC_ONLINE requires authenticated current heartbeat proof",
         }
