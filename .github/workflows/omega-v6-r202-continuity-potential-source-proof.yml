@@ -1,0 +1,128 @@
+name: OMEGA V6 R202 unified continuity potential source proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/continuityPotentialR202.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/omegaRuntimeR201.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/tests/test_r201_durable_mission_continuity.py
+      - canonforge-omega/tests/test_r202_unified_continuity_potential.py
+      - .github/workflows/omega-v6-r202-continuity-potential-source-proof.yml
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/continuityPotentialR202.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/omegaRuntimeR201.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/tests/test_r201_durable_mission_continuity.py
+      - canonforge-omega/tests/test_r202_unified_continuity_potential.py
+      - .github/workflows/omega-v6-r202-continuity-potential-source-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r202-source-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prove-r202-source-and-inherited-system:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove R202 remains above R201/R200 and preserves canonical heartbeat authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'handleContinuityPotentialR202' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'export { OmegaRuntime } from "./heartbeatTruth"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'export { OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'CONTINUITY_POTENTIAL_R202_ID = "r202-unified-continuity-potential"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          test "$(grep -c 'name = \"OMEGA_RUNTIME\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
+          test "$(grep -c 'name = \"OMEGA_MISSION_LEDGER_R201\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
+          if grep -q 'name = "OMEGA_R202' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml; then
+            echo 'R202_SHADOW_DURABLE_NAMESPACE_BLOCKED'
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python package and test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+
+      - name: Prove R201 evidence-only isolation and R202 continuity contracts
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r201_durable_mission_continuity.py \
+            tests/test_r202_unified_continuity_potential.py
+
+      - name: Run full inherited OMEGA regression matrix
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+
+      - name: Typecheck cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+
+      - name: Wrangler dry-run cumulative R202 Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run
+
+      - name: Prove R202 authority and evidence boundaries are explicit
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE=canonforge-omega/cloudflare/omega-v6-worker/src/system/continuityPotentialR202.ts
+          grep -F 'LEXICOGRAPHIC_EVIDENCE_PRIORITY_NOT_PHYSICAL_SCORE' "$FILE"
+          grep -F 'workbookScoreIsNotPhysicalTruth: true' "$FILE"
+          grep -F 'cohortReachabilityIsNotArtifactProof: true' "$FILE"
+          grep -F 'recommendationIsNotAuthorization: true' "$FILE"
+          grep -F 'canonicalMutation: false' "$FILE"
+          grep -F 'hostStateMutation: false' "$FILE"
+          grep -F 'sourceMutationAuthorized: false' "$FILE"
+          grep -F 'deploymentAuthorized: false' "$FILE"
+          grep -F 'promotionAuthorized: false' "$FILE"
+          if grep -qi 'wrangler deploy' "$FILE"; then
+            echo 'R202_DIRECT_DEPLOY_AUTHORITY_BLOCKED'
+            exit 1
+          fi
+
+      - name: Publish R202 source proof summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R202 source proof'
+            echo
+            echo "- SHA: \`$GITHUB_SHA\`"
+            echo '- R201 evidence-only Durable Object: checked'
+            echo '- R202 adds no Durable Object / shadow state: checked'
+            echo '- Targeted R201/R202 contracts: checked'
+            echo '- Full inherited pytest matrix: checked'
+            echo '- Worker typecheck: checked'
+            echo '- Wrangler dry-run: checked'
+            echo '- Production mutation: **not performed by this workflow**'
+            echo '- CanonState / HostState / source / deployment / promotion authority: **not granted to R202**'
+          } >> "$GITHUB_STEP_SUMMARY"

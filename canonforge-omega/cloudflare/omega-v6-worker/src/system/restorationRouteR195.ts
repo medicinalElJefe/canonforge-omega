@@ -30,6 +30,38 @@ function registryRows(snapshot: any): Record<string, any>[] {
   return [];
 }
 
+function summarizeMenus(artifacts: Record<string, any>[], probes: Record<string, any>[]) {
+  const byMenu = new Map<string, any>();
+  for (const probe of probes) {
+    byMenu.set(String(probe.menuId || "UNMAPPED"), {
+      menuId: String(probe.menuId || "UNMAPPED"),
+      artifactCount: 0,
+      disposition: { KEEP: 0, MERGE: 0, DONOR: 0, OTHER: 0 },
+      stateCounts: {},
+      cohort: probe,
+    });
+  }
+  for (const artifact of artifacts) {
+    const menuId = String(artifact.menuId || "UNMAPPED");
+    const row = byMenu.get(menuId) || {
+      menuId,
+      artifactCount: 0,
+      disposition: { KEEP: 0, MERGE: 0, DONOR: 0, OTHER: 0 },
+      stateCounts: {},
+      cohort: artifact.cohort || null,
+    };
+    row.artifactCount += 1;
+    const disposition = String(artifact.disposition || "OTHER").toUpperCase();
+    if (disposition === "KEEP" || disposition === "MERGE" || disposition === "DONOR") row.disposition[disposition] += 1;
+    else row.disposition.OTHER += 1;
+    const state = String(artifact.state || "UNKNOWN");
+    row.stateCounts[state] = (row.stateCounts[state] || 0) + 1;
+    if (!row.cohort && artifact.cohort) row.cohort = artifact.cohort;
+    byMenu.set(menuId, row);
+  }
+  return [...byMenu.values()].sort((a, b) => a.menuId.localeCompare(b.menuId));
+}
+
 export async function handleRestorationPlannerR195(
   request: Request,
   env: any,
@@ -51,8 +83,10 @@ export async function handleRestorationPlannerR195(
     const selected = plan.artifacts.filter(artifact => (!state || artifact.state === state) && (!disposition || artifact.disposition === disposition));
     return json({
       ...plan,
+      menuSummary: summarizeMenus(plan.artifacts, probes),
       artifacts: selected.slice(offset, offset + limit),
       selection: { state: state || null, disposition: disposition || null, matched: selected.length, offset, limit },
+      summaryBoundary: "menuSummary is computed from the complete R195 registry plan before response pagination. It is corpus/restoration evidence, not artifact execution proof or admission.",
     });
   } catch (error) {
     return json({
