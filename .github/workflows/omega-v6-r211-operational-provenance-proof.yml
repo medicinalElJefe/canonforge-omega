@@ -1,0 +1,84 @@
+name: OMEGA V6 R211 operational provenance proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR210.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts'
+      - 'canonforge-omega/tests/test_r211_operational_provenance_fabric.py'
+      - '.github/workflows/omega-v6-r211-operational-provenance-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR210.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts'
+      - 'canonforge-omega/tests/test_r211_operational_provenance_fabric.py'
+      - '.github/workflows/omega-v6-r211-operational-provenance-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r211-provenance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prove-r211-source-and-cumulative:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prove R210 ancestry and immutable runtime authorities
+        env:
+          R210_BASE: 797cfe9698d0a3084ad6afb12cb18a7ed1030c94
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$R210_BASE^{commit}"
+          git merge-base --is-ancestor "$R210_BASE" HEAD
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          git diff --exit-code "$R210_BASE" HEAD -- \
+            canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml \
+            canonforge-omega/cloudflare/omega-v6-worker/src/heartbeatTruth.ts \
+            canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts \
+            canonforge-omega/cloudflare/omega-v6-worker/src/system/omegaRuntimeR201.ts \
+            canonforge-omega/cloudflare/omega-v6-worker/src/system/hybridMissionLedgerR203.ts \
+            canonforge-omega/scripts/ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Full cumulative Python regression including R211
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Prove complete Worker package without deployment
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r211-dry-run
+      - name: Reassert truth boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          F=canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts
+          grep -F 'predecessor: "r210-sovereign-proof-archive"' "$F"
+          grep -F 'CORRELATED_EVIDENCE_VIEW_NOT_NEW_RUNTIME_AUTHORITY' "$F"
+          grep -F 'publicSarCatalogIsNotRealTimeRadar: true' "$F"
+          grep -F 'pcOnlineRequiresCurrentAuthenticatedHeartbeat: true' "$F"
+          grep -F 'canonicalMutation: false' "$F"
+          grep -F 'promotionAuthorized: false' "$F"
