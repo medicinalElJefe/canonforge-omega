@@ -32,8 +32,19 @@ from omega_runtime.state_store import StateStore
 from omega_runtime.security import gateway_authorized
 from omega_runtime.system_manifest import manifest as software_manifest, summary as software_summary
 from omega_runtime.self_build import BuildMode, JobState, SovereignBuildController, SAFE_JOB_KINDS
+from omega_runtime.sai_b059 import (
+    DRIVE_ARCHIVES,
+    RELEASE as SAI_B059_RELEASE,
+    REQUIRED_MODES as SAI_B059_MODES,
+    SOURCE_AUTHORITIES as SAI_B059_AUTHORITIES,
+    locate_release as locate_sai_b059,
+    probe as probe_sai_b059,
+    query as query_sai_b059,
+    traverse as traverse_sai_b059,
+    verify_release as verify_sai_b059,
+)
 
-app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.2.0-live-heartbeat-self-build")
+app = FastAPI(title="OMEGA V6 Sovereign Runtime", version="6.3.0-r179-ai-sai-convergence")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["GET", "POST"], allow_headers=["*"])
 
@@ -85,6 +96,17 @@ def _require_agent(request: Request) -> None:
             "error": "hybrid_agent_authentication_required",
             "action": "download and run a fresh canonical Windows launcher",
         })
+
+
+def _sai_release_or_409() -> Path:
+    root = locate_sai_b059(APPROVED_BUILD_ROOT)
+    if root is None:
+        raise HTTPException(status_code=409, detail={
+            "error": "omega_sai_b059_not_installed",
+            "release": SAI_B059_RELEASE,
+            "action": "place the exact five B059 Drive split archives in the approved root and run the governed sai_b059_install job, or point OMEGA_SAI_B059_ROOT to an exact installed release",
+        })
+    return root
 
 
 class PatternInfo(BaseModel):
@@ -160,12 +182,34 @@ class HeartbeatRequest(BaseModel):
     last_job_id: str | None = None
 
 
+class SaiVerifyRequest(BaseModel):
+    deep: bool = False
+    selftest: bool = True
+
+
+class SaiQueryRequest(BaseModel):
+    prompt: str = Field(min_length=1, max_length=32000)
+    limit: int = Field(default=8, ge=1, le=24)
+
+
+class SaiTraverseRequest(BaseModel):
+    seed: str = Field(default="", max_length=4000)
+
+
+class RoutePreviewRequest(BaseModel):
+    message: str | None = Field(default=None, max_length=32000)
+    prompt: str | None = Field(default=None, max_length=32000)
+    atlas_context: Dict[str, Any] | None = None
+
+
 @app.get("/api/health")
 def health() -> Dict[str, Any]:
-    return {"ok": True, "runtime": "OMEGA V6 Sovereign Runtime", "state_digest": _runtime.state.digest,
+    return {"ok": True, "runtime": "OMEGA V6 Sovereign Runtime", "version": "R179",
+            "state_digest": _runtime.state.digest,
             "proof_records": len(_runtime.ledger.records), "persistent_state": str(STATE_PATH),
             "remote_ingress_secured": bool(GATEWAY_TOKEN), "software_families": software_summary(),
             "development_mode": _builder.mode.value, "hybrid": _heartbeat.status(),
+            "sai_b059": probe_sai_b059(APPROVED_BUILD_ROOT),
             "representation_boundary": "144/1728/20736 are software state-space representations unless independently evidenced otherwise"}
 
 
@@ -182,7 +226,86 @@ def get_status() -> Dict[str, Any]:
             "system_coherence": snap.system_coherence, "evidence_count": snap.evidence_count,
             "truth": tic.truth, "integrity": tic.integrity, "courage": tic.courage,
             "omega_effective": tic.omega_effective, "development": _builder.status(), "hybrid": _heartbeat.status(),
+            "sai_b059": probe_sai_b059(APPROVED_BUILD_ROOT),
             "boundary": "Fusion/TIC is a compatibility-derived layer. With no explicit evidence it returns zero; canonical authority is StateEnvelope."}
+
+
+@app.get("/api/sai/manifest")
+def sai_manifest() -> Dict[str, Any]:
+    return {
+        "schema": "OMEGA_SAI_B059_MANIFEST_R179",
+        "release": SAI_B059_RELEASE,
+        "drive_archives": DRIVE_ARCHIVES,
+        "source_authorities": [{"name": name, "sha256": digest} for name, digest in SAI_B059_AUTHORITIES],
+        "modes": list(SAI_B059_MODES),
+        "training_scope": "DETERMINISTIC_SOURCE_GROUNDED_CORPUS_COMPILED_INDEXED_CALIBRATED",
+        "foundation_model_weights_trained": False,
+        "boundary": "B059 can be fully trained within its declared deterministic source-grounded scope only after exact release verification. Cloud/provider language-model weights are a separate pretrained capability class.",
+    }
+
+
+@app.get("/api/sai/status")
+def sai_status() -> Dict[str, Any]:
+    return probe_sai_b059(APPROVED_BUILD_ROOT)
+
+
+@app.post("/api/sai/verify")
+def sai_verify(req: SaiVerifyRequest) -> Dict[str, Any]:
+    root = _sai_release_or_409()
+    result = verify_sai_b059(root, run_selftest=req.selftest, deep=req.deep)
+    if not result.get("passed"):
+        raise HTTPException(status_code=409, detail=result)
+    return result
+
+
+@app.post("/api/sai/query")
+def sai_query(req: SaiQueryRequest) -> Dict[str, Any]:
+    root = _sai_release_or_409()
+    result = query_sai_b059(root, req.prompt, req.limit, require_verification=True)
+    if result.get("blocked") or not result.get("grounded"):
+        raise HTTPException(status_code=409, detail=result)
+    return result
+
+
+@app.post("/api/sai/traverse")
+def sai_traverse(req: SaiTraverseRequest) -> Dict[str, Any]:
+    root = _sai_release_or_409()
+    result = traverse_sai_b059(root, req.seed)
+    if result.get("blocked") or not result.get("valid"):
+        raise HTTPException(status_code=409, detail=result)
+    return result
+
+
+@app.post("/api/route-preview")
+def route_preview(req: RoutePreviewRequest) -> Dict[str, Any]:
+    text = (req.prompt or req.message or "").strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="message or prompt is required")
+    state = _runtime.state
+    gate, _, _ = _runtime.evaluate(state)
+    sai = probe_sai_b059(APPROVED_BUILD_ROOT)
+    sai_present = sai.get("state") == "B059_PRESENT_VERIFICATION_REQUIRED"
+    lowered = text.lower()
+    software = any(token in lowered for token in ("code", "software", "build", "debug", "repository", "github", "deploy", "test"))
+    route = "HYBRID_B059_SAI_PLUS_CLOUD_AI" if sai_present else "CLOUD_AI_WITH_B059_PROOF_PENDING"
+    specialist = "SOFTWARE_AI" if software else "GENERAL_AI"
+    return {
+        "ok": True,
+        "schema": "OMEGA_ROUTE_PREVIEW_R179",
+        "route_before_generation": True,
+        "admitted": True,
+        "decision": "ADMITTED",
+        "route": route,
+        "specialist": specialist,
+        "selected": route,
+        "canonical_state_digest": state.digest,
+        "mode188": {"dispatch": gate.dispatch.value, "admission": gate.admission.value, "ratio": gate.ratio},
+        "sai_b059": sai,
+        "sai_grounded_generation_available": False,
+        "sai_grounding_note": "B059 presence is only a probe. Each SAI-grounded generation still requires an exact per-query B059 verification + grounded receipt.",
+        "cloud_ai": {"provider": "CLOUDFLARE_WORKERS_AI", "weights": "EXTERNALLY_PRETRAINED_NOT_OMEGA_TRAINED"},
+        "canonical_mutation": False,
+    }
 
 
 @app.get("/api/hybrid/status")
@@ -209,6 +332,7 @@ def hybrid_status() -> Dict[str, Any]:
         "pcOnline": current,
         "proof": proof or None,
         "development": _builder.status(),
+        "sai_b059": probe_sai_b059(APPROVED_BUILD_ROOT),
         "boundary": "browser credential readiness never implies PC ONLINE; current authenticated heartbeat proof is mandatory",
     }
 
@@ -247,7 +371,7 @@ echo [3/5] Downloading canonical sovereign agent...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%OMEGA_SERVER%/api/hybrid/agent' -OutFile '%OMEGA_AGENT%' -TimeoutSec 30" || goto :download_error
 findstr /C:"OMEGA sovereign heartbeat" "%OMEGA_AGENT%" >nul || goto :download_error
 echo [4/5] Starting authenticated heartbeat proof...
-echo [5/5] Starting governed development loop. Keep this window open.
+echo [5/5] Starting governed development and SAI verification loop. Keep this window open.
 %PY% "%OMEGA_AGENT%" --server "%OMEGA_SERVER%" --token "%OMEGA_TOKEN%" --root "%OMEGA_ROOT%"
 set "RC=%ERRORLEVEL%"
 echo.

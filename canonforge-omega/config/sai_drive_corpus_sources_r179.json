@@ -1,0 +1,40 @@
+{
+  "schema": "OMEGA_SAI_DRIVE_CORPUS_SOURCES_R179",
+  "revision": "R179",
+  "authority": "SOURCE_REGISTRY_NOT_TRAINING_PROOF",
+  "sources": [
+    {
+      "driveId": "1ty1KuQMtRC-wGCu__WbNnKEkgSmo7ndv",
+      "title": "SAI",
+      "kind": "folder",
+      "role": "primary_sai_archive",
+      "knownContents": [
+        "OMEGA_SAI_B059_PART_02_PSC_ATLAS.zip",
+        "OMEGA_SAI_B059_PART_03_PSC_OPERATOR_QR.zip",
+        "OMEGA_SAI_B059_PART_04_CALCULUS_GRAPH_PROOF.zip",
+        "OMEGA_SAI_B059_PART_05_WORKBOOKS.zip"
+      ]
+    },
+    {
+      "driveId": "15iTnaXAi8X6pbexWc9Rid-qG36fuxhf-",
+      "title": "OMEGA_HYBRID_LINK_BRIDGE_V90_R4.ps1",
+      "kind": "training_runtime_donor",
+      "role": "TRAIN_LOCAL_and_proof_lesson_contract"
+    },
+    {
+      "driveId": "1VEa4525VYM-hK-hqcvewUSsaJnSORgPk",
+      "title": "OMEGA_B058_CORRESPONDENCE_LEDGER.md",
+      "kind": "ledger",
+      "role": "sai_repair_and_ordered_command_continuity"
+    },
+    {
+      "driveId": "12w_vkhiXU1RUx5YU4C4M232fyvoqx_XN",
+      "title": "OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx",
+      "kind": "system_ledger",
+      "role": "single_runtime_spine_1728_20736_authority_contract"
+    }
+  ],
+  "ingestionRule": "A Drive source is not considered ingested, trained, or admitted merely because it appears in this registry. Local Sovereign ingestion must materialize/read the approved source, hash the bytes or normalized export, compile traceable chunks, evaluate the resulting knowledge/model artifact, and issue a receipt.",
+  "trainingRule": "Retrieval/index construction and model-weight training are distinct proof states.",
+  "canonicalMutation": false
+}
