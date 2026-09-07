@@ -7,7 +7,9 @@ compatibility_date = "2026-08-29"
 workers_dev = true
 
 [vars]
-BUILD_ID = "r189-whole-instrument-convergence"
+# Protected semantic release identity remains invariant. Newer revisions add their own organ IDs
+# below instead of overwriting this predecessor identity.
+BUILD_ID = "r87-semantic-edge-settle-proof"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
