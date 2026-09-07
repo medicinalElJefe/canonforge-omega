@@ -16,6 +16,22 @@ if (-not (Test-Path $ReceiptPath)) {
   throw "Receipt missing: $ReceiptPath"
 }
 
+function Get-OmegaSha256([string]$Path) {
+  $fullPath = [System.IO.Path]::GetFullPath($Path)
+  $stream = [System.IO.File]::Open($fullPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+  try {
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+      $bytes = $sha.ComputeHash($stream)
+      return ([System.BitConverter]::ToString($bytes)).Replace('-', '').ToLowerInvariant()
+    } finally {
+      $sha.Dispose()
+    }
+  } finally {
+    $stream.Dispose()
+  }
+}
+
 $raw = Get-Content -Raw -Path $ReceiptPath
 $receipt = $raw | ConvertFrom-Json
 $expectedSchema = if ($Kind -eq 'R208_ATTEMPT') {
@@ -33,7 +49,7 @@ if ([bool]$receipt.promotionAuthorized -ne $false) {
   throw 'Promotion-authorizing packets may not enter the R210 local proof archive.'
 }
 
-$hash = (Get-FileHash -Algorithm SHA256 -Path $ReceiptPath).Hash.ToLowerInvariant()
+$hash = Get-OmegaSha256 $ReceiptPath
 if ($hash -notmatch '^[a-f0-9]{64}$') {
   throw 'Failed to derive a SHA-256 content address.'
 }
@@ -44,13 +60,13 @@ $archivePath = Join-Path $kindDir "$hash.json"
 $preexisting = Test-Path $archivePath
 
 if ($preexisting) {
-  $existingHash = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToLowerInvariant()
+  $existingHash = Get-OmegaSha256 $archivePath
   if ($existingHash -ne $hash) {
     throw "Content-address collision or archive corruption: $archivePath"
   }
 } else {
   Copy-Item -LiteralPath $ReceiptPath -Destination $archivePath
-  $writtenHash = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToLowerInvariant()
+  $writtenHash = Get-OmegaSha256 $archivePath
   if ($writtenHash -ne $hash) {
     Remove-Item -LiteralPath $archivePath -Force -ErrorAction SilentlyContinue
     throw 'Archived receipt hash mismatch after write.'
