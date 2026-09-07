@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONVERGENCE = ROOT / "cloudflare" / "omega-genesis-worker" / "src" / "convergence.js"
 CATALOG = ROOT / "cloudflare" / "omega-genesis-worker" / "src" / "catalog.js"
 WRANGLER = ROOT / "cloudflare" / "omega-genesis-worker" / "wrangler.toml"
+DEPLOY = ROOT / ".github" / "workflows" / "deploy-genesis-cloudflare.yml"
 
 
 def test_genesis_r191_preserves_role_separation_and_routes_screen_to_current_machine_organ():
@@ -111,7 +112,33 @@ def test_genesis_r191_is_registered_as_measurable_live_core_capability():
     assert 'id:"CAP-033"' in catalog
     assert 'name:"R191 universal surface observer and machine-screen authority alignment"' in catalog
     assert 'status:"LIVE_CORE"' in catalog
+
+
+def test_genesis_cap034_measures_distinct_native_transport_and_rollback_safe_promotion():
+    cap = next(item for item in CAPABILITIES if item["id"] == "CAP-034")
+    assert cap == {
+        "id": "CAP-034",
+        "name": "Native service-bound federation transport and versioned Optical R153.2 promotion law",
+        "menu": "01 Runtime Core",
+        "gate": "Same-account service bindings + R153.2 SCREEN_ONLY health contract + rollback-safe live promotion",
+        "status": "LIVE_CORE",
+    }
+    catalog = CATALOG.read_text(encoding="utf-8")
     source = CONVERGENCE.read_text(encoding="utf-8")
-    assert 'surfaceFabricSnapshot' in source
-    assert 'optical_machine_authority:opticalAuthority' in source
-    assert 'may_promote_v6:false' in source
+    wrangler = WRANGLER.read_text(encoding="utf-8")
+    deploy = DEPLOY.read_text(encoding="utf-8")
+    assert 'id:"CAP-034"' in catalog
+    assert 'name:"Native service-bound federation transport and versioned Optical R153.2 promotion law"' in catalog
+    assert 'service = "omega-v6-full-convergence"' in wrangler
+    assert 'service = "omega-optical-machine-r1532"' in wrangler
+    assert 'machine_transport:"CLOUDFLARE_SERVICE_BINDINGS"' in source
+    assert 'opticalAuthority==="SCREEN_ONLY"' in source
+    assert 'opticalMachineVersion===OPTICAL_MACHINE_GENERATION' in source
+    assert 'opticalAdaptiveCycle&&!opticalCanonicalMutation' in source
+    assert 'verify_candidate()' in deploy
+    assert 'verify_core()' in deploy
+    assert 'npx wrangler rollback' in deploy
+    assert 'ROLLBACK_VERIFIED' in deploy
+    assert 'optical_machine_generation") == "R153.2"' in deploy
+    assert 'optical_adaptive_cycle") is True' in deploy
+    assert 'optical_canonical_mutation") is False' in deploy
