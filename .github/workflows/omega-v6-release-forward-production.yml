@@ -1,0 +1,249 @@
+name: OMEGA V6 release-forward exact-head production
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-v6-release-forward-production
+  cancel-in-progress: false
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  MIN_CANONICAL_SHA: 596b5365d271c6abaa9604a1c880b2c04f3010df
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  prove-exact-canonical:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove lineage and preserved authority entrypoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$MIN_CANONICAL_SHA" HEAD
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          test -f canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts
+          test -f canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Full cumulative Python and Cloudflare contract regression
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck complete canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Dry-run complete canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .release-forward-dry-run
+
+  deploy-exact-canonical:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: prove-exact-canonical
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact canonical SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact canonical head before deployment preparation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$MIN_CANONICAL_SHA" HEAD
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Re-prove exact canonical suite
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and typecheck exact canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Capture pre-deploy production evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/release-forward-proof
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/release-forward-proof/pre-health.json || true
+          curl --fail --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/release-forward-proof/pre-r205.json || true
+
+      - name: Bind exact canonical SHA to temporary deployment config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          source=Path('wrangler.toml').read_text(encoding='utf-8')
+          sha=os.environ['GITHUB_SHA']
+          if re.search(r'(?m)^CANONICAL_GIT_SHA\s*=.*$', source):
+              rendered=re.sub(r'(?m)^CANONICAL_GIT_SHA\s*=.*$', f'CANONICAL_GIT_SHA = "{sha}"', source, count=1)
+          else:
+              marker='[vars]\n'
+              assert marker in source
+              rendered=source.replace(marker, marker+f'CANONICAL_GIT_SHA = "{sha}"\n', 1)
+          Path('wrangler.release-forward.toml').write_text(rendered, encoding='utf-8')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.release-forward.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Dry-run exact deployment config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.release-forward.toml
+
+      - name: Final exact-head lock before production mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+
+      - name: Deploy exact canonical Worker to Cloudflare
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.release-forward.toml
+
+      - name: Prove live exact identity and cumulative truth surfaces
+        id: liveproof
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 70); do
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r211/manifest" -o /tmp/release-forward-proof/r211-manifest.json \
+              && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r211/status" -o /tmp/release-forward-proof/r211-status.json \
+              && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r211/query?domain=earth" -o /tmp/release-forward-proof/r211-earth.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/release-forward-proof/r205.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r204/manifest" -o /tmp/release-forward-proof/r204.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/acceptance/r181/manifest" -o /tmp/release-forward-proof/r181.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/mission/r201/verify" -o /tmp/release-forward-proof/r201.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/_omega/health" -o /tmp/release-forward-proof/health.json \
+              && EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          def load(name): return json.loads(Path('/tmp/release-forward-proof/'+name).read_text())
+          sha=os.environ['EXPECTED_SHA']
+          m=load('r211-manifest.json'); s=load('r211-status.json'); e=load('r211-earth.json')
+          r205=load('r205.json'); r204=load('r204.json'); r181=load('r181.json'); r201=load('r201.json'); h=load('health.json')
+          assert m.get('ok') is True and m.get('schema')=='OMEGA_OPERATIONAL_PROVENANCE_FABRIC_R211', m
+          assert m.get('release')=='r211-operational-provenance-fabric' and m.get('canonicalGitSha')==sha, m
+          assert re.fullmatch(r'[0-9a-f]{64}', str(m.get('receiptSha256',''))), m
+          b=m.get('truthBoundaries') or {}
+          for key in ('driveSnapshotIsNotLiveDriveTelemetry','publicSarCatalogIsNotRealTimeRadar','sarMetadataIsNotInSarDeformation','solverAvailableIsNotSolverExecuted','cloudConfiguredIsNotCloudExecutionProof','pcOnlineRequiresCurrentAuthenticatedHeartbeat','returnedIsNotVerified','verifiedReturnIsNotCanonState'):
+              assert b.get(key) is True, (key,b)
+          assert s.get('schema')=='OMEGA_OPERATIONAL_PROVENANCE_STATUS_R211' and s.get('canonicalGitSha')==sha, s
+          ph=s.get('physicalHost') or {}
+          if ph.get('pcOnline'):
+              assert ph.get('heartbeatCurrent') is True and ph.get('authenticated') is True, ph
+          assert e.get('schema')=='OMEGA_OPERATIONAL_PROVENANCE_QUERY_R211' and e.get('canonicalGitSha')==sha, e
+          earth=[x for x in e.get('results',[]) if x.get('id')=='earthSar']
+          assert earth and earth[0].get('evidenceClass') in ('LIVE_OBSERVED','UNAVAILABLE'), earth
+          assert r205.get('schema')=='OMEGA_WHOLE_SYSTEM_CONTROL_MANIFEST_R205' and r205.get('canonicalGitSha')==sha, r205
+          assert r204.get('schema')=='OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204' and r204.get('canonicalGitSha')==sha, r204
+          assert r181.get('canonicalGitSha')==sha, r181
+          assert r201.get('ok') is True and r201.get('verified') is True and r201.get('failures')==[], r201
+          assert h.get('ok') is True, h
+          PY
+            then matched=true; break; fi
+            sleep 3
+          done
+          test "$matched" = true
+          echo "RELEASE_FORWARD_LIVE_EXACT_HEAD_VERIFIED $GITHUB_SHA"
+
+      - name: Roll back immediately if live exact-head proof failed
+        if: steps.liveproof.outcome != 'success'
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'RELEASE_FORWARD_POST_DEPLOY_PROOF_FAILED: rolling back.'
+          npx wrangler rollback --message 'OMEGA release-forward automatic rollback: exact-head live proof failed'
+          curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/release-forward-proof/rollback-health.json
+          exit 1
+
+      - name: Publish production proof summary
+        if: steps.liveproof.outcome == 'success'
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA release-forward production proof'
+            echo
+            echo "- Exact canonical SHA: $GITHUB_SHA"
+            echo '- Full Python suite: PASS'
+            echo '- Cloudflare contract: PASS'
+            echo '- Worker typecheck: PASS'
+            echo '- Wrangler dry-run: PASS'
+            echo '- Production deploy: PASS'
+            echo '- R211 provenance manifest/status/Earth query: LIVE VERIFIED'
+            echo '- R205/R204/R181 exact identity: LIVE VERIFIED'
+            echo '- R201 durable chain: VERIFIED'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload production proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-release-forward-proof-${{ github.run_id }}
+          path: /tmp/release-forward-proof/
+          if-no-files-found: ignore
