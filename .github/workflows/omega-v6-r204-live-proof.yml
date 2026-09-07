@@ -64,30 +64,38 @@ jobs:
           grep -F 'RETURN_REJECTED_R204' "$RUNTIME"
           grep -F 'RESULT_CONFLICT' "$RUNTIME"
 
-      - name: Wait for and prove live R204 manifest on exact canonical SHA
+      - name: Wait for two consecutive coherent exact-SHA R204 route sets
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
           EXPECTED_SHA: ${{ steps.authority.outputs.expected_sha }}
         shell: bash
         run: |
           set -euo pipefail
-          live=false
-          for attempt in $(seq 1 60); do
-            if curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
-              "$V6_URL/api/system/r204/manifest" -o /tmp/r204-manifest.json; then
-              if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          stable=0
+          for attempt in $(seq 1 75); do
+            proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}"
+            rm -f /tmp/r204-manifest.json /tmp/v6-health.json /tmp/v6-convergence.json
+            if curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/system/r204/manifest?edgeProof=$proof" -o /tmp/r204-manifest.json \
+              && curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/_omega/health?edgeProof=$proof" -o /tmp/v6-health.json \
+              && curl --fail --silent --show-error --max-time 20 \
+                "$V6_URL/api/convergence/edge?edgeProof=$proof" -o /tmp/v6-convergence.json \
+              && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
           import json, os, re
           from pathlib import Path
 
-          manifest = json.loads(Path('/tmp/r204-manifest.json').read_text())
-          expected = os.environ['EXPECTED_SHA']
+          manifest=json.loads(Path('/tmp/r204-manifest.json').read_text())
+          health=json.loads(Path('/tmp/v6-health.json').read_text())
+          edge=json.loads(Path('/tmp/v6-convergence.json').read_text())
+          expected=os.environ['EXPECTED_SHA']
           if manifest.get('ok') is not True: raise SystemExit(1)
           if manifest.get('schema') != 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204': raise SystemExit(1)
           if manifest.get('release') != 'r204-verified-hybrid-return-admission': raise SystemExit(1)
           if manifest.get('verificationSchema') != 'OMEGA_HYBRID_RETURN_VERIFICATION_R204': raise SystemExit(1)
           if manifest.get('canonicalGitSha') != expected: raise SystemExit(1)
 
-          architecture = manifest.get('architecture') or {}
+          architecture=manifest.get('architecture') or {}
           if architecture.get('canonicalEntrypoint') != 'src/runtimeEntryR169.ts': raise SystemExit(1)
           if architecture.get('underlyingConvergencePreserved') is not True: raise SystemExit(1)
           if architecture.get('durableBinding') != 'OMEGA_RUNTIME': raise SystemExit(1)
@@ -97,8 +105,8 @@ jobs:
           if architecture.get('r201EvidenceLedgerPreserved') is not True: raise SystemExit(1)
           if architecture.get('r203HybridMissionLedgerPreserved') is not True: raise SystemExit(1)
 
-          law = manifest.get('returnLaw') or []
-          required_law = {
+          law=manifest.get('returnLaw') or []
+          required_law={
               'AUTHENTICATED_BRIDGE',
               'EXPLICIT_BOOLEAN_OUTCOME',
               'FULL_QUEUED_STEP_LINEAGE_FOR_SUCCESS',
@@ -111,7 +119,7 @@ jobs:
           }
           if not required_law.issubset(set(law)): raise SystemExit(1)
 
-          boundaries = manifest.get('truthBoundaries') or {}
+          boundaries=manifest.get('truthBoundaries') or {}
           for key in (
               'authenticatedAgentIsNotHardwareAttestation',
               'hostHashAloneIsNotAuthority',
@@ -125,41 +133,51 @@ jobs:
           if manifest.get('canonicalMutation') is not False: raise SystemExit(1)
           if manifest.get('hostStateMutation') is not False: raise SystemExit(1)
           if manifest.get('promotionAuthorized') is not False: raise SystemExit(1)
+          receipt=manifest.get('receiptSha256')
+          if not isinstance(receipt,str) or re.fullmatch(r'[0-9a-f]{64}',receipt) is None: raise SystemExit(1)
 
-          receipt = manifest.get('receiptSha256')
-          if not isinstance(receipt, str) or re.fullmatch(r'[0-9a-f]{64}', receipt) is None: raise SystemExit(1)
-          PY
-              then
-                live=true
-                break
-              fi
-            fi
-            echo "R204 exact-SHA manifest not settled yet (attempt $attempt/60)."
-            sleep 2
-          done
-          if [ "$live" != "true" ]; then
-            echo "R204_LIVE_EXACT_SHA_PROOF_FAILED"
-            cat /tmp/r204-manifest.json 2>/dev/null || true
-            exit 1
-          fi
-
-      - name: Prove inherited live runtime remains coherent
-        env:
-          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json
-          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          health = json.loads(Path('/tmp/v6-health.json').read_text())
-          edge = json.loads(Path('/tmp/v6-convergence.json').read_text())
           if health.get('ok') is not True: raise SystemExit(1)
           if health.get('authority') != 'public-interface-only': raise SystemExit(1)
           if edge.get('ok') is not True: raise SystemExit(1)
-          convergence = edge.get('convergence') or {}
+          convergence=edge.get('convergence') or {}
+          if convergence.get('authority_contract_ready') is not True: raise SystemExit(1)
+          if convergence.get('v6_release_authority') != 'omega-v6-full-convergence': raise SystemExit(1)
+          if convergence.get('genesis_may_deploy_v6') is not False: raise SystemExit(1)
+          PY
+            then
+              stable=$((stable + 1))
+              echo "R204 coherent route set observed ($stable/2) on attempt $attempt."
+              if [ "$stable" -ge 2 ]; then
+                echo "R204_EDGE_COHERENCE_SETTLED $EXPECTED_SHA"
+                break
+              fi
+            else
+              stable=0
+              echo "R204 exact-SHA route set not coherent yet (attempt $attempt/75)."
+            fi
+            if [ "$attempt" -eq 75 ]; then
+              echo "R204_LIVE_EDGE_COHERENCE_PROOF_FAILED"
+              for f in /tmp/r204-manifest.json /tmp/v6-health.json /tmp/v6-convergence.json; do
+                echo "--- $f"; cat "$f" 2>/dev/null || true
+              done
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Re-prove inherited live runtime from coherent captured snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          health=json.loads(Path('/tmp/v6-health.json').read_text())
+          edge=json.loads(Path('/tmp/v6-convergence.json').read_text())
+          if health.get('ok') is not True: raise SystemExit(1)
+          if health.get('authority') != 'public-interface-only': raise SystemExit(1)
+          if edge.get('ok') is not True: raise SystemExit(1)
+          convergence=edge.get('convergence') or {}
           if convergence.get('authority_contract_ready') is not True: raise SystemExit(1)
           if convergence.get('v6_release_authority') != 'omega-v6-full-convergence': raise SystemExit(1)
           if convergence.get('genesis_may_deploy_v6') is not False: raise SystemExit(1)
@@ -179,8 +197,9 @@ jobs:
             echo "- Expected canonical SHA: \`$EXPECTED_SHA\`"
             echo '- R169 deployment entrypoint: preserved'
             echo '- R204 live manifest: exact-SHA bound'
+            echo '- R204 + inherited health/convergence: two consecutive coherent snapshots required'
             echo '- R204 verified-return truth boundaries: live-proven'
             echo '- R201/R203 durable evidence continuity: manifest-proven preserved'
             echo '- CanonState / HostState / promotion authority: not granted by R204'
-            echo '- Inherited V6/Genesis role-separated convergence: rechecked'
+            echo '- Inherited V6/Genesis role-separated convergence: coherently rechecked'
           } >> "$GITHUB_STEP_SUMMARY"
