@@ -9,6 +9,7 @@ import { handleImprovementDiscoveryR184 } from "./swarm/improvementDiscoveryR184
 import { handleCloudSwarmR185 } from "./swarm/cloudSwarmR185";
 import { handleSuccessorEvidenceR186 } from "./swarm/successorEvidenceR186";
 import { handleSourcePatchR187 } from "./swarm/sourcePatchR187";
+import { handleMotionTimeR188 } from "./swarm/motionTimeR188";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
@@ -26,7 +27,7 @@ import { independentSolverLabResponse } from "./validation/independentSolverLabR
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
-export { OmegaSwarmCoordinator } from "./swarm/swarmCoordinatorR169";
+export { OmegaSwarmCoordinatorR188 as OmegaSwarmCoordinator } from "./swarm/motionCoordinatorR188";
 export { OmegaSwarmBranch, OmegaSwarmOrgan, OmegaSwarmOrganismCoordinator } from "./swarm/swarmOrganismR169";
 export { OmegaSwarmAutonomicCoordinator } from "./swarm/swarmAutonomicR169";
 
@@ -76,6 +77,7 @@ export default {
     if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
     if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
+    if (url.pathname.startsWith("/api/swarm/motion/r188/")) return handleMotionTimeR188(request, env);
     if (url.pathname.startsWith("/api/swarm/patch/r187/")) return handleSourcePatchR187(request, env);
     if (url.pathname.startsWith("/api/swarm/evidence/r186/")) return handleSuccessorEvidenceR186(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
     if (url.pathname.startsWith("/api/swarm/improvement/r184/")) return handleImprovementDiscoveryR184(request);
