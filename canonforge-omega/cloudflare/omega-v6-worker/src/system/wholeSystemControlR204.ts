@@ -18,6 +18,9 @@ const HYBRID_OPS_R204 = new Set([
   "OPEN_URL","WAIT","CLICK","KEY","TYPE_TEXT","SCROLL","ASSERT_WINDOW",
   "READ_VISIBLE_TEXT","RECORD_MACRO","REPLAY_MACRO",
 ]);
+const DIRECT_PATH_OPS_R204 = new Set([
+  "INDEX","READ_TEXT","HASH_TREE","BUILD","TEST","PACKAGE","SUPPORT_BUNDLE",
+]);
 const HYBRID_PROFILES_R204 = new Set([
   "AUTO_BUILD","NODE_BUILD","PYTHON_TEST","DOTNET_BUILD","WINDOWS_AUTOMATION","BROWSER_AUTOMATION",
 ]);
@@ -114,6 +117,7 @@ async function manifest(env: any) {
       "VERIFY_BOUNDED_SELF_BUILD_PIPELINE",
       "PREPARE_RECEIPT_BOUND_SAI_HYBRID_BRIDGE",
       "MATERIALIZE_ONLY_EXPLICIT_ALLOW_LISTED_HOST_OPERATIONS",
+      "REQUIRE_STRUCTURED_PARAMETERS_FOR_CONTEXTUAL_HOST_OPERATIONS",
       "R203_AUTHENTICATED_NATIVE_QUEUE_ONLY_IF_CURRENT_HOST_PROOF",
       "SYNC_RETURNED_HOST_EVIDENCE",
       "SEPARATE_CANON_ADMISSION",
@@ -125,12 +129,14 @@ async function manifest(env: any) {
       "/api/intelligence/r204/bridge/execute",
     ],
     hybridOperations: [...HYBRID_OPS_R204],
+    directPathOperations: [...DIRECT_PATH_OPS_R204],
     boundaries: {
       aiOutputIsNotCanon: true,
       saiOutputIsNotCanon: true,
       pcOnlineRequiresCurrentAuthenticatedHeartbeat: true,
       bridgePreparationIsNotHostExecution: true,
       explicitHostOperationsRequired: true,
+      contextualOperationsRequireStructuredSteps: true,
       hostQueueIsNotHostCompletion: true,
       selfBuildDraftIsNotGitMutation: true,
       successorEvidenceIsNotAutomaticPromotion: true,
@@ -275,6 +281,31 @@ async function prepareBridge(request: Request, env: any, ctx: any, canonicalFetc
 }
 
 function explicitHybridPlan(hybrid: AnyObj) {
+  const structured = Array.isArray(hybrid.steps) ? hybrid.steps.filter((row: unknown) => row && typeof row === "object").slice(0, 24) : [];
+  if (structured.length) {
+    const normalized = structured.map((row: AnyObj, index: number) => ({
+      ...row,
+      id: text(row.id) || `R204-${String(index + 1).padStart(2, "0")}`,
+      op: text(row.op).toUpperCase(),
+      label: text(row.label) || `R204 explicit ${text(row.op).toUpperCase()}`,
+    }));
+    const unsupported = normalized.filter((row: AnyObj) => !HYBRID_OPS_R204.has(row.op)).map((row: AnyObj) => row.op || "MISSING_OP");
+    if (unsupported.length) return { ok: false, code: "R204_UNSUPPORTED_STRUCTURED_HOST_OPERATION", unsupported, allowedOps: [], draft: null };
+    const allowedOps = [...new Set(normalized.map((row: AnyObj) => row.op))];
+    return {
+      ok: true,
+      code: "R204_STRUCTURED_HOST_PLAN_ACCEPTED_FOR_R33_VALIDATION",
+      unsupported: [],
+      allowedOps,
+      draft: {
+        schema: "OMEGA_GOVERNED_ACTION_DRAFT_R204",
+        projectPath: text(hybrid.projectPath || ".") || ".",
+        allowedDomains: Array.isArray(hybrid.allowedDomains) ? hybrid.allowedDomains.map(String).slice(0, 12) : [],
+        steps: normalized,
+      },
+    };
+  }
+
   const requested = Array.isArray(hybrid.allowedOps)
     ? hybrid.allowedOps.map((value: unknown) => text(value).toUpperCase()).filter(Boolean)
     : [];
@@ -282,13 +313,17 @@ function explicitHybridPlan(hybrid: AnyObj) {
   const allowedOps = [...new Set(requested.filter((op: string) => HYBRID_OPS_R204.has(op)))];
   if (!allowedOps.length) return { ok: false, code: "R204_EXPLICIT_ALLOW_LISTED_HOST_OPERATIONS_REQUIRED", unsupported, allowedOps: [] as string[], draft: null };
   if (unsupported.length) return { ok: false, code: "R204_UNSUPPORTED_HOST_OPERATION", unsupported, allowedOps, draft: null };
+  const contextual = allowedOps.filter((op: string) => !DIRECT_PATH_OPS_R204.has(op));
+  if (contextual.length) {
+    return { ok: false, code: "R204_STRUCTURED_STEPS_REQUIRED_FOR_CONTEXTUAL_OPERATIONS", contextual, allowedOps, draft: null };
+  }
   const projectPath = text(hybrid.projectPath || ".") || ".";
   const profile = HYBRID_PROFILES_R204.has(text(hybrid.profile).toUpperCase()) ? text(hybrid.profile).toUpperCase() : "AUTO_BUILD";
   const steps = allowedOps.map((op: string, index: number) => ({
     id: `R204-${String(index + 1).padStart(2, "0")}`,
     op,
     label: `R204 SAI-bridged explicit ${op}`,
-    ...(op === "WAIT" ? {} : { path: projectPath }),
+    path: projectPath,
     ...(op === "BUILD" || op === "TEST" ? { profile } : {}),
   }));
   return {
