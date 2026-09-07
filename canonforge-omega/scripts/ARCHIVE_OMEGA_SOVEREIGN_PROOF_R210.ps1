@@ -41,8 +41,9 @@ if ($hash -notmatch '^[a-f0-9]{64}$') {
 $kindDir = Join-Path $ArchiveRoot $Kind
 New-Item -ItemType Directory -Force -Path $kindDir | Out-Null
 $archivePath = Join-Path $kindDir "$hash.json"
+$preexisting = Test-Path $archivePath
 
-if (Test-Path $archivePath) {
+if ($preexisting) {
   $existingHash = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToLowerInvariant()
   if ($existingHash -ne $hash) {
     throw "Content-address collision or archive corruption: $archivePath"
@@ -72,7 +73,7 @@ $result = [ordered]@{
   canonicalGitSha = if ($Kind -eq 'R208_ATTEMPT') { [string]$receipt.production.canonicalGitSha } else { $null }
   sha256 = $hash
   archivePath = $relativeArchivePath
-  existed = (Test-Path $archivePath)
+  preexisting = $preexisting
   canonicalMutation = $false
   promotionAuthorized = $false
 }
