@@ -24,6 +24,7 @@ import { handleRestorationPlannerR195 } from "./system/restorationRouteR195";
 import { handleOneSystemOperatorR199 } from "./system/oneSystemOperatorR199";
 import { handleMissionKernelR200 } from "./system/missionKernelR200";
 import { handleDurableMissionR201 } from "./system/durableMissionRouteR201";
+import { handleHybridMissionR202 } from "./system/hybridMissionRouteR202";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -34,12 +35,12 @@ import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
 import { handleCrossRuntimeValidationRequest } from "./validation/crossRuntimeParityR173";
-import { crossRuntimeLabResponse } from "./validation/crossRuntimeLabR173";
+import { crossRuntimeLabResponse } from "./validation/crossRuntimeParityR173";
 import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR174";
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
 import { handleUniversalSurfaceFabricR191 } from "./federation/universalSurfaceFabricR191";
 import { handleIndependentSolverValidationRequest } from "./validation/independentSolverR175";
-import { independentSolverLabResponse } from "./validation/independentSolverLabR175";
+import { independentSolverLabResponse } from "./validation/independentSolverR175";
 import { handleWholeInstrumentR189 } from "./wholeInstrumentR189";
 import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
@@ -54,6 +55,7 @@ import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaRuntime as OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201";
+export { OmegaHybridMissionLedgerR202 } from "./system/hybridMissionLedgerR202";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
 export { OmegaSwarmCoordinatorR188 as OmegaSwarmCoordinator } from "./swarm/motionCoordinatorR188";
 export { OmegaSwarmBranch, OmegaSwarmOrgan, OmegaSwarmOrganismCoordinator } from "./swarm/swarmOrganismR169";
@@ -82,6 +84,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const hybridMission = await handleHybridMissionR202(request, env);
+  if (hybridMission) return hybridMission;
 
   const durableMission = await handleDurableMissionR201(request, env, ctx, runtimeFetch);
   if (durableMission) return durableMission;
