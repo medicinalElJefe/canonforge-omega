@@ -1,0 +1,184 @@
+name: OMEGA V6 R193 Drive corpus proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/cumulativeCapabilityR193.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/test_r193_drive_corpus_one_system.py'
+      - '.github/workflows/omega-v6-r193-drive-corpus-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r193-drive-corpus-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r193:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Verify R193 and cumulative non-regression chain
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r193_drive_corpus_one_system.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Prove Worker package dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r193-dry-run
+
+  prove-live-r193:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r193
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact deployed R193 SHA
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 20 "$LIVE/api/system/r193/manifest" -o /tmp/r193-manifest.json || true
+            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              d=json.loads(Path('/tmp/r193-manifest.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']:
+              raise SystemExit(1)
+          PY
+            then matched=true; break; fi
+            sleep 5
+          done
+          test "$matched" = true
+      - name: Verify live corpus, cumulative Canon, navigation and organ status
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          CORPUS_SHA256: d80267761320c3bf3d219b38b6293fc52a02e09182fa0825853c7202131f2746
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$LIVE/api/system/r193/manifest" -o /tmp/manifest.json
+          curl --fail --silent --show-error "$LIVE/api/system/r193/status" -o /tmp/status.json
+          curl --fail --silent --show-error "$LIVE/api/canon/r193/manifest" -o /tmp/canon.json
+          curl --fail --silent --show-error "$LIVE/api/system/r193/registry?limit=1" -o /tmp/registry.json
+          curl --fail --silent --show-error "$LIVE/api/system/r193/analyze?table=registry&limit=1" -o /tmp/analysis.json
+          curl --fail --silent --show-error -D /tmp/system.headers "$LIVE/system" -o /tmp/system.html
+          CORPUS_SHA256="$CORPUS_SHA256" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          manifest=json.loads(Path('/tmp/manifest.json').read_text())
+          status=json.loads(Path('/tmp/status.json').read_text())
+          canon=json.loads(Path('/tmp/canon.json').read_text())
+          registry=json.loads(Path('/tmp/registry.json').read_text())
+          analysis=json.loads(Path('/tmp/analysis.json').read_text())
+          html=Path('/tmp/system.html').read_text()
+          assert manifest.get('ok') is True, manifest
+          assert manifest.get('schema') == 'OMEGA_DRIVE_CORPUS_ONE_SYSTEM_R193'
+          corpus=manifest.get('corpus') or {}
+          assert corpus.get('sha256') == os.environ['CORPUS_SHA256']
+          assert (corpus.get('integrity') or {}).get('ok') is True
+          tables={row.get('id'):row for row in corpus.get('tables') or []}
+          assert (tables.get('registry') or {}).get('rows') == 100
+          assert (tables.get('menus') or {}).get('rows',0) >= 36
+          assert (tables.get('capabilities') or {}).get('rows',0) >= 18
+          assert (tables.get('acceptanceGates') or {}).get('rows',0) >= 12
+          assert (tables.get('runtimeWiring') or {}).get('rows',0) >= 16
+          assert (tables.get('capacityAddressIndex') or {}).get('rows',0) >= 144
+          assert (tables.get('implementationSequence') or {}).get('rows',0) >= 16
+          dispositions=corpus.get('dispositions') or {}
+          assert dispositions.get('KEEP') == 63, dispositions
+          assert dispositions.get('MERGE') == 26, dispositions
+          assert dispositions.get('DONOR') == 11, dispositions
+          assert status.get('ok') is True, status
+          assert status.get('corpusReady') is True
+          assert status.get('runtimeReady') is True
+          assert status.get('requiredProbePassCount') == status.get('requiredProbeCount')
+          assert canon.get('schema') == 'OMEGA_CUMULATIVE_CAPABILITY_CANON_R193'
+          assert canon.get('totalCapabilityGroups') == 64
+          assert canon.get('canonicalMutation') is False
+          assert canon.get('promotionAuthorized') is False
+          assert registry.get('ok') is True and registry.get('total') == 100
+          assert analysis.get('ok') is True
+          assert analysis.get('formula') == 'S188=CΩ/(Λ+q+0.35Λq+0.05)'
+          for marker in ('OMEGA ONE SYSTEM','Unified execution console','Recovered Drive corpus','Execute through real specialist route','data-r193-system-link="true"'):
+              assert marker in html, marker
+          PY
+          grep -qi '^x-omega-navigation: r192-navigation-home-repair' /tmp/system.headers
+          grep -qi '^x-omega-system-navigation: r193-drive-corpus-one-system' /tmp/system.headers
+      - name: Execute invariant-preserving continuity computation through R193
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$LIVE/api/system/r193/execute" \
+            -H 'content-type: application/json' \
+            --data '{"operation":"continuity.transfer","input":{"values":[1,2,3],"transfers":[{"from":2,"to":0,"amount":0.25}]}}' \
+            -o /tmp/execute.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          packet=json.loads(Path('/tmp/execute.json').read_text())
+          assert packet.get('schema') == 'OMEGA_ONE_SYSTEM_EXECUTION_RECEIPT_R193', packet
+          assert packet.get('operation') == 'continuity.transfer'
+          assert packet.get('downstreamOk') is True
+          assert packet.get('canonicalMutation') is False
+          result=((packet.get('result') or {}).get('result') or {})
+          assert abs(float(result.get('invariant_before',-1))-6.0) <= 1e-12
+          assert abs(float(result.get('invariant_after',-1))-6.0) <= 1e-12
+          assert packet.get('receiptSha256')
+          PY
+      - name: Execute B059 SAI query through R193 routing
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$LIVE/api/system/r193/execute" \
+            -H 'content-type: application/json' \
+            --data '{"operation":"sai.query","prompt":"State the OMEGA address hierarchy and its physical-dimension truth boundary."}' \
+            -o /tmp/sai.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          packet=json.loads(Path('/tmp/sai.json').read_text())
+          assert packet.get('schema') == 'OMEGA_ONE_SYSTEM_EXECUTION_RECEIPT_R193', packet
+          assert packet.get('operation') == 'sai.query'
+          assert packet.get('downstreamOk') is True, packet
+          result=packet.get('result') or {}
+          assert result.get('grounded') is True, result
+          assert result.get('fully_trained_within_declared_scope') is True, result
+          assert result.get('foundation_model_weights_trained') is False, result
+          assert result.get('receipt_sha256'), result
+          PY
