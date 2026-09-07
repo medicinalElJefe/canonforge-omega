@@ -1,20 +1,40 @@
 name: OMEGA V6 R177 live warp integrity proof
 
 on:
-  push:
-    branches: [omega-v6-full-convergence]
+  workflow_call:
+    inputs:
+      run_full:
+        description: Execute the full 1,728-cell proof after the 576-cell proof
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      run_full:
+        description: Execute the full 1,728-cell proof after the 576-cell proof
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r177-live-integrity
+  cancel-in-progress: true
 
 jobs:
   prove-r177-warp-integrity:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
-      - name: Wait for R177 integrity fabric after canonical deployment
+      - name: Confirm R177 integrity fabric on deployed edge
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 120); do
+          for attempt in $(seq 1 45); do
             if curl --fail --silent --show-error "$V6_URL/api/swarm/warp/manifest" -o /tmp/r177-manifest.json \
               && python - <<'PY'
           import json
@@ -33,8 +53,8 @@ jobs:
               curl --fail --silent --show-error "$V6_URL/warp" -o /tmp/r177-lab.html
               exit 0
             fi
-            if [ "$attempt" -eq 120 ]; then
-              echo "R177 integrity fabric did not settle on the public edge"
+            if [ "$attempt" -eq 45 ]; then
+              echo "R177 integrity fabric unavailable after post-deploy settle window"
               cat /tmp/r177-manifest.json || true
               exit 1
             fi
@@ -108,6 +128,7 @@ jobs:
           PY
 
       - name: Prove exact 1728-cell FULL completion
+        if: ${{ inputs.run_full == true }}
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
