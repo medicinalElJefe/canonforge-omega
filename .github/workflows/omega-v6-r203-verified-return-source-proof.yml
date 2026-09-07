@@ -1,0 +1,122 @@
+name: OMEGA V6 R203 verified Hybrid return source proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR203.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR203.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/scripts/check_cloudflare_contract.py
+      - canonforge-omega/tests/test_r203_verified_return_lineage.py
+      - .github/workflows/omega-v6-r203-verified-return-source-proof.yml
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR203.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR203.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/scripts/check_cloudflare_contract.py
+      - canonforge-omega/tests/test_r203_verified_return_lineage.py
+      - .github/workflows/omega-v6-r203-verified-return-source-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r203-source-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prove-r203-return-admission-and-lineage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove additive entry wrapper and namespace preservation
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR203.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'import runtime from "./runtimeEntryR169"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR203.ts
+          grep -F 'export { OmegaRuntime } from "./omegaRuntimeR203"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR203.ts
+          grep -F 'HYBRID_RETURN_ADMISSION_R203_ID = "r203-verified-hybrid-return-admission"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          test "$(grep -c 'name = \"OMEGA_RUNTIME\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
+          test "$(grep -c 'name = \"OMEGA_MISSION_LEDGER_R201\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
+          ! grep -q '^\[\[migrations\]\]' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          ! grep -q 'new_sqlite_classes' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          ! grep -q 'state = "deleted"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python package and test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+
+      - name: Prove R203 focused invariants
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r203_verified_return_lineage.py
+
+      - name: Prove observed Cloudflare durable contract
+        working-directory: canonforge-omega
+        run: python scripts/check_cloudflare_contract.py --strict
+
+      - name: Run full inherited OMEGA regression matrix
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+
+      - name: Typecheck complete R203 Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+
+      - name: Wrangler dry-run complete R203 Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run
+
+      - name: Prove return-truth boundary text and completion law
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE=canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR203.ts
+          grep -F 'explicit boolean ok outcome required' "$FILE"
+          grep -F 'successful return requires proof for every queued step' "$FILE"
+          grep -F 'RETURN_VERIFIED_SUCCESS_R203' "$FILE"
+          grep -F 'RETURN_REJECTED_R203' "$FILE"
+          grep -F 'RESULT_CONFLICT' "$FILE"
+          grep -F 'hostFingerprintAloneIsAuthority: false' "$FILE"
+          grep -F 'hostCryptographicAttestationClaimed: false' "$FILE"
+          grep -F 'const complete = finalStatus === "COMPLETE" && verification.verified === true;' "$FILE"
+
+      - name: Publish R203 source proof summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R203 source proof'
+            echo
+            echo "- SHA: \`$GITHUB_SHA\`"
+            echo '- R169→R202 public runtime delegation: checked'
+            echo '- Existing Durable Object namespaces/storage identities: checked'
+            echo '- Hybrid successful return full-step admission: checked'
+            echo '- Server canonical SHA-256 receipt and replay conflict law: checked'
+            echo '- Hardware-attestation overclaim blocked: checked'
+            echo '- Canonical merge-lineage guard: checked'
+            echo '- Full inherited pytest matrix: checked'
+            echo '- Worker typecheck and Wrangler dry-run: checked'
+            echo '- Production mutation: **not performed by this workflow**'
+          } >> "$GITHUB_STEP_SUMMARY"
