@@ -33,7 +33,7 @@ def test_r201_live_proof_verifies_execute_record_reread_chain():
         "/api/mission/r201/summary",
         "/api/mission/r201/verify",
         "/api/mission/r201/execute",
-        "/api/mission/r201/history?limit=12",
+        "/api/mission/r201/history?limit=48",
     ]:
         assert route in WORKFLOW
     for token in [
@@ -44,6 +44,15 @@ def test_r201_live_proof_verifies_execute_record_reread_chain():
         "LIVE_R201_DURABLE_MISSION_CONTINUITY_VERIFIED",
     ]:
         assert token in WORKFLOW
+
+
+def test_r201_live_proof_binds_persisted_entry_without_assuming_exclusive_head_ownership():
+    assert "r201-proof-prev-entry-sha.txt" in WORKFLOW
+    assert "missionReceiptSha256') == mission_receipt" in WORKFLOW
+    assert "entrySha256') == entry_sha" in WORKFLOW
+    assert "v.get('headSha256') == s.get('headSha256')" in WORKFLOW
+    assert "Concurrent verified writes are permitted" in WORKFLOW
+    assert "assert s.get('headSha256') == entry_sha" not in WORKFLOW
 
 
 def test_r201_live_proof_preserves_authority_and_public_history_privacy():
@@ -60,6 +69,7 @@ def test_r201_live_proof_is_reusable_and_runs_on_every_canonical_push():
     assert "workflow_call:" in WORKFLOW
     assert "workflow_dispatch:" in WORKFLOW
     assert "push:" in WORKFLOW
+    assert "pull_request:" in WORKFLOW
     assert "branches: [omega-v6-full-convergence]" in WORKFLOW
     assert "cancel-in-progress: false" in WORKFLOW
     assert "actions/upload-artifact@v4" in WORKFLOW
