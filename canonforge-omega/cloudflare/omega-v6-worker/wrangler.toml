@@ -31,6 +31,10 @@ SWARM_GOVERNOR_ID = "r180-adaptive-interactive-reserve-self-development-governor
 LIVE_ACCEPTANCE_ID = "r181-current-heartbeat-exact-b059-grounded-query-acceptance"
 CLOUD_SWARM_R185_ID = "r185-172-addressable-durable-cloud-federation"
 SUCCESSOR_EVIDENCE_R186_ID = "r186-execution-derived-live-connection-successor-evidence"
+SOURCE_PATCH_R187_ID = "r187-bounded-source-patch-rollback"
+MOTION_TIME_R188_ID = "r188-172-node-synchronous-motion-time"
+WHOLE_SYSTEM_ACCEPTANCE_ID = "r189-whole-system-canonical-acceptance"
+CAPABILITY_TRUTH_ID = "r189-implemented-route-invoked-returned-verified"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
