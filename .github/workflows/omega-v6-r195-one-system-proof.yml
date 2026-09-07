@@ -72,7 +72,7 @@ jobs:
     needs: verify-r195
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for exact deployed R195 SHA
+      - name: Wait for stable exact deployed R195 SHA
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
           EXPECTED_SHA: ${{ github.sha }}
@@ -80,38 +80,57 @@ jobs:
         run: |
           set -euo pipefail
           matched=false
+          consecutive=0
           for attempt in $(seq 1 60); do
-            curl --fail --silent --show-error --max-time 20 "$LIVE/api/system/r195/manifest" -o /tmp/manifest.json || true
-            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+            if curl --fail --silent --show-error --max-time 20 "$LIVE/api/system/r195/manifest" -o /tmp/manifest.json && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
           import json, os
           from pathlib import Path
           try: d=json.loads(Path('/tmp/manifest.json').read_text())
           except Exception: raise SystemExit(1)
           if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']: raise SystemExit(1)
           PY
-            then matched=true; break; fi
-            sleep 5
+            then
+              consecutive=$((consecutive + 1))
+              if [ "$consecutive" -ge 3 ]; then matched=true; break; fi
+            else
+              consecutive=0
+            fi
+            sleep 3
           done
           test "$matched" = true
       - name: Prove corpus, evidence, residual restoration, cumulative truth and One-System workspace
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
           SHA256: 8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "$LIVE/api/system/r195/manifest" -o /tmp/manifest.json
-          curl --fail --silent --show-error "$LIVE/api/system/r195/status" -o /tmp/status.json
-          curl --fail --silent --show-error "$LIVE/api/system/r195/restoration?limit=24" -o /tmp/restoration.json
-          curl --fail --silent --show-error "$LIVE/api/canon/r195/manifest" -o /tmp/canon.json
-          curl --fail --silent --show-error "$LIVE/api/workspace/r194/status" -o /tmp/evidence.json
-          curl --fail --silent --show-error "$LIVE/api/system/r195/registry?limit=1" -o /tmp/registry.json
-          curl --fail --silent --show-error "$LIVE/api/system/r195/analyze?table=registry&limit=1" -o /tmp/analysis.json
-          curl --fail --silent --show-error -D /tmp/system.headers "$LIVE/system" -o /tmp/system.html
-          SHA256="$SHA256" python - <<'PY'
+          get_live() {
+            local url="$1" out="$2" headers="${3:-}"
+            for attempt in $(seq 1 15); do
+              if [ -n "$headers" ]; then
+                if curl --fail --silent --show-error --max-time 20 -D "$headers" "$url" -o "$out"; then return 0; fi
+              else
+                if curl --fail --silent --show-error --max-time 20 "$url" -o "$out"; then return 0; fi
+              fi
+              sleep 2
+            done
+            return 1
+          }
+          get_live "$LIVE/api/system/r195/manifest" /tmp/manifest.json
+          get_live "$LIVE/api/system/r195/status" /tmp/status.json
+          get_live "$LIVE/api/system/r195/restoration?limit=24" /tmp/restoration.json
+          get_live "$LIVE/api/canon/r195/manifest" /tmp/canon.json
+          get_live "$LIVE/api/workspace/r194/status" /tmp/evidence.json
+          get_live "$LIVE/api/system/r195/registry?limit=1" /tmp/registry.json
+          get_live "$LIVE/api/system/r195/analyze?table=registry&limit=1" /tmp/analysis.json
+          get_live "$LIVE/system" /tmp/system.html /tmp/system.headers
+          EXPECTED_SHA="$EXPECTED_SHA" SHA256="$SHA256" python - <<'PY'
           import json, os
           from pathlib import Path
           m=json.loads(Path('/tmp/manifest.json').read_text());s=json.loads(Path('/tmp/status.json').read_text());p=json.loads(Path('/tmp/restoration.json').read_text());c=json.loads(Path('/tmp/canon.json').read_text());e=json.loads(Path('/tmp/evidence.json').read_text());r=json.loads(Path('/tmp/registry.json').read_text());a=json.loads(Path('/tmp/analysis.json').read_text());h=Path('/tmp/system.html').read_text()
+          assert m.get('canonicalGitSha')==os.environ['EXPECTED_SHA'],m
           assert m.get('ok') is True,m
           assert m.get('schema')=='OMEGA_DRIVE_CORPUS_ONE_SYSTEM_R195'
           assert m.get('predecessor')=='r194-dual-plane-evidence-restoration'
@@ -149,7 +168,15 @@ jobs:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "$LIVE/api/system/r195/execute" -H 'content-type: application/json' --data '{"operation":"continuity.transfer","input":{"values":[1,2,3],"transfers":[{"from":2,"to":0,"amount":0.25}]}}' -o /tmp/compute.json
+          post_live() {
+            local url="$1" data="$2" out="$3"
+            for attempt in $(seq 1 15); do
+              if curl --fail --silent --show-error --max-time 20 "$url" -H 'content-type: application/json' --data "$data" -o "$out"; then return 0; fi
+              sleep 2
+            done
+            return 1
+          }
+          post_live "$LIVE/api/system/r195/execute" '{"operation":"continuity.transfer","input":{"values":[1,2,3],"transfers":[{"from":2,"to":0,"amount":0.25}]}}' /tmp/compute.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -161,12 +188,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/manifest" -o /tmp/dewey-manifest.json
-          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/pair" -H 'content-type: application/json' --data '{"b":37,"c":73}' -o /tmp/dewey-pair.json
-          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/solve" -H 'content-type: application/json' --data '{"mode":"full-overall-canon","steps":512,"state":{"continuity":0.72,"plasticity":0.68,"burden":0.24,"contradiction":0.18,"orientation":0,"scar":0.08,"shell":1728}}' -o /tmp/dewey-neutral.json
-          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/solve" -H 'content-type: application/json' --data '{"mode":"mode-188","steps":512,"state":{"continuity":0.72,"plasticity":0.68,"burden":0.24,"contradiction":0.18,"orientation":1,"scar":0.08,"shell":20736}}' -o /tmp/dewey-solve.json
-          curl --fail --silent --show-error "$LIVE/api/compute/dewey/r195/ensemble" -H 'content-type: application/json' --data '{"mode":"unified-coherence","steps":256,"ensemble":64,"amplitude":0.03}' -o /tmp/dewey-ensemble.json
-          curl --fail --silent --show-error -D /tmp/dewey.headers "$LIVE/?app=Calculus&mode=dewey-calculus" -o /tmp/dewey.html
+          get_live() {
+            local url="$1" out="$2" headers="${3:-}"
+            for attempt in $(seq 1 15); do
+              if [ -n "$headers" ]; then
+                if curl --fail --silent --show-error --max-time 20 -D "$headers" "$url" -o "$out"; then return 0; fi
+              else
+                if curl --fail --silent --show-error --max-time 20 "$url" -o "$out"; then return 0; fi
+              fi
+              sleep 2
+            done
+            return 1
+          }
+          post_live() {
+            local url="$1" data="$2" out="$3"
+            for attempt in $(seq 1 15); do
+              if curl --fail --silent --show-error --max-time 20 "$url" -H 'content-type: application/json' --data "$data" -o "$out"; then return 0; fi
+              sleep 2
+            done
+            return 1
+          }
+          get_live "$LIVE/api/compute/dewey/r195/manifest" /tmp/dewey-manifest.json
+          post_live "$LIVE/api/compute/dewey/r195/pair" '{"b":37,"c":73}' /tmp/dewey-pair.json
+          post_live "$LIVE/api/compute/dewey/r195/solve" '{"mode":"full-overall-canon","steps":512,"state":{"continuity":0.72,"plasticity":0.68,"burden":0.24,"contradiction":0.18,"orientation":0,"scar":0.08,"shell":1728}}' /tmp/dewey-neutral.json
+          post_live "$LIVE/api/compute/dewey/r195/solve" '{"mode":"mode-188","steps":512,"state":{"continuity":0.72,"plasticity":0.68,"burden":0.24,"contradiction":0.18,"orientation":1,"scar":0.08,"shell":20736}}' /tmp/dewey-solve.json
+          post_live "$LIVE/api/compute/dewey/r195/ensemble" '{"mode":"unified-coherence","steps":256,"ensemble":64,"amplitude":0.03}' /tmp/dewey-ensemble.json
+          get_live "$LIVE/?app=Calculus&mode=dewey-calculus" /tmp/dewey.html /tmp/dewey.headers
           python - <<'PY'
           import json, math
           from pathlib import Path
@@ -198,7 +245,15 @@ jobs:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "$LIVE/api/system/r195/execute" -H 'content-type: application/json' --data '{"operation":"sai.query","prompt":"State the OMEGA address hierarchy and its physical-dimension truth boundary."}' -o /tmp/sai.json
+          post_live() {
+            local url="$1" data="$2" out="$3"
+            for attempt in $(seq 1 15); do
+              if curl --fail --silent --show-error --max-time 20 "$url" -H 'content-type: application/json' --data "$data" -o "$out"; then return 0; fi
+              sleep 2
+            done
+            return 1
+          }
+          post_live "$LIVE/api/system/r195/execute" '{"operation":"sai.query","prompt":"State the OMEGA address hierarchy and its physical-dimension truth boundary."}' /tmp/sai.json
           python - <<'PY'
           import json
           from pathlib import Path
