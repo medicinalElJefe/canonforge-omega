@@ -137,7 +137,7 @@ def test_r190_operator_surface_connects_truth_to_whole_instrument():
     assert "Run core proof" in source
     assert "Run full proof" in source
     assert 'href="/instrument"' in source
-    assert 'fetch(\'/api/acceptance/r190/probe\'' in source
+    assert "fetch('/api/acceptance/r190/probe'" in source
     assert "What is actually working?" in source
 
 
