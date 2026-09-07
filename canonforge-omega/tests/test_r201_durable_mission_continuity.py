@@ -6,17 +6,19 @@ SRC = WORKER / "src"
 ENTRY = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
 RUNTIME = (SRC / "system" / "omegaRuntimeR201.ts").read_text(encoding="utf-8")
 ROUTE = (SRC / "system" / "durableMissionRouteR201.ts").read_text(encoding="utf-8")
-BASE_RUNTIME = (SRC / "omegaRuntime.ts").read_text(encoding="utf-8")
 WRANGLER = (WORKER / "wrangler.toml").read_text(encoding="utf-8")
 
 
-def test_r201_reuses_recovered_runtime_behavior_without_replacing_canonical_runtime():
-    assert 'import { OmegaRuntime as BaseOmegaRuntime } from "../omegaRuntime"' in RUNTIME
-    assert 'export class OmegaRuntime extends BaseOmegaRuntime' in RUNTIME
+def test_r201_is_a_dedicated_evidence_only_durable_object_not_a_runtime_subclass():
+    assert 'from "../omegaRuntime"' not in RUNTIME
+    assert "extends BaseOmegaRuntime" not in RUNTIME
+    assert "super.fetch" not in RUNTIME
+    assert "export class OmegaMissionLedgerR201" in RUNTIME
+    assert "DEDICATED_EVIDENCE_ONLY_DURABLE_OBJECT_NO_GENERAL_RUNTIME_METHODS" in RUNTIME
+    assert "appendAuditEvent" in RUNTIME
+    assert "this.event(" not in RUNTIME
     assert 'export { OmegaRuntime } from "./heartbeatTruth"' in ENTRY
-    assert 'export { OmegaRuntime as OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201"' in ENTRY
-    for inherited_key in ['"devices"', '"jobs"', '"missions"', '"events"', '"thread"']:
-        assert inherited_key in BASE_RUNTIME
+    assert 'export { OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201"' in ENTRY
     assert WRANGLER.count('name = "OMEGA_RUNTIME"') == 1
     assert WRANGLER.count('class_name = "OmegaRuntime"') == 1
     assert '[exports.OmegaRuntime]' in WRANGLER
@@ -69,7 +71,7 @@ def test_r201_public_history_is_sanitized_and_direct_record_is_not_public():
     assert '/api/mission/r201/history' in ROUTE
     assert '/mission-ledger/public-history' in ROUTE
     assert 'Mission intent, specialist payloads, downstream evidence bodies' in RUNTIME
-    public_entry = RUNTIME[RUNTIME.index('function publicEntry'):RUNTIME.index('export class OmegaRuntime')]
+    public_entry = RUNTIME[RUNTIME.index('function publicEntry'):RUNTIME.index('export class OmegaMissionLedgerR201')]
     assert 'intent:' not in public_entry
     assert 'taskReceipts:' not in public_entry
     assert '/api/mission/r201/record' not in ROUTE
@@ -84,10 +86,12 @@ def test_r201_never_promotes_history_to_host_or_canon_authority():
         assert 'promotionAuthorized: false' in source
     assert 'pc_online' not in RUNTIME
     assert 'nativeExecutionClaimed' not in RUNTIME
+    assert 'Pair this browser' not in RUNTIME
+    assert 'HYBRID_OPS' not in RUNTIME
     assert 'The historical OMEGA_RUNTIME/OmegaRuntime binding is unchanged' in ROUTE
 
 
-def test_r201_routes_and_release_register_new_evidence_only_sqlite_class():
+def test_r201_routes_and_release_preserve_dedicated_evidence_only_sqlite_class():
     for path in [
         '/api/mission/r201/manifest', '/api/mission/r201/execute', '/api/mission/r201/summary',
         '/api/mission/r201/history', '/api/mission/r201/verify',
@@ -109,3 +113,11 @@ def test_r201_uses_dedicated_evidence_binding_and_named_instance_not_pc_state_ru
     assert 'env?.OMEGA_RUNTIME' not in ROUTE
     assert 'hostStateMutation: false' in ROUTE
     assert 'Pair this browser' not in ROUTE
+
+
+def test_r201_unknown_internal_routes_cannot_fall_through_to_general_runtime_behavior():
+    assert 'R201_EVIDENCE_LEDGER_ROUTE_NOT_FOUND' in RUNTIME
+    assert 'return super.fetch(request)' not in RUNTIME
+    assert 'if ((path === "/status" || path === "/snapshot")' not in RUNTIME
+    assert 'AUDIT_KEY = "missionLedgerAuditR201"' in RUNTIME
+    assert 'AUDIT_LIMIT = 128' in RUNTIME
