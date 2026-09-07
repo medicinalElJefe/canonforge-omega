@@ -1,5 +1,7 @@
 import base, { type Env } from "./index";
 import { enhanceHdLaunchNavigation } from "./launchHdNavigation";
+// R85 base-contract identity remains the superclass preserved by R203:
+// export { OmegaRuntime } from "./omegaRuntime";
 export { OmegaRuntime } from "./omegaRuntimeR203";
 
 const GENESIS = "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev";
