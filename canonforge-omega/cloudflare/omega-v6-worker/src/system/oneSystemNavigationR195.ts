@@ -1,4 +1,7 @@
 import { EVIDENCE_PLANE_RELEASE_R194 } from "../evidencePlaneR194";
+import { reconstituteOneSystemR199, ONE_SYSTEM_CORRELATION_RELEASE_R199 } from "./oneSystemCorrelationR199";
+import { correlateOneSystemTruthStripR199 } from "./oneSystemTruthStripR199";
+import { enhanceOneSystemOperatorSurfaceR199 } from "./oneSystemOperatorSurfaceR199";
 
 export const ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system";
 
@@ -17,18 +20,25 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
   let html = await response.text();
-  if (!html.includes('id="omegaR193Rail"') || html.includes('data-r195-one-system="true"')) {
-    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+
+  if (html.includes('id="omegaR193Rail"') && !html.includes('data-r195-one-system="true"')) {
+    const active = pathname === "/system" || pathname.startsWith("/system/") ? " active" : "";
+    const item = `<a data-r195-one-system="true" data-predecessor="${EVIDENCE_PLANE_RELEASE_R194}" class="r193Item${active}" href="/system"><span class="r193Icon">Ω1</span><span class="r193Label"><b>ONE SYSTEM</b><small>Drive corpus · calculus · execution state · proof</small></span></a>`;
+    html = html.replace('<section class="r193Section"><div class="r193SectionTitle"><span>SYSTEMS</span></div>', `<section class="r193Section"><div class="r193SectionTitle"><span>SYSTEMS</span></div>${item}`);
   }
-  const active = pathname === "/system" || pathname.startsWith("/system/") ? " active" : "";
-  const item = `<a data-r195-one-system="true" data-predecessor="${EVIDENCE_PLANE_RELEASE_R194}" class="r193Item${active}" href="/system"><span class="r193Icon">Ω1</span><span class="r193Label"><b>ONE SYSTEM</b><small>Drive corpus · calculus · execution state · proof</small></span></a>`;
-  html = html.replace('<section class="r193Section"><div class="r193SectionTitle"><span>SYSTEMS</span></div>', `<section class="r193Section"><div class="r193SectionTitle"><span>SYSTEMS</span></div>${item}`);
-  if (active) {
+
+  const active = pathname === "/system" || pathname.startsWith("/system/");
+  if (active && !html.includes('id="omegaResidualRestorationR195Runtime"')) {
     html = html.includes("</head>") ? html.replace("</head>", residualStyle + "</head>") : residualStyle + html;
     html = html.includes("</body>") ? html.replace("</body>", residualScript + "</body>") : html + residualScript;
   }
+
   const headers = new Headers(response.headers);
   headers.set("cache-control", "no-store");
   headers.set("x-omega-one-system", ONE_SYSTEM_NAVIGATION_RELEASE_R195);
-  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+  headers.set("x-omega-one-system-correlation", ONE_SYSTEM_CORRELATION_RELEASE_R199);
+  const preserved = new Response(html, { status: response.status, statusText: response.statusText, headers });
+  const reconstituted = await reconstituteOneSystemR199(preserved, pathname);
+  const correlated = await correlateOneSystemTruthStripR199(reconstituted);
+  return enhanceOneSystemOperatorSurfaceR199(correlated);
 }
