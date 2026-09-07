@@ -15,6 +15,7 @@ import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR1
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
 import { handleIndependentSolverValidationRequest } from "./validation/independentSolverR175";
 import { independentSolverLabResponse } from "./validation/independentSolverLabR175";
+import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -33,6 +34,9 @@ export default {
     if (url.pathname === "/validate/cross-runtime" || url.pathname === "/validate/cross-runtime/") return crossRuntimeLabResponse();
     if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
     if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
+    if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) {
+      return handleSaiAiFusionR179(request, env, ctx, (innerRequest, innerEnv, innerCtx) => canonical.fetch(innerRequest, innerEnv, innerCtx));
+    }
     if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/build/")) return handleWarpBuildCandidateRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/warp/")) return handleWarpComputationRequest(request, env);
