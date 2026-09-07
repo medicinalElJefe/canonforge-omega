@@ -22,6 +22,7 @@ import { handleDriveCorpusSystemR195 } from "./system/driveCorpusSystemR195";
 import { handleRestorationPlannerR195 } from "./system/restorationRouteR195";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
+import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
 import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
@@ -37,6 +38,7 @@ import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
+import { enhanceDeweyComputeSurfaceR195 } from "./deweyComputeSurfaceR195";
 import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195";
 
 export { OmegaRuntime } from "./heartbeatTruth";
@@ -77,6 +79,9 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 
   const r195Canon = handleCumulativeCapabilityR195(request);
   if (r195Canon) return r195Canon;
+
+  const deweyCompute = await handleDeweyWaterContinuityR195(request);
+  if (deweyCompute) return deweyCompute;
 
   const evidencePlane = await handleEvidencePlaneR194(request, env, ctx, runtimeFetch);
   if (evidencePlane) return evidencePlane;
@@ -151,7 +156,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
   const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
   const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
-  return enhanceOneSystemNavigationR195(r194, new URL(request.url).pathname);
+  const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
+  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };
