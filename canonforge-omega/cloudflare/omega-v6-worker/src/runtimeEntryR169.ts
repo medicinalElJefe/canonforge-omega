@@ -180,15 +180,23 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 }
 
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
-  const url = new URL(request.url);
   const response = await runtimeFetch(request, env, ctx);
-  const r192 = await enhanceUniversalNavigationR192(response, url.pathname);
-  const r193 = await enhanceUniversalWorkspaceR193(r192, url.pathname);
-  const r194 = await enhanceEvidencePlaneR194(r193, url.pathname);
-  const dewey = await enhanceDeweyComputeSurfaceR195(r194, url.pathname);
-  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, url.pathname);
-  const oneSystem = await enhanceOneSystemNavigationR195(calibrated !== dewey ? calibrated : dewey, url.pathname);
-  return enhanceEarthSarIntegratedRepairR198_1(oneSystem, request.url);
+  const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
+  const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
+  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, new URL(request.url).pathname);
+
+  const requestUrl = new URL(request.url);
+  const earthApp = (requestUrl.searchParams.get("app") || "").toLowerCase() === "earth" || requestUrl.pathname === "/earth" || requestUrl.pathname.startsWith("/earth/");
+  if (earthApp) {
+    const earthBase = calibrated !== dewey ? calibrated : dewey;
+    const oneSystemEarth = await enhanceOneSystemNavigationR195(earthBase, new URL(request.url).pathname);
+    return enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);
+  }
+
+  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
+  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };
