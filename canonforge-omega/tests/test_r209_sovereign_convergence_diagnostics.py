@@ -1,0 +1,83 @@
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+R209 = ROOT / "scripts" / "PROVE_OMEGA_V6_R209_WINDOWS.ps1"
+R208 = ROOT / "scripts" / "PROVE_OMEGA_V6_WINDOWS.ps1"
+LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
+
+
+def text(path: Path) -> str:
+    assert path.exists(), path
+    return path.read_text(encoding="utf-8")
+
+
+def test_r209_wraps_r208_truth_instead_of_redefining_acceptance():
+    source = text(R209)
+    required = [
+        "OMEGA_SOVEREIGN_CONVERGENCE_R209",
+        "OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208",
+        "PROVE_OMEGA_V6_WINDOWS.ps1",
+        "onlyR208R181ReceiptsDetermineAcceptance = $true",
+        "retriesDoNotCreateProof = $true",
+        "LOCAL_OPERATOR_CONVERGENCE_OBSERVATION_NOT_CANON",
+        "canonicalMutation = $false",
+        "promotionAuthorized = $false",
+        "windowsCiIsPhysicalPcProof = $false",
+        "providerWeightsAreOmegaTrained = $false",
+    ]
+    for token in required:
+        assert token in source, token
+
+
+def test_r209_bounded_retry_and_blocker_taxonomy_are_explicit():
+    source = text(R209)
+    assert "$MaxAttempts = 12" in source
+    assert "$DelaySeconds = 5" in source
+    assert "$MaxAttempts -gt 60" in source
+    assert "$DelaySeconds -gt 60" in source
+    blockers = [
+        "LOCAL_RUNTIME_UNHEALTHY",
+        "NATIVE_RCWA_UNAVAILABLE",
+        "LOCAL_HYBRID_UNAUTHENTICATED",
+        "LOCAL_HEARTBEAT_NOT_CURRENT",
+        "PRODUCTION_PC_UNAUTHENTICATED",
+        "PRODUCTION_HEARTBEAT_NOT_CURRENT",
+        "PRODUCTION_PC_NOT_ACCEPTED",
+        "B059_DEEP_VERIFICATION_INCOMPLETE",
+        "B059_GROUNDED_QUERY_INCOMPLETE",
+    ]
+    for blocker in blockers:
+        assert blocker in source, blocker
+
+
+def test_r209_does_not_install_or_mutate_machine_state():
+    source = text(R209).lower()
+    forbidden = [
+        "pip install",
+        "npm install",
+        "reg add",
+        "new-service",
+        "set-service",
+        "powercfg",
+        "sc.exe create",
+    ]
+    for token in forbidden:
+        assert token not in source, token
+
+
+def test_r208_truth_prover_remains_present_and_unchanged_as_authority_layer():
+    source = text(R208)
+    assert "OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208" in source
+    assert "/api/acceptance/r181/probe" in source
+    assert "fullAcceptance -eq $expectedFull" in source
+    assert "canonicalMutation = $false" in source
+    assert "promotionAuthorized = $false" in source
+
+
+def test_launcher_is_expected_to_wire_r209_without_removing_r208():
+    launcher = text(LAUNCHER)
+    # Updated by the R209 launcher commit. This test intentionally fails until wiring is complete.
+    assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in launcher
+    assert "r209_sovereign_convergence_latest.json" in launcher
+    assert "R209" in launcher
