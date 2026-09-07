@@ -13,7 +13,6 @@ on:
     branches: [omega-genesis-v1-full]
   workflow_dispatch:
 
-# Never allow two canonical Genesis edge deployments to race each other.
 concurrency:
   group: omega-genesis-cloudflare
   cancel-in-progress: false
@@ -31,8 +30,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # workflow_run must deploy the latest canonical head, including any
-          # governed Self-Builder promotion-ledger commit that used [skip ci].
           ref: omega-genesis-v1-full
           fetch-depth: 1
       - uses: actions/setup-python@v5
@@ -71,7 +68,7 @@ jobs:
       - name: Check Worker syntax
         working-directory: cloudflare/omega-genesis-worker
         run: npm run check
-      - name: Deploy, prove live health plus R191 surface alignment, or automatically roll back
+      - name: Deploy and prove service-bound R191 + Optical R153.2, or roll back safely
         id: deploy
         working-directory: cloudflare/omega-genesis-worker
         env:
@@ -81,7 +78,7 @@ jobs:
           set -uo pipefail
 
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "BLOCKED_CREDENTIALS: core + Worker checks passed; add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository Actions secrets to deploy omega-genesis-v1." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "BLOCKED_CREDENTIALS: core + Worker checks passed; Cloudflare credentials are required to promote omega-genesis-v1." | tee -a "$GITHUB_STEP_SUMMARY"
             echo "deployment_status=BLOCKED_CREDENTIALS" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -99,29 +96,20 @@ jobs:
           fi
 
           echo "public_url=$PUBLIC_URL" >> "$GITHUB_OUTPUT"
-          echo "OMEGA public candidate: $PUBLIC_URL" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "OMEGA Genesis candidate: $PUBLIC_URL" | tee -a "$GITHUB_STEP_SUMMARY"
 
-          verify_live() {
-            local health_file api_file fabric_file page_file
+          verify_core() {
+            local health_file api_file
             health_file="$(mktemp)"
             api_file="$(mktemp)"
-            fabric_file="$(mktemp)"
-            page_file="$(mktemp)"
             curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
               "$PUBLIC_URL/_omega/health" -o "$health_file" || return 1
             curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
               "$PUBLIC_URL/api/health" -o "$api_file" || return 1
-            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
-              "$PUBLIC_URL/api/fabric/r191" -o "$fabric_file" || return 1
-            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
-              "$PUBLIC_URL/" -o "$page_file" || return 1
-            python - "$health_file" "$api_file" "$fabric_file" "$page_file" <<'PY'
+            python - "$health_file" "$api_file" <<'PY'
           import json, sys
-          from pathlib import Path
           health = json.load(open(sys.argv[1], encoding="utf-8"))
           api = json.load(open(sys.argv[2], encoding="utf-8"))
-          fabric = json.load(open(sys.argv[3], encoding="utf-8"))
-          page = Path(sys.argv[4]).read_text(encoding="utf-8")
           assert health.get("ok") is True, health
           assert health.get("authority") == "durable-object-canonical", health
           assert api.get("status") == "OK", api
@@ -130,10 +118,30 @@ jobs:
           assert api.get("proof", {}).get("valid") is True, api
           assert api.get("replay", {}).get("valid") is True, api
           assert api.get("replay", {}).get("current_digest") == api.get("canonical_digest"), api
+          PY
+          }
+
+          verify_candidate() {
+            local fabric_file page_file
+            verify_core || return 1
+            fabric_file="$(mktemp)"
+            page_file="$(mktemp)"
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
+              "$PUBLIC_URL/api/fabric/r191" -o "$fabric_file" || return 1
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors \
+              "$PUBLIC_URL/" -o "$page_file" || return 1
+            python - "$fabric_file" "$page_file" <<'PY'
+          import json, sys
+          from pathlib import Path
+          fabric = json.load(open(sys.argv[1], encoding="utf-8"))
+          page = Path(sys.argv[2]).read_text(encoding="utf-8")
           assert fabric.get("schema") == "OMEGA_GENESIS_SURFACE_FABRIC_OBSERVER_R191", fabric
           assert fabric.get("role") == "GENESIS_DISCOVERY_EVOLUTION_OBSERVER", fabric
           assert fabric.get("federation_verb") == "PROPOSE", fabric
           assert fabric.get("canonical_authority") == "OMEGA_V6_ONLY", fabric
+          assert fabric.get("machine_transport") == "CLOUDFLARE_SERVICE_BINDINGS", fabric
+          assert fabric.get("required_bindings") == ["OMEGA_V6", "OMEGA_OPTICAL"], fabric
+          assert fabric.get("service_bindings_active") is True, fabric
           assert fabric.get("may_mutate_global_canon_state") is False, fabric
           assert fabric.get("may_promote_v6") is False, fabric
           assert fabric.get("may_claim_vercel_same_url_promotion") is False, fabric
@@ -141,29 +149,39 @@ jobs:
           assert fabric.get("canonical_fabric_ready") is True, fabric
           assert fabric.get("canonical_capability_groups") == 63, fabric
           assert isinstance(fabric.get("canonical_git_sha"), str) and len(fabric["canonical_git_sha"]) == 40, fabric
+          assert fabric.get("optical_machine_generation") == "R153.2", fabric
           assert fabric.get("optical_machine_authority") == "SCREEN_ONLY", fabric
+          assert fabric.get("optical_machine_version") == "R153.2", fabric
+          assert fabric.get("optical_tool_version") == "R153.2", fabric
+          assert fabric.get("optical_adaptive_cycle") is True, fabric
+          assert fabric.get("optical_canonical_mutation") is False, fabric
+          assert "SCREEN_ONLY" in fabric.get("optical_truth_boundary", ""), fabric
+          for key in ("fabric", "canon", "optical"):
+              assert fabric["observations"][key].get("transport") == "cloudflare_service_binding", fabric
+              assert fabric["observations"][key].get("reachable") is True, fabric
           assert "omega-r191-genesis-bar" in page, page[:500]
           assert "GENESIS · PROPOSE" in page, page[:500]
+          assert "Optical R153.2" in page, page[:500]
           assert "Canon remains OMEGA V6" in page, page[:500]
           PY
           }
 
-          if verify_live; then
+          if verify_candidate; then
             echo "deployment_status=LIVE_VERIFIED" >> "$GITHUB_OUTPUT"
-            echo "LIVE_VERIFIED: $PUBLIC_URL passed edge health, canonical state, proof-chain, replay, R191 surface alignment, Optical SCREEN authority, and Genesis PROPOSE UI checks." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "LIVE_VERIFIED: $PUBLIC_URL passed inherited state/proof/replay plus native service-bound R191 V6 and live-proven Optical R153.2 SCREEN_ONLY/adaptive-tool checks." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           echo "POST_DEPLOY_VERIFY_FAILED: attempting bounded rollback to the immediately previous Worker version." | tee -a "$GITHUB_STEP_SUMMARY"
-          if ! npx wrangler rollback --message "OMEGA automatic rollback: post-deploy canonical proof/replay/R191 surface verification failed"; then
+          if ! npx wrangler rollback --message "OMEGA automatic rollback: R191 + R153.2 service-bound verification failed"; then
             echo "QUARANTINE: candidate failed verification and automatic rollback could not be completed." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
-          if verify_live; then
+          if verify_core; then
             echo "deployment_status=ROLLBACK_VERIFIED" >> "$GITHUB_OUTPUT"
-            echo "ROLLBACK_VERIFIED: previous Worker version restored and passed canonical health/proof/replay checks." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "ROLLBACK_VERIFIED: predecessor restored and passed its inherited core health/proof/replay contract." | tee -a "$GITHUB_STEP_SUMMARY"
           else
-            echo "QUARANTINE: rollback completed but the restored Worker did not pass canonical health/proof/replay checks." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "QUARANTINE: rollback completed but the restored predecessor failed its inherited core health/proof/replay contract." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
           exit 1
