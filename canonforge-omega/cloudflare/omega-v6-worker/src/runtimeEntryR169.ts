@@ -17,6 +17,8 @@ import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
 import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabilityR190";
 import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilityR191";
+import { handleCumulativeCapabilityR195 } from "./acceptance/cumulativeCapabilityR195";
+import { handleDriveCorpusSystemR195 } from "./system/driveCorpusSystemR195";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -34,6 +36,7 @@ import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
+import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -64,6 +67,12 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const driveCorpusSystem = await handleDriveCorpusSystemR195(request, env, ctx, runtimeFetch);
+  if (driveCorpusSystem) return driveCorpusSystem;
+
+  const r195Canon = handleCumulativeCapabilityR195(request);
+  if (r195Canon) return r195Canon;
 
   const evidencePlane = await handleEvidencePlaneR194(request, env, ctx, runtimeFetch);
   if (evidencePlane) return evidencePlane;
@@ -137,7 +146,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const response = await runtimeFetch(request, env, ctx);
   const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
   const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
-  return enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  return enhanceOneSystemNavigationR195(r194, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };
