@@ -25,6 +25,7 @@ import { handleOneSystemOperatorR199 } from "./system/oneSystemOperatorR199";
 import { handleMissionKernelR200 } from "./system/missionKernelR200";
 import { handleDurableMissionR201 } from "./system/durableMissionRouteR201";
 import { handleContinuityPotentialR202 } from "./system/continuityPotentialR202";
+import { handleHybridMissionR203 } from "./system/hybridMissionRouteR203";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -55,6 +56,7 @@ import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201";
+export { OmegaHybridMissionLedgerR203 } from "./system/hybridMissionLedgerR203";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
 export { OmegaSwarmCoordinatorR188 as OmegaSwarmCoordinator } from "./swarm/motionCoordinatorR188";
 export { OmegaSwarmBranch, OmegaSwarmOrgan, OmegaSwarmOrganismCoordinator } from "./swarm/swarmOrganismR169";
@@ -83,6 +85,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const hybridMissionContinuity = await handleHybridMissionR203(request, env, ctx, runtimeFetch);
+  if (hybridMissionContinuity) return hybridMissionContinuity;
 
   const continuityPotential = await handleContinuityPotentialR202(request, env, ctx, runtimeFetch);
   if (continuityPotential) return continuityPotential;
