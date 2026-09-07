@@ -55,16 +55,27 @@ async function inflateDriveCorpusR195(): Promise<string> {
   return cachedText;
 }
 
+function normalizeRegistryRowR195(row: any): any {
+  if (!Array.isArray(row)) return row;
+  return Object.fromEntries(DRIVE_REGISTRY_COLUMNS_R195.map((column, index) => [column, row[index] ?? null]));
+}
+
 function normalizeRegistryRowsR195(snapshot: any): any {
   if (!snapshot || typeof snapshot !== "object") return snapshot;
   const aliases = new Set(["registry", "softwareRegistry", "software_registry", "software"].map(value => value.replace(/[^a-z0-9]/gi, "").toLowerCase()));
   for (const [key, value] of Object.entries(snapshot)) {
     const normalizedKey = key.replace(/[^a-z0-9]/gi, "").toLowerCase();
-    if (!aliases.has(normalizedKey) || !Array.isArray(value)) continue;
-    snapshot[key] = value.map((row: any) => {
-      if (!Array.isArray(row)) return row;
-      return Object.fromEntries(DRIVE_REGISTRY_COLUMNS_R195.map((column, index) => [column, row[index] ?? null]));
-    });
+    if (!aliases.has(normalizedKey)) continue;
+    if (Array.isArray(value)) {
+      snapshot[key] = value.map(normalizeRegistryRowR195);
+      continue;
+    }
+    if (value && typeof value === "object" && Array.isArray((value as any).rows)) {
+      snapshot[key] = {
+        ...(value as any),
+        rows: (value as any).rows.map(normalizeRegistryRowR195),
+      };
+    }
   }
   return snapshot;
 }
@@ -79,6 +90,7 @@ export async function driveCorpusIntegrityR195() {
     chunks: 5,
     driveEvidence: DRIVE_CORPUS_EVIDENCE_R195,
     registryEncoding: "14_COLUMN_ROW_ARRAY_NORMALIZED_TO_NAMED_RECORDS_AT_READ_BOUNDARY",
+    registryContainerSupport: ["DIRECT_ARRAY", "WRAPPED_ROWS"],
     registryColumns: DRIVE_REGISTRY_COLUMNS_R195,
     canonicalMutation: false,
   };
