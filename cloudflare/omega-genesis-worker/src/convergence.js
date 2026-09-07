@@ -25,8 +25,8 @@ const FEDERATION_R102={
   user_model:"one project + one packet lineage + four specialized runtimes",
   handoff_order:["PROPOSE","SCREEN","SOLVE","ADMIT"],
   peers:{
-    "omega-v6":{verb:"ADMIT",url:V6_URL+"/",scope:"GLOBAL_FEDERATION_CANONSTATE"},
-    "omega-optical":{verb:"SCREEN",url:OPTICAL_MACHINE_URL+"/",human_surface:OPTICAL_HUMAN_URL+"/",scope:"WORKER_RETURN_PACKET_ONLY"},
+    "omega-v6":{verb:"ADMIT",url:V6_URL+"/",transport:"CLOUDFLARE_SERVICE_BINDING",binding:"OMEGA_V6",scope:"GLOBAL_FEDERATION_CANONSTATE"},
+    "omega-optical":{verb:"SCREEN",url:OPTICAL_MACHINE_URL+"/",transport:"CLOUDFLARE_SERVICE_BINDING",binding:"OMEGA_OPTICAL",human_surface:OPTICAL_HUMAN_URL+"/",scope:"WORKER_RETURN_PACKET_ONLY"},
     "omega-sovereign":{verb:"SOLVE",url:null,human_surface:SOVEREIGN_HUMAN_URL+"/",scope:"AUTHENTICATED_WORKER_RESULT_RETURN_ONLY"}
   },
   input:["intent","project context","canonical snapshot"],
@@ -45,6 +45,8 @@ const SURFACE_FABRIC_R191={
   optical_machine:OPTICAL_MACHINE_URL+"/",
   optical_human_target:OPTICAL_HUMAN_URL+"/",
   sovereign_human_target:SOVEREIGN_HUMAN_URL+"/",
+  machine_transport:"CLOUDFLARE_SERVICE_BINDINGS",
+  required_bindings:["OMEGA_V6","OMEGA_OPTICAL"],
   may_mutate_global_canon_state:false,
   may_promote_v6:false,
   may_claim_vercel_same_url_promotion:false,
@@ -61,33 +63,49 @@ async function digest(value){
   const out=await crypto.subtle.digest("SHA-256",bytes);
   return [...new Uint8Array(out)].map(v=>v.toString(16).padStart(2,"0")).join("");
 }
+async function parseProbeResponse(response,transport){
+  const text=await response.text();
+  let body=null;
+  try{body=JSON.parse(text)}catch{body={error:"non_json_response",preview:text.slice(0,180)}}
+  return{reachable:response.ok,status:response.status,transport,body};
+}
 async function probe(url){
   try{
     const response=await fetch(url,{headers:{accept:"application/json","x-omega-genesis-observer":"r191"}});
-    const text=await response.text();
-    let body=null;
-    try{body=JSON.parse(text)}catch{body={error:"non_json_response",preview:text.slice(0,180)}}
-    return{reachable:response.ok,status:response.status,body};
+    return await parseProbeResponse(response,"public_https_fallback");
   }catch(error){
-    return{reachable:false,status:0,error:String(error?.message||error)};
+    return{reachable:false,status:0,transport:"public_https_fallback",error:String(error?.message||error)};
   }
+}
+async function probePeer(binding,publicUrl,path,peer){
+  if(binding&&typeof binding.fetch==="function"){
+    try{
+      const request=new Request(`https://${peer}.omega.internal${path}`,{headers:{accept:"application/json","x-omega-genesis-observer":"r191","x-omega-peer-transport":"service-binding"}});
+      return await parseProbeResponse(await binding.fetch(request),"cloudflare_service_binding");
+    }catch(error){
+      return{reachable:false,status:0,transport:"cloudflare_service_binding",error:String(error?.message||error)};
+    }
+  }
+  return probe(publicUrl);
 }
 async function federationManifest(){
   return{...FEDERATION_R102,manifest_digest:await digest(FEDERATION_R102)};
 }
-async function surfaceFabricSnapshot(){
+async function surfaceFabricSnapshot(env){
   const [fabric,canon,optical]=await Promise.all([
-    probe(R191_FABRIC_URL),
-    probe(R191_CANON_URL),
-    probe(OPTICAL_MACHINE_URL+"/api/health")
+    probePeer(env?.OMEGA_V6,R191_FABRIC_URL,"/api/fabric/r191/status","omega-v6"),
+    probePeer(env?.OMEGA_V6,R191_CANON_URL,"/api/canon/r191/manifest","omega-v6"),
+    probePeer(env?.OMEGA_OPTICAL,OPTICAL_MACHINE_URL+"/api/health","/api/health","omega-optical")
   ]);
   const canonicalSha=fabric.body?.canonicalGitSha||canon.body?.canonicalGitSha||null;
   const canonicalGroups=canon.body?.totalCapabilityGroups||null;
   const opticalAuthority=optical.body?.authority||null;
+  const bindingTransport=fabric.transport==="cloudflare_service_binding"&&canon.transport==="cloudflare_service_binding"&&optical.transport==="cloudflare_service_binding";
   return{
     ...SURFACE_FABRIC_R191,
     observed_at:new Date().toISOString(),
-    ok:Boolean(fabric.reachable&&canon.reachable&&optical.reachable),
+    ok:Boolean(bindingTransport&&fabric.reachable&&canon.reachable&&optical.reachable),
+    service_bindings_active:bindingTransport,
     canonical_git_sha:canonicalSha,
     canonical_capability_groups:canonicalGroups,
     canonical_fabric_ready:fabric.body?.canonicalFabricReady===true,
@@ -147,9 +165,9 @@ async function manifest(env){
 async function reciprocalSnapshot(env){
   const [ownManifest,v6Health,v6Convergence,r191]=await Promise.all([
     manifest(env),
-    probe(V6_URL+"/_omega/health"),
-    probe(V6_URL+"/api/convergence/edge"),
-    surfaceFabricSnapshot()
+    probePeer(env?.OMEGA_V6,V6_URL+"/_omega/health","/_omega/health","omega-v6"),
+    probePeer(env?.OMEGA_V6,V6_URL+"/api/convergence/edge","/api/convergence/edge","omega-v6"),
+    surfaceFabricSnapshot(env)
   ]);
   return{
     schema:"OMEGA_RECIPROCAL_CONVERGENCE_SNAPSHOT_V3",
@@ -191,7 +209,7 @@ export default{
       return Response.json(await federationManifest(),{headers:{"cache-control":"no-store","x-omega-federation-role":"PROPOSE","x-omega-federation-revision":"R102"}});
     }
     if(url.pathname==="/api/fabric/r191"||url.pathname==="/_omega/fabric/r191"){
-      return Response.json(await surfaceFabricSnapshot(),{headers:{"cache-control":"no-store","access-control-allow-origin":"*","x-omega-authority":"genesis-r191-observer-only","x-omega-federation-role":"PROPOSE","x-omega-surface-fabric":"R191_OBSERVER"}});
+      return Response.json(await surfaceFabricSnapshot(env),{headers:{"cache-control":"no-store","access-control-allow-origin":"*","x-omega-authority":"genesis-r191-observer-only","x-omega-federation-role":"PROPOSE","x-omega-surface-fabric":"R191_OBSERVER"}});
     }
     if(url.pathname==="/api/convergence/manifest"){
       return Response.json(await manifest(env),{headers:{"cache-control":"no-store","x-omega-authority":"genesis-discovery-evolution-manifest","x-omega-federation-role":"PROPOSE","x-omega-federation-revision":"R102","x-omega-surface-fabric":"R191_OBSERVER"}});
