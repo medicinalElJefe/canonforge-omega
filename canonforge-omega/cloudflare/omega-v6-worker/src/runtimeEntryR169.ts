@@ -33,6 +33,7 @@ import { handleWholeInstrumentR189 } from "./wholeInstrumentR189";
 import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
+import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -63,6 +64,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const evidencePlane = await handleEvidencePlaneR194(request, env, ctx, runtimeFetch);
+  if (evidencePlane) return evidencePlane;
 
   const workspaceManifest = handleWorkspaceManifestR193(request);
   if (workspaceManifest) return workspaceManifest;
@@ -130,9 +134,11 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 }
 
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
+  const pathname = new URL(request.url).pathname;
   const response = await runtimeFetch(request, env, ctx);
-  const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
-  return enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
+  const r192 = await enhanceUniversalNavigationR192(response, pathname);
+  const r193 = await enhanceUniversalWorkspaceR193(r192, pathname);
+  return enhanceEvidencePlaneR194(r193, pathname);
 }
 
 export default { fetch: publicFetch };
