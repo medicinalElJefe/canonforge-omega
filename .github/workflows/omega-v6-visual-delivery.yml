@@ -37,16 +37,17 @@ name: OMEGA V6 visual delivery proof
 # PUBLIC_EARTH_TRUTH_LAYERS_VERIFIED
 
 on:
-  push:
-    branches: [omega-v6-full-convergence]
+  workflow_call:
   workflow_dispatch:
+
+concurrency:
+  group: omega-v6-visual-proof
+  cancel-in-progress: true
 
 jobs:
   prove-public-visual:
     runs-on: ubuntu-latest
-    concurrency:
-      group: omega-v6-visual-proof
-      cancel-in-progress: true
+    timeout-minutes: 6
     steps:
       - name: Verify public Build Evolution governance and preserved runtime
         shell: bash
@@ -61,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           ok=false
-          for attempt in $(seq 1 60); do
+          for attempt in $(seq 1 30); do
             curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors -D /tmp/v6-root.headers "$V6_URL/?view=Build&delivery_probe=$GITHUB_SHA" -o /tmp/v6-root.html || true
             if EXPECTED_VISUAL_RELEASE="$EXPECTED_VISUAL_RELEASE" EXPECTED_FIELD_RELEASE="$EXPECTED_FIELD_RELEASE" EXPECTED_FIELD_LAYER_RELEASE="$EXPECTED_FIELD_LAYER_RELEASE" EXPECTED_OPERATOR_RELEASE="$EXPECTED_OPERATOR_RELEASE" EXPECTED_STATE_RELEASE="$EXPECTED_STATE_RELEASE" EXPECTED_SAI_HYBRID_RELEASE="$EXPECTED_SAI_HYBRID_RELEASE" python - <<'PY'
           import os
@@ -75,63 +76,21 @@ jobs:
           state_release = os.environ['EXPECTED_STATE_RELEASE']
           sai_hybrid_release = os.environ['EXPECTED_SAI_HYBRID_RELEASE']
           required = [
-              f'content="{release}"',
-              f'content="{field_release}"',
-              f'content="{field_layer_release}"',
-              f'content="{operator_release}"',
-              f'content="{state_release}"',
-              f'content="{sai_hybrid_release}"',
-              'omegaRootSovereignField',
-              '/api/omega/state',
-              'omegaCanonicalState',
-              'r167-authoritative-state',
-              'future_plasticity',
-              'STATE OK',
-              'Derived display score Ω*',
-              'gmaToolsToggle',
-              'omega-field-tools-open',
-              'Advanced Field Tools',
-              'r166-deduplicated-depth',
-              'SYSTEM STATUS',
-              'gmaLayerToggle',
-              'omega-field-layer',
-              'omegaFieldLayers',
-              'omegaGovernedModeAtlasRuntime',
-              'omegaUnifiedMotionRelativityRuntime',
-              'omegaInteractiveFieldRelease',
-              'omegaFieldFrame',
-              'omega-field-reset',
-              'DRAG TO EXPLORE',
-              'omegaMemoryContinuityRuntime',
-              'omegaIntelligenceReasoningRuntime',
-              'omegaCreateSimulateRuntime',
-              'omegaSovereignDevicesRuntime',
-              'omegaEarthTruthLayersRuntime',
-              'omegaBuildEvolutionGovernanceRuntime',
-              'omegaSaiHybridMotionRuntime',
-              'data-gma-layer',
-              'SAI / HYBRID',
-              'OMEGA_SAI_HYBRID_CONTEXT',
-              'sai_hybrid',
-              '/api/hybrid/status',
-              'route authority ready',
-              'Build / Evolution',
-              'Canonical candidate lifecycle',
-              'EXACT-HEAD CI',
-              'PROMOTE / REJECT',
-              'DEPLOY VERIFY',
-              '/api/convergence/edge',
-              '/api/development/status',
-              'SECONDARY WORKSPACE',
-              'No promote, deploy, merge or rollback mutation action is exposed here',
-              'OBSERVED_SOURCE',
-              'DERIVED_FRAMEWORK_MATH',
-              'FORECAST_PROJECTION',
-              'SIMULATED_CONTINUATION',
-              'finite_difference + RK2 integral curves',
-              '20,736',
-              'route-before-generation',
-              'omegaVisualRuntimeIntegrity',
+              f'content="{release}"', f'content="{field_release}"', f'content="{field_layer_release}"',
+              f'content="{operator_release}"', f'content="{state_release}"', f'content="{sai_hybrid_release}"',
+              'omegaRootSovereignField','/api/omega/state','omegaCanonicalState','r167-authoritative-state',
+              'future_plasticity','STATE OK','Derived display score Ω*','gmaToolsToggle','omega-field-tools-open',
+              'Advanced Field Tools','r166-deduplicated-depth','SYSTEM STATUS','gmaLayerToggle','omega-field-layer',
+              'omegaFieldLayers','omegaGovernedModeAtlasRuntime','omegaUnifiedMotionRelativityRuntime',
+              'omegaInteractiveFieldRelease','omegaFieldFrame','omega-field-reset','DRAG TO EXPLORE',
+              'omegaMemoryContinuityRuntime','omegaIntelligenceReasoningRuntime','omegaCreateSimulateRuntime',
+              'omegaSovereignDevicesRuntime','omegaEarthTruthLayersRuntime','omegaBuildEvolutionGovernanceRuntime',
+              'omegaSaiHybridMotionRuntime','data-gma-layer','SAI / HYBRID','OMEGA_SAI_HYBRID_CONTEXT','sai_hybrid',
+              '/api/hybrid/status','route authority ready','Build / Evolution','Canonical candidate lifecycle',
+              'EXACT-HEAD CI','PROMOTE / REJECT','DEPLOY VERIFY','/api/convergence/edge','/api/development/status',
+              'SECONDARY WORKSPACE','No promote, deploy, merge or rollback mutation action is exposed here',
+              'OBSERVED_SOURCE','DERIVED_FRAMEWORK_MATH','FORECAST_PROJECTION','SIMULATED_CONTINUATION',
+              'finite_difference + RK2 integral curves','20,736','route-before-generation','omegaVisualRuntimeIntegrity',
               '61,917,364,224',
           ]
           forbidden = ['omegaIndividualSkinRelativity','omegaUltraQualityView','orsfUltraQuality','omegaMicroMacroGeometry','omegaSymmetryBalance']
@@ -154,7 +113,7 @@ jobs:
               echo "PUBLIC_BUILD_EVOLUTION_AND_FIELD_VERIFIED visual=$EXPECTED_VISUAL_RELEASE field=$EXPECTED_FIELD_RELEASE layers=$EXPECTED_FIELD_LAYER_RELEASE operator=$EXPECTED_OPERATOR_RELEASE state=$EXPECTED_STATE_RELEASE sai_hybrid=$EXPECTED_SAI_HYBRID_RELEASE sha=$GITHUB_SHA"
               break
             fi
-            echo "Visual edge not settled on $EXPECTED_SAI_HYBRID_RELEASE yet ($attempt/60)."
+            echo "Visual edge not settled yet ($attempt/30)."
             sleep 2
           done
           if [ "$ok" != "true" ]; then
