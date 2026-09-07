@@ -1,0 +1,146 @@
+name: OMEGA V6 R207 Windows sovereign loopback proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/scripts/**'
+      - 'canonforge-omega/api/**'
+      - 'canonforge-omega/omega_runtime/**'
+      - 'canonforge-omega/tests/**'
+      - '.github/workflows/omega-v6-r207-windows-sovereign-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r207-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-sovereign-loopback:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Set up supported Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Parse canonical PowerShell launch surfaces
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'scripts\INSTALL_OMEGA_V6_WINDOWS.ps1',
+            'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file), [ref]$tokens, [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell syntax rejected: $file"
+            }
+          }
+          Write-Host 'R207_POWERSHELL_PARSE_VERIFIED'
+
+      - name: Build the same verified venv used by Windows installation
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev,rcwa]'
+          if ($LASTEXITCODE -ne 0) { throw 'R207 Windows dependency installation failed' }
+
+      - name: Prove native grcwa RCWA on Windows
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          $raw = & $py -m omega_runtime.rcwa_solver --probe
+          if ($LASTEXITCODE -ne 0) { throw 'R207 native RCWA probe process failed' }
+          $raw | Set-Content -Encoding utf8 'r207-rcwa-probe.json'
+          $probe = ($raw -join "`n") | ConvertFrom-Json
+          if (-not $probe.available) { throw 'R207 native grcwa RCWA is unavailable on Windows' }
+          Write-Host 'R207_WINDOWS_NATIVE_RCWA_VERIFIED'
+
+      - name: Run sovereign and successor invariants on Windows
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pytest -q `
+            tests\test_omega_runtime.py `
+            tests\test_pairing_and_agent.py `
+            tests\test_r175_independent_solver_validation.py `
+            tests\test_r206_sovereign_windows_boot_continuity.py `
+            tests\test_r207_windows_verified_venv_launch.py
+          if ($LASTEXITCODE -ne 0) { throw 'R207 Windows sovereign invariant suite failed' }
+
+      - name: Execute real Windows localhost pairing heartbeat loop
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path '.').Path
+          $env:OMEGA_PUBLIC_URL = 'http://127.0.0.1:8127'
+          $env:OMEGA_APPROVED_ROOT = $root
+          $passed = $false
+          try {
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser
+            if ($LASTEXITCODE -ne 0) { throw "R207 canonical launcher exited $LASTEXITCODE" }
+
+            $status = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/hybrid/status' -TimeoutSec 5
+            $status | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 'r207-loopback-proof.json'
+            if (-not $status.heartbeatCurrent) { throw 'R207 loopback heartbeat is not current' }
+            if (-not $status.authenticated) { throw 'R207 loopback heartbeat is not authenticated' }
+            if (-not $status.pcOnline) { throw 'R207 loopback PC state did not reach online proof' }
+            if (-not $status.proof) { throw 'R207 loopback heartbeat proof is missing' }
+            $passed = $true
+            Write-Host 'R207_WINDOWS_LOOPBACK_SOVEREIGN_TRANSPORT_VERIFIED_NOT_USER_PC'
+          }
+          finally {
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.Name -match '^python' -and $_.CommandLine -and
+                ($_.CommandLine -match 'omega_sovereign_agent\.py' -or $_.CommandLine -match 'omega_runtime\.cli') -and
+                $_.CommandLine -like "*$root*"
+              } |
+              ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+          }
+          if (-not $passed) { throw 'R207 Windows loopback proof did not complete' }
+
+      - name: Record proof boundary
+        if: always()
+        run: |
+          @'
+          ## OMEGA R207 Windows sovereign proof
+
+          This runner verifies the Windows packaging/launch transport itself: PowerShell syntax, the installer-equivalent `.venv`, native `grcwa` RCWA availability, local pairing-token rotation, canonical repository-agent startup, and an authenticated localhost heartbeat.
+
+          **Authority boundary:** this is a Windows CI transport proof. It is not the operator's physical Sovereign PC heartbeat and cannot satisfy R181 user-device acceptance by itself.
+          '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload Windows proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r207-windows-sovereign-loopback-proof
+          if-no-files-found: warn
+          path: |
+            canonforge-omega/r207-rcwa-probe.json
+            canonforge-omega/r207-loopback-proof.json
+            canonforge-omega/logs/

@@ -12,7 +12,7 @@ function Log([string]$Text) {
   $line | Tee-Object -FilePath $Log -Append
 }
 
-Log "OMEGA V6 R206 install root=$Root"
+Log "OMEGA V6 R207 install root=$Root"
 
 if (-not (Get-Command py -ErrorAction SilentlyContinue) -and -not (Get-Command python -ErrorAction SilentlyContinue)) {
   throw 'Python 3.10+ is required. Install Python and rerun this installer.'
@@ -74,16 +74,25 @@ if ($LASTEXITCODE -ne 0 -or ($RcwaProbe -join "`n") -notmatch '"available"\s*:\s
   throw 'Native grcwa RCWA probe failed. Installation is not promoted.'
 }
 
-Log 'running sovereign runtime, pairing, and independent-solver verification'
+Log 'running sovereign runtime, pairing, independent-solver, and R207 launch verification'
 & $Vpy -m pytest -q `
   (Join-Path $Root 'tests\test_omega_runtime.py') `
   (Join-Path $Root 'tests\test_pairing_and_agent.py') `
-  (Join-Path $Root 'tests\test_r175_independent_solver_validation.py') |
+  (Join-Path $Root 'tests\test_r175_independent_solver_validation.py') `
+  (Join-Path $Root 'tests\test_r206_sovereign_windows_boot_continuity.py') `
+  (Join-Path $Root 'tests\test_r207_windows_verified_venv_launch.py') |
   Tee-Object -FilePath $Log -Append
 if ($LASTEXITCODE -ne 0) { throw 'OMEGA verification failed; installation not promoted.' }
 
 $Launcher = Join-Path $Root 'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1'
 if (-not (Test-Path $Launcher)) { throw "Canonical launcher missing: $Launcher" }
+
+# Persist only the non-secret canonical root pointer. Pairing tokens remain ephemeral.
+$OmegaLocal = Join-Path $env:LOCALAPPDATA 'OMEGA'
+New-Item -ItemType Directory -Force -Path $OmegaLocal | Out-Null
+$RootPointer = Join-Path $OmegaLocal 'canonical-root.txt'
+Set-Content -Path $RootPointer -Value $Root -Encoding utf8
+Log "canonical root pointer written: $RootPointer"
 
 $Shell = New-Object -ComObject WScript.Shell
 $DesktopShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'OMEGA V6.lnk'
@@ -95,19 +104,20 @@ $Shortcut.Description = 'OMEGA V6 Sovereign Runtime + authenticated PC link'
 $Shortcut.Save()
 Log "desktop shortcut created: $DesktopShortcut"
 
-# Continuity across Windows logins: launch the same canonical entry point, never a second implementation.
+# Continuity across Windows logins: use the exact same canonical entry point, but do not
+# open a browser every time Windows starts.
 $StartupDir = [Environment]::GetFolderPath('Startup')
 if ($StartupDir) {
   $StartupShortcut = Join-Path $StartupDir 'OMEGA V6 Sovereign Continuity.lnk'
   $Auto = $Shell.CreateShortcut($StartupShortcut)
   $Auto.TargetPath = 'powershell.exe'
-  $Auto.Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Launcher`""
+  $Auto.Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Launcher`" -NoBrowser"
   $Auto.WorkingDirectory = $Root
-  $Auto.Description = 'Start the canonical OMEGA V6 runtime and sovereign heartbeat after Windows login'
+  $Auto.Description = 'Start canonical OMEGA V6 runtime and authenticated sovereign heartbeat after Windows login'
   $Auto.Save()
   Log "startup continuity shortcut created: $StartupShortcut"
 }
 
-Log 'PASS dependencies, RCWA probe, targeted tests, and Windows launch continuity'
+Log 'PASS dependencies, native RCWA, targeted tests, verified-venv launch contract, and Windows continuity'
 Write-Host 'OMEGA V6 installation verified. Starting the canonical runtime and sovereign PC link now.'
 Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$Launcher`"") -WorkingDirectory $Root
