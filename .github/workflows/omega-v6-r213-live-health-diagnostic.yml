@@ -44,8 +44,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/r213-live
+          PROBE="r213-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 45 \
-            "$V6_URL/api/system/r205/health" \
+            "$V6_URL/api/system/r205/health?r213Proof=$PROBE" \
             -o /tmp/r213-live/whole-system.json
           python - <<'PY'
           import json
