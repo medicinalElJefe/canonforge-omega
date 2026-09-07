@@ -25,7 +25,7 @@ import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
 import { handleCrossRuntimeValidationRequest } from "./validation/crossRuntimeParityR173";
-import { crossRuntimeLabResponse } from "./validation/crossRuntimeParityR173";
+import { crossRuntimeLabResponse } from "./validation/crossRuntimeLabR173";
 import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR174";
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
 import { handleUniversalSurfaceFabricR191 } from "./federation/universalSurfaceFabricR191";
