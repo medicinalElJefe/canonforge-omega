@@ -114,7 +114,9 @@ def test_current_dispatcher_preserves_r191_r190_r189_and_applies_truth_repair():
     entry = ENTRY.read_text(encoding="utf-8")
     assert 'from "./federation/universalSurfaceFabricR191"' in entry
     assert 'from "./acceptance/cumulativeCapabilityR191"' in entry
-    assert "handleUniversalSurfaceFabricR191(request, env)" in entry
+    r191_call = "const universalSurfaceFabric = await handleUniversalSurfaceFabricR191(request, env);"
+    r190_call = "return handleWholeSystemAcceptanceR190Repaired(request, env, ctx, runtimeFetch);"
+    assert r191_call in entry
     assert "handleCumulativeCapabilityR191(request)" in entry
     assert 'from "./wholeInstrumentR189"' in entry
     assert "handleWholeInstrumentR189(request)" in entry
@@ -123,9 +125,9 @@ def test_current_dispatcher_preserves_r191_r190_r189_and_applies_truth_repair():
     assert R190_REPAIR.exists()
     assert 'from "./acceptance/r190AcceptanceRepair"' in entry
     assert 'url.pathname.startsWith("/api/acceptance/r190/")' in entry
-    assert "handleWholeSystemAcceptanceR190Repaired(request, env, ctx, runtimeFetch)" in entry
+    assert r190_call in entry
     assert 'url.pathname === "/truth"' in entry
-    assert entry.index("handleUniversalSurfaceFabricR191(request, env)") < entry.index("handleWholeSystemAcceptanceR190Repaired")
+    assert entry.index(r191_call) < entry.index(r190_call)
     for marker in [
         "/api/canon/r189/",
         "/api/swarm/motion/r188/",
