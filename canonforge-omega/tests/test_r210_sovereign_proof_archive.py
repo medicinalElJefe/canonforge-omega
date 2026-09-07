@@ -14,7 +14,9 @@ def text(path: Path) -> str:
 def test_r210_is_content_addressed_and_hash_verified():
     source = text(ARCHIVER)
     required = [
-        "Get-FileHash -Algorithm SHA256",
+        "function Get-OmegaSha256",
+        "[System.Security.Cryptography.SHA256]::Create()",
+        "ComputeHash($stream)",
         'Join-Path $kindDir "$hash.json"',
         "Content-address collision or archive corruption",
         "Archived receipt hash mismatch after write",
@@ -22,6 +24,7 @@ def test_r210_is_content_addressed_and_hash_verified():
     ]
     for token in required:
         assert token in source, token
+    assert "Get-FileHash" not in source
 
 
 def test_r210_accepts_only_known_noncanon_receipt_schemas():
