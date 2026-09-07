@@ -23,14 +23,14 @@ async function body(response: Response): Promise<any> {
 }
 
 function runtimeStub(env: any): any | null {
-  const namespace = env?.OMEGA_RUNTIME;
+  const namespace = env?.OMEGA_MISSION_LEDGER_R201;
   if (!namespace || typeof namespace.idFromName !== "function" || typeof namespace.get !== "function") return null;
   return namespace.get(namespace.idFromName(DURABLE_MISSION_SINGLETON_R201));
 }
 
 function internalRequest(request: Request, path: string, init?: RequestInit): Request {
   const source = new URL(request.url);
-  const target = new URL("https://omega-runtime-r201.internal" + path);
+  const target = new URL("https://omega-mission-ledger-r201.internal" + path);
   target.search = source.search;
   const headers = new Headers(init?.headers || request.headers);
   headers.set("content-type", "application/json");
@@ -60,7 +60,8 @@ async function manifest() {
     schema: "OMEGA_DURABLE_MISSION_ROUTE_MANIFEST_R201",
     release: DURABLE_MISSION_ROUTE_R201,
     singleton: DURABLE_MISSION_SINGLETON_R201,
-    durableClass: "OmegaRuntime",
+    durableBinding: "OMEGA_MISSION_LEDGER_R201",
+    durableClass: "OmegaMissionLedgerR201",
     flow: [
       "INTENT",
       "R200_CANONICAL_MISSION_EXECUTION",
@@ -78,6 +79,7 @@ async function manifest() {
     ],
     privacyBoundary: "Public history is sanitized and omits stored mission intent, specialist payloads, downstream evidence bodies, and secrets.",
     authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+    canonicalRuntimeBoundary: "The historical OMEGA_RUNTIME/OmegaRuntime binding is unchanged; R201 uses a dedicated evidence-only SQLite namespace.",
     canonicalMutation: false,
     hostStateMutation: false,
     promotionAuthorized: false,
