@@ -1,0 +1,355 @@
+name: OMEGA V6 R206.1 proof-coherence production promotion
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r192-navigation-home-proof.yml
+      - .github/workflows/omega-v6-r193-full-restoration-proof.yml
+      - .github/workflows/omega-v6-r2061-proof-coherence-production.yml
+      - canonforge-omega/tests/test_r206_live_proof_coherence.py
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r192-navigation-home-proof.yml
+      - .github/workflows/omega-v6-r193-full-restoration-proof.yml
+      - .github/workflows/omega-v6-r2061-proof-coherence-production.yml
+      - canonforge-omega/tests/test_r206_live_proof_coherence.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-v6-production
+  cancel-in-progress: false
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  R206_CANONICAL_SHA: 49616f51266f17cb8f7c4f50c025d47b3c7b88a2
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  prove-r2061-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove R206 ancestry and proof-only bounded scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$R206_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R206_CANONICAL_SHA" HEAD
+          test -f canonforge-omega/tests/test_r206_sovereign_windows_boot_continuity.py
+          test -f canonforge-omega/tests/test_r206_live_proof_coherence.py
+          grep -F 'pip install -e "$Root[dev,rcwa]"' canonforge-omega/scripts/INSTALL_OMEGA_V6_WINDOWS.ps1
+          grep -F '$Port = 8127' canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1
+          grep -F 'sovereign heartbeat is still pending and is not being promoted to PC ONLINE' canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove full inherited runtime and R206/R206.1 invariants
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r206_sovereign_windows_boot_continuity.py tests/test_r206_live_proof_coherence.py
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck and dry-run unchanged cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir .r2061-dry-run
+
+  deploy-exact-canonical-r2061:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: prove-r2061-candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact canonical promotion commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact canonical head and bounded merge delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$R206_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R206_CANONICAL_SHA" HEAD
+          mapfile -t parents < <(git show -s --format='%P' "$GITHUB_SHA" | tr ' ' '\n')
+          test "${#parents[@]}" -eq 2
+          previous="${parents[0]}"
+          git merge-base --is-ancestor "$R206_CANONICAL_SHA" "$previous"
+          mapfile -t changed < <(git diff --name-only "$previous" HEAD)
+          allowed=(
+            '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+            '.github/workflows/omega-v6-r193-full-restoration-proof.yml'
+            '.github/workflows/omega-v6-r2061-proof-coherence-production.yml'
+            'canonforge-omega/tests/test_r206_live_proof_coherence.py'
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for candidate in "${allowed[@]}"; do [[ "$path" = "$candidate" ]] && ok=true; done
+            if [[ "$ok" != true ]]; then
+              echo "R2061_UNEXPECTED_PROMOTION_DELTA $path"
+              exit 1
+            fi
+          done
+          git diff --quiet "$previous" HEAD -- canonforge-omega/cloudflare/omega-v6-worker canonforge-omega/omega_runtime canonforge-omega/api canonforge-omega/config canonforge-omega/scripts || {
+            echo 'R2061_RUNTIME_OR_SOVEREIGN_SOURCE_DRIFT_BLOCKED'
+            git diff --name-only "$previous" HEAD -- canonforge-omega/cloudflare/omega-v6-worker canonforge-omega/omega_runtime canonforge-omega/api canonforge-omega/config canonforge-omega/scripts
+            exit 1
+          }
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+          echo "R2061_EXACT_CANONICAL_HEAD_VERIFIED $GITHUB_SHA"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Re-prove cumulative contract before production mutation
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r206_sovereign_windows_boot_continuity.py tests/test_r206_live_proof_coherence.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and typecheck exact Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Capture pre-deploy production identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r2061-proof
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
+            "$V6_URL/api/acceptance/r181/manifest?preDeploy=$GITHUB_RUN_ID" -o /tmp/r2061-proof/pre-r181.json
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
+            "$V6_URL/_omega/health?preDeploy=$GITHUB_RUN_ID" -o /tmp/r2061-proof/pre-health.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r2061-proof/pre-r181.json').read_text())
+          assert d.get('ok') is True, d
+          sha=str(d.get('canonicalGitSha') or '')
+          assert len(sha)==40, d
+          Path('/tmp/r2061-proof/pre-sha.txt').write_text(sha)
+          PY
+
+      - name: Bind deployment identity to exact canonical SHA without source mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          source=Path('wrangler.toml').read_text(encoding='utf-8')
+          marker='[vars]\n'
+          assert marker in source
+          assert 'CANONICAL_GIT_SHA =' not in source
+          sha=os.environ['GITHUB_SHA']
+          Path('wrangler.r2061-promotion.toml').write_text(source.replace(marker, marker+f'CANONICAL_GIT_SHA = "{sha}"\n',1), encoding='utf-8')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.r2061-promotion.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Dry-run exact R206.1 promotion config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.r2061-promotion.toml
+
+      - name: Final exact-head check immediately before production mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+
+      - name: Deploy exact canonical R206.1 identity to Cloudflare
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.r2061-promotion.toml
+
+      - name: Prove coherent live identity, R192/R193 surfaces, R201 durability and R204 return admission
+        id: liveproof
+        continue-on-error: true
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          stable=0
+          for attempt in $(seq 1 100); do
+            proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}"
+            rm -f /tmp/r2061-proof/r181.json /tmp/r2061-proof/r191.json /tmp/r2061-proof/r193.json /tmp/r2061-proof/r193-health.json /tmp/r2061-proof/r204.json /tmp/r2061-proof/health.json /tmp/r2061-proof/convergence.json /tmp/r2061-proof/r201-summary.json /tmp/r2061-proof/r201-verify.json /tmp/r2061-proof/root.headers /tmp/r2061-proof/root.html
+            if curl --fail --silent --show-error --max-time 25 "$V6_URL/api/acceptance/r181/manifest?edgeProof=$proof" -o /tmp/r2061-proof/r181.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/fabric/r191/manifest?edgeProof=$proof" -o /tmp/r2061-proof/r191.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/workspace/r193/manifest?edgeProof=$proof" -o /tmp/r2061-proof/r193.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/workspace/r193/health?edgeProof=$proof" -o /tmp/r2061-proof/r193-health.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/system/r204/manifest?edgeProof=$proof" -o /tmp/r2061-proof/r204.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/_omega/health?edgeProof=$proof" -o /tmp/r2061-proof/health.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/convergence/edge?edgeProof=$proof" -o /tmp/r2061-proof/convergence.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/mission/r201/summary?edgeProof=$proof" -o /tmp/r2061-proof/r201-summary.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/mission/r201/verify?edgeProof=$proof" -o /tmp/r2061-proof/r201-verify.json \
+              && curl --fail --silent --show-error --max-time 25 -D /tmp/r2061-proof/root.headers "$V6_URL/?edgeProof=$proof" -o /tmp/r2061-proof/root.html \
+              && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          def load(name): return json.loads(Path('/tmp/r2061-proof/'+name).read_text())
+          expected=os.environ['EXPECTED_SHA']
+          r181=load('r181.json'); r191=load('r191.json'); r193=load('r193.json'); r193h=load('r193-health.json')
+          r204=load('r204.json'); health=load('health.json'); conv=load('convergence.json'); s=load('r201-summary.json'); v=load('r201-verify.json')
+          headers=Path('/tmp/r2061-proof/root.headers').read_text(errors='replace').lower()
+          html=Path('/tmp/r2061-proof/root.html').read_text(errors='replace')
+          assert r181.get('ok') is True and r181.get('canonicalGitSha') == expected and r181.get('deploymentIdentityBound') is True, r181
+          assert r191.get('canonicalGitSha') == expected, r191
+          assert r193.get('ok') is True and r193.get('release') == 'r193-full-restoration-workspace', r193
+          assert r193h.get('ok') is True and r193h.get('release') == 'r193-full-restoration-workspace', r193h
+          assert r204.get('ok') is True and r204.get('schema') == 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204' and r204.get('canonicalGitSha') == expected, r204
+          assert r204.get('canonicalMutation') is False and r204.get('hostStateMutation') is False and r204.get('promotionAuthorized') is False, r204
+          assert health.get('ok') is True and health.get('authority') == 'public-interface-only', health
+          c=conv.get('convergence') or {}
+          assert conv.get('ok') is True and c.get('authority_contract_ready') is True and c.get('v6_release_authority') == 'omega-v6-full-convergence' and c.get('genesis_may_deploy_v6') is False, conv
+          assert s.get('ok') is True and s.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', s
+          assert v.get('ok') is True and v.get('verified') is True and v.get('failures') == [], v
+          assert 'content-type: text/html' in headers and 'x-omega-navigation: r192-navigation-home-repair' in headers and 'x-omega-workspace: r193-full-restoration-workspace' in headers, headers
+          assert 'id="omegaUniversalNavR192"' in html and 'id="omegaR193Rail"' in html and 'Living Operator Field' in html, html[:1600]
+          assert re.fullmatch(r'[0-9a-f]{64}', str(r204.get('receiptSha256',''))), r204
+          PY
+            then
+              stable=$((stable + 1))
+              echo "R206.1 coherent whole-system snapshot observed ($stable/2) on attempt $attempt."
+              if [ "$stable" -ge 2 ]; then break; fi
+            else
+              stable=0
+            fi
+            if [ "$attempt" -eq 100 ]; then
+              echo 'R2061_COHERENT_LIVE_SNAPSHOT_FAILED'
+              exit 1
+            fi
+            sleep 2
+          done
+
+          python - <<'PY' > /tmp/r2061-proof/r201-payload.json
+          import json, os
+          print(json.dumps({'intent':f"R206.1 promotion continuity proof {os.environ['GITHUB_RUN_ID']}: verify durable mission chain.",'useAI':False,'allModes':True,'allDomains':False}))
+          PY
+          curl --fail --silent --show-error --max-time 60 -X POST "$V6_URL/api/mission/r201/execute" -H 'content-type: application/json' --data-binary @/tmp/r2061-proof/r201-payload.json -o /tmp/r2061-proof/r201-execute.json
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r2061-proof/r201-execute.json').read_text())
+          assert d.get('ok') is True and d.get('state') == 'EXECUTED_RECORDED_CHAIN_VERIFIED', d
+          assert d.get('durableRecorded') is True and d.get('durableVerified') is True, d
+          m=d.get('mission') or {}; results=(m.get('execution') or {}).get('results') or []
+          assert [r.get('task',{}).get('id') for r in results] == ['correlated-snapshot','proof-state'], results
+          assert (m.get('execution') or {}).get('requiredTasks') == 2 and (m.get('execution') or {}).get('requiredVerified') == 2, m
+          record=(d.get('continuity') or {}).get('record') or {}
+          assert record.get('missionReceiptSha256') == m.get('missionReceiptSha256'), (record,m)
+          assert re.fullmatch(r'[0-9a-f]{64}', str(record.get('entrySha256',''))), record
+          Path('/tmp/r2061-proof/mission-receipt.txt').write_text(str(m.get('missionReceiptSha256')))
+          Path('/tmp/r2061-proof/entry-sha.txt').write_text(str(record.get('entrySha256')))
+          PY
+
+          settled=false
+          for attempt in $(seq 1 45); do
+            proof="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-ledger-${attempt}"
+            if curl --fail --silent --show-error --max-time 25 "$V6_URL/api/mission/r201/history?limit=48&edgeProof=$proof" -o /tmp/r2061-proof/r201-history.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/mission/r201/summary?edgeProof=$proof" -o /tmp/r2061-proof/r201-summary-after.json \
+              && curl --fail --silent --show-error --max-time 25 "$V6_URL/api/mission/r201/verify?edgeProof=$proof" -o /tmp/r2061-proof/r201-verify-after.json \
+              && python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=Path('/tmp/r2061-proof/mission-receipt.txt').read_text().strip(); entry=Path('/tmp/r2061-proof/entry-sha.txt').read_text().strip()
+          h=json.loads(Path('/tmp/r2061-proof/r201-history.json').read_text()); s=json.loads(Path('/tmp/r2061-proof/r201-summary-after.json').read_text()); v=json.loads(Path('/tmp/r2061-proof/r201-verify-after.json').read_text())
+          assert any(e.get('missionReceiptSha256') == receipt and e.get('entrySha256') == entry for e in h.get('entries') or []), h
+          assert v.get('verified') is True and v.get('failures') == [] and v.get('headSha256') == s.get('headSha256'), (v,s)
+          PY
+            then settled=true; break; fi
+            sleep 2
+          done
+          test "$settled" = true
+          echo "R2061_LIVE_PROMOTION_VERIFIED $EXPECTED_SHA"
+
+      - name: Roll back immediately if coherent live proof failed
+        if: steps.liveproof.outcome != 'success'
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R2061_POST_DEPLOY_PROOF_FAILED: rolling back immediately.'
+          npx wrangler rollback --message 'OMEGA R206.1 automatic rollback: coherence proof failed'
+          pre_sha="$(cat /tmp/r2061-proof/pre-sha.txt)"
+          restored=false
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error --max-time 20 "$V6_URL/api/acceptance/r181/manifest?rollback=$attempt" -o /tmp/r2061-proof/rollback-r181.json \
+              && PRE_SHA="$pre_sha" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r2061-proof/rollback-r181.json').read_text())
+          assert d.get('canonicalGitSha') == os.environ['PRE_SHA'], d
+          PY
+            then restored=true; break; fi
+            sleep 3
+          done
+          test "$restored" = true
+          exit 1
+
+      - name: Upload R206.1 production proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r2061-production-proof-${{ github.run_id }}
+          path: /tmp/r2061-proof/
+          if-no-files-found: warn
+
+      - name: Publish R206.1 promotion summary
+        if: steps.liveproof.outcome == 'success'
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R206.1 exact-head promotion'
+            echo
+            echo "- Canonical/deployed SHA: \`$GITHUB_SHA\`"
+            echo '- R206 Windows fixed-port/root-bound pairing/native-RCWA source continuity: preserved'
+            echo '- R192 navigation edge coherence: live-proven'
+            echo '- R193 restoration edge coherence: live-proven'
+            echo '- R201 bounded AI-off mission: durably recorded and whole-chain verified'
+            echo '- R204 verified-return admission: preserved; not CanonState or promotion authority'
+            echo '- PC ONLINE: not asserted by this release gate; still requires a current authenticated heartbeat'
+          } >> "$GITHUB_STEP_SUMMARY"
