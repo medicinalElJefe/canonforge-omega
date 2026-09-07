@@ -4,6 +4,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 SRC = WORKER / "src"
 R199 = (SRC / "system" / "oneSystemCorrelationR199.ts").read_text(encoding="utf-8")
+TRUTH = (SRC / "system" / "oneSystemTruthStripR199.ts").read_text(encoding="utf-8")
 NAV195 = (SRC / "system" / "oneSystemNavigationR195.ts").read_text(encoding="utf-8")
 ENTRY = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
 
@@ -69,14 +70,29 @@ def test_r199_keeps_domain_engines_upstream_and_does_not_reimplement_them():
     assert "handleSaiRequest" not in R199
 
 
-def test_r199_preserves_r195_release_identity_while_upgrading_its_role():
+def test_r199_preserves_r195_release_identity_recovery_then_final_projection():
     assert 'ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system"' in NAV195
     assert 'from "./oneSystemCorrelationR199"' in NAV195
+    assert 'from "./oneSystemTruthStripR199"' in NAV195
     assert "const preserved = new Response(html" in NAV195
-    assert "return reconstituteOneSystemR199(preserved, pathname)" in NAV195
+    assert "const reconstituted = await reconstituteOneSystemR199(preserved, pathname)" in NAV195
+    assert "return correlateOneSystemTruthStripR199(reconstituted)" in NAV195
     assert 'headers.set("x-omega-one-system"' in NAV195
     assert 'headers.set("x-omega-one-system-correlation"' in NAV195
     assert "RESIDUAL RESTORATION / WEAKEST-LINK QUEUE" in NAV195
+
+
+def test_r199_truth_strip_uses_existing_shared_convergence_packet_for_v6_genesis_hybrid():
+    assert "/api/convergence/edge" in TRUTH
+    assert "topology?.v6?.edge" in TRUTH
+    assert "topology?.sovereign_pc" in TRUTH
+    assert "pc.pc_online" in TRUTH
+    assert "pc.heartbeat_current" in TRUTH
+    assert "reciprocal_manifest_ready" in TRUTH
+    assert "authority_contract_ready" in TRUTH
+    assert "/api/system/r195/restoration?limit=1" in TRUTH
+    assert "PC ONLINE · authenticated heartbeat current" in TRUTH
+    assert "PC UNPROVEN · no current authenticated heartbeat" in TRUTH
 
 
 def test_r199_truthfully_exposes_unrestored_audio_instead_of_inventing_route():
