@@ -32,72 +32,32 @@ jobs:
           python -m pip install -e '.[dev]'
 
       - name: Drive · lossless snapshot and table contract
-        id: drive_snapshot
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_snapshot_is_lossless_and_matches_drive_contract
       - name: Drive · exact KEEP/MERGE/DONOR admission classes
-        id: drive_disposition
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_registry_preserves_exact_keep_merge_donor_admission_classes
       - name: Drive · measured digest and provenance
-        id: drive_digest
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_digest_is_measured_payload_not_stale_expected_value_and_has_drive_provenance
       - name: Drive · Mode188 source-metric boundary
-        id: drive_mode188
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_applies_mode188_only_when_source_metrics_exist
       - name: Drive · RETURNED versus VERIFIED execution truth
-        id: drive_execution_truth
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_execution_truth_separates_returned_from_verified
       - name: Drive · specialist route delegation
-        id: drive_specialists
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_routes_existing_specialist_organs_instead_of_reimplementing_them
       - name: Drive · R192/R193/R194 wrapper and R195 surface preservation
-        id: drive_wrappers
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_preserves_r192_r193_r194_wrapper_chain_and_adds_both_r195_surfaces
       - name: Drive · cumulative 66-group capability truth
-        id: drive_canon
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_cumulative_truth_counts_three_distinct_post_r191_operational_organs
       - name: Drive · release identity and namespace preservation
-        id: drive_identity
-        continue-on-error: true
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py::test_r195_release_identity_is_additive_and_preserves_existing_runtime_namespaces
-      - name: Aggregate Drive/One-System contract
-        if: always()
-        shell: bash
-        run: |
-          echo "snapshot=${{ steps.drive_snapshot.outcome }}"
-          echo "disposition=${{ steps.drive_disposition.outcome }}"
-          echo "digest=${{ steps.drive_digest.outcome }}"
-          echo "mode188=${{ steps.drive_mode188.outcome }}"
-          echo "execution_truth=${{ steps.drive_execution_truth.outcome }}"
-          echo "specialists=${{ steps.drive_specialists.outcome }}"
-          echo "wrappers=${{ steps.drive_wrappers.outcome }}"
-          echo "canon=${{ steps.drive_canon.outcome }}"
-          echo "identity=${{ steps.drive_identity.outcome }}"
-          test "${{ steps.drive_snapshot.outcome }}" = success
-          test "${{ steps.drive_disposition.outcome }}" = success
-          test "${{ steps.drive_digest.outcome }}" = success
-          test "${{ steps.drive_mode188.outcome }}" = success
-          test "${{ steps.drive_execution_truth.outcome }}" = success
-          test "${{ steps.drive_specialists.outcome }}" = success
-          test "${{ steps.drive_wrappers.outcome }}" = success
-          test "${{ steps.drive_canon.outcome }}" = success
-          test "${{ steps.drive_identity.outcome }}" = success
 
       - name: R195 residual restoration planner
         working-directory: canonforge-omega
