@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR192.ts"
+main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR192 wraps runtimeEntryR169 only at the final human HTML boundary so the full
-# R169-R191 execution/API dispatcher remains unchanged while navigation is consistent everywhere.
+# runtimeEntryR169 remains the preserved deployment entrypoint. R192 only adds a final HTML
+# navigation/home projection after the existing R169-R191 dispatcher returns a response.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
