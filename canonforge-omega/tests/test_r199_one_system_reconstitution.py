@@ -80,7 +80,8 @@ def test_r199_preserves_r195_release_identity_recovery_then_final_projection():
     assert "const preserved = new Response(html" in NAV195
     assert "const reconstituted = await reconstituteOneSystemR199(preserved, pathname)" in NAV195
     assert "const correlated = await correlateOneSystemTruthStripR199(reconstituted)" in NAV195
-    assert "return enhanceOneSystemOperatorSurfaceR199(correlated)" in NAV195
+    assert "const operated = await enhanceOneSystemOperatorSurfaceR199(correlated)" in NAV195
+    assert "return enhanceMissionSurfaceR200(operated)" in NAV195
     assert 'headers.set("x-omega-one-system"' in NAV195
     assert 'headers.set("x-omega-one-system-correlation"' in NAV195
     assert "RESIDUAL RESTORATION / WEAKEST-LINK QUEUE" in NAV195
