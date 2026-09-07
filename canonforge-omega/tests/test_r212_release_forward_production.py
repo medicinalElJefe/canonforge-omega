@@ -16,7 +16,7 @@ def test_r212_is_release_forward_not_r205_delta_allowlist():
     assert "R205_UNEXPECTED_PROMOTION_DELTA" not in text
     assert "allowed=(" not in text
     assert "push:" in text and "branches: [omega-v6-full-convergence]" in text
-    assert "MIN_CANONICAL_SHA: 596b5365d271c6abaa9604a1c880b2c04f3010df" in text
+    assert "MIN_CANONICAL_SHA: 878f331a38ac01ace480858f9f135e441ad3a1f6" in text
 
 
 def test_r212_proves_full_cumulative_candidate_before_deploy():
@@ -38,7 +38,7 @@ def test_r212_binds_exact_sha_without_mutating_source_wrangler():
     assert 'export { OmegaRuntime } from "./heartbeatTruth"' in runtime
 
 
-def test_r212_live_proof_covers_current_operational_truth_chain():
+def test_r212_live_proof_covers_current_operational_truth_chain_and_r185_federation():
     text = read(WORKFLOW)
     for route in (
         "/api/system/r211/manifest",
@@ -55,11 +55,14 @@ def test_r212_live_proof_covers_current_operational_truth_chain():
     assert "OMEGA_WHOLE_SYSTEM_CONTROL_MANIFEST_R205" in text
     assert "OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204" in text
     assert "pcOnlineRequiresCurrentAuthenticatedHeartbeat" in text
+    assert "verify_r185_live_federation.py" in text
+    assert '--expected-sha "$GITHUB_SHA"' in text
 
 
-def test_r212_rolls_back_on_failed_live_proof():
+def test_r212_rolls_back_on_any_failed_live_or_federation_proof():
     text = read(WORKFLOW)
     assert "continue-on-error: true" in text
     assert "if: steps.liveproof.outcome != 'success'" in text
     assert "npx wrangler rollback" in text
+    assert "cumulative or R185 federation proof failed" in text
     assert "exit 1" in text
