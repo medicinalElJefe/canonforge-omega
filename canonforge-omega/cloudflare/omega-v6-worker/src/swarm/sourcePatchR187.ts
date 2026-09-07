@@ -89,18 +89,18 @@ async function selectPaths(body: AnyObj, env: SwarmEnv): Promise<AnyObj> {
   const mission = evidenceMission(body);
   const inventory = inventoryRows(body.inventory);
   if (!inventory.length) throw new Error("SOURCE_INVENTORY_REQUIRED");
-  const deterministic = [...inventory]
-    .map((row) => ({ ...row, score: pathScore(row.path, mission.objective) }))
-    .sort((a, b) => b.score - a.score || a.bytes - b.bytes || a.path.localeCompare(b.path))
+  const deterministic: AnyObj[] = [...inventory]
+    .map((row: AnyObj): AnyObj => ({ ...row, score: pathScore(String(row.path), mission.objective) }))
+    .sort((a: AnyObj, b: AnyObj) => Number(b.score) - Number(a.score) || Number(a.bytes) - Number(b.bytes) || String(a.path).localeCompare(String(b.path)))
     .slice(0, SOURCE_PATCH_MAX_FILES_R187);
 
-  let selected = deterministic.map((row) => row.path);
+  let selected = deterministic.map((row: AnyObj) => String(row.path));
   let selectionMethod = "DETERMINISTIC_LEXICAL_SOURCE_ROUTER";
   let modelReceipt: AnyObj | null = null;
   if (env.AI) {
-    const shortlist = [...inventory]
-      .map((row) => ({ path: row.path, bytes: row.bytes, score: pathScore(row.path, mission.objective) }))
-      .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path))
+    const shortlist: AnyObj[] = [...inventory]
+      .map((row: AnyObj): AnyObj => ({ path: String(row.path), bytes: Number(row.bytes || 0), score: pathScore(String(row.path), mission.objective) }))
+      .sort((a: AnyObj, b: AnyObj) => Number(b.score) - Number(a.score) || String(a.path).localeCompare(String(b.path)))
       .slice(0, 120);
     const prompt = [
       "You are the bounded OMEGA R187 source-file selector.",
@@ -114,7 +114,7 @@ async function selectPaths(body: AnyObj, env: SwarmEnv): Promise<AnyObj> {
     try {
       const raw = await env.AI.run(String(env.SWARM_MODEL_ID || SOURCE_PATCH_MODEL_R187), { messages: [{ role: "user", content: prompt }], max_tokens: 1200, temperature: 0.05 });
       const parsed = extractJson(modelText(raw));
-      const permitted = new Set(shortlist.map((x) => x.path));
+      const permitted = new Set(shortlist.map((x: AnyObj) => String(x.path)));
       const modelPaths = Array.isArray(parsed?.paths) ? parsed.paths.map(normalizedPath).filter((x): x is string => Boolean(x && permitted.has(x))).slice(0, SOURCE_PATCH_MAX_FILES_R187) : [];
       if (modelPaths.length) {
         selected = [...new Set(modelPaths)];
@@ -126,7 +126,7 @@ async function selectPaths(body: AnyObj, env: SwarmEnv): Promise<AnyObj> {
     }
   }
 
-  const inventoryMap = new Map(inventory.map((x) => [x.path, x]));
+  const inventoryMap = new Map(inventory.map((x: AnyObj) => [String(x.path), x]));
   const selectedRows = selected.map((path) => inventoryMap.get(path)).filter(Boolean);
   const core = {
     schema: SOURCE_PATCH_SELECTION_SCHEMA_R187,
