@@ -15,6 +15,7 @@ R199_ENTRY = WORKER / "src" / "runtimeEntryR199.ts"
 GATEWAY = WORKER / "src" / "sovereignPcGatewayR199.ts"
 RUNTIME_DO = WORKER / "src" / "sovereignPcRuntimeR199.ts"
 SURFACE = WORKER / "src" / "sovereignPcSurfaceR199.ts"
+ONE_SYSTEM = WORKER / "src" / "system" / "oneSystemNavigationR195.ts"
 AGENT_TS = WORKER / "src" / "sovereignAgentR199.ts"
 WRANGLER = WORKER / "wrangler.toml"
 BRIDGE_AGENT = ROOT / "scripts" / "omega_hybrid_agent_r199.py"
@@ -67,16 +68,20 @@ def test_wrangler_preserves_canonical_identity_while_activating_r199_capability(
         assert f'name = "{binding}"' in source
 
 
-def test_canonical_entry_integrates_r199_without_replacing_existing_route_stack():
+def test_canonical_entry_integrates_r199_without_replacing_existing_route_or_render_stack():
     source = text(CANONICAL_ENTRY)
-    assert 'handleSovereignPcGatewayR199' in source
-    assert 'enhanceSovereignPcSurfaceR199' in source
+    assert "handleSovereignPcGatewayR199" in source
     assert 'export { OmegaRuntime } from "./sovereignPcRuntimeR199"' in source
-    # Inherited route stack remains present.
     for inherited in ("handleEarthSarFusionR198", "handleSourceGroundingR197", "handleCloudSwarmR185", "handleComputeRequest"):
         assert inherited in source
     assert "const sovereignPc = await handleSovereignPcGatewayR199(request, env);" in source
     assert "if (sovereignPc) return sovereignPc;" in source
+    # Preserve the exact R195/R198 render chain; R199 composes inside R195 rather than replacing it.
+    assert "return enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);" in source
+    assert "return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);" in source
+    one_system = text(ONE_SYSTEM)
+    assert "enhanceSovereignPcSurfaceR199" in one_system
+    assert "return enhanceSovereignPcSurfaceR199(oneSystem, pathname);" in one_system
 
 
 def test_r199_standalone_entry_remains_a_valid_wrapper_reference():
