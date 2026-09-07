@@ -42,6 +42,7 @@ import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
 import { enhanceDeweyComputeSurfaceR195 } from "./deweyComputeSurfaceR195";
+import { enhanceDeweyCalibrationSurfaceR196 } from "./deweyCalibrationSurfaceR196";
 import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195";
 
 export { OmegaRuntime } from "./heartbeatTruth";
@@ -164,12 +165,14 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 }
 
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
+  const pathname = new URL(request.url).pathname;
   const response = await runtimeFetch(request, env, ctx);
-  const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
-  const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
-  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
-  const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
-  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
+  const r192 = await enhanceUniversalNavigationR192(response, pathname);
+  const r193 = await enhanceUniversalWorkspaceR193(r192, pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, pathname);
+  const dewey = await enhanceDeweyComputeSurfaceR195(r194, pathname);
+  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, pathname);
+  return enhanceOneSystemNavigationR195(calibrated, pathname);
 }
 
 export default { fetch: publicFetch };
