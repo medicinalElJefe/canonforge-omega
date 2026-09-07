@@ -23,6 +23,7 @@ import { handleDriveCorpusSystemR195 } from "./system/driveCorpusSystemR195";
 import { handleRestorationPlannerR195 } from "./system/restorationRouteR195";
 import { handleOneSystemOperatorR199 } from "./system/oneSystemOperatorR199";
 import { handleMissionKernelR200 } from "./system/missionKernelR200";
+import { handleDurableMissionR201 } from "./system/durableMissionRouteR201";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -52,6 +53,7 @@ import { enhanceEarthSarIntegratedRepairR198_1 } from "./earthSarIntegratedRepai
 import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_2";
 
 export { OmegaRuntime } from "./heartbeatTruth";
+export { OmegaRuntime as OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
 export { OmegaSwarmCoordinatorR188 as OmegaSwarmCoordinator } from "./swarm/motionCoordinatorR188";
 export { OmegaSwarmBranch, OmegaSwarmOrgan, OmegaSwarmOrganismCoordinator } from "./swarm/swarmOrganismR169";
@@ -80,6 +82,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const durableMission = await handleDurableMissionR201(request, env, ctx, runtimeFetch);
+  if (durableMission) return durableMission;
 
   const missionKernel = await handleMissionKernelR200(request, env, ctx, runtimeFetch);
   if (missionKernel) return missionKernel;
