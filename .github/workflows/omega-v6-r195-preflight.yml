@@ -1,0 +1,60 @@
+name: OMEGA V6 R195 fail-fast preflight
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyWaterContinuityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyComputeSurfaceR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/cumulativeCapabilityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/test_r195_*.py'
+      - '.github/workflows/omega-v6-r195-preflight.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: r195-preflight-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: R195 Drive and One-System contract
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_drive_corpus_one_system.py
+      - name: R195 residual restoration planner
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_residual_restoration_planner.py
+      - name: R195 Dewey calculus numerical and truth contracts
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r195_dewey_water_continuity_compute.py
+      - name: R195 predecessor non-regression
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r194_evidence_plane_restoration.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r167_authoritative_state_accuracy.py \
+            tests/test_r163_visual_delivery_contract.py \
+            tests/test_r153_mobile_workspace_orchestration.py \
+            tests/test_r145_governed_mode_atlas.py \
+            tests/test_role_separated_convergence_r128.py
