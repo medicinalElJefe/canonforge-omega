@@ -12,6 +12,8 @@ import time
 import urllib.error
 import urllib.request
 
+from omega_runtime.agent_sai_r179 import SAI_JOB_KINDS, execute_sai_job, sai_capabilities
+
 CROSS_RUNTIME_CHALLENGE_SCHEMA = "OMEGA_CROSS_RUNTIME_CHALLENGE_R173"
 INDEPENDENT_SOLVER_CHALLENGE_SCHEMA = "OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175"
 
@@ -28,7 +30,7 @@ SAFE_KINDS = {
     "prepare_candidate",
     "verify_candidate",
     "cleanup_candidate",
-}
+} | SAI_JOB_KINDS
 
 
 def request_json(base: str, path: str, token: str, payload: dict | None = None) -> dict:
@@ -328,6 +330,8 @@ def execute_job(job: dict, root: Path) -> dict:
     kind = job.get("kind")
     if kind not in SAFE_KINDS:
         raise RuntimeError(f"unsupported governed job kind: {kind}")
+    if kind in SAI_JOB_KINDS:
+        return execute_sai_job(kind, job, root)
     if kind == "convergence_scan":
         return convergence_scan(root)
     if kind in {"inspect_workspace", "inspect_runtime"}:
@@ -402,6 +406,8 @@ def main() -> int:
         capabilities.extend(["independent_fullwave_rcwa", "maxwell_rcwa_grcwa"])
     else:
         capabilities.append("rcwa_dependency_probe")
+    sai_caps, sai_probe = sai_capabilities(root)
+    capabilities.extend(sai_caps)
 
     last_job_id = None
     sequence_seen = 0
@@ -412,6 +418,8 @@ def main() -> int:
     print("R173 cross-runtime parity is receipt-bound: cloud challenges become L3 validation only after authenticated native execution is persisted and numerically compared.")
     print("R175 independent-solver validation is no-fallback: L4 requires current authenticated native grcwa RCWA execution, numerical convergence, persisted receipt identity, and proof admission.")
     print("R175 RCWA capability: " + ("AVAILABLE" if rcwa_probe["available"] else "DEPENDENCY MISSING / NO FALLBACK"))
+    print("R179 SAI B059 state: " + str(sai_probe.get("state", "UNKNOWN")))
+    print("R179 training law: B059 is fully trained only inside its declared deterministic source-grounded corpus scope after exact release hash + runtime selftest proof; external provider-model weights remain separately pretrained.")
     print("PC ONLINE will only be claimed after the server accepts a current authenticated heartbeat.")
 
     while True:
@@ -420,8 +428,9 @@ def main() -> int:
                 "agent_id": args.agent_id,
                 "approved_root": str(root),
                 "capabilities": capabilities,
-                "runtime_version": "r175-independent-rcwa-validation-agent",
+                "runtime_version": "r179-b059-ai-sai-convergence-agent",
                 "rcwa": rcwa_probe,
+                "sai_b059": sai_probe,
                 "last_job_id": last_job_id,
             })
             proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
