@@ -7,7 +7,7 @@ import { warpBuildCandidateLabResponse } from "./swarm/warpBuildCandidateLabR178
 import { handleSuccessorGateR183 } from "./swarm/successorGateR183";
 import { handleImprovementDiscoveryR184 } from "./swarm/improvementDiscoveryR184";
 import { handleCloudSwarmR185 } from "./swarm/cloudSwarmR185";
-import { handleSuccessorEvidenceR186 } from "./swarm/successorEvidenceR186";
+import { handleSuccessorEvidenceR186 } from "./swarm/sourcePatchR187";
 import { handleSourcePatchR187 } from "./swarm/sourcePatchR187";
 import { handleMotionTimeR188 } from "./swarm/motionTimeR188";
 import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
@@ -35,6 +35,7 @@ import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
+import { enhanceDeweyComputeSurfaceR195 } from "./deweyComputeSurfaceR195";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -141,7 +142,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const response = await runtimeFetch(request, env, ctx);
   const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
   const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
-  return enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  return enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };
