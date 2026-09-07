@@ -35,6 +35,7 @@ import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 import { enhanceUniversalWorkspaceR193 } from "./universalWorkspaceR193";
 import { handleWorkspaceManifestR193 } from "./workspaceManifestR193";
 import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePlaneR194";
+import { enhanceDeweyWaterMotionSurfaceR195 } from "./deweyWaterMotionSurfaceR195";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -140,7 +141,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const response = await runtimeFetch(request, env, ctx);
   const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
   const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
-  return enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
+  return enhanceDeweyWaterMotionSurfaceR195(r194, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };
