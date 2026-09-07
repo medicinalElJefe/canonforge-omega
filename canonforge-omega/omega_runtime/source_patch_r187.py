@@ -100,9 +100,16 @@ def current_git_sha(root: Path) -> str | None:
 
 
 def git_worktree_clean(root: Path) -> bool:
+    """Require tracked-source cleanliness while allowing R187's own untracked staging receipts.
+
+    Untracked files are not a source-overwrite risk because R187 independently verifies
+    every target path and rejects expected-absent targets that already exist. Tracked
+    modifications remain a hard blocker.
+    """
     try:
         proc = subprocess.run(
-            ["git", "status", "--porcelain"], cwd=str(root), capture_output=True, text=True, timeout=30, check=False
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            cwd=str(root), capture_output=True, text=True, timeout=30, check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return False
@@ -192,7 +199,7 @@ def build_source_patch_r187(
         "promotionAuthorized": False,
         "canonicalMutation": False,
         "authority": PATCH_AUTHORITY_R187,
-        "truthBoundary": "R187 may stage and apply hash-bound UTF-8 source changes only inside allow-listed paths of the authenticated approved Sovereign worktree. Exact predecessor/file hashes are mandatory; validation failure requires rollback. It cannot commit, push, deploy or promote Canon by itself.",
+        "truthBoundary": "R187 may stage and apply hash-bound UTF-8 source changes only inside allow-listed paths of the authenticated approved Sovereign worktree. Exact predecessor/file hashes are mandatory; tracked source modifications block application, while unrelated untracked files cannot bypass per-target path/hash checks. Validation failure requires rollback. It cannot commit, push, deploy or promote Canon by itself.",
     }
     return {**core, "patchSha256": canonical_sha256(core)}
 
@@ -294,7 +301,7 @@ def verify_preconditions_r187(root: Path, patch: Mapping[str, Any], require_clea
     if head != valid["predecessorGitSha"]:
         raise SourcePatchError(f"R187 predecessor mismatch: workspace={head} patch={valid['predecessorGitSha']}")
     if require_clean and not git_worktree_clean(root):
-        raise SourcePatchError("R187 requires a clean worktree before source mutation")
+        raise SourcePatchError("R187 requires tracked source files to be clean before source mutation")
     checks: List[Dict[str, Any]] = []
     for row in valid["changes"]:
         target = _target(root, row["path"])
