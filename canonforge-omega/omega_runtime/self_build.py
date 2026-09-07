@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 import json
 import uuid
 
+from .agent_sai_r179 import SAI_JOB_KINDS
 from .warp_candidate import (
     SAFE_CANDIDATE_JOB_KINDS,
     WARP_BUILD_IMPORT_SCHEMA_R178,
@@ -46,13 +47,14 @@ SAFE_JOB_KINDS = {
     "prepare_candidate",
     "verify_candidate",
     "cleanup_candidate",
-}
+} | SAI_JOB_KINDS
 
 VALIDATION_SEQUENCE = [
     "convergence_scan",
     "inspect_workspace",
     "inspect_runtime",
     "compute_truth_suite",
+    "sai_b059_verify",
     "run_tests",
     "build_vite",
     "wrangler_dry_run",
@@ -81,8 +83,9 @@ class SovereignBuildController:
     Jobs are typed and allow-listed. The controller continuously advances a real
     convergence + validation cycle after authenticated host execution returns proof.
     R178 can import a cryptographically identified, strictly accounted R177 warp
-    candidate, but only into a fixed local validation sequence. It never emits
-    arbitrary shell text and never grants release promotion by itself.
+    candidate into its fixed local validation sequence. R179 additionally requires
+    exact OMEGA SAI B059 host verification in the ordinary continuous acceptance
+    cycle. Neither path grants release promotion by itself.
     """
 
     def __init__(self, state_path: Path, approved_root: Path) -> None:
@@ -197,10 +200,6 @@ class SovereignBuildController:
                 "canonical_mutation": False,
                 "promotion_authorized": False,
             }
-        # The cloud-built capsule is already persisted verbatim inside the governed
-        # build job payload, so the first executable host stage is run_tests. The
-        # optional prepare_candidate artifact helper remains available for manual
-        # archival use but is not required for the automatic R178 path.
         first_index = 1
         payload = candidate_job_payload(valid, first_index)
         job = self.enqueue(
@@ -265,6 +264,7 @@ class SovereignBuildController:
             "inspect_workspace": "Inspect the approved OMEGA workspace and report source/lineage/worktree state.",
             "inspect_runtime": "Inspect the sovereign runtime/toolchain before changing or promoting anything.",
             "compute_truth_suite": "Run the physically grounded R170 reference computation suite and return invariant/error evidence before accepting advanced-computation claims.",
+            "sai_b059_verify": "R179 verify the exact 15-authority OMEGA SAI B059 trained release on the authenticated Sovereign host, including compiled DB identity and grounded runtime selftest. Never substitute a bootstrap index or model animation.",
             "run_tests": "Run the complete Python runtime test suite and return executable evidence.",
             "build_vite": "Validate the Cloudflare/Vite interface toolchain and return build/type evidence.",
             "wrangler_dry_run": "Dry-run the Worker package before any production deployment authority is considered.",
@@ -281,6 +281,13 @@ class SovereignBuildController:
                 "evidence_class": "DERIVED",
                 "physical_dimension_claim": False,
                 "optical_fullwave_claim": False,
+            },
+            "sai_r179": {
+                "required": True,
+                "release": "OMEGA SAI B059",
+                "training_scope": "DETERMINISTIC_SOURCE_GROUNDED_CORPUS_COMPILED_INDEXED_CALIBRATED",
+                "source_authorities": 15,
+                "foundation_model_weights_trained": False,
             },
         })
 
@@ -366,6 +373,15 @@ class SovereignBuildController:
             "recent_jobs": [asdict(job) for job in self.jobs[-20:]],
             "safe_job_kinds": sorted(SAFE_JOB_KINDS),
             "validation_sequence": VALIDATION_SEQUENCE,
+            "sai_r179": {
+                "required_in_continuous_acceptance": True,
+                "release": "OMEGA SAI B059",
+                "training_scope": "DETERMINISTIC_SOURCE_GROUNDED_CORPUS_COMPILED_INDEXED_CALIBRATED",
+                "source_authorities": 15,
+                "documents": 541526,
+                "edges": 82082,
+                "boundary": "FULLY_TRAINED_WITHIN_B059_SCOPE requires exact host hash + runtime selftest proof; external provider-model weights are separately pretrained and never relabeled OMEGA-trained.",
+            },
             "warp_candidate_r178": {
                 "enabled": True,
                 "schema": WARP_BUILD_IMPORT_SCHEMA_R178,
@@ -378,7 +394,7 @@ class SovereignBuildController:
                 "enabled": self.mode != BuildMode.MANUAL,
                 "canonical_ref": "omega-v6-full-convergence",
                 "genesis_ref": "omega-genesis-v1-full",
-                "rule": "discover -> prune -> prove -> compute-truth -> build -> verify; never silently mutate production",
+                "rule": "discover -> prune -> prove -> compute-truth -> verify SAI -> build -> verify; never silently mutate production",
             },
-            "promotion_boundary": "controller may converge/inspect/compute/materialize/build/test candidates; release promotion requires separate proof and deployment authority",
+            "promotion_boundary": "controller may converge/inspect/compute/verify SAI/materialize/build/test candidates; release promotion requires separate proof and deployment authority",
         }
