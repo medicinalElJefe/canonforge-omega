@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "config" / "capability_truth_r190.json"
+CONFIG = ROOT / "config" / "capability_truth_r190.json
+"
 ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "runtimeEntryR169.ts"
 R190 = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "acceptance" / "wholeSystemAcceptanceR190.ts"
 R189 = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "wholeInstrumentR189.ts"
@@ -59,15 +60,14 @@ def test_r190_uses_explicit_truth_progression_and_preserves_all_modes():
         assert f'"{mode}"' in source
 
 
-def test_r190_core_probe_requires_r189_and_all_core_runtime_families():
+def test_r190_quick_probe_uses_only_worker_local_runtime_contracts():
     c = contract()
     routes = set(c["quick_required_routes"])
     required = {
         "/api/instrument/r189/manifest",
-        "/api/omega/state",
-        "/api/omega/proof?limit=2",
-        "/api/restoration",
-        "/api/earth/catalog",
+        "/api/state/workbench/schema",
+        "/api/core/evidence-ledger/schema",
+        "/api/core/replay/schema",
         "/api/compute/manifest",
         "/api/validate/manifest",
         "/api/validate/independent/manifest",
@@ -76,13 +76,49 @@ def test_r190_core_probe_requires_r189_and_all_core_runtime_families():
         "/truth",
     }
     assert routes == required
+    external = set(c["full_additional_routes"])
+    assert {"/api/omega/state", "/api/omega/proof?limit=2", "/api/restoration", "/api/earth/catalog"} <= external
+    assert routes.isdisjoint({"/api/omega/state", "/api/omega/proof?limit=2", "/api/restoration", "/api/earth/catalog"})
     source = R190.read_text(encoding="utf-8")
     for route in required:
         assert route in source
     assert 'id: "R189_WHOLE_INSTRUMENT"' in source
+    assert 'id: "STATE_INSTRUMENT_CONTRACT"' in source
+    assert 'id: "PROOF_EVIDENCE_FABRIC"' in source
+    assert 'id: "RECOVERY_REPLAY_CONTRACT"' in source
+    assert 'availability: "LOCAL_CORE"' in source
+    assert 'availability: "EXTERNAL_EVIDENCE"' in source
     assert "inheritedRoutesPreserved" in source
     assert "inheritedVisualShellPreserved" in source
     assert "durableObjectNamespacesPreserved" in source
+
+
+def test_r190_external_unavailability_is_blocked_not_mislabeled_as_core_failure():
+    c = contract()
+    source = R190.read_text(encoding="utf-8")
+    assert c["truth_boundaries"]["local_core_is_not_external_evidence"] is True
+    assert "blockedExternal" in source
+    assert "BLOCKED_SOVEREIGN_STATE_UNAVAILABLE" in source
+    assert "BLOCKED_SOVEREIGN_PROOF_UNAVAILABLE" in source
+    assert "BLOCKED_SOVEREIGN_RESTORATION_UNAVAILABLE" in source
+    assert "BLOCKED_EARTH_SOURCE_CATALOG_UNAVAILABLE" in source
+    assert "BLOCKED_CURRENT_HEARTBEAT_REQUIRED" in source
+    assert 'state: external ? (spec.unavailableState || "BLOCKED_EXTERNAL_EVIDENCE_UNAVAILABLE") : "FAILED_INVOCATION"' in source
+    assert 'id: "EARTH_TRUTH_BOUNDARY"' in source
+    assert "EARTH_TRUTH_LAYERS_BOUNDARY" in source
+
+
+def test_r190_local_contracts_assert_truthful_non_mutating_schemas():
+    source = R190.read_text(encoding="utf-8")
+    assert 'body?.schema === "OMEGA_STATE_WORKBENCH_SCHEMA_V1"' in source
+    assert 'body?.schema === "OMEGA_BINDING_EVIDENCE_LEDGER_V1"' in source
+    assert 'body?.schema === "OMEGA_UNIFIED_CORE_VALIDATION_REPLAY_V1"' in source
+    assert 'body?.authority === "computation-only"' in source
+    assert 'body?.authority === "validation-and-aggregation-only"' in source
+    assert 'body?.authority === "validation-only"' in source
+    assert "body?.native_execution === false" in source
+    assert "body?.automatic_weight_change === false" in source
+    assert "body?.production_policy_mutation === false" in source
 
 
 def test_r190_exact_deployment_identity_accepts_git_sha_not_only_sha256():
