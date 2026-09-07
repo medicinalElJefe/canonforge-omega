@@ -28,7 +28,7 @@ def test_r207_consumes_pairing_envelope_but_runs_exact_agent_with_verified_venv(
 def test_r207_keeps_pc_online_claim_behind_current_heartbeat_proof():
     text = read(LAUNCHER)
     assert "PC ONLINE is still proof-gated" in text
-    assert "current authenticated generation-bound heartbeat" in text
+    assert "current authenticated hosted generation-bound heartbeat" in text
     assert "PC ONLINE is not claimed" in text
 
 
