@@ -1,0 +1,282 @@
+name: OMEGA V6 R204 cumulative exact-head production promotion
+
+on:
+  push:
+    branches:
+      - omega-v6-full-convergence
+    paths:
+      - canonforge-omega/cloudflare/omega-v6-worker/**
+      - canonforge-omega/tests/**
+      - .github/workflows/omega-v6-r204-production-deploy.yml
+  workflow_dispatch:
+
+concurrency:
+  group: omega-v6-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  verify-deploy-prove:
+    if: github.ref == 'refs/heads/omega-v6-full-convergence'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact canonical candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact canonical lineage before tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse origin/$CANONICAL_BRANCH)" = "$GITHUB_SHA"
+          echo "R204_EXACT_CANONICAL_HEAD_PRETEST $GITHUB_SHA"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run complete cumulative Python proof suite
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+
+      - name: Typecheck complete cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+
+      - name: Bind exact deployment identity without mutating source
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          source = Path('wrangler.toml').read_text(encoding='utf-8')
+          marker = '[vars]\n'
+          assert marker in source, 'wrangler [vars] section missing'
+          assert 'CANONICAL_GIT_SHA =' not in source, 'source config must remain identity-neutral'
+          sha = os.environ['GITHUB_SHA']
+          Path('wrangler.r204-promotion.toml').write_text(
+              source.replace(marker, marker + f'CANONICAL_GIT_SHA = "{sha}"\n', 1),
+              encoding='utf-8',
+          )
+          print(f'R204_PROMOTION_IDENTITY_BOUND {sha}')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.r204-promotion.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Dry-run exact cumulative deployment
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.r204-promotion.toml
+
+      - name: Re-prove exact canonical head immediately before deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          REMOTE_HEAD="$(git rev-parse origin/$CANONICAL_BRANCH)"
+          LOCAL_HEAD="$(git rev-parse HEAD)"
+          printf 'LOCAL_HEAD=%s\nREMOTE_HEAD=%s\nEVENT_SHA=%s\n' "$LOCAL_HEAD" "$REMOTE_HEAD" "$GITHUB_SHA"
+          test "$LOCAL_HEAD" = "$GITHUB_SHA"
+          test "$REMOTE_HEAD" = "$GITHUB_SHA"
+
+      - name: Deploy exact cumulative canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.r204-promotion.toml
+
+      - name: Wait for exact R204 deployment identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 90); do
+            curl --fail --silent --show-error --max-time 20 "$V6_URL/api/system/r204/manifest" -o /tmp/r204-manifest.json || true
+            if EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              d=json.loads(Path('/tmp/r204-manifest.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_WHOLE_SYSTEM_CONTROL_MANIFEST_R204', d
+          assert d.get('release') == 'r204-whole-system-professional-control', d
+          assert d.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], (d.get('canonicalGitSha'), os.environ['EXPECTED_SHA'])
+          assert d.get('boundaries',{}).get('canonicalMutation') is False, d
+          assert d.get('boundaries',{}).get('promotionAuthorized') is False, d
+          PY
+            then
+              matched=true
+              break
+            fi
+            sleep 2
+          done
+          test "$matched" = true
+          echo "R204_EXACT_LIVE_SHA_VERIFIED $GITHUB_SHA"
+
+      - name: Prove professional whole-system surface is live and API-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 -D /tmp/r204-home.headers "$V6_URL/" -o /tmp/r204-home.html
+          grep -qi '^content-type: text/html' /tmp/r204-home.headers
+          grep -qi '^x-omega-whole-system-surface: r204-professional-whole-system-surface' /tmp/r204-home.headers
+          grep -F 'id="omegaWholeSystemSurfaceR204Runtime"' /tmp/r204-home.html
+          grep -F 'OMEGA WHOLE SYSTEM' /tmp/r204-home.html
+          grep -F 'AI / SAI BRIDGE' /tmp/r204-home.html
+          grep -F 'BOUNDED SELF-DEVELOPMENT' /tmp/r204-home.html
+
+          curl --fail --silent --show-error --max-time 30 -D /tmp/r204-api.headers "$V6_URL/api/system/r204/manifest" -o /tmp/r204-api.json
+          grep -qi '^content-type: application/json' /tmp/r204-api.headers
+          if grep -qi '^x-omega-whole-system-surface:' /tmp/r204-api.headers; then
+            echo 'R204_PRESENTATION_LEAKED_INTO_API'
+            exit 1
+          fi
+
+      - name: Prove fast mission snapshot avoids heavyweight full probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r199/snapshot?profile=mission" -o /tmp/r199-mission-snapshot.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r199-mission-snapshot.json').read_text())
+          assert d.get('schema') == 'OMEGA_ONE_SYSTEM_CORRELATED_SNAPSHOT_R199', d
+          assert d.get('profile') == 'mission', d
+          assert d.get('runtimeReady') is True, d
+          ids={row.get('id') for row in d.get('results',[])}
+          assert ids == {'STATE','ONE_SYSTEM','WORKSPACE','FABRIC','SAI_AI','BUILD'}, ids
+          assert d.get('truth',{}).get('missionSnapshotDoesNotClaimHostState') is True, d
+          assert d.get('pcOnline') is False, d
+          print('R204_FAST_MISSION_SNAPSHOT_LIVE_VERIFIED')
+          PY
+
+      - name: Prove R201 durable read-only mission now closes live
+        shell: bash
+        env:
+          PROOF_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' > /tmp/r204-r201-payload.json
+          import json, os
+          print(json.dumps({
+              'intent': f"R204 production proof {os.environ['PROOF_RUN']}: verify fast R199 to R200 to R201 durable continuity.",
+              'useAI': False,
+              'allModes': True,
+              'allDomains': False,
+          }))
+          PY
+          curl --fail --silent --show-error --max-time 60 \
+            -X POST "$V6_URL/api/mission/r201/execute" \
+            -H 'content-type: application/json' \
+            --data-binary @/tmp/r204-r201-payload.json \
+            -o /tmp/r204-r201-execute.json
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r204-r201-execute.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('state') == 'EXECUTED_RECORDED_CHAIN_VERIFIED', d
+          assert d.get('durableRecorded') is True and d.get('durableVerified') is True, d
+          m=d.get('mission') or {}
+          assert m.get('schema') == 'OMEGA_CANONICAL_MISSION_R200', m
+          assert re.fullmatch(r'[0-9a-f]{64}', str(m.get('missionReceiptSha256',''))), m
+          results=(m.get('execution') or {}).get('results') or []
+          assert [r.get('task',{}).get('id') for r in results] == ['correlated-snapshot','proof-state'], results
+          assert all(r.get('returned') is True for r in results), results
+          assert all(r.get('verified') is True for r in results), results
+          assert d.get('canonicalMutation') is False and d.get('hostStateMutation') is False and d.get('promotionAuthorized') is False, d
+          print('R204_R201_DURABLE_CLOSURE_LIVE_VERIFIED', m.get('missionId'))
+          PY
+
+      - name: Prove AI SAI Hybrid and self-build health contracts without fabricating PC online
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r204/health" -o /tmp/r204-health.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r204-health.json').read_text())
+          assert d.get('schema') == 'OMEGA_WHOLE_SYSTEM_HEALTH_R204', d
+          layers={x.get('id'):x for x in d.get('layers',[])}
+          required={'PROOF','CLOUD_AI','SAI_MULTI_AGENT','SAI_B059','HYBRID_PC','R201_DURABILITY','R202_CONTINUITY','R203_HYBRID_CONTINUITY','SELF_BUILD_DISCOVERY','SELF_BUILD_PATCH'}
+          assert required <= set(layers), (required-set(layers), layers)
+          for key in ['CLOUD_AI','SAI_MULTI_AGENT','SAI_B059','R201_DURABILITY','R202_CONTINUITY','R203_HYBRID_CONTINUITY','SELF_BUILD_DISCOVERY','SELF_BUILD_PATCH']:
+              assert layers[key].get('ok') is True, (key,layers[key])
+          assert d.get('aiSai',{}).get('cloudAiReady') is True, d
+          assert d.get('aiSai',{}).get('multiAgentSaiReady') is True, d
+          assert d.get('aiSai',{}).get('bridgeReady') is True, d
+          assert d.get('selfBuild',{}).get('automaticGitMutation') is False, d
+          assert d.get('selfBuild',{}).get('automaticCanonicalPromotion') is False, d
+          h=d.get('hybrid',{})
+          if h.get('pcOnline') is not True:
+              assert d.get('state') == 'CLOUD_SYSTEM_READY_HOST_OPTIONAL_OFFLINE', d
+              assert h.get('nativeExecutionMayBeClaimed') is False, d
+          print('R204_WHOLE_SYSTEM_HEALTH_LIVE_VERIFIED', d.get('state'))
+          PY
+
+      - name: Prove R204 bridge cannot bypass preparation, confirmation, or host proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS=$(curl --silent --show-error --max-time 30 -o /tmp/r204-bridge-reject.json -w '%{http_code}' \
+            -X POST "$V6_URL/api/intelligence/r204/bridge/execute" \
+            -H 'content-type: application/json' \
+            --data '{}')
+          test "$STATUS" = "422"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r204-bridge-reject.json').read_text())
+          assert d.get('ok') is False, d
+          assert d.get('code') == 'R204_VALID_PREPARE_PACKET_REQUIRED', d
+          assert d.get('canonicalMutation') is False and d.get('hostStateMutation') is False and d.get('promotionAuthorized') is False, d
+          print('R204_BRIDGE_AUTHORITY_BOUNDARY_LIVE_VERIFIED')
+          PY
+
+      - name: Upload R204 production proof packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r204-production-proof-${{ github.run_id }}
+          path: |
+            /tmp/r204-manifest.json
+            /tmp/r204-home.headers
+            /tmp/r204-home.html
+            /tmp/r204-api.headers
+            /tmp/r204-api.json
+            /tmp/r199-mission-snapshot.json
+            /tmp/r204-r201-payload.json
+            /tmp/r204-r201-execute.json
+            /tmp/r204-health.json
+            /tmp/r204-bridge-reject.json
+          if-no-files-found: error
