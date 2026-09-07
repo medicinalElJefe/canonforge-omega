@@ -12,6 +12,9 @@ $ExpectedRepository = 'medicinalElJefe/canonforge-omega'
 $ExpectedOriginPattern = 'medicinalElJefe[/:]canonforge-omega(?:\.git)?$'
 $OmegaLocal = Join-Path $env:LOCALAPPDATA 'OMEGA'
 $RootPointer = Join-Path $OmegaLocal 'canonical-root.txt'
+$RecoveryReceiptDir = Join-Path $OmegaLocal 'receipts'
+New-Item -ItemType Directory -Force -Path $RecoveryReceiptDir | Out-Null
+$ReceiptPath = Join-Path $RecoveryReceiptDir 'r209_host_recovery_latest.json'
 
 function Invoke-Git([string]$WorkingRoot, [string[]]$Arguments, [switch]$AllowFailure) {
   $output = & git -C $WorkingRoot @Arguments 2>&1
@@ -31,8 +34,8 @@ function Assert-Sha([string]$Value, [string]$Label) {
   if ($Value -notmatch '^[0-9a-f]{40}$') { throw "$Label is not a full Git SHA: $Value" }
 }
 
-function Write-Receipt([hashtable]$Receipt, [string]$Path) {
-  $Receipt.capturedAt = (Get-Date).ToUniversalTime().ToString('o')
+function Write-Receipt($Receipt, [string]$Path) {
+  $Receipt['capturedAt'] = (Get-Date).ToUniversalTime().ToString('o')
   $Receipt | ConvertTo-Json -Depth 12 | Set-Content -Path $Path -Encoding utf8
 }
 
@@ -50,21 +53,22 @@ if (-not $Root) {
 }
 
 $Root = [System.IO.Path]::GetFullPath($Root)
-$LogDir = Join-Path $Root 'logs'
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
-$ReceiptPath = Join-Path $LogDir 'r209_host_recovery_latest.json'
 $Installer = Join-Path $Root 'scripts\INSTALL_OMEGA_V6_WINDOWS.ps1'
 $Launcher = Join-Path $Root 'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1'
 $Prover = Join-Path $Root 'scripts\PROVE_OMEGA_V6_WINDOWS.ps1'
+$Recovery = Join-Path $Root 'scripts\RECOVER_OMEGA_V6_WINDOWS.ps1'
+$PackageMarker = Join-Path $Root 'pyproject.toml'
 
 $receipt = [ordered]@{
   schema = 'OMEGA_PHYSICAL_HOST_RECOVERY_R209'
   revision = 'R209'
+  capturedAt = $null
   authority = 'LOCAL_RECOVERY_OBSERVATION_NOT_CANON'
   canonicalMutation = $false
   promotionAuthorized = $false
   expectedRepository = $ExpectedRepository
   root = $Root
+  receiptPath = $ReceiptPath
   gitRoot = $null
   remoteName = $RemoteName
   originUrl = $null
@@ -83,6 +87,8 @@ $receipt = [ordered]@{
   boundaries = [ordered]@{
     destructiveResetAllowed = $false
     forcedCheckoutAllowed = $false
+    automaticStashAllowed = $false
+    automaticRebaseAllowed = $false
     localChangesMayBeOverwritten = $false
     fastForwardOnly = $true
     arbitraryRemoteAllowed = $false
@@ -92,9 +98,8 @@ $receipt = [ordered]@{
 }
 
 try {
-  foreach ($required in @($Installer, $Launcher, $Prover)) {
-    if (-not (Test-Path $required)) { throw "Canonical R208+ runtime component missing: $required" }
-  }
+  if (-not (Test-Path $Root)) { throw "Selected OMEGA root does not exist: $Root" }
+  if (-not (Test-Path $PackageMarker)) { throw "Selected root is not the OMEGA package root: $PackageMarker missing." }
 
   $gitRootResult = Invoke-Git $Root @('rev-parse','--show-toplevel')
   $gitRoot = First-Line $gitRootResult
@@ -125,14 +130,15 @@ try {
   $receipt.dirtyEntryCount = $dirtyEntries.Count
   $receipt.dirty = ($dirtyEntries.Count -gt 0)
 
-  # Read the authoritative remote branch without changing the working tree.
+  # Resolve the authoritative canonical head without changing working-tree files.
   $lsRemote = Invoke-Git $gitRoot @('ls-remote','--heads',$RemoteName,"refs/heads/$CanonicalBranch")
   $remoteLine = First-Line $lsRemote
-  if ($remoteLine -notmatch '^([0-9a-f]{40})\s+') {
+  $remoteMatch = [regex]::Match($remoteLine, '^([0-9a-f]{40})\s+')
+  if (-not $remoteMatch.Success) {
     $receipt.updateState = 'BLOCKED_REMOTE_HEAD_UNAVAILABLE'
     throw "Canonical remote head could not be resolved for $CanonicalBranch."
   }
-  $remoteSha = $Matches[1]
+  $remoteSha = $remoteMatch.Groups[1].Value
   Assert-Sha $remoteSha 'Remote canonical HEAD'
   $receipt.remoteSha = $remoteSha
 
@@ -179,6 +185,14 @@ try {
   if ($afterSha -ne $remoteSha) {
     $receipt.updateState = 'BLOCKED_NOT_EXACT_CANONICAL'
     throw "Recovery cannot launch because local HEAD is not exact canonical ($afterSha != $remoteSha)."
+  }
+
+  # R208+ execution components are required only after the checkout has reached exact Canon.
+  foreach ($required in @($Installer, $Launcher, $Prover, $Recovery)) {
+    if (-not (Test-Path $required)) {
+      $receipt.updateState = 'BLOCKED_CANONICAL_COMPONENT_MISSING'
+      throw "Exact canonical checkout is missing required recovery/runtime component: $required"
+    }
   }
 
   $receipt.safeToLaunch = $true
