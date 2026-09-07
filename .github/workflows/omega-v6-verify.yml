@@ -144,7 +144,7 @@ jobs:
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
           GENESIS_URL: https://omega-genesis-v1.jeffdeweyeljefe.workers.dev
-          EXPECTED_BUILD: r189-whole-instrument-convergence
+          EXPECTED_BUILD: r87-semantic-edge-settle-proof
         run: |
           set -euo pipefail
           verified=false
@@ -226,7 +226,7 @@ jobs:
               verified=true
               break
             fi
-            echo "Edge not settled on expected R189 role-separated identity yet; federation/instrument proof not settled (attempt $attempt/30)."
+            echo "Edge not settled on expected role-separated identity yet; R189 federation/instrument proof not settled (attempt $attempt/30)."
             sleep 2
           done
           if [ "$verified" != "true" ]; then
