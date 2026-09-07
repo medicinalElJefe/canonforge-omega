@@ -1,10 +1,14 @@
 name = "omegav6"
-main = "src/runtimeEntryR204.ts"
+main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR204 delegates the complete R169→R203 public runtime unchanged while replacing only
-# the historical OMEGA_RUNTIME class implementation with R204 verified-return admission.
+# R204 preserves the canonical R169 deployment entrypoint. Wrangler substitutes only
+# heartbeatTruth's ./convergence module with an additive alias that delegates original
+# convergence behavior and exports the stronger OmegaRuntime return-admission class.
 compatibility_date = "2026-08-29"
 workers_dev = true
+
+[alias]
+"./convergence" = "./src/convergenceRuntimeAliasR204.ts"
 
 [vars]
 BUILD_ID = "r87-semantic-edge-settle-proof"
