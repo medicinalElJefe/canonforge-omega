@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR202.ts"
-# R202 delegates the established R169→R201 public route/render stack byte-for-byte at fetch time.
-# Only the historical OMEGA_RUNTIME export is hardened for authenticated return admission;
-# the R201 evidence ledger and all existing Durable Object namespaces remain distinct and preserved.
+main = "src/runtimeEntryR169.ts"
+# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
+# runtimeEntryR169 remains the preserved deployment entrypoint. R199/R200/R201/R202 correlate established organs
+# above that entry without replacing Durable Objects, specialist engines, or the canonical heartbeat authority.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -85,8 +85,8 @@ class_name = "OmegaSwarmOrganismCoordinator"
 name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
-# Existing namespaces remain live. R201 is the dedicated evidence-only SQLite namespace;
-# R202 changes no namespace identity, storage backend, migration tag, or tombstone state.
+# Existing namespaces remain live. R201 is a new evidence-only SQLite namespace;
+# R202 changes only OMEGA_RUNTIME return admission; no migration tag, tombstone, or namespace identity changes.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"
