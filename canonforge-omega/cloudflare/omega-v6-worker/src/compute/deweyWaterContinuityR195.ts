@@ -6,6 +6,7 @@ export const DEWEY_WATER_CONTINUITY_BOUNDARY_R195 =
 const EPS = 1e-12;
 const SQRT2 = Math.SQRT2;
 const INV_SQRT2 = 1 / SQRT2;
+const GOLDEN_FRACTION = (Math.sqrt(5) - 1) / 2;
 const MAX_STEPS = 4096;
 const MAX_ENSEMBLE = 256;
 const MAX_TRACE = 2048;
@@ -112,7 +113,7 @@ function clamp(v: number, lo: number, hi: number): number {
 }
 
 function unit(v: unknown, fallback: number): number {
-  return clamp(finite(v, fallback), 0, 1);
+  return clamp(finite(v, fallback), EPS, 1);
 }
 
 function positive(v: unknown, fallback: number, floor = EPS): number {
@@ -230,7 +231,7 @@ export function waterVelocity(s: number, d: number, p: DeweyParams, phase: numbe
 }
 
 function omegaLogScore(s: DeweyState): number {
-  return safeLog(s.continuity + EPS) + safeLog(s.plasticity + EPS) - safeLog(s.burden + s.contradiction + EPS);
+  return safeLog(s.continuity) + safeLog(s.plasticity) - safeLog(s.burden + s.contradiction);
 }
 
 function coherenceScore(s: DeweyState): number {
@@ -240,17 +241,19 @@ function coherenceScore(s: DeweyState): number {
 }
 
 function relationalCoordinates(s: DeweyState) {
-  const b = safeLog(s.continuity + EPS) + safeLog(s.plasticity + EPS);
-  const c = safeLog(s.burden + s.contradiction + EPS);
+  const b = safeLog(s.continuity) + safeLog(s.plasticity);
+  const c = safeLog(s.burden + s.contradiction);
   const pair = pair011(b, c);
   return { b, c, ...pair };
 }
 
 function noZeroPacket(s: DeweyState) {
   return {
-    rule: "MAGNITUDE_FLOOR_PLUS_SEPARATE_ORIENTATION",
+    rule: "STRICT_POSITIVE_MAGNITUDE_FLOOR_PLUS_SEPARATE_ORIENTATION",
     epsilon: EPS,
     neutralOrientationAllowed: true,
+    neutralOrientationCreatesNoSignedDirectionalDrive: true,
+    stateMagnitudesFlooredAboveExactZero: true,
     magnitudesNeverUsedAsExactZeroIn_DIV_LOG: true,
     orientation: s.orientation,
   };
@@ -268,7 +271,7 @@ function stateDistance(a: DeweyState, b: DeweyState): number {
 function stepOnce(s: DeweyState, p: DeweyParams): { state: DeweyState; proof: Obj } {
   const rel = relationalCoordinates(s);
   const water = waterVelocity(rel.construct, rel.prune, p, s.phase);
-  const orient = s.orientation === 0 ? 1 : s.orientation;
+  const orient = s.orientation;
 
   const constructDrive = Math.tanh(rel.construct) * p.constructGain;
   const pruneDrive = Math.tanh(rel.prune) * p.pruneGain;
@@ -316,6 +319,11 @@ function stepOnce(s: DeweyState, p: DeweyParams): { state: DeweyState; proof: Ob
         prune_01m1: rel.prune,
         inverse: inversePair011(rel.construct, rel.prune),
         orthonormalEnergyError: energyError,
+      },
+      orientation: {
+        sigma: s.orientation,
+        directionalDrive: orient,
+        neutralPreserved: s.orientation === 0,
       },
       waterGeometry: {
         kind: "DIVERGENCE_FREE_STREAM_FUNCTION_INSPIRED_MODEL",
@@ -387,7 +395,7 @@ function trajectory(initial: DeweyState, p: DeweyParams, steps: number, traceEve
 function perturbState(base: DeweyState, index: number, ensemble: number, amplitude: number): DeweyState {
   const t = (index + 0.5) / ensemble;
   const a = 2 * Math.PI * t;
-  const b = 2 * Math.PI * (((index * 37) % ensemble) + 0.5) / ensemble;
+  const b = 2 * Math.PI * ((index * GOLDEN_FRACTION) % 1);
   const jitter = (x: number, phase: number) => clamp(x + amplitude * Math.sin(phase), EPS, 1);
   return {
     ...base,
@@ -480,7 +488,7 @@ function manifest() {
     },
     noZeroMath: {
       epsilon: EPS,
-      rule: "positive magnitude floor for log/division + separate signed orientation σ∈{-1,0,+1}",
+      rule: "strict positive magnitude floor + separate signed orientation σ∈{-1,0,+1}; neutral σ=0 is preserved as no signed directional drive",
       compounding: "log-space accumulation with bounded exponentiation",
     },
     waterGeometry: {
@@ -488,6 +496,10 @@ function manifest() {
       velocity: "v=(∂ψ/∂d,-∂ψ/∂s)",
       analyticalDivergence: 0,
       physicalClaim: false,
+    },
+    referenceKernelPolicy: {
+      fixedSymmetryAsymmetryConstants: false,
+      note: "Contextual symmetry/asymmetry remains frame-dependent; reference ratios belong in input/evidence, not engine constants.",
     },
     wovenContinuity: ["partition", "exchange/transform", "invariant carry", "scar/residual carry", "re-contextualize/repartition"],
     shells: SHELLS,
