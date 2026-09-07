@@ -1,0 +1,170 @@
+name: OMEGA V6 R191 universal surface proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/federation/universalSurfaceFabricR191.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/cumulativeCapabilityR191.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/wholeInstrumentR189.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/vercel/omega-r191-universal-surface/**'
+      - 'canonforge-omega/tests/test_r191_universal_surface_fabric.py'
+      - '.github/workflows/omega-v6-r191-universal-surface-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r191-universal-surface-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r191:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Verify R191 plus cumulative predecessor contracts
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_cumulative_capability_completion.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r189_whole_instrument_cumulative_completion.py \
+            tests/test_r188_motion_time.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+      - name: Typecheck complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+      - name: Prove Worker package dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r191-dry-run
+      - name: Verify deploy-ready Vercel mirror is canonical-read-only
+        working-directory: canonforge-omega
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f vercel/omega-r191-universal-surface/index.html
+          test -f vercel/omega-r191-universal-surface/vercel.json
+          grep -F 'https://omegav6.jeffdeweyeljefe.workers.dev/api/fabric/r191/status' vercel/omega-r191-universal-surface/index.html
+          grep -F 'CANON REMAINS OMEGA V6' vercel/omega-r191-universal-surface/index.html
+          grep -F 'does not grant Vercel write authority' vercel/omega-r191-universal-surface/index.html
+
+  prove-live-r191:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r191
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact canonical SHA and prove universal surface fabric
+        shell: bash
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 1 --retry-all-errors "$LIVE/api/fabric/r191/manifest" -o /tmp/r191-manifest.json || true
+            curl --fail --silent --show-error --max-time 20 --retry 2 --retry-delay 1 --retry-all-errors "$LIVE/api/fabric/r191/status" -o /tmp/r191-status.json || true
+            curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 1 --retry-all-errors "$LIVE/api/canon/r191/manifest" -o /tmp/r191-canon.json || true
+            curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 1 --retry-all-errors "$LIVE/api/canon/r190/manifest" -o /tmp/r190-canon.json || true
+            curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 1 --retry-all-errors "$LIVE/api/instrument/r189/coverage" -o /tmp/r189-coverage.json || true
+            curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 1 --retry-all-errors "$LIVE/fabric" -o /tmp/r191-fabric.html || true
+            if python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              manifest=json.loads(Path('/tmp/r191-manifest.json').read_text())
+              status=json.loads(Path('/tmp/r191-status.json').read_text())
+              canon=json.loads(Path('/tmp/r191-canon.json').read_text())
+              r190=json.loads(Path('/tmp/r190-canon.json').read_text())
+              r189=json.loads(Path('/tmp/r189-coverage.json').read_text())
+              html=Path('/tmp/r191-fabric.html').read_text()
+          except Exception:
+              raise SystemExit(1)
+          if manifest.get('schema') != 'OMEGA_UNIVERSAL_SURFACE_FABRIC_R191': raise SystemExit(1)
+          if manifest.get('release') != 'r191-universal-surface-fabric': raise SystemExit(1)
+          if manifest.get('canonicalGitSha') != os.environ['EXPECTED_SHA']: raise SystemExit(1)
+          if manifest.get('deploymentIdentityBound') is not True: raise SystemExit(1)
+          if manifest.get('predecessorCapabilityGroups') != 62: raise SystemExit(1)
+          if manifest.get('canonicalAuthority') != 'OMEGA_V6_ONLY': raise SystemExit(1)
+          if manifest.get('addressHierarchy') != [12,144,1728,20736,248832]: raise SystemExit(1)
+          if 'not literal physical dimensions' not in manifest.get('addressHierarchyMeaning',''): raise SystemExit(1)
+          preservation=manifest.get('preservation') or {}
+          for key in ('protectedR87IdentityPreserved','r189WholeInstrumentPreserved','r190CapabilityTruthPreserved','inheritedRoutesPreserved','durableObjectNamespacesPreserved'):
+              if preservation.get(key) is not True: raise SystemExit(1)
+          if preservation.get('canonicalMutation') is not False or preservation.get('autonomousPromotion') is not False: raise SystemExit(1)
+          if status.get('schema') != 'OMEGA_UNIVERSAL_SURFACE_STATUS_R191': raise SystemExit(1)
+          if status.get('canonicalGitSha') != os.environ['EXPECTED_SHA']: raise SystemExit(1)
+          if status.get('canonicalFabricReady') is not True: raise SystemExit(1)
+          if status.get('everywherePromotionProved') is not False: raise SystemExit(1)
+          surfaces={s.get('id'):s for s in status.get('surfaces') or []}
+          if (surfaces.get('GENESIS_MACHINE') or {}).get('reachable') is not True: raise SystemExit(1)
+          if (surfaces.get('OPTICAL_MACHINE') or {}).get('reachable') is not True: raise SystemExit(1)
+          vercel=status.get('vercel') or {}
+          if vercel.get('sameUrlPromotionAuthorized') is not False: raise SystemExit(1)
+          if vercel.get('blocker') != 'VERCEL_PROJECT_WRITE_ACCESS_REQUIRED': raise SystemExit(1)
+          if canon.get('schema') != 'OMEGA_CUMULATIVE_CAPABILITY_CANON_R191': raise SystemExit(1)
+          if canon.get('predecessorCapabilityGroups') != 62: raise SystemExit(1)
+          if canon.get('totalCapabilityGroups') != 63: raise SystemExit(1)
+          if canon.get('currentOrganCount') != 1: raise SystemExit(1)
+          current=canon.get('currentOrgans') or []
+          if len(current) != 1 or current[0].get('id') != 'R191_UNIVERSAL_SURFACE_FABRIC': raise SystemExit(1)
+          if canon.get('canonicalMutation') is not False or canon.get('promotionAuthorized') is not False: raise SystemExit(1)
+          if r190.get('totalCapabilityGroups') != 62: raise SystemExit(1)
+          if r189.get('totalCapabilityGroups') != 61 or r189.get('complete') is not True: raise SystemExit(1)
+          if 'OMEGA · R191 SURFACE FABRIC' not in html or 'One system.' not in html: raise SystemExit(1)
+          PY
+            then
+              matched=true
+              break
+            fi
+            echo "R191 exact-SHA surface fabric not settled yet (attempt $attempt/60)."
+            sleep 5
+          done
+          if [ "$matched" != true ]; then
+            echo "R191_LIVE_PROOF_FAILED for $EXPECTED_SHA"
+            echo "manifest:"; cat /tmp/r191-manifest.json || true
+            echo "status:"; cat /tmp/r191-status.json || true
+            echo "canon:"; cat /tmp/r191-canon.json || true
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          status=json.loads(Path('/tmp/r191-status.json').read_text())
+          canon=json.loads(Path('/tmp/r191-canon.json').read_text())
+          print(json.dumps({
+              'status':'R191_UNIVERSAL_SURFACE_FABRIC_LIVE_VERIFIED',
+              'canonicalGitSha':status.get('canonicalGitSha'),
+              'canonicalFabricReady':status.get('canonicalFabricReady'),
+              'everywherePromotionProved':status.get('everywherePromotionProved'),
+              'totalCapabilityGroups':canon.get('totalCapabilityGroups'),
+              'vercel':status.get('vercel'),
+          }, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r191-universal-surface-proof-${{ github.sha }}
+          path: |
+            /tmp/r191-manifest.json
+            /tmp/r191-status.json
+            /tmp/r191-canon.json
+            /tmp/r190-canon.json
+            /tmp/r189-coverage.json
+            /tmp/r191-fabric.html

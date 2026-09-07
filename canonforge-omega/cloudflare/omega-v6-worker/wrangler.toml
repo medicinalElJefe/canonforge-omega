@@ -36,6 +36,7 @@ MOTION_TIME_R188_ID = "r188-synchronous-12-phase-motion-barrier"
 WHOLE_INSTRUMENT_R189_ID = "r189-whole-instrument-convergence"
 WHOLE_SYSTEM_ACCEPTANCE_R190_ID = "r190-capability-truth-admission"
 CAPABILITY_TRUTH_R190_ID = "r190-implemented-route-invoked-returned-verified"
+UNIVERSAL_SURFACE_FABRIC_R191_ID = "r191-universal-surface-fabric"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]

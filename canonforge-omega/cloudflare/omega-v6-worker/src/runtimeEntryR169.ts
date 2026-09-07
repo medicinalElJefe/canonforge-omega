@@ -16,6 +16,7 @@ import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
 import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabilityR190";
+import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilityR191";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -25,6 +26,7 @@ import { handleCrossRuntimeValidationRequest } from "./validation/crossRuntimePa
 import { crossRuntimeLabResponse } from "./validation/crossRuntimeLabR173";
 import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR174";
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
+import { handleUniversalSurfaceFabricR191 } from "./federation/universalSurfaceFabricR191";
 import { handleIndependentSolverValidationRequest } from "./validation/independentSolverR175";
 import { independentSolverLabResponse } from "./validation/independentSolverLabR175";
 import { handleWholeInstrumentR189 } from "./wholeInstrumentR189";
@@ -58,6 +60,14 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  // R191 is an additive universal surface registry. It does not create another
+  // Canon authority or shadow any inherited specialized route.
+  const universalSurfaceFabric = await handleUniversalSurfaceFabricR191(request, env);
+  if (universalSurfaceFabric) return universalSurfaceFabric;
+
+  const r191Canon = handleCumulativeCapabilityR191(request);
+  if (r191Canon) return r191Canon;
 
   // R189 remains the admitted additive whole-instrument surface.
   const wholeInstrument = handleWholeInstrumentR189(request);
