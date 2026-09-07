@@ -26,10 +26,12 @@ def test_repair_is_additive_and_dispatcher_bound_beneath_r191():
     assert 'R190_ACCEPTANCE_REPAIR_ID = "r190-sovereign-boundary-classification-repair"' in repair
     assert 'from "./wholeSystemAcceptanceR190"' in repair
     assert 'from "./acceptance/r190AcceptanceRepair"' in entry
-    assert "handleWholeSystemAcceptanceR190Repaired(request, env, ctx, runtimeFetch)" in entry
-    assert "handleUniversalSurfaceFabricR191(request, env)" in entry
+    r191_call = "const universalSurfaceFabric = await handleUniversalSurfaceFabricR191(request, env);"
+    r190_call = "return handleWholeSystemAcceptanceR190Repaired(request, env, ctx, runtimeFetch);"
+    assert r190_call in entry
+    assert r191_call in entry
     assert "handleCumulativeCapabilityR191(request)" in entry
-    assert entry.index("handleUniversalSurfaceFabricR191(request, env)") < entry.index("handleWholeSystemAcceptanceR190Repaired")
+    assert entry.index(r191_call) < entry.index(r190_call)
 
 
 def test_cloud_quick_gate_excludes_only_declared_sovereign_backed_capabilities():
