@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR198.ts"
+main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved R197 deployment entrypoint underneath R198. R198 wraps it additively:
-# no prior route, Durable Object, Hybrid truth, SAI authority, calibration, workspace, evidence, or navigation layer is removed.
+# runtimeEntryR169 remains the preserved deployment entrypoint. R198 is integrated additively through
+# the existing R195 final navigation/enhancement chain and does not replace the canonical entrypoint.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
