@@ -86,8 +86,9 @@ class_name = "OmegaSwarmOrganismCoordinator"
 name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
-# Existing namespaces remain live. R201 is a dedicated evidence-only SQLite namespace;
-# R202 and R203 add no Durable Object and therefore cannot create shadow state namespaces.
+# Existing namespaces remain live. R201 is a dedicated evidence-only SQLite namespace.
+# R202 adds no Durable Object and therefore cannot create a shadow state namespace.
+# R203 likewise adds no Durable Object; it hardens the existing OMEGA_RUNTIME class contract in place.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"
