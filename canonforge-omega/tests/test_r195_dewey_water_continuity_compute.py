@@ -1,5 +1,6 @@
 from pathlib import Path
 import math
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
@@ -49,7 +50,6 @@ def test_011_01m1_pair_is_orthonormal_and_invertible():
 
 
 def test_water_geometry_is_numerically_divergence_free():
-    # Central finite-difference check of d(v_s)/ds + d(v_d)/dd.
     h = 1e-6
     points = [(0.4, 0.8), (-1.2, 0.45), (2.1, -0.7), (-0.35, -1.4)]
     for s, d in points:
@@ -93,9 +93,12 @@ def test_r195_neutral_orientation_is_preserved_not_coerced_positive():
 
 def test_r195_reference_kernel_values_are_not_engine_symmetry_constants():
     engine = read("compute/deweyWaterContinuityR195.ts")
-    # 37/73 may be external test/reference values but are not hard-coded into the runtime model.
-    assert "37" not in engine
-    assert "73" not in engine
+    # Reject standalone runtime numeric constants 37/73 while allowing unrelated
+    # established values such as the 20,736 address shell.
+    standalone_37 = re.compile(r"(?<![\d.])37(?:\.0+)?(?![\d.])")
+    standalone_73 = re.compile(r"(?<![\d.])73(?:\.0+)?(?![\d.])")
+    assert standalone_37.search(engine) is None
+    assert standalone_73.search(engine) is None
     assert "fixedSymmetryAsymmetryConstants: false" in engine
     assert "Contextual symmetry/asymmetry remains frame-dependent" in engine
     assert "GOLDEN_FRACTION" in engine
