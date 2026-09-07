@@ -4,6 +4,7 @@ import { handleWarpComputationRequest } from "./swarm/warpComputationR176";
 import { warpComputationLabResponse } from "./swarm/warpComputationLabR176";
 import { handleWarpBuildCandidateRequest } from "./swarm/warpBuildCandidateR178";
 import { warpBuildCandidateLabResponse } from "./swarm/warpBuildCandidateLabR178";
+import { handleSuccessorGateR183 } from "./swarm/successorGateR183";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
@@ -66,6 +67,7 @@ export default {
     if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
     if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
+    if (url.pathname.startsWith("/api/swarm/successor/r183/")) return handleSuccessorGateR183(request);
     if (url.pathname.startsWith("/api/swarm/build/")) return handleWarpBuildCandidateRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/warp/")) return handleWarpComputationRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/")) return handleSwarmRequest(request, env);
