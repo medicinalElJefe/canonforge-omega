@@ -3,18 +3,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 SAR = (WORKER / "src" / "earthSarTruthFusionR198.ts").read_text(encoding="utf-8")
-ENTRY = (WORKER / "src" / "runtimeEntryR198.ts").read_text(encoding="utf-8")
+NAV = (WORKER / "src" / "system" / "oneSystemNavigationR195.ts").read_text(encoding="utf-8")
+ENTRY = (WORKER / "src" / "runtimeEntryR169.ts").read_text(encoding="utf-8")
 WRANGLER = (WORKER / "wrangler.toml").read_text(encoding="utf-8")
 
 
-def test_r198_wraps_r197_instead_of_replacing_it():
-    assert 'import runtimeR197 from "./runtimeEntryR169"' in ENTRY
-    assert "prior.fetch(request, env, ctx)" in ENTRY
-    assert "enhanceEarthSarTruthR198(priorResponse" in ENTRY
-    assert 'main = "src/runtimeEntryR198.ts"' in WRANGLER
+def test_r198_preserves_canonical_r169_entrypoint():
+    assert 'main = "src/runtimeEntryR169.ts"' in WRANGLER
+    assert 'enhanceOneSystemNavigationR195' in ENTRY
+    assert 'handleEarthSarFusionR198' in NAV
+    assert 'enhanceEarthSarTruthR198' in NAV
+    assert 'EARTH_SAR_TRUTH_R198_ID = "r198-real-public-sar-truth-fusion"' in WRANGLER
 
 
-def test_r198_preserves_durable_object_exports():
+def test_r198_is_additive_inside_existing_final_enhancer():
+    assert 'from "../earthSarTruthFusionR198"' in NAV
+    assert 'pathname.startsWith("/api/earth/sar/r198/")' in NAV
+    assert 'return enhanceEarthSarTruthR198' in NAV
+    assert 'x-omega-one-system' in NAV
+
+
+def test_r198_preserves_durable_object_contract():
     for name in [
         "OmegaRuntime",
         "OmegaSwarmCell",
@@ -24,7 +33,6 @@ def test_r198_preserves_durable_object_exports():
         "OmegaSwarmOrganismCoordinator",
         "OmegaSwarmAutonomicCoordinator",
     ]:
-        assert f"export {{ {name} }}" in ENTRY
         assert f"[exports.{name}]" in WRANGLER
 
 
