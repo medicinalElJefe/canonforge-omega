@@ -2,6 +2,16 @@ name: OMEGA V6 Cloudflare deploy
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - omega-v6-full-convergence
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-cloudflare.yml'
+
+concurrency:
+  group: omega-v6-production
+  cancel-in-progress: false
 
 jobs:
   verify-and-deploy:
@@ -17,7 +27,7 @@ jobs:
         working-directory: canonforge-omega
         run: |
           python -m pip install -U pip pytest
-          python -m pytest -q tests/test_omega_runtime.py
+          python -m pytest -q tests/test_omega_runtime.py tests/test_r189_whole_instrument_convergence.py
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
