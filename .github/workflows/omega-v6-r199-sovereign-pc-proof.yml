@@ -50,11 +50,13 @@ jobs:
         run: npm run typecheck
       - name: Build Cloudflare deployment bundle without publishing
         run: npx wrangler deploy --dry-run --outdir .r199-dry-run
-      - name: Verify connector survived bundling
+      - name: Verify R199 routes and connector survived bundling
         run: |
           test -f .r199-dry-run/index.js
-          grep -q "OMEGA_HYBRID_CONNECTOR_MANIFEST_R199" .r199-dry-run/index.js
-          grep -q "r199-project-aware-verified-return-runtime" .r199-dry-run/index.js
+          grep -R -q "OMEGA_HYBRID_CONNECTOR_MANIFEST_R199" .r199-dry-run
+          grep -R -q "R127_ZERO_DRIFT_SHA256_PLUS_R199_VERIFIED_RETURN" .r199-dry-run
+          grep -R -q "/api/hybrid/agent-download" .r199-dry-run
+          grep -R -q "RETURN_VERIFIED_SUCCESS" .r199-dry-run
 
   r199-preservation-regression:
     runs-on: ubuntu-24.04
