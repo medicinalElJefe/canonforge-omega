@@ -53,5 +53,11 @@ def test_r189_live_gate_preserves_inherited_identity_and_proves_additive_whole_i
     assert "Edge not settled on expected role-separated V3 identity yet" in verify
     assert "R189_WHOLE_INSTRUMENT_CONVERGENCE" in verify
     assert "api/instrument/r189/manifest" in verify
+    assert "api/instrument/r189/coverage" in verify
+    assert "api/canon/r189/manifest" in verify
+    assert "api/canon/r189/regimes" in verify
     assert "cumulativeCapabilityCoverageComplete" in verify
+    assert "protectedBaseIdentityPreserved" in verify
     assert "totalCapabilityGroups" in verify
+    assert "mappedExtensionOrgans" in verify
+    assert "OMEGA_EXECUTION_REGIME_PORTFOLIO_R189" in verify
