@@ -47,8 +47,9 @@ def test_r196_holdout_is_not_used_for_candidate_selection():
     assert "const candidateHoldout = await evaluateRows(split.holdoutRows" in cal
 
 
-def test_r196_guard_requires_independent_groups_and_temporal_validity():
+def test_r196_guard_and_core_require_independent_groups_and_temporal_validity():
     guard = text(GUARD)
+    cal = text(CAL)
     for marker in (
         "MINIMUM_2_INDEPENDENT_GROUPS_REQUIRED_FOR_HOLDOUT",
         "TEMPORAL_SPLIT_REQUIRES_VALID_OBSERVED_AT",
@@ -58,6 +59,8 @@ def test_r196_guard_requires_independent_groups_and_temporal_validity():
         "requestBodyMeasurementClaimsAreNotServerAuthentication: true",
     ):
         assert marker in guard
+    assert "MINIMUM_2_INDEPENDENT_GROUPS_REQUIRED_FOR_HOLDOUT" in cal
+    assert "TEMPORAL_SPLIT_REQUIRES_VALID_OBSERVED_AT" in cal
 
 
 def test_r196_calibration_never_promotes_request_body_measurement_claim_to_empirical_truth():
@@ -92,6 +95,15 @@ def test_r196_parameter_calibration_is_bounded_and_invariants_are_not_fitted():
     assert "weighted Huber" in cal or "TRAIN_WEIGHTED_HUBER" in cal
 
 
+def test_r196_admission_requires_strict_positive_untouched_holdout_improvement():
+    cal = text(CAL)
+    assert "const requiredRelativeImprovement = clamp(finite(options.requiredHoldoutRelativeImprovement, 0), 0, 1)" in cal
+    assert "holdoutRelativeImprovement > requiredRelativeImprovement + 1e-12" in cal
+    assert "candidateHoldout.dataLoss - bestTrain.dataLoss" in cal
+    assert 'generalizationGapDefinition: "candidate_holdout_data_loss - candidate_train_data_loss"' in cal
+    assert "bestTrain.dataLoss - candidateHoldout.dataLoss" not in cal
+
+
 def test_r196_exact_pair_energy_still_holds_for_reference_and_signed_kernels():
     for b, c in [(0.7, 0.2), (37, 73), (-37, -73), (1e-9, -1e-8)]:
         construct, prune = pair_011(b, c)
@@ -99,7 +111,6 @@ def test_r196_exact_pair_energy_still_holds_for_reference_and_signed_kernels():
 
 
 def test_r196_dual_rails_preserve_cancellation_information_and_exact_net():
-    # Deliberate hidden opposition: both signs are populated before net collapse.
     bp, bn, cp, cn = 5.0, 4.0, 3.0, 2.0
     construct, prune = dual_rail(bp, bn, cp, cn)
     b, c = bp - bn, cp - cn
@@ -110,9 +121,12 @@ def test_r196_dual_rails_preserve_cancellation_information_and_exact_net():
     assert math.isclose(pnet, exact_prune, rel_tol=1e-12, abs_tol=1e-12)
     assert min(construct) > 0 or min(prune) > 0
     rep = text(REP)
+    cal = text(CAL)
     assert "cancellationEvidencePreserved" in rep
     assert "railNetResidual" in rep
     assert "representation envelope, not a new physical primitive" in rep
+    assert "function dualRailPair" not in cal
+    assert "authority: \"deweyRepresentationR196\"" in cal
 
 
 def test_r196_t12_is_reversible_without_decision_policy_claim():
@@ -151,12 +165,24 @@ def test_r196_preserves_r195_no_zero_and_neutral_orientation_contract():
     assert "% 73" not in perturb
 
 
-def test_r196_synthetic_benchmark_is_explicitly_non_empirical():
+def test_r196_synthetic_benchmark_is_explicitly_non_empirical_and_fully_receipted():
     cal = text(CAL)
     assert 'authority: "SYNTHETIC_NUMERICAL_BENCHMARK_ONLY"' in cal
     assert "physicalMeasurement: false" in cal
     assert "empiricalCalibration: false" in cal
     assert 'evidenceClass: "SYNTHETIC"' in cal
+    assert "const calibrationReceiptSha256 = result.receiptSha256" in cal
+    assert 'envelope: "OMEGA_DEWEY_SYNTHETIC_BENCHMARK_R196"' in cal
+    assert "receiptSha256: await sha256(core)" in cal
+
+
+def test_r196_nested_receipt_chain_covers_guarded_envelope():
+    guard = text(GUARD)
+    assert 'crypto.subtle.digest("SHA-256"' in guard
+    assert "calibrationReceiptSha256" in guard
+    assert "guardedReceiptSha256" in guard
+    assert 'receiptScope: "guarded-result-with-parent-calibration-receipt"' in guard
+    assert "delete result.receiptSha256" in guard
 
 
 def test_r196_receipts_and_truth_boundaries_are_explicit():
