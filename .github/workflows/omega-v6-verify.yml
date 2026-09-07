@@ -1,7 +1,8 @@
 name: OMEGA V6 verify
 
-# Inherited post-deploy proof identity retained for R86/R128 continuity:
-# LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3
+# Source/runtime verification only.
+# Production mutation authority for omegav6 is exclusively:
+# .github/workflows/omega-v6-release-forward-production.yml
 
 on:
   push:
@@ -11,6 +12,10 @@ on:
       - 'canonforge-omega/**'
       - 'docs/**'
       - '.github/workflows/omega-v6-verify.yml'
+      - '.github/workflows/omega-v6-release-forward-production.yml'
+
+permissions:
+  contents: read
 
 jobs:
   sovereign-core:
@@ -28,6 +33,9 @@ jobs:
       - name: Compile
         working-directory: canonforge-omega
         run: python -m compileall -q omega_runtime api omega_144d_core omega_fusion_core
+      - name: Strict Cloudflare authority contract
+        working-directory: canonforge-omega
+        run: python scripts/check_cloudflare_contract.py --strict
       - name: Full runtime tests
         working-directory: canonforge-omega
         run: python -m pytest -q
@@ -47,6 +55,9 @@ jobs:
         run: |
           npm install
           npm run typecheck
+      - name: Dry-run complete Worker without mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .verify-dry-run
 
   federated-machine-services:
     runs-on: ubuntu-latest
@@ -78,314 +89,20 @@ jobs:
           }, sort_keys=True))
           PY
 
-  promotion-compatibility:
+  production-authority-observation:
     if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
     needs: [sovereign-core, cloudflare-interface, federated-machine-services]
     runs-on: ubuntu-latest
-    outputs:
-      compatible: ${{ steps.contract.outputs.compatible }}
-      status: ${{ steps.contract.outputs.status }}
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
     steps:
-      - name: Checkout exact verified head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - id: contract
-        name: Preserve observed live Durable Object contract
-        working-directory: canonforge-omega
-        shell: bash
-        run: |
-          result="$(python scripts/check_cloudflare_contract.py)"
-          echo "$result"
-          RESULT="$result" python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json, os
-          value = json.loads(os.environ["RESULT"])
-          print("compatible=" + str(bool(value["compatible"])).lower())
-          print("status=" + value["status"])
-          PY
-      - name: Explain promotion hold
-        if: steps.contract.outputs.compatible != 'true'
-        run: echo "PROMOTION HOLD - candidate does not yet preserve the observed live OmegaRuntime Durable Object export. Canonical Worker is left untouched."
-
-  promote-canonical-worker:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence' && needs.promotion-compatibility.outputs.compatible == 'true'
-    needs: [sovereign-core, cloudflare-interface, federated-machine-services, promotion-compatibility]
-    runs-on: ubuntu-latest
-    concurrency:
-      group: omega-v6-production
-      cancel-in-progress: false
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout exact verified head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install Worker dependencies
-        working-directory: canonforge-omega/cloudflare/omega-v6-worker
-        run: npm install
-      - name: Reconfirm interface type safety
-        working-directory: canonforge-omega/cloudflare/omega-v6-worker
-        run: npm run typecheck
-      - name: Deploy exact verified canonical head with immutable Git identity
-        working-directory: canonforge-omega/cloudflare/omega-v6-worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npm run deploy -- --var "CANONICAL_GIT_SHA:$GITHUB_SHA"
-      - name: Verify canonical public convergence, R174 federation and R189 cumulative whole instrument
-        shell: bash
-        env:
-          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-          GENESIS_URL: https://omega-genesis-v1.jeffdeweyeljefe.workers.dev
-          EXPECTED_BUILD: r87-semantic-edge-settle-proof
-        run: |
-          set -euo pipefail
-          verified=false
-          for attempt in $(seq 1 30); do
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/federation/r174/health" -o /tmp/r174-federation.json || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/instrument/r189/manifest" -o /tmp/r189-manifest.json || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/instrument/r189/coverage" -o /tmp/r189-coverage.json || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/canon/r189/manifest" -o /tmp/r189-canon.json || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/canon/r189/regimes" -o /tmp/r189-regimes.json || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/instrument" -o /tmp/r189-instrument.html || true
-            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$GENESIS_URL/api/convergence/manifest" -o /tmp/genesis-manifest.json || true
-            if EXPECTED_BUILD="$EXPECTED_BUILD" python - <<'PY'
-          import json, os
-          from pathlib import Path
-          try:
-              health = json.loads(Path("/tmp/v6-health.json").read_text())
-              edge = json.loads(Path("/tmp/v6-convergence.json").read_text())
-              federation = json.loads(Path("/tmp/r174-federation.json").read_text())
-              r189 = json.loads(Path("/tmp/r189-manifest.json").read_text())
-              coverage_route = json.loads(Path("/tmp/r189-coverage.json").read_text())
-              canon_route = json.loads(Path("/tmp/r189-canon.json").read_text())
-              regimes_route = json.loads(Path("/tmp/r189-regimes.json").read_text())
-              instrument_html = Path("/tmp/r189-instrument.html").read_text()
-              manifest = json.loads(Path("/tmp/genesis-manifest.json").read_text())
-          except Exception:
-              raise SystemExit(1)
-          if health.get("ok") is not True: raise SystemExit(1)
-          if health.get("authority") != "public-interface-only": raise SystemExit(1)
-          if health.get("build") != os.environ["EXPECTED_BUILD"]: raise SystemExit(1)
-          convergence = edge.get("convergence") or {}
-          peer_manifest = (edge.get("genesis") or {}).get("manifest") or {}
-          if convergence.get("reciprocal_manifest_ready") is not True: raise SystemExit(1)
-          if convergence.get("authority_contract_ready") is not True: raise SystemExit(1)
-          if convergence.get("authority_contract") != "OMEGA_ROLE_SEPARATED_CONVERGENCE_V1": raise SystemExit(1)
-          if convergence.get("genesis_may_deploy_v6") is not False: raise SystemExit(1)
-          if convergence.get("v6_release_authority") != "omega-v6-full-convergence": raise SystemExit(1)
-          if peer_manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3": raise SystemExit(1)
-          if peer_manifest.get("authority_contract") != "OMEGA_ROLE_SEPARATED_CONVERGENCE_V1": raise SystemExit(1)
-          if peer_manifest.get("runtime_role") != "GENESIS_DISCOVERY_EVOLUTION_AUTHORITY": raise SystemExit(1)
-          if peer_manifest.get("operational_release_authority") is not False: raise SystemExit(1)
-          if peer_manifest.get("public_product_role") != "V6_CANONICAL_OPERATIONAL_RUNTIME": raise SystemExit(1)
-          if peer_manifest.get("release_authority") != "omega-v6-full-convergence": raise SystemExit(1)
-          if peer_manifest.get("genesis_may_deploy_v6") is not False: raise SystemExit(1)
-          if not peer_manifest.get("digest"): raise SystemExit(1)
-          if manifest.get("schema") != "OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3": raise SystemExit(1)
-          if manifest.get("authority_contract") != "OMEGA_ROLE_SEPARATED_CONVERGENCE_V1": raise SystemExit(1)
-          runtime = manifest.get("runtime") or {}
-          product = manifest.get("public_product") or {}
-          if runtime.get("role") != "GENESIS_DISCOVERY_EVOLUTION_AUTHORITY": raise SystemExit(1)
-          if runtime.get("operational_release_authority") is not False: raise SystemExit(1)
-          if product.get("role") != "V6_CANONICAL_OPERATIONAL_RUNTIME": raise SystemExit(1)
-          if product.get("release_authority") != "omega-v6-full-convergence": raise SystemExit(1)
-          if product.get("genesis_may_deploy_v6") is not False: raise SystemExit(1)
-          if manifest.get("manifest_digest") != peer_manifest.get("digest"): raise SystemExit(1)
-          genome = manifest.get("capability_genome") or {}
-          if int(genome.get("capability_count") or 0) < 32: raise SystemExit(1)
-          if federation.get("ok") is not True: raise SystemExit(1)
-          if federation.get("federationReady") is not True: raise SystemExit(1)
-          if federation.get("fullFederationProved") is not False: raise SystemExit(1)
-          services = federation.get("services") or {}
-          if (services.get("genesisMachine") or {}).get("reachable") is not True: raise SystemExit(1)
-          if (services.get("opticalMachine") or {}).get("reachable") is not True: raise SystemExit(1)
-          hierarchy = federation.get("hierarchy") or {}
-          if hierarchy.get("cells") != 1728 or hierarchy.get("lanes") != 20736: raise SystemExit(1)
-          if r189.get("schema") != "OMEGA_WHOLE_INSTRUMENT_MANIFEST_v1": raise SystemExit(1)
-          if r189.get("revision") != "R189_WHOLE_INSTRUMENT_CONVERGENCE": raise SystemExit(1)
-          if r189.get("protectedBaseIdentity") != os.environ["EXPECTED_BUILD"]: raise SystemExit(1)
-          preservation = r189.get("preservation") or {}
-          if preservation.get("additiveSuccessor") is not True: raise SystemExit(1)
-          if preservation.get("inheritedRoutesPreserved") is not True: raise SystemExit(1)
-          if preservation.get("inheritedVisualShellPreserved") is not True: raise SystemExit(1)
-          if preservation.get("durableObjectNamespacesPreserved") is not True: raise SystemExit(1)
-          if preservation.get("cumulativeCapabilityCoverageComplete") is not True: raise SystemExit(1)
-          if preservation.get("protectedBaseIdentityPreserved") is not True: raise SystemExit(1)
-          if preservation.get("canonicalMutation") is not False: raise SystemExit(1)
-          if preservation.get("autonomousPromotion") is not False: raise SystemExit(1)
-          domain_ids = {d.get("id") for d in (r189.get("domains") or [])}
-          required_domains = {"FIELD","CANON","EARTH","MODES","SKINS","CALCULUS","VISUAL","WORKSPACE","COMPUTE","VALIDATE","CROSS_RUNTIME","RCWA","FEDERATION","SWARM","CLOUD172","SAI","HYBRID","MOTION","BUILD","SUCCESSOR","DISCOVERY","EVIDENCE","PATCH","MEMORY","RECOVERY"}
-          if not required_domains.issubset(domain_ids): raise SystemExit(1)
-          profiles = {p.get("id"): p.get("cells") for p in (r189.get("executionProfiles") or [])}
-          if profiles != {"PULSE":12,"FLOCK":24,"ORGAN":144,"WARP":576,"FULL":1728}: raise SystemExit(1)
-          if r189.get("executionRegimes") != ["ASYNC_INDEPENDENT","CAUSAL_DAG","BOUNDED_WAVE","SYNCHRONIZED_BARRIER_R188","HETEROGENEOUS_FEDERATED"]: raise SystemExit(1)
-          if r189.get("continuityLaw") != ["FRAME","PARTITION","TRANSFORM","EXCHANGE","INVARIANT_CARRY","SCAR_CARRY","RECONTEXTUALIZE","FORECAST","SYNTHESIZE","EXECUTE","OBSERVE","PROVE"]: raise SystemExit(1)
-          cumulative = r189.get("cumulativeCanon") or {}
-          coverage = cumulative.get("coverage") or {}
-          if cumulative.get("totalCapabilityGroups") != 61: raise SystemExit(1)
-          if len(cumulative.get("baseFamilies") or []) != 24: raise SystemExit(1)
-          if len(cumulative.get("extensionOrgans") or []) != 37: raise SystemExit(1)
-          if len(cumulative.get("executionRegimes") or []) != 5: raise SystemExit(1)
-          if coverage.get("complete") is not True: raise SystemExit(1)
-          if coverage.get("mappedExtensionOrgans") != 37: raise SystemExit(1)
-          if coverage.get("totalCapabilityGroups") != 61: raise SystemExit(1)
-          if coverage.get("unmappedExtensionOrgans") not in ([], None): raise SystemExit(1)
-          if coverage.get("invalidDomainMappings") not in ([], None): raise SystemExit(1)
-          if coverage_route.get("schema") != "OMEGA_R189_CUMULATIVE_SURFACE_COVERAGE_v1": raise SystemExit(1)
-          if coverage_route.get("complete") is not True: raise SystemExit(1)
-          if coverage_route.get("baseFamilyCount") != 24: raise SystemExit(1)
-          if coverage_route.get("extensionOrganCount") != 37: raise SystemExit(1)
-          if coverage_route.get("mappedExtensionOrgans") != 37: raise SystemExit(1)
-          if coverage_route.get("totalCapabilityGroups") != 61: raise SystemExit(1)
-          if canon_route.get("schema") != "OMEGA_CUMULATIVE_CAPABILITY_CANON_R189": raise SystemExit(1)
-          if canon_route.get("totalCapabilityGroups") != 61: raise SystemExit(1)
-          if canon_route.get("baseFamilyCount") != 24 or canon_route.get("extensionOrganCount") != 37: raise SystemExit(1)
-          if regimes_route.get("schema") != "OMEGA_EXECUTION_REGIME_PORTFOLIO_R189": raise SystemExit(1)
-          if len(regimes_route.get("regimes") or []) != 5: raise SystemExit(1)
-          if "OMEGA · R189" not in instrument_html or "One instrument." not in instrument_html or "61" not in instrument_html: raise SystemExit(1)
-          PY
-            then
-              verified=true
-              break
-            fi
-            echo "Edge not settled on expected role-separated V3 identity yet; R189 cumulative federation/instrument proof not settled (attempt $attempt/30)."
-            sleep 2
-          done
-          if [ "$verified" != "true" ]; then
-            echo "LIVE_CONVERGENCE_VERIFY_FAILED after R189 cumulative edge-settle window."
-            echo "V6 health:"; cat /tmp/v6-health.json || true
-            echo "V6 convergence:"; cat /tmp/v6-convergence.json || true
-            echo "R174 federation:"; cat /tmp/r174-federation.json || true
-            echo "R189 manifest:"; cat /tmp/r189-manifest.json || true
-            echo "R189 coverage:"; cat /tmp/r189-coverage.json || true
-            echo "R189 cumulative Canon:"; cat /tmp/r189-canon.json || true
-            echo "R189 regimes:"; cat /tmp/r189-regimes.json || true
-            echo "Genesis manifest:"; cat /tmp/genesis-manifest.json || true
-            exit 1
-          fi
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          health=json.loads(Path("/tmp/v6-health.json").read_text())
-          edge=json.loads(Path("/tmp/v6-convergence.json").read_text())
-          federation=json.loads(Path("/tmp/r174-federation.json").read_text())
-          r189=json.loads(Path("/tmp/r189-manifest.json").read_text())
-          coverage=json.loads(Path("/tmp/r189-coverage.json").read_text())
-          manifest=json.loads(Path("/tmp/genesis-manifest.json").read_text())
-          print(json.dumps({
-            "status":"LIVE_CONVERGENCE_VERIFIED__R189_CUMULATIVE_WHOLE_INSTRUMENT",
-            "inherited_status":"LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3",
-            "v6_build":health.get("build"),
-            "r189_revision":r189.get("revision"),
-            "r189_domains":len(r189.get("domains") or []),
-            "r189_capability_groups":coverage.get("totalCapabilityGroups"),
-            "r189_extension_coverage":coverage.get("mappedExtensionOrgans"),
-            "r189_execution_regimes":coverage.get("executionRegimeCount"),
-            "authority_contract":manifest.get("authority_contract"),
-            "genesis_manifest_digest":manifest.get("manifest_digest"),
-            "v6_observed_manifest_digest":((edge.get("genesis") or {}).get("manifest") or {}).get("digest"),
-            "genesis_capability_count":(manifest.get("capability_genome") or {}).get("capability_count"),
-            "v6_release_authority":(edge.get("convergence") or {}).get("v6_release_authority"),
-            "genesis_may_deploy_v6":(edge.get("convergence") or {}).get("genesis_may_deploy_v6"),
-            "r174_federation_ready":federation.get("federationReady"),
-            "r174_full_federation_proved":federation.get("fullFederationProved"),
-            "r174_cells":(federation.get("hierarchy") or {}).get("cells"),
-            "r174_lanes":(federation.get("hierarchy") or {}).get("lanes"),
-          }, sort_keys=True))
-          PY
-      - name: Record promoted SHA
-        run: echo "OMEGA V6 promoted exact verified SHA $GITHUB_SHA"
-
-  post-deploy-classify:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
-    needs: [promote-canonical-worker]
-    runs-on: ubuntu-latest
-    outputs:
-      intelligence_changed: ${{ steps.frames.outputs.intelligence_changed }}
-      swarm_changed: ${{ steps.frames.outputs.swarm_changed }}
-      full_integrity_changed: ${{ steps.frames.outputs.full_integrity_changed }}
-      visual_changed: ${{ steps.frames.outputs.visual_changed }}
-    steps:
-      - name: Checkout exact deployed head with history
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-      - id: frames
-        name: Classify changed proof frames
+      - name: Observe edge without deployment or promotion
         shell: bash
         run: |
           set -euo pipefail
-          before="${{ github.event.before }}"
-          if [ -n "$before" ] && [ "$before" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$before^{commit}" 2>/dev/null; then
-            base="$before"
-          else
-            base="$(git rev-parse HEAD^ 2>/dev/null || printf '%s' "$GITHUB_SHA")"
-          fi
-          mapfile -t files < <(git diff --name-only "$base" "$GITHUB_SHA")
-          printf '%s\n' "${files[@]}"
-          intelligence=false
-          swarm=false
-          full=false
-          visual=false
-          for f in "${files[@]}"; do
-            case "$f" in
-              canonforge-omega/cloudflare/omega-v6-worker/src/sai/*|canonforge-omega/cloudflare/omega-v6-worker/src/intelligence/*|canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/*|canonforge-omega/omega_runtime/sai_b059.py|canonforge-omega/omega_sovereign_agent.py|canonforge-omega/api/app.py|.github/workflows/omega-v6-r179-live-sai-proof.yml|.github/workflows/omega-v6-r181-live-ai-sai-sovereign-proof.yml)
-                intelligence=true ;;
-            esac
-            case "$f" in
-              canonforge-omega/cloudflare/omega-v6-worker/src/swarm/*|canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts|canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml|.github/workflows/omega-v6-r176-live-warp-proof.yml|.github/workflows/omega-v6-r177-live-integrity-proof.yml)
-                swarm=true ;;
-            esac
-            case "$f" in
-              canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpComputationR176.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmCellR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmCoordinatorR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmOrganismR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmAutonomicR169.ts|canonforge-omega/cloudflare/omega-v6-worker/src/swarm/warpBuildCandidateR178.ts)
-                full=true ;;
-            esac
-            case "$f" in
-              canonforge-omega/cloudflare/omega-v6-worker/src/index.ts|canonforge-omega/cloudflare/omega-v6-worker/src/heartbeatTruth.ts|canonforge-omega/cloudflare/omega-v6-worker/src/sovereignVisualShell.ts|canonforge-omega/cloudflare/omega-v6-worker/src/*Visual*|canonforge-omega/cloudflare/omega-v6-worker/src/wholeInstrumentR189.ts|.github/workflows/omega-v6-visual-delivery.yml)
-                visual=true ;;
-            esac
-          done
-          echo "intelligence_changed=$intelligence" >> "$GITHUB_OUTPUT"
-          echo "swarm_changed=$swarm" >> "$GITHUB_OUTPUT"
-          echo "full_integrity_changed=$full" >> "$GITHUB_OUTPUT"
-          echo "visual_changed=$visual" >> "$GITHUB_OUTPUT"
-          echo "R189 frames: intelligence=$intelligence swarm=$swarm full_integrity=$full visual=$visual"
-
-  post-deploy-r181-continuity:
-    needs: [post-deploy-classify]
-    uses: ./.github/workflows/omega-v6-r181-live-ai-sai-sovereign-proof.yml
-    with:
-      expected_sha: ${{ github.sha }}
-
-  post-deploy-r179-intelligence:
-    if: needs.post-deploy-classify.outputs.intelligence_changed == 'true'
-    needs: [post-deploy-classify, post-deploy-r181-continuity]
-    uses: ./.github/workflows/omega-v6-r179-live-sai-proof.yml
-
-  post-deploy-r176-swarm:
-    if: needs.post-deploy-classify.outputs.swarm_changed == 'true' && needs.post-deploy-classify.outputs.full_integrity_changed != 'true'
-    needs: [post-deploy-classify, post-deploy-r181-continuity]
-    uses: ./.github/workflows/omega-v6-r176-live-warp-proof.yml
-
-  post-deploy-r177-full-integrity:
-    if: needs.post-deploy-classify.outputs.full_integrity_changed == 'true'
-    needs: [post-deploy-classify, post-deploy-r181-continuity]
-    uses: ./.github/workflows/omega-v6-r177-live-integrity-proof.yml
-    with:
-      run_full: true
-
-  post-deploy-visual:
-    if: needs.post-deploy-classify.outputs.visual_changed == 'true'
-    needs: [post-deploy-classify, post-deploy-r181-continuity]
-    uses: ./.github/workflows/omega-v6-visual-delivery.yml
+          code=$(curl --silent --show-error --max-time 30 -o /tmp/v6-health.json -w '%{http_code}' "$V6_URL/_omega/health" || true)
+          echo "OMEGA_V6_EDGE_HTTP=$code"
+          cat /tmp/v6-health.json 2>/dev/null || true
+          echo
+          echo "GENERAL_VERIFY_READ_ONLY=true"
+          echo "PRODUCTION_WRITER=omega-v6-release-forward-production.yml"
