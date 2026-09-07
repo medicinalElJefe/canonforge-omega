@@ -34,7 +34,9 @@ def test_r198_1_integrates_inside_existing_earth_instrument_only():
     assert 'REAL SAR' in REPAIR
     assert 'stage.appendChild(overlay)' in REPAIR
     assert 'panel.insertBefore(ledger' in REPAIR
-    assert 'return enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);' in ENTRY
+    assert 'const nativeSarEarth = await enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);' in ENTRY
+    assert 'return enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);' in ENTRY
+    assert ENTRY.index('enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url)') < ENTRY.index('enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url)')
     assert 'omegaSarTruthR198Runtime' not in REPAIR
 
 
