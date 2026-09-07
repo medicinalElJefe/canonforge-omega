@@ -1,0 +1,146 @@
+name: OMEGA V6 R190 whole-system capability truth
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r190-whole-system-acceptance.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python verification dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: R190 plus predecessor regression proof
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r189_cumulative_capability_canon.py \
+            tests/test_r188_motion_time.py \
+            tests/test_r185_172_cloud_federation.py \
+            tests/test_r181_live_ai_sai_sovereign_acceptance.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_system_alignment_contract.py \
+            tests/test_omega_runtime.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck exact R190 Worker head
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+  live-exact-head-acceptance:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: exact-head-verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for canonical deployment of this exact Git head
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+              "$LIVE/api/acceptance/r190/manifest" -o /tmp/r190-manifest.json || true
+            if GITHUB_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              p=json.loads(Path('/tmp/r190-manifest.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          if p.get('release') != 'r190-capability-truth-admission': raise SystemExit(1)
+          if p.get('canonicalGitSha') != os.environ['GITHUB_SHA']: raise SystemExit(1)
+          if p.get('deploymentIdentityBound') is not True: raise SystemExit(1)
+          if p.get('predecessorRevision') != 'R189_WHOLE_INSTRUMENT_CONVERGENCE': raise SystemExit(1)
+          PY
+            then
+              matched=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$matched" != true ]; then
+            echo "R190 exact-head live deployment identity did not converge to $GITHUB_SHA"
+            exit 1
+          fi
+
+      - name: Require core whole-system verification
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors \
+            -X POST "$LIVE/api/acceptance/r190/probe" \
+            -H 'content-type: application/json' \
+            --data '{"depth":"quick"}' -o /tmp/r190-quick.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('/tmp/r190-quick.json').read_text())
+          assert p.get('overallState') == 'CORE_SYSTEM_VERIFIED', p
+          assert p.get('summary',{}).get('hardFailures') == 0, p
+          assert p.get('summary',{}).get('required') == p.get('summary',{}).get('requiredVerified'), p
+          assert p.get('receiptSha256'), p
+          print('R190 CORE:', p['overallState'], p['summary'])
+          PY
+
+      - name: Run full proof without fabricating unavailable external evidence
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors \
+            -X POST "$LIVE/api/acceptance/r190/probe" \
+            -H 'content-type: application/json' \
+            --data '{"depth":"full"}' -o /tmp/r190-full.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('/tmp/r190-full.json').read_text())
+          state=p.get('overallState')
+          print('R190 FULL:', state, p.get('summary'))
+          if state == 'ACCEPTANCE_FAILED':
+              raise SystemExit('R190 full probe contains a hard runtime failure')
+          if state != 'FULL_SYSTEM_VERIFIED':
+              blocked=[(c.get('id'),c.get('state')) for c in p.get('capabilities',[]) if not c.get('verified')]
+              print('::warning::R190 full system proof remains externally blocked/partial. No completion claim is admissible. '+repr(blocked))
+          PY
+
+      - name: Capture truth surface
+        if: always()
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors "$LIVE/truth" -o /tmp/r190-truth.html || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r190-live-capability-truth-${{ github.sha }}
+          path: |
+            /tmp/r190-manifest.json
+            /tmp/r190-quick.json
+            /tmp/r190-full.json
+            /tmp/r190-truth.html
+          if-no-files-found: warn
