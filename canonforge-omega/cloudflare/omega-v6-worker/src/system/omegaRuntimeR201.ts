@@ -1,10 +1,10 @@
-import { OmegaRuntime as BaseOmegaRuntime } from "../omegaRuntime";
-
 export const DURABLE_MISSION_LEDGER_R201 = "r201-durable-mission-evidence-ledger";
 export const DURABLE_MISSION_LEDGER_SCHEMA_R201 = "OMEGA_DURABLE_MISSION_LEDGER_R201";
 
 const LEDGER_KEY = "missionLedgerR201";
+const AUDIT_KEY = "missionLedgerAuditR201";
 const LEDGER_LIMIT = 96;
+const AUDIT_LIMIT = 128;
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 
 type AnyObj = Record<string, any>;
@@ -138,6 +138,7 @@ function ledgerSummary(ledger: LedgerState) {
     schema: ledger.schema,
     release: ledger.release,
     authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+    capabilityBoundary: "DEDICATED_EVIDENCE_ONLY_DURABLE_OBJECT_NO_GENERAL_RUNTIME_METHODS",
     entryCount: ledger.entries.length,
     anchorSha256: ledger.anchorSha256,
     headSha256: ledger.headSha256,
@@ -174,7 +175,15 @@ function publicEntry(entry: LedgerEntry) {
   };
 }
 
-export class OmegaRuntime extends BaseOmegaRuntime {
+export class OmegaMissionLedgerR201 {
+  ctx: any;
+  env: any;
+
+  constructor(ctx: any, env: any) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
   async loadMissionLedgerR201(): Promise<LedgerState> {
     const existing = await this.ctx.storage.get(LEDGER_KEY) as LedgerState | undefined;
     if (!existing || existing.schema !== DURABLE_MISSION_LEDGER_SCHEMA_R201 || !Array.isArray(existing.entries)) return blankLedger();
@@ -188,6 +197,20 @@ export class OmegaRuntime extends BaseOmegaRuntime {
   async saveMissionLedgerR201(ledger: LedgerState) {
     ledger.updatedAt = new Date().toISOString();
     await this.ctx.storage.put(LEDGER_KEY, ledger);
+  }
+
+  async appendAuditEvent(type: string, message: string, data: AnyObj = {}) {
+    const events = (await this.ctx.storage.get(AUDIT_KEY) as AnyObj[] | undefined) || [];
+    const event = {
+      id: `r201_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`,
+      at: new Date().toISOString(),
+      type,
+      message,
+      data,
+      authority: "EVIDENCE_LEDGER_AUDIT_ONLY",
+    };
+    events.push(event);
+    await this.ctx.storage.put(AUDIT_KEY, events.slice(-AUDIT_LIMIT));
   }
 
   async verifyMissionLedgerR201() {
@@ -219,6 +242,7 @@ export class OmegaRuntime extends BaseOmegaRuntime {
       headSha256: ledger.headSha256,
       failures,
       authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+      capabilityBoundary: "DEDICATED_EVIDENCE_ONLY_DURABLE_OBJECT_NO_GENERAL_RUNTIME_METHODS",
       canonicalMutation: false,
       hostStateMutation: false,
       promotionAuthorized: false,
@@ -288,7 +312,7 @@ export class OmegaRuntime extends BaseOmegaRuntime {
     }
     ledger.headSha256 = entry.entrySha256;
     await this.saveMissionLedgerR201(ledger);
-    await this.event("MISSION_CONTINUITY_RECORDED", `R201 recorded mission ${missionId} into the durable evidence chain.`, {
+    await this.appendAuditEvent("MISSION_CONTINUITY_RECORDED", `R201 recorded mission ${missionId} into the durable evidence chain.`, {
       missionId,
       missionReceiptSha256: entry.missionReceiptSha256,
       entrySha256: entry.entrySha256,
@@ -304,6 +328,7 @@ export class OmegaRuntime extends BaseOmegaRuntime {
       record: entry,
       ledger: ledgerSummary(ledger),
       authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+      capabilityBoundary: "DEDICATED_EVIDENCE_ONLY_DURABLE_OBJECT_NO_GENERAL_RUNTIME_METHODS",
       canonicalMutation: false,
       hostStateMutation: false,
       promotionAuthorized: false,
@@ -341,6 +366,7 @@ export class OmegaRuntime extends BaseOmegaRuntime {
         entries: ledger.entries.slice(-limit).map(publicEntry),
         privacyBoundary: "Mission intent, specialist payloads, downstream evidence bodies, stored task errors, and secrets are omitted from the public history surface.",
         authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+        capabilityBoundary: "DEDICATED_EVIDENCE_ONLY_DURABLE_OBJECT_NO_GENERAL_RUNTIME_METHODS",
         canonicalMutation: false,
         hostStateMutation: false,
         promotionAuthorized: false,
@@ -367,16 +393,14 @@ export class OmegaRuntime extends BaseOmegaRuntime {
       return this.recordMissionR201(await request.json().catch(() => ({})));
     }
 
-    if ((path === "/status" || path === "/snapshot") && request.method === "GET") {
-      const base = await super.fetch(request);
-      const type = base.headers.get("content-type") || "";
-      if (!type.includes("application/json")) return base;
-      const raw = await base.json().catch(() => null) as AnyObj | null;
-      if (!raw || typeof raw !== "object") return base;
-      const ledger = await this.loadMissionLedgerR201();
-      return json({ ...raw, missionContinuityR201: ledgerSummary(ledger) }, base.status);
-    }
-
-    return super.fetch(request);
+    return json({
+      ok: false,
+      code: "R201_EVIDENCE_LEDGER_ROUTE_NOT_FOUND",
+      authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+      capabilityBoundary: "DEDICATED_EVIDENCE_ONLY_DURABLE_OBJECT_NO_GENERAL_RUNTIME_METHODS",
+      canonicalMutation: false,
+      hostStateMutation: false,
+      promotionAuthorized: false,
+    }, 404);
   }
 }
