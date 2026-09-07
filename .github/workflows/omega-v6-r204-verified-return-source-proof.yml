@@ -50,7 +50,7 @@ jobs:
           grep -F 'import convergence, { OmegaRuntime } from "./convergence"' "$HEARTBEAT"
           grep -F 'import convergence from "./system/../convergence"' "$ALIAS"
           grep -F 'export { OmegaRuntime } from "./omegaRuntimeR204"' "$ALIAS"
-          grep -F 'return convergence.fetch(request, env, ctx)' "$ALIAS"
+          grep -F 'return convergence.fetch(request, env)' "$ALIAS"
           grep -F 'export { OmegaRuntime } from "./heartbeatTruth"' "$ENTRY"
           grep -F 'handleHybridMissionR203' "$ENTRY"
           grep -F 'HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"' "$WRANGLER"
@@ -126,7 +126,7 @@ jobs:
             echo
             echo "- SHA: \`$GITHUB_SHA\`"
             echo '- Canonical R169 deployment entrypoint: preserved'
-            echo '- Scoped convergence alias: Wrangler dry-run verified'
+            echo '- Scoped convergence alias: subject to the Wrangler dry-run gate above'
             echo '- R169→R203 public runtime and mission continuity: preserved'
             echo '- Existing Durable Object namespaces/storage identities: preserved'
             echo '- Successful Hybrid return requires full ordered step proof: checked'
@@ -135,6 +135,5 @@ jobs:
             echo '- Hardware-attestation and host-hash overclaims: blocked'
             echo '- Canonical merge-lineage release guard: checked'
             echo '- Full inherited pytest matrix: checked'
-            echo '- Worker typecheck + Wrangler dry-run: checked'
             echo '- Production mutation: **not performed by this workflow**'
           } >> "$GITHUB_STEP_SUMMARY"
