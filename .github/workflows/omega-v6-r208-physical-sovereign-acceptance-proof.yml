@@ -1,0 +1,66 @@
+name: OMEGA V6 R208 physical sovereign acceptance closure proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/scripts/INSTALL_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/tests/test_r208_physical_sovereign_acceptance.py'
+      - '.github/workflows/omega-v6-r208-physical-sovereign-acceptance-proof.yml'
+  push:
+    branches:
+      - omega-v6-full-convergence
+    paths:
+      - 'canonforge-omega/scripts/INSTALL_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/tests/test_r208_physical_sovereign_acceptance.py'
+      - '.github/workflows/omega-v6-r208-physical-sovereign-acceptance-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-r208-transport-and-source-proof:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Parse canonical PowerShell entry points
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'canonforge-omega/scripts/INSTALL_OMEGA_V6_WINDOWS.ps1',
+            'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1',
+            'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file),
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell parse failed: $file"
+            }
+          }
+
+      - name: Enforce R208 source invariants
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r208_physical_sovereign_acceptance.py
+
+      - name: State proof boundary
+        shell: pwsh
+        run: |
+          Write-Host 'R208 Windows CI proves script syntax and source invariants only.'
+          Write-Host 'It does not satisfy physical-PC R181 acceptance, does not verify a current operator-machine heartbeat, and does not fabricate B059 grounding.'
