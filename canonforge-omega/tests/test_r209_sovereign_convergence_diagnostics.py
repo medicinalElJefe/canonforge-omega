@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 R209 = ROOT / "scripts" / "PROVE_OMEGA_V6_R209_WINDOWS.ps1"
 R208 = ROOT / "scripts" / "PROVE_OMEGA_V6_WINDOWS.ps1"
+R210 = ROOT / "scripts" / "ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1"
 LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
 
 
@@ -51,15 +52,20 @@ def test_r209_bounded_retry_and_blocker_taxonomy_are_explicit():
         assert blocker in source, blocker
 
 
-def test_r209_rejects_stale_r208_receipts_between_attempts():
+def test_r209_rejects_stale_receipts_and_retains_fresh_attempts_before_replacement():
     source = text(R209)
     required = [
         "Remove-Item $R208ReceiptPath -Force -ErrorAction SilentlyContinue",
         "[DateTimeOffset]::Parse",
         "r208ReceiptCapturedAt",
-        "R208_RECEIPT_PARSE_OR_FRESHNESS_FAILED",
+        "R208_RECEIPT_PARSE_FRESHNESS_OR_ARCHIVE_FAILED",
         "R208_RECEIPT_MISSING",
         "staleR208ReceiptsRejected = $true",
+        "everyValidatedR208AttemptContentAddressedBeforeReplacement = $true",
+        "ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1",
+        "r210ArchiveSha256",
+        "r210ArchivePath",
+        "retentionRevision = 'R210'",
     ]
     for token in required:
         assert token in source, token
@@ -89,7 +95,15 @@ def test_r208_truth_prover_remains_present_and_unchanged_as_authority_layer():
     assert "promotionAuthorized = $false" in source
 
 
-def test_launcher_is_expected_to_wire_r209_without_removing_r208():
+def test_r210_archiver_is_evidence_retention_not_acceptance_authority():
+    source = text(R210)
+    assert "OMEGA_SOVEREIGN_PROOF_ARCHIVE_RESULT_R210" in source
+    assert "LOCAL_CONTENT_ADDRESSED_EVIDENCE_INDEX_NOT_CANON" in source
+    assert "canonicalMutation = $false" in source
+    assert "promotionAuthorized = $false" in source
+
+
+def test_launcher_still_wires_r209_truth_convergence_surface():
     launcher = text(LAUNCHER)
     assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in launcher
     assert "r209_sovereign_convergence_latest.json" in launcher
