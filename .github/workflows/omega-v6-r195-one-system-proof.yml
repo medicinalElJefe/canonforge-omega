@@ -8,6 +8,7 @@ on:
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
       - 'canonforge-omega/tests/test_r195_drive_corpus_one_system.py'
+      - 'canonforge-omega/tests/test_r195_residual_restoration_planner.py'
       - '.github/workflows/omega-v6-r195-one-system-proof.yml'
   push:
     branches: [omega-v6-full-convergence]
@@ -34,6 +35,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_r195_drive_corpus_one_system.py \
+            tests/test_r195_residual_restoration_planner.py \
             tests/test_r194_evidence_plane_restoration.py \
             tests/test_r193_full_restoration_workspace.py \
             tests/test_r192_navigation_home_repair.py \
@@ -80,7 +82,7 @@ jobs:
             sleep 5
           done
           test "$matched" = true
-      - name: Prove corpus, predecessor evidence, cumulative truth and visible One-System workspace
+      - name: Prove corpus, predecessor evidence, residual planner, cumulative truth and visible One-System workspace
         env:
           LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
           SHA256: 8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655
@@ -89,6 +91,7 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error "$LIVE/api/system/r195/manifest" -o /tmp/manifest.json
           curl --fail --silent --show-error "$LIVE/api/system/r195/status" -o /tmp/status.json
+          curl --fail --silent --show-error "$LIVE/api/system/r195/restoration?limit=24" -o /tmp/restoration.json
           curl --fail --silent --show-error "$LIVE/api/canon/r195/manifest" -o /tmp/canon.json
           curl --fail --silent --show-error "$LIVE/api/workspace/r194/status" -o /tmp/evidence.json
           curl --fail --silent --show-error "$LIVE/api/system/r195/registry?limit=1" -o /tmp/registry.json
@@ -97,7 +100,7 @@ jobs:
           SHA256="$SHA256" python - <<'PY'
           import json, os
           from pathlib import Path
-          m=json.loads(Path('/tmp/manifest.json').read_text());s=json.loads(Path('/tmp/status.json').read_text());c=json.loads(Path('/tmp/canon.json').read_text());e=json.loads(Path('/tmp/evidence.json').read_text());r=json.loads(Path('/tmp/registry.json').read_text());a=json.loads(Path('/tmp/analysis.json').read_text());h=Path('/tmp/system.html').read_text()
+          m=json.loads(Path('/tmp/manifest.json').read_text());s=json.loads(Path('/tmp/status.json').read_text());p=json.loads(Path('/tmp/restoration.json').read_text());c=json.loads(Path('/tmp/canon.json').read_text());e=json.loads(Path('/tmp/evidence.json').read_text());r=json.loads(Path('/tmp/registry.json').read_text());a=json.loads(Path('/tmp/analysis.json').read_text());h=Path('/tmp/system.html').read_text()
           assert m.get('ok') is True,m
           assert m.get('schema')=='OMEGA_DRIVE_CORPUS_ONE_SYSTEM_R195'
           assert m.get('predecessor')=='r194-dual-plane-evidence-restoration'
@@ -112,12 +115,19 @@ jobs:
           assert s.get('corpusReady') is True and s.get('runtimeReady') is True
           assert all(x.get('ok') is True for x in s.get('probes') or []),s
           assert e.get('schema')=='OMEGA_V6_EVIDENCE_PLANE_R194' and e.get('ok') is True,e
+          assert p.get('schema')=='OMEGA_RESIDUAL_RESTORATION_PLAN_R195',p
+          assert p.get('totalArtifacts')==100,p
+          assert p.get('individuallyVerifiedArtifacts')==0,p
+          assert p.get('truth',{}).get('menuReachabilityIsNotArtifactProof') is True,p
+          assert p.get('truth',{}).get('donorNeverBecomesAuthorityWithoutAdmission') is True,p
+          assert p.get('cohortProof',{}).get('total')==12,p
+          assert len(p.get('residual',{}).get('weakestFirst') or [])<=24,p
           assert c.get('schema')=='OMEGA_CUMULATIVE_CAPABILITY_CANON_R195' and c.get('totalCapabilityGroups')==65
           assert c.get('postR191OperationalOrganCount')==2
           assert c.get('canonicalMutation') is False and c.get('promotionAuthorized') is False
           assert r.get('ok') is True and r.get('total')==100
           assert a.get('ok') is True and a.get('formula')=='S188=CΩ/(Λ+q+0.35Λq+0.05)'
-          for marker in ('OMEGA ONE SYSTEM','EXECUTION TRUTH CONSOLE','RECOVERED DRIVE CORPUS','data-r195-one-system="true"','id="omegaR193Rail"'): assert marker in h,marker
+          for marker in ('OMEGA ONE SYSTEM','EXECUTION TRUTH CONSOLE','RECOVERED DRIVE CORPUS','data-r195-one-system="true"','id="omegaR193Rail"','RESIDUAL RESTORATION / WEAKEST-LINK QUEUE'): assert marker in h,marker
           PY
           grep -qi '^x-omega-one-system: r195-drive-corpus-one-system' /tmp/system.headers
       - name: Prove invariant-preserving computation reaches VERIFIED state
