@@ -1,12 +1,17 @@
 param(
   [string]$ProductionBase = 'https://omegav6.jeffdeweyeljefe.workers.dev',
-  [switch]$RequireFullAcceptance
+  [switch]$RequireFullAcceptance,
+  [string]$RootOverride = ''
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$Root = Split-Path -Parent $PSScriptRoot
+if ($RootOverride) {
+  $Root = (Resolve-Path $RootOverride).Path
+} else {
+  $Root = Split-Path -Parent $PSScriptRoot
+}
 $Vpy = Join-Path $Root '.venv\Scripts\python.exe'
 $LogDir = Join-Path $Root 'logs'
 $ReceiptPath = Join-Path $LogDir 'r208_physical_acceptance_latest.json'
