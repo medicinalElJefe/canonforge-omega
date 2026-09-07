@@ -1,8 +1,8 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R192 only adds a final HTML
-# navigation/home projection after the existing R169-R191 dispatcher returns a response.
+# runtimeEntryR169 remains the preserved deployment entrypoint. R192 retains final HTML
+# navigation/home projection; R193 adds the hash-verified One-System Drive corpus control plane.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -38,6 +38,8 @@ WHOLE_SYSTEM_ACCEPTANCE_R190_ID = "r190-capability-truth-admission"
 CAPABILITY_TRUTH_R190_ID = "r190-implemented-route-invoked-returned-verified"
 UNIVERSAL_SURFACE_FABRIC_R191_ID = "r191-universal-surface-fabric"
 UNIVERSAL_NAVIGATION_R192_ID = "r192-navigation-home-repair"
+DRIVE_CORPUS_ONE_SYSTEM_R193_ID = "r193-drive-corpus-one-system"
+DRIVE_CORPUS_SHA256_R193 = "d80267761320c3bf3d219b38b6293fc52a02e09182fa0825853c7202131f2746"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
