@@ -5,6 +5,7 @@ import { warpComputationLabResponse } from "./swarm/warpComputationLabR176";
 import { handleWarpBuildCandidateRequest } from "./swarm/warpBuildCandidateR178";
 import { warpBuildCandidateLabResponse } from "./swarm/warpBuildCandidateLabR178";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
+import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -24,6 +25,19 @@ export { OmegaSwarmBranch, OmegaSwarmOrgan, OmegaSwarmOrganismCoordinator } from
 export { OmegaSwarmAutonomicCoordinator } from "./swarm/swarmAutonomicR169";
 
 const canonical: any = canonicalRuntime;
+const B059_SOVEREIGN_PATHS = new Set([
+  "/api/sai/status",
+  "/api/sai/verify",
+  "/api/sai/query",
+  "/api/sai/traverse",
+]);
+
+function rewritePath(request: Request, pathname: string): Request {
+  const target = new URL(request.url);
+  target.pathname = pathname;
+  return new Request(target.toString(), request);
+}
+
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
     const url = new URL(request.url);
@@ -35,7 +49,15 @@ export default {
     if (url.pathname === "/validate/cross-runtime" || url.pathname === "/validate/cross-runtime/") return crossRuntimeLabResponse();
     if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
     if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
+
+    // R179 provider-backed cloud SAI remains a first-class organ.
+    // B059 deterministic SAI remains Sovereign authority and must not be shadowed
+    // by the cloud /api/sai namespace.
+    if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) return handleSaiAiFusionR179(request, env);
+    if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(rewritePath(request, "/api/sai/manifest"), env, ctx);
+    if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
     if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
+
     if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/build/")) return handleWarpBuildCandidateRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/warp/")) return handleWarpComputationRequest(request, env);
