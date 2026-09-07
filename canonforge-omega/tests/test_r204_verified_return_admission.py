@@ -8,8 +8,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 SRC = WORKER / "src"
-ENTRY204 = (SRC / "runtimeEntryR204.ts").read_text(encoding="utf-8")
+ALIAS204 = (SRC / "convergenceRuntimeAliasR204.ts").read_text(encoding="utf-8")
 ENTRY169 = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
+HEARTBEAT = (SRC / "heartbeatTruth.ts").read_text(encoding="utf-8")
 RUNTIME204 = (SRC / "omegaRuntimeR204.ts").read_text(encoding="utf-8")
 RUNTIME_BASE = (SRC / "omegaRuntime.ts").read_text(encoding="utf-8")
 R201 = (SRC / "system" / "omegaRuntimeR201.ts").read_text(encoding="utf-8")
@@ -29,26 +30,19 @@ def load_contract_check():
     return module
 
 
-def test_r204_is_additive_wrapper_over_complete_r169_to_r203_stack():
-    assert 'main = "src/runtimeEntryR204.ts"' in WRANGLER
-    assert 'import runtime from "./runtimeEntryR169"' in ENTRY204
-    assert 'return runtime.fetch(request, env, ctx)' in ENTRY204
-    assert 'export { OmegaRuntime } from "./omegaRuntimeR204"' in ENTRY204
-    assert 'export { OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201"' in ENTRY204
-    assert 'export { OmegaHybridMissionLedgerR203 } from "./system/hybridMissionLedgerR203"' in ENTRY204
+def test_r204_preserves_canonical_r169_entrypoint_and_upgrades_only_convergence_export_alias():
+    assert 'main = "src/runtimeEntryR169.ts"' in WRANGLER
+    assert '[alias]' in WRANGLER
+    assert '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' in WRANGLER
+    assert 'import convergence, { OmegaRuntime } from "./convergence"' in HEARTBEAT
+    assert 'export { OmegaRuntime } from "./heartbeatTruth"' in ENTRY169
+    assert 'import convergence from "./system/../convergence"' in ALIAS204
+    assert 'export { OmegaRuntime } from "./omegaRuntimeR204"' in ALIAS204
+    assert 'return convergence.fetch(request, env, ctx)' in ALIAS204
     assert 'handleHybridMissionR203' in ENTRY169
     assert 'handleContinuityPotentialR202' in ENTRY169
     assert 'OMEGA_HYBRID_MISSION_CONTINUITY_MANIFEST_R203' in R203_ROUTE
     assert 'OMEGA_UNIFIED_CONTINUITY_POTENTIAL_R202' in R202
-    for export in (
-        "OmegaSwarmCell",
-        "OmegaSwarmCoordinator",
-        "OmegaSwarmBranch",
-        "OmegaSwarmOrgan",
-        "OmegaSwarmOrganismCoordinator",
-        "OmegaSwarmAutonomicCoordinator",
-    ):
-        assert export in ENTRY204
 
 
 def test_r204_preserves_all_existing_durable_namespaces_and_storage_identities():
@@ -96,6 +90,7 @@ def test_r204_replaces_only_the_active_agent_result_completion_shortcut():
 
 
 def test_r204_confines_outputs_binds_server_receipts_and_detects_replay_conflicts():
+    combined = ALIAS204 + RUNTIME204
     for token in (
         'relativePath',
         'unsafe or non-string relative path',
@@ -107,7 +102,7 @@ def test_r204_confines_outputs_binds_server_receipts_and_detects_replay_conflict
         'AUTHENTICATED_SERVER_HASH_BOUND_ADMISSION',
         'path.endsWith("/receipt")',
     ):
-        assert token in (ENTRY204 + RUNTIME204)
+        assert token in combined
     receipt_section = RUNTIME204[RUNTIME204.index('if (path.startsWith("/jobs/")'):]
     assert 'this.authorized(request)' in receipt_section
     assert 'returnVerification' in receipt_section
@@ -130,18 +125,19 @@ def test_r204_does_not_overclaim_hardware_attestation_host_hash_or_canon_authori
         'hostStateMutation: false',
         'promotionAuthorized: false',
     ):
-        assert token in ENTRY204
+        assert token in ALIAS204
 
 
 def test_r204_manifest_preserves_r203_mission_continuity_and_r201_evidence_chain():
-    assert '/api/system/r204/manifest' in ENTRY204
-    assert 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204' in ENTRY204
-    assert 'R203_AUTHENTICATED_HYBRID_MISSION_CONTINUITY' in ENTRY204
-    assert 'r201EvidenceLedgerPreserved: true' in ENTRY204
-    assert 'r203HybridMissionLedgerPreserved: true' in ENTRY204
-    assert 'storageIdentityChanged: false' in ENTRY204
-    assert 'newDurableNamespaceCreated: false' in ENTRY204
-    assert 'R169_TO_R203_UNCHANGED' in ENTRY204
+    assert '/api/system/r204/manifest' in ALIAS204
+    assert 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204' in ALIAS204
+    assert 'R203_AUTHENTICATED_HYBRID_MISSION_CONTINUITY' in ALIAS204
+    assert 'r201EvidenceLedgerPreserved: true' in ALIAS204
+    assert 'r203HybridMissionLedgerPreserved: true' in ALIAS204
+    assert 'storageIdentityChanged: false' in ALIAS204
+    assert 'newDurableNamespaceCreated: false' in ALIAS204
+    assert 'canonicalEntrypoint: "src/runtimeEntryR169.ts"' in ALIAS204
+    assert 'underlyingConvergencePreserved: true' in ALIAS204
 
 
 def test_r203_sync_will_observe_and_hash_r204_return_packet_without_becoming_verifier():
