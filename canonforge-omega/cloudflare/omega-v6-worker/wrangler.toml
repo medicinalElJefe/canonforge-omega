@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR169.ts"
+main = "src/runtimeEntryR192.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 delegates every unhandled request directly to heartbeatTruth while preserving
-# cloud SAI, Sovereign B059 SAI, AI+SAI fusion, swarm, compute, validation and federation namespaces.
+# runtimeEntryR192 wraps runtimeEntryR169 only at the final human HTML boundary so the full
+# R169-R191 execution/API dispatcher remains unchanged while navigation is consistent everywhere.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -37,6 +37,7 @@ WHOLE_INSTRUMENT_R189_ID = "r189-whole-instrument-convergence"
 WHOLE_SYSTEM_ACCEPTANCE_R190_ID = "r190-capability-truth-admission"
 CAPABILITY_TRUTH_R190_ID = "r190-implemented-route-invoked-returned-verified"
 UNIVERSAL_SURFACE_FABRIC_R191_ID = "r191-universal-surface-fabric"
+UNIVERSAL_NAVIGATION_R192_ID = "r192-navigation-home-repair"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
