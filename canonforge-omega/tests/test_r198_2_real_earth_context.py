@@ -44,7 +44,7 @@ def test_r198_2_preserves_exact_legacy_wrapper_chain():
 
 def test_r198_2_context_has_user_control_and_recent_date_fallback():
     assert "EARTH CONTEXT · ON" in CTX
-    assert "EARTH CONTEXT · "+"'" not in CTX  # ensure static initial marker is retained separately
+    assert "EARTH CONTEXT · "+"(enabled?'ON':'OFF')" in CTX
     assert "maxAttempts=8" in CTX
     assert "isoDay(attempt+1)" in CTX
     assert "tryDate()" in CTX
