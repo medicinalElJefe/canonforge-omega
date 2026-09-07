@@ -1,10 +1,14 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R199/R200/R201/R202/R203 correlate established organs
-# above that entry without replacing Durable Objects, specialist engines, or the canonical heartbeat authority.
+# R204 preserves the canonical R169 deployment entrypoint. Wrangler substitutes only
+# heartbeatTruth's ./convergence module with an additive alias that delegates original
+# convergence behavior and exports the stronger OmegaRuntime return-admission class.
 compatibility_date = "2026-08-29"
 workers_dev = true
+
+[alias]
+"./convergence" = "./src/convergenceRuntimeAliasR204.ts"
 
 [vars]
 BUILD_ID = "r87-semantic-edge-settle-proof"
@@ -49,6 +53,7 @@ MISSION_KERNEL_R200_ID = "r200-canonical-mission-kernel"
 DURABLE_MISSION_LEDGER_R201_ID = "r201-durable-mission-evidence-ledger"
 CONTINUITY_POTENTIAL_R202_ID = "r202-unified-continuity-potential"
 HYBRID_MISSION_CONTINUITY_R203_ID = "r203-r201-anchored-r202-aware-hybrid-mission-continuity"
+HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
@@ -91,8 +96,8 @@ name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
 # Existing namespaces remain live. R201 is a dedicated evidence-only SQLite namespace;
-# R202 adds no Durable Object and therefore cannot create a shadow state namespace.
-# R203 adds one isolated correlation-evidence namespace; it does not replace OMEGA_RUNTIME or R201.
+# R202 adds no Durable Object. R203 adds one isolated correlation-evidence namespace.
+# R204 strengthens only the existing OMEGA_RUNTIME return boundary; no namespace identity changes.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"
