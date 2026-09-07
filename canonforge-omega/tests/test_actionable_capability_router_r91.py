@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ROUTER = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "capabilityRouter.ts"
 HEARTBEAT = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "heartbeatTruth.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
-VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
+RELEASE = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 
 
 def test_r91_binds_beneath_canonical_heartbeat_entrypoint_instead_of_replacing_it():
@@ -73,13 +73,15 @@ def test_r91_binds_capability_routing_to_same_heartbeat_governed_edge_snapshot()
     assert 'from "./heartbeatTruth"' not in router
 
 
-def test_r91_preserves_existing_release_identities_and_verifier():
+def test_r91_preserves_existing_release_identities_under_current_release_authority():
     wrangler = WRANGLER.read_text(encoding="utf-8")
-    verify = VERIFY.read_text(encoding="utf-8")
+    release = RELEASE.read_text(encoding="utf-8")
     assert 'main = "src/heartbeatTruth.ts"' in wrangler
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"' in wrangler
     assert 'CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"' in wrangler
     assert 'CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"' in wrangler
-    assert "LIVE_CONVERGENCE_VERIFIED" in verify
-    assert "reciprocal_manifest_ready" in verify
+    assert "release-forward exact-head production" in release
+    assert "/api/system/r211/manifest" in release
+    assert "verify_r185_live_federation.py" in release
+    assert "Roll back immediately if any live exact-head proof failed" in release
