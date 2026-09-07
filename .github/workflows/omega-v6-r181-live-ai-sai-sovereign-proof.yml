@@ -65,12 +65,16 @@ jobs:
             sleep 2
           done
 
-      - name: Verify R182 continuity-stabilized R180 governor before intelligence proof
+      - name: Wait for R182 continuity-stabilized R180 governor before intelligence proof
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "$V6_URL/api/swarm/governor/manifest" -o /tmp/r180-governor.json
-          python - <<'PY'
+          settled=false
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error \
+              "$V6_URL/api/swarm/governor/manifest?edge_settle_sha=${EXPECTED_SHA}&attempt=${attempt}" \
+              -o /tmp/r180-governor.json; then
+              if python - <<'PY'
           import json
           from pathlib import Path
           d=json.loads(Path('/tmp/r180-governor.json').read_text())
@@ -92,6 +96,19 @@ jobs:
           assert set(p['full1728Requires']) == {'CALM_PRESSURE','PREVIOUS_STAGE_VERIFIED','OPERATOR_AUTHORIZED_FULL'}, p
           assert d['canonicalMutation'] is False and d['promotionAuthorized'] is False, d
           PY
+              then
+                settled=true
+                break
+              fi
+            fi
+            echo "R180 governor route not settled on this edge yet (attempt $attempt/60)."
+            sleep 2
+          done
+          if [ "$settled" != "true" ]; then
+            echo "R180 governor did not settle after exact R181 SHA was observed"
+            cat /tmp/r180-governor.json 2>/dev/null || true
+            exit 1
+          fi
 
       - name: Execute real fusion-provider inference without fabricating B059 grounding
         shell: bash
