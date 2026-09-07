@@ -2,6 +2,7 @@ import { EVIDENCE_PLANE_RELEASE_R194 } from "../evidencePlaneR194";
 import { reconstituteOneSystemR199, ONE_SYSTEM_CORRELATION_RELEASE_R199 } from "./oneSystemCorrelationR199";
 import { correlateOneSystemTruthStripR199 } from "./oneSystemTruthStripR199";
 import { enhanceOneSystemOperatorSurfaceR199 } from "./oneSystemOperatorSurfaceR199";
+import { enhanceMissionSurfaceR200 } from "./missionSurfaceR200";
 
 export const ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system";
 
@@ -40,5 +41,6 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   const preserved = new Response(html, { status: response.status, statusText: response.statusText, headers });
   const reconstituted = await reconstituteOneSystemR199(preserved, pathname);
   const correlated = await correlateOneSystemTruthStripR199(reconstituted);
-  return enhanceOneSystemOperatorSurfaceR199(correlated);
+  const operated = await enhanceOneSystemOperatorSurfaceR199(correlated);
+  return enhanceMissionSurfaceR200(operated);
 }
