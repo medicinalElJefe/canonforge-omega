@@ -4,6 +4,8 @@ param(
   [string]$RootOverride = '',
   [string]$AgentScriptOverride = '',
   [string]$AcceptanceProverOverride = '',
+  [string]$CloudBase = 'https://omegav6.jeffdeweyeljefe.workers.dev',
+  [string]$PairingEnvelopePath = '/api/hybrid/pairing-envelope',
   [switch]$ForceRepair
 )
 
@@ -28,10 +30,12 @@ $AcceptanceReceipt = Join-Path $LogDir 'r208_physical_acceptance_latest.json'
 $Port = 8127
 $Base = "http://127.0.0.1:$Port"
 $Health = "$Base/api/health"
-$HybridStatus = "$Base/api/hybrid/status"
-$HybridLauncher = "$Base/api/hybrid/launcher"
+$CloudBase = $CloudBase.TrimEnd('/')
+if (-not $PairingEnvelopePath.StartsWith('/')) { throw 'PairingEnvelopePath must be an absolute HTTP path beginning with /.' }
+$HostedHybridStatus = "$CloudBase/api/hybrid/status"
+$HostedPairingEnvelope = "$CloudBase$PairingEnvelopePath"
 $OmegaLocal = Join-Path $env:LOCALAPPDATA 'OMEGA'
-$PairingGenerationFile = Join-Path $OmegaLocal 'agent-pairing-generation.txt'
+$PairingGenerationFile = Join-Path $OmegaLocal 'hosted-pairing-generation.txt'
 $PairingEnvelope = Join-Path $OmegaLocal ("pairing-once-{0}.cmd" -f $PID)
 
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
@@ -50,10 +54,11 @@ function Get-HealthyOmegaRuntime {
   }
 }
 
-function Get-HybridStatus {
+function Get-HostedHybridStatus {
   try {
-    return Invoke-RestMethod -Uri $HybridStatus -TimeoutSec 2
+    return Invoke-RestMethod -Uri $HostedHybridStatus -TimeoutSec 5
   } catch {
+    Write-OmegaLog "hosted hybrid status unavailable: $($_.Exception.Message)"
     return $null
   }
 }
@@ -81,7 +86,7 @@ function Get-StoredPairingGeneration {
     if (-not $raw) { return $null }
     return [int64]$raw
   } catch {
-    Write-OmegaLog "pairing-generation sidecar unreadable: $($_.Exception.Message)"
+    Write-OmegaLog "hosted pairing-generation sidecar unreadable: $($_.Exception.Message)"
     return $null
   }
 }
@@ -122,7 +127,7 @@ if (-not (Test-Path $AcceptanceProver)) {
   throw "R208 physical acceptance prover missing: $AcceptanceProver"
 }
 
-Write-OmegaLog "R209 launch requested root=$Root canonical_port=$Port force_repair=$ForceRepair"
+Write-OmegaLog "R209 launch requested root=$Root canonical_port=$Port cloud=$CloudBase force_repair=$ForceRepair"
 
 $runtimeProcess = $null
 if (Get-HealthyOmegaRuntime) {
@@ -155,11 +160,11 @@ if (Get-HealthyOmegaRuntime) {
 }
 
 $agentProcess = Get-OmegaAgentProcess
-$hybridBefore = Get-HybridStatus
+$hostedBefore = Get-HostedHybridStatus
 $storedGeneration = Get-StoredPairingGeneration
-$currentGeneration = Get-StatusPairingGeneration $hybridBefore
-$authenticatedBefore = Get-StatusBool $hybridBefore @('authenticated','agentAuthenticated','authenticated_heartbeat')
-$heartbeatBefore = Get-StatusBool $hybridBefore @('heartbeatCurrent','pcOnline','pc_online')
+$currentGeneration = Get-StatusPairingGeneration $hostedBefore
+$authenticatedBefore = Get-StatusBool $hostedBefore @('authenticated','agentAuthenticated','authenticated_heartbeat')
+$heartbeatBefore = Get-StatusBool $hostedBefore @('heartbeatCurrent','pcOnline','pc_online')
 $generationBound = [bool]($null -ne $storedGeneration -and $null -ne $currentGeneration -and $storedGeneration -eq $currentGeneration)
 $reuseAgent = [bool]($null -ne $agentProcess -and -not $ForceRepair -and $heartbeatBefore -and $authenticatedBefore -and $generationBound)
 
@@ -167,53 +172,58 @@ if ($null -ne $agentProcess -and -not $reuseAgent) {
   $reason = if ($ForceRepair) {
     'operator or exact-SHA recovery requested'
   } elseif (-not $heartbeatBefore) {
-    'heartbeat stale or absent'
+    'hosted heartbeat stale or absent'
   } elseif (-not $authenticatedBefore) {
-    'heartbeat authentication incomplete'
+    'hosted heartbeat authentication incomplete'
   } elseif (-not $generationBound) {
-    'pairing generation changed or is not bound to this agent launch'
+    'hosted pairing generation changed or is not bound to this agent launch'
   } else {
-    'device proof incomplete'
+    'hosted device proof incomplete'
   }
   Stop-OmegaAgent $agentProcess $reason
   $agentProcess = $null
 }
 
 if ($reuseAgent) {
-  Write-OmegaLog "reusing sovereign agent pid=$($agentProcess.ProcessId) pairing_generation=$storedGeneration with current authenticated heartbeat"
+  Write-OmegaLog "reusing sovereign agent pid=$($agentProcess.ProcessId) hosted_pairing_generation=$storedGeneration with current authenticated hosted heartbeat"
 } else {
-  # Localhost remains the pairing authority. The generated batch is consumed only as a
-  # one-time credential envelope, deleted immediately, and never executed. The agent is
-  # always started by OMEGA's verified venv. R209 persists only non-secret generation data.
-  Write-OmegaLog 'requesting fresh one-time pairing envelope from local sovereign runtime'
-  Invoke-WebRequest -UseBasicParsing -Uri $HybridLauncher -OutFile $PairingEnvelope -TimeoutSec 15
+  # Hosted canonical Hybrid remains the pairing authority. The public R209 bootstrap itself
+  # contains no token. This local launcher obtains one short-lived envelope only after it is
+  # executing on the user-owned PC, deletes the envelope immediately, and starts the exact
+  # sovereign agent through OMEGA's installer-verified venv.
+  Write-OmegaLog "requesting fresh hosted one-time pairing envelope from $HostedPairingEnvelope"
+  Invoke-WebRequest -UseBasicParsing -Uri $HostedPairingEnvelope -OutFile $PairingEnvelope -TimeoutSec 30
   try {
     $pairingText = Get-Content -Raw -Path $PairingEnvelope
     if ($pairingText -notmatch 'OMEGA Sovereign PC Link' -or
         $pairingText -notmatch '/api/hybrid/agent' -or
         $pairingText -notmatch 'omega_sovereign_agent\.py') {
-      throw 'Local sovereign runtime returned an invalid Hybrid pairing contract.'
+      throw 'Hosted canonical runtime returned an invalid Hybrid pairing contract.'
     }
 
     $tokenMatch = [regex]::Match($pairingText, 'set "OMEGA_TOKEN=([^"\r\n]+)"')
     $serverMatch = [regex]::Match($pairingText, 'set "OMEGA_SERVER=([^"\r\n]+)"')
     if (-not $tokenMatch.Success -or -not $serverMatch.Success) {
-      throw 'Local sovereign runtime pairing envelope is missing server or credential fields.'
+      throw 'Hosted canonical pairing envelope is missing server or credential fields.'
     }
     $pairingToken = $tokenMatch.Groups[1].Value
-    $pairedServer = $serverMatch.Groups[1].Value
+    $pairedServer = $serverMatch.Groups[1].Value.TrimEnd('/')
   } finally {
     Remove-Item $PairingEnvelope -Force -ErrorAction SilentlyContinue
   }
 
-  $pairedStatus = Get-HybridStatus
+  if (-not $pairedServer.StartsWith('http://') -and -not $pairedServer.StartsWith('https://')) {
+    throw 'Hosted pairing server is not an HTTP(S) origin.'
+  }
+
+  $pairedStatus = Get-HostedHybridStatus
   $pairedGeneration = Get-StatusPairingGeneration $pairedStatus
   if ($null -eq $pairedGeneration) {
-    throw 'OMEGA pairing rotated but the local runtime did not expose a pairing generation.'
+    throw 'Hosted pairing rotated but the canonical Hybrid status did not expose a pairing generation.'
   }
   Set-Content -Path $PairingGenerationFile -Value $pairedGeneration -Encoding ascii
 
-  Write-OmegaLog "starting canonical sovereign agent with verified venv against $pairedServer pairing_generation=$pairedGeneration"
+  Write-OmegaLog "starting canonical sovereign agent with verified venv against hosted authority $pairedServer pairing_generation=$pairedGeneration"
   $agentArgs = @(
     "`"$AgentScript`"",
     '--server', "`"$pairedServer`"",
@@ -232,19 +242,20 @@ if ($reuseAgent) {
 }
 
 $heartbeatCurrent = $false
-for ($i = 0; $i -lt 50; $i++) {
-  $hybrid = Get-HybridStatus
-  if ($null -ne $hybrid) {
-    $generation = Get-StatusPairingGeneration $hybrid
+for ($i = 0; $i -lt 60; $i++) {
+  $hosted = Get-HostedHybridStatus
+  if ($null -ne $hosted) {
+    $generation = Get-StatusPairingGeneration $hosted
     $expectedGeneration = Get-StoredPairingGeneration
     $generationCurrent = [bool]($null -ne $generation -and $null -ne $expectedGeneration -and $generation -eq $expectedGeneration)
-    $authenticated = Get-StatusBool $hybrid @('authenticated','agentAuthenticated','authenticated_heartbeat')
-    $heartbeatSeen = Get-StatusBool $hybrid @('heartbeatCurrent','pcOnline','pc_online')
+    $authenticated = Get-StatusBool $hosted @('authenticated','agentAuthenticated','authenticated_heartbeat')
+    $heartbeatSeen = Get-StatusBool $hosted @('heartbeatCurrent','pcOnline','pc_online')
     if ($heartbeatSeen -and $authenticated -and $generationCurrent) {
       $heartbeatCurrent = $true
-      $ageProperty = $hybrid.PSObject.Properties['heartbeatAgeSeconds']
+      $ageProperty = $hosted.PSObject.Properties['heartbeatAgeSeconds']
+      if ($null -eq $ageProperty) { $ageProperty = $hosted.PSObject.Properties['heartbeat_age_seconds'] }
       $age = if ($null -ne $ageProperty) { $ageProperty.Value } else { 'unknown' }
-      Write-OmegaLog "authenticated heartbeat current age=${age}s pairing_generation=$generation"
+      Write-OmegaLog "authenticated hosted heartbeat current age=${age}s pairing_generation=$generation"
       break
     }
   }
@@ -253,17 +264,17 @@ for ($i = 0; $i -lt 50; $i++) {
 
 if (-not $heartbeatCurrent) {
   $failedAgent = Get-OmegaAgentProcess
-  if ($null -ne $failedAgent) { Stop-OmegaAgent $failedAgent 'current authenticated generation-bound heartbeat did not arrive' }
+  if ($null -ne $failedAgent) { Stop-OmegaAgent $failedAgent 'current authenticated hosted generation-bound heartbeat did not arrive' }
   Remove-Item $PairingGenerationFile -Force -ErrorAction SilentlyContinue
-  Write-OmegaLog 'runtime is healthy but R209 heartbeat recovery failed; PC ONLINE is not claimed and R208 deep acceptance is withheld'
-  throw "OMEGA runtime is healthy, but an authenticated generation-bound heartbeat did not become current. Review $AgentStderr and $Log."
+  Write-OmegaLog 'localhost runtime is healthy but R209 hosted heartbeat recovery failed; PC ONLINE is not claimed and R208 deep acceptance is withheld'
+  throw "OMEGA localhost runtime is healthy, but an authenticated hosted generation-bound heartbeat did not become current. Review $AgentStderr and $Log."
 }
 
 if (-not $SkipAcceptanceProof) {
   # Preserve the complete R208 closure. R209 only strengthens the prerequisite heartbeat.
   # The prover remains evidence-only and cannot mutate Canon or authorize promotion.
-  Write-OmegaLog 'running preserved R208 physical sovereign acceptance proof after R209 heartbeat recovery'
-  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $AcceptanceProver -RootOverride $Root
+  Write-OmegaLog 'running preserved R208 physical sovereign acceptance proof after R209 hosted heartbeat recovery'
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $AcceptanceProver -RootOverride $Root -ProductionBase $CloudBase
   $proofExit = $LASTEXITCODE
   if (Test-Path $AcceptanceReceipt) {
     try {
@@ -274,10 +285,10 @@ if (-not $SkipAcceptanceProof) {
     }
   }
   if ($proofExit -ne 0) {
-    Write-OmegaLog "R208 acceptance prover returned exit=$proofExit; heartbeat remains proven but no full-acceptance success claim is promoted"
+    Write-OmegaLog "R208 acceptance prover returned exit=$proofExit; hosted heartbeat remains proven but no full-acceptance success claim is promoted"
   }
 } else {
-  Write-OmegaLog 'R208 deep acceptance proof skipped for headless continuity launch; R209 current authenticated heartbeat remains the only PC ONLINE gate'
+  Write-OmegaLog 'R208 deep acceptance proof skipped for headless continuity launch; R209 current authenticated hosted heartbeat remains the PC ONLINE gate'
 }
 
 if (-not $NoBrowser) {
