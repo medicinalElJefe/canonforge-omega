@@ -14,7 +14,8 @@ import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
-import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
+import { wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
+import { handleWholeSystemAcceptanceR190Repaired } from "./acceptance/r190AcceptanceRepair";
 import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabilityR190";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
@@ -64,10 +65,12 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (wholeInstrument) return wholeInstrument;
 
   // R190 does not create another runtime. It proves the existing dispatcher and
-  // exposes its capability truth through the same route authority.
+  // exposes its capability truth through the same route authority. The current
+  // dispatcher applies the sovereign-boundary classification repair without
+  // rewriting the historical R190 implementation file.
   if (url.pathname === "/truth" || url.pathname === "/truth/") return wholeSystemTruthR190();
   if (url.pathname.startsWith("/api/acceptance/r190/")) {
-    return handleWholeSystemAcceptanceR190(request, env, ctx, runtimeFetch);
+    return handleWholeSystemAcceptanceR190Repaired(request, env, ctx, runtimeFetch);
   }
 
   // R190 cumulative Canon extends the immutable R189 61-group predecessor with
