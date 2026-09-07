@@ -21,8 +21,8 @@ def test_r206_launcher_keeps_one_canonical_localhost_identity():
 
 def test_r206_approved_repository_root_binding_survives_r207_r208_r209_successors():
     text = read(LAUNCHER)
-    assert '"$Base/api/hybrid/launcher"' in text
-    assert "$PairingEnvelope" in text
+    assert "PairingEnvelopePath" in text
+    assert "$HostedPairingEnvelope" in text
     assert "OMEGA Sovereign PC Link" in text
     assert "/api/hybrid/agent" in text
     assert "omega_sovereign_agent\\.py" in text
@@ -35,7 +35,7 @@ def test_r206_launcher_never_promotes_unproved_heartbeat_to_online():
     text = read(LAUNCHER)
     assert "PC ONLINE is still proof-gated" in text
     assert "PC ONLINE is not claimed" in text
-    assert "authenticated generation-bound heartbeat did not become current" in text
+    assert "authenticated hosted generation-bound heartbeat did not become current" in text
     assert "R208 deep acceptance is withheld" in text
 
 
