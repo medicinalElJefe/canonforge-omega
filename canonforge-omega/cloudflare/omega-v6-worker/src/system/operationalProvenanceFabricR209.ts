@@ -17,10 +17,10 @@ const SOURCES = [
   { id: "canonical", domain: "runtime", path: "/_omega/health", expected: ["ok"] },
   { id: "acceptance", domain: "proof", path: "/api/acceptance/r181/manifest", expected: ["canonicalGitSha"] },
   { id: "workspace", domain: "surface", path: "/api/workspace/r193/manifest", expected: ["release"] },
-  { id: "evidence", domain: "evidence", path: "/api/workspace/r194/manifest", expected: ["release"] },
+  { id: "evidence", domain: "evidence", path: "/api/workspace/r194/health", expected: ["release"] },
   { id: "drive", domain: "archive", path: "/api/system/r195/manifest", expected: ["corpus"] },
-  { id: "grounding", domain: "grounding", path: "/api/grounding/r197/manifest", expected: ["release"] },
-  { id: "earthSar", domain: "earth", path: "/api/earth/sar/r198/manifest", expected: ["release"] },
+  { id: "grounding", domain: "grounding", path: "/api/sai/r197/manifest", expected: ["release"] },
+  { id: "earthSar", domain: "earth", path: "/api/earth/sar/r198/sources", expected: ["build", "providers"] },
   { id: "operator", domain: "operator", path: "/api/system/r199/manifest", expected: ["release"] },
   { id: "mission", domain: "mission", path: "/api/mission/r200/manifest", expected: ["release"] },
   { id: "durability", domain: "continuity", path: "/api/mission/r201/verify", expected: ["verified"] },
@@ -173,8 +173,10 @@ async function status(request: Request, env: any, ctx: any, canonicalFetch: Cano
   }, {});
   const hybrid = calls.find(call => call.id === "wholeSystem")?.body?.hybrid || {};
   const pcOnline = hybrid?.pcOnline === true && hybrid?.heartbeatCurrent === true && hybrid?.authenticated === true;
+  const requiredIds = new Set(["canonical", "acceptance", "workspace", "drive", "earthSar", "durability", "returnAdmission", "wholeSystem"]);
+  const requiredSources = sources.filter(source => requiredIds.has(source.id));
   const core = {
-    ok: sources.filter(source => ["canonical", "acceptance", "workspace", "drive", "earthSar", "durability", "returnAdmission", "wholeSystem"].includes(source.id)).every(source => source.ok),
+    ok: requiredSources.length === requiredIds.size && requiredSources.every(source => source.ok),
     schema: "OMEGA_OPERATIONAL_PROVENANCE_STATUS_R209",
     release: OPERATIONAL_PROVENANCE_RELEASE_R209,
     canonicalGitSha: env?.CANONICAL_GIT_SHA ?? null,
