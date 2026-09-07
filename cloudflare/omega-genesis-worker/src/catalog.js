@@ -37,5 +37,6 @@ export const CAPABILITIES=[
 {id:"CAP-031",name:"Legacy OmegaRuntime Durable Object preservation bridge",menu:"10 Recovery / Packaging",gate:"Preserve historical V6 Durable Object lineage without granting Genesis V6 release authority",status:"LIVE_CORE"},
 {id:"CAP-032",name:"Role-separated V3 reciprocal convergence contract",menu:"02 Proof & Governance",gate:"Schema identity + explicit authority compatibility + no cross-runtime mutation",status:"LIVE_CORE"},
 {id:"CAP-033",name:"R191 universal surface observer and machine-screen authority alignment",menu:"02 Proof & Governance",gate:"Canonical R191 observation + Optical SCREEN machine routing + no cross-runtime promotion",status:"LIVE_CORE"},
-{id:"CAP-034",name:"Native service-bound federation transport and versioned Optical R153.2 promotion law",menu:"01 Runtime Core",gate:"Same-account service bindings + R153.2 SCREEN_ONLY health contract + rollback-safe live promotion",status:"LIVE_CORE"}
+{id:"CAP-034",name:"Native service-bound federation transport and versioned Optical R153.2 promotion law",menu:"01 Runtime Core",gate:"Same-account service bindings + R153.2 SCREEN_ONLY health contract + rollback-safe live promotion",status:"LIVE_CORE"},
+{id:"CAP-035",name:"Deployment-resolvable canonical federation service identity contract",menu:"01 Runtime Core",gate:"Verified Cloudflare sibling service identities + retired identity rejection + truth-bound routing intent",status:"LIVE_CORE"}
 ];

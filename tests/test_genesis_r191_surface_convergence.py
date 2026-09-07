@@ -56,10 +56,12 @@ def test_genesis_uses_service_bindings_not_same_account_workers_dev_loopback():
     source = CONVERGENCE.read_text(encoding="utf-8")
     wrangler = WRANGLER.read_text(encoding="utf-8")
     assert 'binding = "OMEGA_V6"' in wrangler
-    assert 'service = "omega-v6-full-convergence"' in wrangler
+    assert 'service = "omegav6"' in wrangler
+    assert 'OMEGA_V6_SERVICE_IDENTITY = "omegav6"' in wrangler
     assert 'binding = "OMEGA_OPTICAL"' in wrangler
     assert 'service = "omega-optical-machine-r1532"' in wrangler
     assert 'OPTICAL_MACHINE_GENERATION = "R153.2"' in wrangler
+    assert 'omega-v6-full-convergence' not in wrangler
     assert 'probePeer(env?.OMEGA_V6,R191_FABRIC_URL,"/api/fabric/r191/status","omega-v6")' in source
     assert 'probePeer(env?.OMEGA_V6,R191_CANON_URL,"/api/canon/r191/manifest","omega-v6")' in source
     assert 'probePeer(env?.OMEGA_OPTICAL,OPTICAL_MACHINE_URL+"/api/health","/api/health","omega-optical")' in source
@@ -129,7 +131,7 @@ def test_genesis_cap034_measures_distinct_native_transport_and_rollback_safe_pro
     deploy = DEPLOY.read_text(encoding="utf-8")
     assert 'id:"CAP-034"' in catalog
     assert 'name:"Native service-bound federation transport and versioned Optical R153.2 promotion law"' in catalog
-    assert 'service = "omega-v6-full-convergence"' in wrangler
+    assert 'service = "omegav6"' in wrangler
     assert 'service = "omega-optical-machine-r1532"' in wrangler
     assert 'machine_transport:"CLOUDFLARE_SERVICE_BINDINGS"' in source
     assert 'opticalAuthority==="SCREEN_ONLY"' in source
@@ -142,3 +144,21 @@ def test_genesis_cap034_measures_distinct_native_transport_and_rollback_safe_pro
     assert 'optical_machine_generation") == "R153.2"' in deploy
     assert 'optical_adaptive_cycle") is True' in deploy
     assert 'optical_canonical_mutation") is False' in deploy
+
+
+def test_genesis_cap035_measures_deployment_resolvable_service_identity_contract():
+    cap = next(item for item in CAPABILITIES if item["id"] == "CAP-035")
+    assert cap == {
+        "id": "CAP-035",
+        "name": "Deployment-resolvable canonical federation service identity contract",
+        "menu": "01 Runtime Core",
+        "gate": "Verified Cloudflare sibling service identities + retired identity rejection + truth-bound routing intent",
+        "status": "LIVE_CORE",
+    }
+    catalog = CATALOG.read_text(encoding="utf-8")
+    wrangler = WRANGLER.read_text(encoding="utf-8")
+    assert 'id:"CAP-035"' in catalog
+    assert 'name:"Deployment-resolvable canonical federation service identity contract"' in catalog
+    assert 'binding = "OMEGA_V6"\nservice = "omegav6"' in wrangler
+    assert 'OMEGA_V6_SERVICE_IDENTITY = "omegav6"' in wrangler
+    assert 'omega-v6-full-convergence' not in wrangler
