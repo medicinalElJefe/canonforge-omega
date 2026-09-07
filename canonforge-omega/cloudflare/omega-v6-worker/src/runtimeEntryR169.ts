@@ -12,6 +12,7 @@ import { handleSourcePatchR187 } from "./swarm/sourcePatchR187";
 import { handleMotionTimeR188 } from "./swarm/motionTimeR188";
 import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
+import { handleDeweyWaterSaiR195 } from "./sai/deweyWaterSaiR195";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleWholeSystemAcceptanceR190, wholeSystemTruthR190 } from "./acceptance/wholeSystemAcceptanceR190";
@@ -112,6 +113,8 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) {
     return handleSaiAiFusionR179(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
   }
+  const deweyWaterSai = await handleDeweyWaterSaiR195(request, env);
+  if (deweyWaterSai) return deweyWaterSai;
   if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
   if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
   if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
