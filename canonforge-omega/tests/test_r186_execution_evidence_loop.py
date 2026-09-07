@@ -7,6 +7,7 @@ from omega_runtime.successor_evidence_r186 import (
     build_execution_evidence_r186,
     execution_metric_vector,
 )
+from omega_runtime.warp_candidate import build_candidate_capsule
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +15,59 @@ TS = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "swarm" / "successorEvide
 ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "runtimeEntryR169.ts"
 WORKFLOW = ROOT.parent / ".github" / "workflows" / "omega-v6-r185-live-172-cloud-proof.yml"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
+
+
+def r178_candidate():
+    invariant = {
+        "schema": "OMEGA_WARP_COMPLETION_INVARIANT_R177",
+        "integrityRevision": "R177",
+        "strict": True,
+        "expectedCells": 12,
+        "accountedCells": 12,
+        "delta": 0,
+        "allShardsAccounted": True,
+        "invalidShardCount": 0,
+        "invalidShards": [],
+    }
+    receipt = {
+        "schema": "OMEGA_WARP_EXECUTION_RECEIPT_R176",
+        "revision": "R176",
+        "integrityRevision": "R177",
+        "warpId": "r186-fixture-warp",
+        "profile": "PULSE",
+        "purpose": "BUILD",
+        "status": "COMPLETE",
+        "shardCount": 1,
+        "totalCells": 12,
+        "completedCells": 12,
+        "failedCells": 0,
+        "strictCompletionInvariant": True,
+        "completionInvariant": invariant,
+        "childMissionHashes": ["c" * 64],
+        "resultMerkleRoot": "a" * 64,
+        "proofState": "RETURNED_NOT_ADMITTED",
+        "authority": "WARP_EXECUTION_RECEIPT_NOT_CANON",
+        "canonicalMutation": False,
+        "nativeExecutionClaim": False,
+        "performanceGuaranteeClaim": False,
+        "physicalDimensionClaim": False,
+        "truthBoundary": "R186 fixture",
+        "receiptSha256": "b" * 64,
+    }
+    status = {
+        "state": "COMPLETE",
+        "integrityRevision": "R177",
+        "warpId": receipt["warpId"],
+        "profile": receipt["profile"],
+        "purpose": receipt["purpose"],
+        "totalCells": 12,
+        "completedCells": 12,
+        "failedCells": 0,
+        "shardCount": 1,
+        "resultMerkleRoot": receipt["resultMerkleRoot"],
+        "receipt": receipt,
+    }
+    return build_candidate_capsule(status, "Advance OMEGA with execution-derived successor evidence.")
 
 
 def test_r186_execution_metrics_are_derived_from_raw_results_not_supplied_scores():
@@ -45,7 +99,8 @@ def test_r186_execution_metrics_are_derived_from_raw_results_not_supplied_scores
     assert 0.0 < metrics["resourceEfficiency"] < 1.0
 
 
-def test_r186_python_receipt_hash_binds_r183_r184_payload(strict_r178_candidate):
+def test_r186_python_receipt_hash_binds_r183_r184_payload():
+    candidate = r178_candidate()
     predecessor_metrics = {key: 0.8 for key in (
         "correctness", "regressionSafety", "missionFit", "proofCoverage", "capabilityCoverage",
         "interactiveEfficiency", "resourceEfficiency", "recoverability", "continuity",
@@ -63,7 +118,7 @@ def test_r186_python_receipt_hash_binds_r183_r184_payload(strict_r178_candidate)
         "canonicalEdge", "swarm", "genesisMachine", "opticalMachine", "sovereignHost", "sai"
     )}
     receipt = build_execution_evidence_r186(
-        candidate=strict_r178_candidate,
+        candidate=candidate,
         predecessor_sha="a" * 40,
         predecessor_metrics=predecessor_metrics,
         predecessor_capabilities=["BASE"],
