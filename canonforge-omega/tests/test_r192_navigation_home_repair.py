@@ -5,22 +5,15 @@ WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 SRC = WORKER / "src"
 
 
-def test_r192_is_the_worker_entrypoint_without_replacing_r169_dispatcher():
+def test_r192_preserves_r169_entrypoint_and_wraps_only_public_html():
     wrangler = (WORKER / "wrangler.toml").read_text()
-    wrapper = (SRC / "runtimeEntryR192.ts").read_text()
-    assert 'main = "src/runtimeEntryR192.ts"' in wrangler
-    assert 'import runtime from "./runtimeEntryR169"' in wrapper
-    assert 'enhanceUniversalNavigationR192' in wrapper
-    for export_name in (
-        "OmegaRuntime",
-        "OmegaSwarmCell",
-        "OmegaSwarmCoordinator",
-        "OmegaSwarmBranch",
-        "OmegaSwarmOrgan",
-        "OmegaSwarmOrganismCoordinator",
-        "OmegaSwarmAutonomicCoordinator",
-    ):
-        assert export_name in wrapper
+    entry = (SRC / "runtimeEntryR169.ts").read_text()
+    assert 'main = "src/runtimeEntryR169.ts"' in wrangler
+    assert 'import { enhanceUniversalNavigationR192 } from "./universalNavigationR192"' in entry
+    assert "async function publicFetch" in entry
+    assert "const response = await runtimeFetch(request, env, ctx)" in entry
+    assert "enhanceUniversalNavigationR192(response, new URL(request.url).pathname)" in entry
+    assert "export default { fetch: publicFetch }" in entry
 
 
 def test_universal_navigation_reaches_every_primary_human_surface():
@@ -44,7 +37,8 @@ def test_universal_navigation_reaches_every_primary_human_surface():
 def test_home_no_longer_starts_behind_the_full_screen_launcher():
     nav = (SRC / "universalNavigationR192.ts").read_text()
     launch = (SRC / "launchHdNavigation.ts").read_text()
-    assert "document.body.classList.add('omegaLaunchOpen')" in launch  # inherited behavior remains preserved
+    assert "document.body.classList.add('omegaLaunchOpen')" in launch  # inherited launcher remains available
+    assert "html.replace('<div id=\"omegaLaunch\">', '<div id=\"omegaLaunch\" class=\"hidden\">')" in nav
     assert "launch?.classList.add('hidden')" in nav
     assert "document.body.classList.remove('omegaLaunchOpen')" in nav
     assert "sessionStorage.setItem('omega_launch_seen','1')" in nav
