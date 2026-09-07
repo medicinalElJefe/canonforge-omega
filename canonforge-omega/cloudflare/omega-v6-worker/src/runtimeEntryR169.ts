@@ -48,8 +48,10 @@ import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195
 import { handleEarthSarFusionR198 } from "./earthSarTruthFusionR198";
 import { enhanceEarthSarIntegratedRepairR198_1 } from "./earthSarIntegratedRepairR198_1";
 import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_2";
+import { handleSovereignPcGatewayR199 } from "./sovereignPcGatewayR199";
+import { enhanceSovereignPcSurfaceR199 } from "./sovereignPcSurfaceR199";
 
-export { OmegaRuntime } from "./heartbeatTruth";
+export { OmegaRuntime } from "./sovereignPcRuntimeR199";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
 export { OmegaSwarmCoordinatorR188 as OmegaSwarmCoordinator } from "./swarm/motionCoordinatorR188";
 export { OmegaSwarmBranch, OmegaSwarmOrgan, OmegaSwarmOrganismCoordinator } from "./swarm/swarmOrganismR169";
@@ -78,6 +80,11 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  // R199 is intentionally a narrow additive gateway.  It owns only Hybrid/runtime
+  // execution routes and returns null for every inherited OMEGA route.
+  const sovereignPc = await handleSovereignPcGatewayR199(request, env);
+  if (sovereignPc) return sovereignPc;
 
   const earthSarR198 = await handleEarthSarFusionR198(request);
   if (earthSarR198) return earthSarR198;
@@ -194,11 +201,14 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
     const earthBase = calibrated !== dewey ? calibrated : dewey;
     const oneSystemEarth = await enhanceOneSystemNavigationR195(earthBase, new URL(request.url).pathname);
     const nativeSarEarth = await enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);
-    return enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
+    const contextualEarth = await enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
+    return enhanceSovereignPcSurfaceR199(contextualEarth, requestUrl.pathname);
   }
 
-  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
-  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
+  const oneSystem = calibrated !== dewey
+    ? await enhanceOneSystemNavigationR195(calibrated, requestUrl.pathname)
+    : await enhanceOneSystemNavigationR195(dewey, requestUrl.pathname);
+  return enhanceSovereignPcSurfaceR199(oneSystem, requestUrl.pathname);
 }
 
 export default { fetch: publicFetch };
