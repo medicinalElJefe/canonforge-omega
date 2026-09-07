@@ -54,7 +54,6 @@ def test_r199_replaces_competing_global_chrome_instead_of_stacking_another_rail(
 
 
 def test_r199_keeps_domain_engines_upstream_and_does_not_reimplement_them():
-    # Backend specialist routes remain in the canonical runtime entry.
     for marker in [
         "handleSwarmRequest",
         "handleSaiRequest",
@@ -65,7 +64,6 @@ def test_r199_keeps_domain_engines_upstream_and_does_not_reimplement_them():
         "handleEarthSarFusionR198",
     ]:
         assert marker in ENTRY
-    # R199 is a correlation/projection shell, not an Earth/SAR or solver clone.
     assert "handleEarthSarFusionR198" not in R199
     assert "handleComputeRequest" not in R199
     assert "handleSaiRequest" not in R199
@@ -74,9 +72,11 @@ def test_r199_keeps_domain_engines_upstream_and_does_not_reimplement_them():
 def test_r199_preserves_r195_release_identity_while_upgrading_its_role():
     assert 'ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system"' in NAV195
     assert 'from "./oneSystemCorrelationR199"' in NAV195
-    assert "reconstituteOneSystemR199(response, pathname)" in NAV195
+    assert "const preserved = new Response(html" in NAV195
+    assert "return reconstituteOneSystemR199(preserved, pathname)" in NAV195
     assert 'headers.set("x-omega-one-system"' in NAV195
     assert 'headers.set("x-omega-one-system-correlation"' in NAV195
+    assert "RESIDUAL RESTORATION / WEAKEST-LINK QUEUE" in NAV195
 
 
 def test_r199_truthfully_exposes_unrestored_audio_instead_of_inventing_route():
