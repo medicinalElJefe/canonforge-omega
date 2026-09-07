@@ -29,7 +29,6 @@ def test_r200_exact_deployment_identity_binding_survives_without_source_mutation
     assert "git diff --exit-code -- wrangler.toml" in text
     assert "/api/acceptance/r181/manifest" in text
     assert "canonicalGitSha" in text
-    assert "deploymentIdentityBound" not in text or "canonicalGitSha" in text
 
 
 def test_r200_proof_before_mutation_and_live_acceptance_after_mutation_survive():
@@ -53,8 +52,8 @@ def test_r200_cumulative_truth_boundaries_remain_in_current_live_gate():
         "/api/acceptance/r181/manifest",
         "/api/mission/r201/verify",
         "pcOnlineRequiresCurrentAuthenticatedHeartbeat",
-        "canonicalMutation",
-        "promotionAuthorized",
+        "cloudConfiguredIsNotCloudExecutionProof",
+        "verifiedReturnIsNotCanonState",
     ):
         assert token in text, token
 
