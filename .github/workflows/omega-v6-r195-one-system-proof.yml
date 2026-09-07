@@ -176,7 +176,10 @@ jobs:
           assert m.get('shells')==[12,144,1728,20736,248832],m
           assert (m.get('waterGeometry') or {}).get('physicalClaim') is False,m
           assert float((m.get('noZeroMath') or {}).get('epsilon'))==1e-12,m
-          assert (m.get('referenceKernelPolicy') or {}).get('fixedSymmetryAsymmetryConstants') is False,m
+          # Semantic guard: 37/73 may exist as input/reference values, while 20,736 remains a valid address shell.
+          policy=m.get('referenceKernelPolicy') or {}
+          assert policy.get('fixedSymmetryAsymmetryConstants') is False,m
+          assert policy.get('fixedSymmetryValue') is None and policy.get('fixedAsymmetryValue') is None,policy
           assert float(p.get('reconstructionError'))<1e-12,p
           out=p.get('output') or {};assert abs(float(out.get('relationalEnergyAfter'))-float(out.get('relationalEnergyBefore')))<1e-10,p
           assert (n.get('initial') or {}).get('orientation')==0,n
@@ -187,7 +190,6 @@ jobs:
           d=s.get('diagnostics') or {};assert float(d.get('maxPairEnergyError',0))<1e-9,s
           result=e.get('result') or {};idx=float(result.get('inevitabilityIndex',-1));assert 0<=idx<=1,e
           assert result.get('interpretation')=='MODEL_CONVERGENCE_INDEX_NOT_FATE',e
-          assert '37' not in json.dumps(m) and '73' not in json.dumps(m),m
           for marker in ('id="odc195"','/api/compute/dewey/r195/solve','64× STABILITY'): assert marker in h,marker
           PY
           grep -qi '^x-omega-dewey-compute: r195-dewey-compute-surface' /tmp/dewey.headers
