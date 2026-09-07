@@ -1,27 +1,25 @@
 name: OMEGA V6 R179 live SAI intelligence proof
 
 on:
-  push:
-    branches: [omega-v6-full-convergence]
-    paths:
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/sai/**'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
-      - '.github/workflows/omega-v6-r179-live-sai-proof.yml'
+  workflow_call:
   workflow_dispatch:
+
+concurrency:
+  group: omega-r179-live-sai
+  cancel-in-progress: true
 
 jobs:
   prove-r179-real-sai:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     env:
       V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
     steps:
-      - name: Wait for R179 manifest after canonical deployment
+      - name: Confirm R179 manifest on deployed canonical edge
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 120); do
+          for attempt in $(seq 1 60); do
             if curl --fail --silent --show-error "$V6_URL/api/sai/manifest" -o /tmp/sai-manifest.json \
               && python - <<'PY'
           import json
@@ -39,11 +37,9 @@ jobs:
           assert training.get('state') == 'OPERATIONAL_INFERENCE_NOT_FULLY_FINE_TUNED', training
           assert d.get('canonicalMutation') is False, d
           PY
-            then
-              exit 0
-            fi
-            if [ "$attempt" -eq 120 ]; then
-              echo "R179 SAI manifest did not settle on the public edge"
+            then exit 0; fi
+            if [ "$attempt" -eq 60 ]; then
+              echo "R179 SAI manifest unavailable after post-deploy settle window"
               cat /tmp/sai-manifest.json || true
               exit 1
             fi
