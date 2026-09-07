@@ -61,11 +61,12 @@ def test_water_geometry_is_numerically_divergence_free():
         assert abs(divergence) < 2e-7
 
 
-def test_r195_engine_declares_no_zero_log_space_and_truth_boundaries():
+def test_r195_engine_declares_strict_no_zero_log_space_and_truth_boundaries():
     engine = read("compute/deweyWaterContinuityR195.ts")
     required = (
         'const EPS = 1e-12',
-        'MAGNITUDE_FLOOR_PLUS_SEPARATE_ORIENTATION',
+        'STRICT_POSITIVE_MAGNITUDE_FLOOR_PLUS_SEPARATE_ORIENTATION',
+        'stateMagnitudesFlooredAboveExactZero: true',
         'log-space accumulation with bounded exponentiation',
         'orientation: Orientation',
         'safeLog',
@@ -78,6 +79,26 @@ def test_r195_engine_declares_no_zero_log_space_and_truth_boundaries():
     )
     for token in required:
         assert token in engine
+    assert 'return clamp(finite(v, fallback), EPS, 1)' in engine
+
+
+def test_r195_neutral_orientation_is_preserved_not_coerced_positive():
+    engine = read("compute/deweyWaterContinuityR195.ts")
+    assert "const orient = s.orientation;" in engine
+    assert "s.orientation === 0 ? 1 : s.orientation" not in engine
+    assert "neutralOrientationCreatesNoSignedDirectionalDrive: true" in engine
+    assert "neutralPreserved: s.orientation === 0" in engine
+    assert "phase: s.phase + p.dt * orient" in engine
+
+
+def test_r195_reference_kernel_values_are_not_engine_symmetry_constants():
+    engine = read("compute/deweyWaterContinuityR195.ts")
+    # 37/73 may be external test/reference values but are not hard-coded into the runtime model.
+    assert "37" not in engine
+    assert "73" not in engine
+    assert "fixedSymmetryAsymmetryConstants: false" in engine
+    assert "Contextual symmetry/asymmetry remains frame-dependent" in engine
+    assert "GOLDEN_FRACTION" in engine
 
 
 def test_r195_implements_full_woven_continuity_chain():
