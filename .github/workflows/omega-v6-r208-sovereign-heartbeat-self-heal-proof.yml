@@ -1,0 +1,318 @@
+name: OMEGA V6 R208 sovereign heartbeat self-heal proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/scripts/**'
+      - 'canonforge-omega/api/**'
+      - 'canonforge-omega/omega_runtime/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/sovereignHeartbeatRecoveryR208.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/**'
+      - '.github/workflows/omega-v6-r208-sovereign-heartbeat-self-heal-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/scripts/**'
+      - 'canonforge-omega/api/**'
+      - 'canonforge-omega/omega_runtime/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/sovereignHeartbeatRecoveryR208.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/**'
+      - '.github/workflows/omega-v6-r208-sovereign-heartbeat-self-heal-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r208-sovereign-heartbeat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-and-cumulative-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact R208 candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+
+      - name: Prove R208 plus R207 R206 heartbeat lineage
+        working-directory: canonforge-omega
+        run: |
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q \
+            tests/test_r208_sovereign_heartbeat_self_heal.py \
+            tests/test_r207_windows_verified_venv_launch.py \
+            tests/test_r206_sovereign_windows_boot_continuity.py \
+            tests/test_pairing_and_agent.py \
+            tests/test_omega_runtime.py
+
+      - name: Full Sovereign non-regression suite
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck complete cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Prove Cloudflare package and Durable Object contract dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r208-dry-run
+
+  windows-self-heal-proof:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+    steps:
+      - name: Checkout exact R208 candidate
+        uses: actions/checkout@v4
+
+      - name: Set up supported Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Parse R208 Windows launch surfaces
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($file in @('scripts\INSTALL_OMEGA_V6_WINDOWS.ps1','scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell syntax rejected: $file"
+            }
+          }
+          Write-Host 'R208_POWERSHELL_PARSE_VERIFIED'
+
+      - name: Build installer-equivalent verified venv
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev,rcwa]'
+          if ($LASTEXITCODE -ne 0) { throw 'R208 Windows dependency installation failed' }
+
+      - name: Prove native grcwa and R208 source invariants on Windows
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          $raw = & $py -m omega_runtime.rcwa_solver --probe
+          if ($LASTEXITCODE -ne 0) { throw 'R208 native RCWA probe failed' }
+          $raw | Set-Content -Encoding utf8 'r208-rcwa-probe.json'
+          $probe = ($raw -join "`n") | ConvertFrom-Json
+          if (-not $probe.available) { throw 'R208 native grcwa RCWA unavailable on Windows' }
+          & $py -m pytest -q `
+            tests\test_omega_runtime.py `
+            tests\test_pairing_and_agent.py `
+            tests\test_r175_independent_solver_validation.py `
+            tests\test_r206_sovereign_windows_boot_continuity.py `
+            tests\test_r207_windows_verified_venv_launch.py `
+            tests\test_r208_sovereign_heartbeat_self_heal.py
+          if ($LASTEXITCODE -ne 0) { throw 'R208 Windows invariant suite failed' }
+
+      - name: Prove live localhost repair reuse and pairing-generation replacement
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path '.').Path
+          $base = 'http://127.0.0.1:8127'
+          $env:OMEGA_PUBLIC_URL = $base
+          $env:OMEGA_APPROVED_ROOT = $root
+          $generationFile = Join-Path $env:LOCALAPPDATA 'OMEGA\agent-pairing-generation.txt'
+          $rotateFile = Join-Path $env:TEMP 'omega-r208-ci-rotation.cmd'
+
+          function Get-CanonicalAgent {
+            return Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.Name -match '^python' -and $_.CommandLine -and
+                $_.CommandLine -match 'omega_sovereign_agent\.py' -and
+                $_.CommandLine -like "*$root*"
+              } |
+              Select-Object -First 1
+          }
+
+          function Assert-Current([string]$Stage) {
+            $status = Invoke-RestMethod -Uri "$base/api/hybrid/status" -TimeoutSec 5
+            if (-not $status.heartbeatCurrent) { throw "$Stage heartbeat is not current" }
+            if (-not $status.authenticated) { throw "$Stage heartbeat is not authenticated" }
+            if (-not $status.pcOnline) { throw "$Stage PC state is not online" }
+            if (-not $status.proof) { throw "$Stage heartbeat proof is missing" }
+            if (-not (Test-Path $generationFile)) { throw "$Stage pairing-generation sidecar missing" }
+            $stored = [int64](Get-Content -Raw $generationFile).Trim()
+            if ($stored -ne [int64]$status.pairingGeneration) { throw "$Stage pairing generation is not bound" }
+            return $status
+          }
+
+          $passed = $false
+          try {
+            Remove-Item $generationFile -Force -ErrorAction SilentlyContinue
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -ForceRepair
+            if ($LASTEXITCODE -ne 0) { throw "R208 initial repair launch exited $LASTEXITCODE" }
+            $firstStatus = Assert-Current 'initial repair'
+            $firstAgent = Get-CanonicalAgent
+            if (-not $firstAgent) { throw 'R208 initial agent process missing' }
+            $firstPid = [int]$firstAgent.ProcessId
+
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser
+            if ($LASTEXITCODE -ne 0) { throw "R208 healthy reuse launch exited $LASTEXITCODE" }
+            $reuseStatus = Assert-Current 'healthy reuse'
+            $reuseAgent = Get-CanonicalAgent
+            if (-not $reuseAgent -or [int]$reuseAgent.ProcessId -ne $firstPid) {
+              throw 'R208 replaced a healthy generation-bound agent instead of reusing it'
+            }
+
+            Invoke-WebRequest -UseBasicParsing -Uri "$base/api/hybrid/launcher" -OutFile $rotateFile -TimeoutSec 10
+            Remove-Item $rotateFile -Force -ErrorAction SilentlyContinue
+            $rotated = Invoke-RestMethod -Uri "$base/api/hybrid/status" -TimeoutSec 5
+            if ([int64]$rotated.pairingGeneration -le [int64]$reuseStatus.pairingGeneration) {
+              throw 'R208 test failed to rotate pairing generation'
+            }
+
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser
+            if ($LASTEXITCODE -ne 0) { throw "R208 generation-repair launch exited $LASTEXITCODE" }
+            $repairedStatus = Assert-Current 'generation mismatch repair'
+            $repairedAgent = Get-CanonicalAgent
+            if (-not $repairedAgent) { throw 'R208 repaired agent process missing' }
+            if ([int]$repairedAgent.ProcessId -eq $firstPid) {
+              throw 'R208 failed to replace the generation-unbound agent'
+            }
+
+            [ordered]@{
+              schema = 'OMEGA_WINDOWS_HEARTBEAT_SELF_HEAL_PROOF_R208'
+              initial_agent_pid = $firstPid
+              reused_agent_pid = [int]$reuseAgent.ProcessId
+              repaired_agent_pid = [int]$repairedAgent.ProcessId
+              initial_generation = [int64]$firstStatus.pairingGeneration
+              rotated_generation = [int64]$rotated.pairingGeneration
+              repaired_generation = [int64]$repairedStatus.pairingGeneration
+              heartbeat_current = [bool]$repairedStatus.heartbeatCurrent
+              authenticated = [bool]$repairedStatus.authenticated
+              pc_online = [bool]$repairedStatus.pcOnline
+              authority = 'WINDOWS_CI_TRANSPORT_SELF_HEAL_PROOF_NOT_OPERATOR_PC'
+            } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 'r208-self-heal-proof.json'
+            $passed = $true
+            Write-Host 'R208_WINDOWS_STALE_GENERATION_SELF_HEAL_VERIFIED_NOT_USER_PC'
+          }
+          finally {
+            Remove-Item $rotateFile -Force -ErrorAction SilentlyContinue
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.Name -match '^python' -and $_.CommandLine -and
+                ($_.CommandLine -match 'omega_sovereign_agent\.py' -or $_.CommandLine -match 'omega_runtime\.cli') -and
+                $_.CommandLine -like "*$root*"
+              } |
+              ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+            Remove-Item $generationFile -Force -ErrorAction SilentlyContinue
+          }
+          if (-not $passed) { throw 'R208 Windows self-heal proof did not complete' }
+
+      - name: Record physical-PC truth boundary
+        if: always()
+        run: |
+          @'
+          ## OMEGA R208 Windows heartbeat self-heal proof
+
+          This runner proves the Windows transport/recovery mechanism: verified `.venv`, native `grcwa`, current authenticated localhost heartbeat, healthy-agent reuse, pairing-generation drift detection, scoped stale-agent replacement, fresh one-time pairing, and fail-closed recovery.
+
+          **Authority boundary:** this is a Windows CI transport/self-heal proof. It is not the operator's physical Sovereign PC heartbeat and cannot satisfy R181 user-device acceptance by itself.
+          '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload R208 Windows proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r208-windows-heartbeat-self-heal-proof
+          if-no-files-found: warn
+          path: |
+            canonforge-omega/r208-rcwa-probe.json
+            canonforge-omega/r208-self-heal-proof.json
+            canonforge-omega/logs/
+
+  prove-live-r208-bootstrap:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: [source-and-cumulative-proof, windows-self-heal-proof]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Wait for exact canonical R208 deployment and prove token-free bootstrap
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          settled=false
+          mkdir -p /tmp/r208-live
+          for attempt in $(seq 1 90); do
+            rm -f /tmp/r208-live/manifest.json /tmp/r208-live/launcher.headers /tmp/r208-live/launcher.cmd
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r208/manifest" -o /tmp/r208-live/manifest.json \
+              && curl --fail --silent --show-error --max-time 30 -D /tmp/r208-live/launcher.headers "$V6_URL/api/hybrid/launcher" -o /tmp/r208-live/launcher.cmd \
+              && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          expected=os.environ['EXPECTED_SHA']
+          d=json.loads(Path('/tmp/r208-live/manifest.json').read_text())
+          h=Path('/tmp/r208-live/launcher.headers').read_text(errors='replace').lower()
+          b=Path('/tmp/r208-live/launcher.cmd').read_text(errors='replace')
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_SOVEREIGN_HEARTBEAT_RECOVERY_MANIFEST_R208', d
+          assert d.get('release') == 'r208-sovereign-heartbeat-self-heal', d
+          assert d.get('deploymentIdentityBound') is True, d
+          assert d.get('canonicalGitSha') == expected, (expected,d.get('canonicalGitSha'))
+          boundaries=d.get('boundaries') or {}
+          assert boundaries.get('currentAuthenticatedHeartbeatRequiredForPcOnline') is True, boundaries
+          assert boundaries.get('cloudBootstrapDoesNotIssuePairingCredential') is True, boundaries
+          assert boundaries.get('cloudBootstrapDoesNotExecuteOnUserPcByItself') is True, boundaries
+          assert boundaries.get('canonicalMutation') is False and boundaries.get('promotionAuthorized') is False, boundaries
+          assert 'x-omega-hybrid-bootstrap: r208-sovereign-heartbeat-self-heal' in h, h
+          assert f'x-omega-canonical-sha: {expected}' in h, h
+          assert 'start_omega_pc_link_r208.cmd' in h, h
+          assert expected in b, b[:1500]
+          assert f'raw.githubusercontent.com/medicinalElJefe/canonforge-omega/{expected}/canonforge-omega' in b, b[:2500]
+          assert '-RootOverride' in b and '-AgentScriptOverride' in b and '-ForceRepair' in b, b[:3000]
+          assert 'OMEGA_TOKEN=' not in b, 'public bootstrap must not contain a pairing token'
+          PY
+            then
+              settled=true
+              break
+            fi
+            echo "R208 exact-SHA deployment/bootstrap not settled yet (attempt $attempt/90)."
+            sleep 3
+          done
+          if [ "$settled" != true ]; then
+            echo 'R208_LIVE_BOOTSTRAP_NOT_SETTLED'
+            cat /tmp/r208-live/manifest.json 2>/dev/null || true
+            cat /tmp/r208-live/launcher.headers 2>/dev/null || true
+            head -c 2500 /tmp/r208-live/launcher.cmd 2>/dev/null || true
+            exit 1
+          fi
+          echo "R208_LIVE_EXACT_SHA_TOKEN_FREE_BOOTSTRAP_VERIFIED $EXPECTED_SHA"
