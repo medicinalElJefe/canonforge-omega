@@ -6,6 +6,7 @@ import { handleWarpBuildCandidateRequest } from "./swarm/warpBuildCandidateR178"
 import { warpBuildCandidateLabResponse } from "./swarm/warpBuildCandidateLabR178";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
+import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -49,6 +50,10 @@ export default {
     if (url.pathname === "/validate/cross-runtime" || url.pathname === "/validate/cross-runtime/") return crossRuntimeLabResponse();
     if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
     if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
+
+    if (url.pathname.startsWith("/api/acceptance/r181/")) {
+      return handleLiveAcceptanceR181(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
+    }
 
     // R179 provider-backed cloud SAI remains a first-class organ.
     // B059 deterministic SAI remains Sovereign authority and must not be shadowed
