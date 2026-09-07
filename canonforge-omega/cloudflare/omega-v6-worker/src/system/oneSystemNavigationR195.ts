@@ -1,4 +1,5 @@
 import { EVIDENCE_PLANE_RELEASE_R194 } from "../evidencePlaneR194";
+import { enhanceWholeSystemSurfaceR205 } from "../wholeSystemSurfaceR205";
 import { reconstituteOneSystemR199, ONE_SYSTEM_CORRELATION_RELEASE_R199 } from "./oneSystemCorrelationR199";
 import { correlateOneSystemTruthStripR199 } from "./oneSystemTruthStripR199";
 import { enhanceOneSystemOperatorSurfaceR199 } from "./oneSystemOperatorSurfaceR199";
@@ -42,5 +43,6 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   const reconstituted = await reconstituteOneSystemR199(preserved, pathname);
   const correlated = await correlateOneSystemTruthStripR199(reconstituted);
   const operated = await enhanceOneSystemOperatorSurfaceR199(correlated);
-  return enhanceMissionSurfaceR200(operated);
+  const missionSurface = await enhanceMissionSurfaceR200(operated);
+  return enhanceWholeSystemSurfaceR205(missionSurface);
 }
