@@ -1,0 +1,78 @@
+{
+  "version": "R190",
+  "release": "r190-capability-truth-admission",
+  "predecessor": {
+    "revision": "R189_WHOLE_INSTRUMENT_CONVERGENCE",
+    "sha": "ab3c8973dad012da11b75983dd41bed6bddfad3a",
+    "rule": "R190 is additive proof/admission over the admitted R189 whole instrument; it may not delete, fork, or shadow predecessor capability."
+  },
+  "capability_stages": ["IMPLEMENTED", "ROUTE_BOUND", "INVOKED", "RETURNED", "VERIFIED"],
+  "governed_modes": [
+    "FULL_OVERALL_CANON",
+    "MODE_188",
+    "UNIFIED_COHERENCE",
+    "FORECAST",
+    "FULL_SPHERE",
+    "RELATIONAL_SKIN",
+    "DEWEY_CALCULUS",
+    "UNIFIED_RECURSION",
+    "DEEP_MOTHER",
+    "HIGH_FATHER",
+    "HEAVY_PRUNE",
+    "ALPHA",
+    "CRIMSON",
+    "NO_NOTHING_TRUTH",
+    "GUIDANCE_FIELD"
+  ],
+  "quick_required_routes": [
+    "/api/instrument/r189/manifest",
+    "/api/omega/state",
+    "/api/omega/proof?limit=2",
+    "/api/restoration",
+    "/api/earth/catalog",
+    "/api/compute/manifest",
+    "/api/validate/manifest",
+    "/api/validate/independent/manifest",
+    "/api/clouds/r185/manifest",
+    "/api/swarm/motion/r188/manifest",
+    "/truth"
+  ],
+  "full_additional_routes": [
+    "/api/sai/status",
+    "/api/hybrid/status",
+    "/api/acceptance/r181/probe",
+    "/api/development/status",
+    "/api/validate/independent/compare"
+  ],
+  "full_acceptance_requirements": [
+    "verified R189 whole-instrument predecessor",
+    "exact deployed Git identity",
+    "all quick required routes verified",
+    "current authenticated sovereign heartbeat",
+    "exact B059 deep verification within declared deterministic training scope",
+    "grounded B059 query receipt",
+    "persisted VERIFIED native grcwa RCWA execution receipt",
+    "independent R175 level-4 revalidation of the native RCWA result"
+  ],
+  "truth_boundaries": {
+    "source_presence_is_not_execution": true,
+    "route_return_is_not_verification": true,
+    "manifest_is_not_native_execution": true,
+    "heartbeat_is_not_solver_validation": true,
+    "provider_weights_are_not_omega_training": true,
+    "logical_time_is_not_physical_time_acceleration": true,
+    "address_shells_are_not_physical_dimensions": true,
+    "automatic_production_mutation": false
+  },
+  "promotion": {
+    "exact_head_required": true,
+    "r189_predecessor_required": true,
+    "quick_core_acceptance_required": true,
+    "typecheck_required": true,
+    "r189_r188_r185_r181_r175_regression_tests_required": true,
+    "rollback_parent_required": true,
+    "no_regression_by_omission": true,
+    "full_probe_external_blocks_are_reported_not_fabricated": true,
+    "acceptance_layer_may_promote": false
+  }
+}
