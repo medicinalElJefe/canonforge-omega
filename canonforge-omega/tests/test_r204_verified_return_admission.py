@@ -38,7 +38,7 @@ def test_r204_preserves_canonical_r169_entrypoint_and_upgrades_only_convergence_
     assert 'export { OmegaRuntime } from "./heartbeatTruth"' in ENTRY169
     assert 'import convergence from "./system/../convergence"' in ALIAS204
     assert 'export { OmegaRuntime } from "./omegaRuntimeR204"' in ALIAS204
-    assert 'return convergence.fetch(request, env, ctx)' in ALIAS204
+    assert 'return convergence.fetch(request, env)' in ALIAS204
     assert 'handleHybridMissionR203' in ENTRY169
     assert 'handleContinuityPotentialR202' in ENTRY169
     assert 'OMEGA_HYBRID_MISSION_CONTINUITY_MANIFEST_R203' in R203_ROUTE
