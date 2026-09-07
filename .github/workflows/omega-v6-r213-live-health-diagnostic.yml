@@ -1,0 +1,73 @@
+name: OMEGA V6 R213 live whole-system diagnostic
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts'
+      - 'canonforge-omega/tests/test_r213_provenance_health_closure.py'
+      - '.github/workflows/omega-v6-r213-live-health-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  diagnose-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Prove R213 source invariants and full regression
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck and dry-run complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir .r213-dry-run
+      - name: Observe current live R205 blocker through R211 without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r213-live
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 45 \
+            "$V6_URL/api/system/r211/query?id=wholeSystem" \
+            -o /tmp/r213-live/whole-system.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r213-live/whole-system.json').read_text())
+          assert d.get('schema') == 'OMEGA_OPERATIONAL_PROVENANCE_QUERY_R211', d
+          rows=d.get('results') or []
+          assert len(rows)==1 and rows[0].get('id')=='wholeSystem', rows
+          evidence=rows[0].get('evidence') or {}
+          assert evidence.get('schema') == 'OMEGA_WHOLE_SYSTEM_HEALTH_R205', evidence
+          print('R213_LIVE_R205_OK', evidence.get('ok'))
+          print('R213_LIVE_R205_STATE', evidence.get('state'))
+          print('R213_LIVE_R205_SHA', evidence.get('canonicalGitSha'))
+          for layer in evidence.get('layers') or []:
+              print('R213_LAYER', layer.get('id'), 'OK='+str(layer.get('ok')), 'STATE='+str(layer.get('state')), 'STATUS='+str(layer.get('status')), 'SCHEMA='+str(layer.get('schema')))
+          print('R213_HYBRID', json.dumps(evidence.get('hybrid') or {}, sort_keys=True))
+          print('R213_AISAI', json.dumps(evidence.get('aiSai') or {}, sort_keys=True))
+          print('R213_SELFBUILD', json.dumps(evidence.get('selfBuild') or {}, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: omega-r213-live-health-${{ github.run_id }}
+          path: /tmp/r213-live/
+          if-no-files-found: ignore
