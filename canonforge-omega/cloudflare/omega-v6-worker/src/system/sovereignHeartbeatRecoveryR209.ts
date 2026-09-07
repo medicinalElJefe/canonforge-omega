@@ -1,6 +1,8 @@
 export const SOVEREIGN_HEARTBEAT_RECOVERY_RELEASE_R209 = "r209-sovereign-heartbeat-self-heal";
 export const SOVEREIGN_HEARTBEAT_RECOVERY_SCHEMA_R209 = "OMEGA_SOVEREIGN_HEARTBEAT_RECOVERY_MANIFEST_R209";
 
+type CanonicalFetch = (request: Request) => Promise<Response>;
+
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
   "cache-control": "no-store",
@@ -30,20 +32,22 @@ async function manifest(env: any): Promise<Response> {
     canonicalGitSha: gitSha,
     deploymentIdentityBound: Boolean(gitSha),
     predecessor: "R208_PHYSICAL_SOVEREIGN_ACCEPTANCE_CLOSURE",
-    purpose: "Make the R208 physical-acceptance prerequisite self-healing when an old sovereign agent process survives with stale authentication or a superseded pairing generation.",
+    purpose: "Make the R208 physical-acceptance prerequisite self-healing while restoring the established hosted short-lived pairing authority used by the Windows bridge.",
     recoveryLaw: [
       "PRESERVE_R208_PHYSICAL_ACCEPTANCE_PROVER",
       "PRESERVE_FIXED_LOCALHOST_127_0_0_1_8127",
       "PRESERVE_INSTALLER_VERIFIED_VENV",
-      "OBSERVE_AGENT_PROCESS_AND_HYBRID_STATUS",
+      "HOSTED_CANONICAL_PAIRING_AUTHORITY_ISSUES_SHORT_LIVED_CREDENTIAL",
+      "PUBLIC_DOWNLOAD_BOOTSTRAP_REMAINS_CREDENTIAL_FREE",
+      "OBSERVE_AGENT_PROCESS_AND_HOSTED_HYBRID_STATUS",
       "REUSE_ONLY_CURRENT_AUTHENTICATED_GENERATION_BOUND_AGENT",
       "SCOPED_TERMINATION_ONLY_OF_MATCHING_CANONICAL_STALE_AGENT",
-      "ROTATE_PAIRING_ONLY_THROUGH_LOCAL_SOVEREIGN_RUNTIME",
+      "ROTATE_PAIRING_ONLY_THROUGH_HOSTED_CANONICAL_AUTHORITY",
       "DELETE_ONE_TIME_CREDENTIAL_ENVELOPE_IMMEDIATELY",
       "PERSIST_ONLY_NON_SECRET_PAIRING_GENERATION_METADATA",
       "RESTART_EXACT_AGENT_WITH_VERIFIED_VENV",
-      "FAIL_CLOSED_IF_CURRENT_AUTHENTICATED_HEARTBEAT_DOES_NOT_RETURN",
-      "RUN_R208_DEEP_ACCEPTANCE_ONLY_AFTER_HEARTBEAT_CURRENT_UNLESS_EXPLICITLY_SKIPPED_FOR_HEADLESS_CONTINUITY",
+      "FAIL_CLOSED_IF_CURRENT_AUTHENTICATED_HOSTED_HEARTBEAT_DOES_NOT_RETURN",
+      "RUN_R208_DEEP_ACCEPTANCE_ONLY_AFTER_HOSTED_HEARTBEAT_CURRENT_UNLESS_EXPLICITLY_SKIPPED_FOR_HEADLESS_CONTINUITY",
     ],
     publicBootstrap: {
       endpoint: "/api/hybrid/launcher",
@@ -58,6 +62,14 @@ async function manifest(env: any): Promise<Response> {
       invokesForceRepair: true,
       executesOnUserPcByItself: false,
     },
+    hostedPairingEnvelope: {
+      endpoint: "/api/hybrid/pairing-envelope",
+      credentialBearing: true,
+      ephemeral: true,
+      cacheable: false,
+      delegatesToPreservedCanonicalPairingAuthority: true,
+      userFacingBootstrapContainsCredential: false,
+    },
     boundaries: {
       browserCredentialIsNotPcProof: true,
       windowsCiIsNotOperatorPcAcceptance: true,
@@ -66,6 +78,8 @@ async function manifest(env: any): Promise<Response> {
       cloudBootstrapDoesNotIssuePairingCredential: true,
       cloudBootstrapDoesNotExecuteOnUserPcByItself: true,
       publicBootstrapContainsPairingToken: false,
+      hostedPairingEnvelopeIsCredentialBearingEphemeral: true,
+      hostedPairingCredentialIsNotCanon: true,
       noFallbackToSystemPythonAfterVerifiedVenvExists: true,
       noPortDriftFrom8127: true,
       canonicalMutation: false,
@@ -76,7 +90,52 @@ async function manifest(env: any): Promise<Response> {
   return json({ ...core, receiptSha256: await sha256(core) });
 }
 
-function bootstrap(env: any): Response {
+async function pairingEnvelope(request: Request, canonicalFetch: CanonicalFetch | undefined): Promise<Response> {
+  if (!canonicalFetch) {
+    return json({ ok: false, code: "R209_CANONICAL_PAIRING_AUTHORITY_UNAVAILABLE", canonicalMutation: false, promotionAuthorized: false }, 503);
+  }
+  const target = new URL(request.url);
+  target.pathname = "/api/hybrid/launcher";
+  target.search = "";
+  const upstream = await canonicalFetch(new Request(target.toString(), { method: "GET", headers: request.headers }));
+  const body = await upstream.text();
+  if (!upstream.ok || !body.includes("OMEGA Sovereign PC Link") || !body.includes("OMEGA_TOKEN=") || !body.includes("OMEGA_SERVER=")) {
+    return json({
+      ok: false,
+      code: "R209_HOSTED_PAIRING_CONTRACT_INVALID",
+      upstreamStatus: upstream.status,
+      boundary: "No credential is substituted when the preserved canonical pairing authority fails to return its short-lived pairing contract.",
+      canonicalMutation: false,
+      promotionAuthorized: false,
+    }, 502);
+  }
+
+  let pairingGeneration: number | null = null;
+  try {
+    const statusUrl = new URL(request.url);
+    statusUrl.pathname = "/api/hybrid/status";
+    statusUrl.search = "";
+    const statusResponse = await canonicalFetch(new Request(statusUrl.toString(), { method: "GET", headers: { accept: "application/json" } }));
+    if (statusResponse.ok) {
+      const status: any = await statusResponse.json();
+      const raw = status?.pairingGeneration;
+      if (Number.isInteger(Number(raw))) pairingGeneration = Number(raw);
+    }
+  } catch {
+    pairingGeneration = null;
+  }
+
+  const headers = new Headers();
+  headers.set("content-type", "application/octet-stream");
+  headers.set("content-disposition", 'attachment; filename="OMEGA_PAIRING_ENVELOPE_R209.cmd"');
+  headers.set("cache-control", "no-store");
+  headers.set("pragma", "no-cache");
+  headers.set("x-omega-pairing-envelope", "hosted-canonical-ephemeral-r209");
+  if (pairingGeneration !== null) headers.set("x-omega-pairing-generation", String(pairingGeneration));
+  return new Response(body, { status: 200, headers });
+}
+
+function bootstrap(request: Request, env: any): Response {
   const gitSha = canonicalSha(env);
   if (!gitSha) {
     return json({
@@ -89,9 +148,10 @@ function bootstrap(env: any): Response {
     }, 503);
   }
 
+  const origin = new URL(request.url).origin;
   const shortSha = gitSha.slice(0, 12);
   const rawRoot = `https://raw.githubusercontent.com/medicinalElJefe/canonforge-omega/${gitSha}/canonforge-omega`;
-  const cmd = `@echo off\r\nsetlocal EnableExtensions\r\nchcp 65001 >nul\r\nset "OMEGA_R209_SHA=${gitSha}"\r\nset "OMEGA_ROOT_FILE=%LOCALAPPDATA%\\OMEGA\\canonical-root.txt"\r\nset "OMEGA_TMP=%TEMP%\\OMEGA-R209-${shortSha}"\r\necho OMEGA R209 Sovereign Heartbeat Self-Heal\r\necho Canonical SHA: %OMEGA_R209_SHA%\r\necho This bootstrap contains no pairing credential. PC ONLINE remains current-heartbeat proof gated.\r\nif not exist "%OMEGA_ROOT_FILE%" goto :install_required\r\nfor /f "usebackq delims=" %%R in ("%OMEGA_ROOT_FILE%") do if not defined OMEGA_ROOT set "OMEGA_ROOT=%%R"\r\nif not defined OMEGA_ROOT goto :install_required\r\nif not exist "%OMEGA_ROOT%\\.venv\\Scripts\\python.exe" goto :install_required\r\nif not exist "%OMEGA_TMP%" mkdir "%OMEGA_TMP%"\r\necho [1/5] Fetching exact deployed recovery launcher...\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '${rawRoot}/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1' -OutFile '%OMEGA_TMP%\\LAUNCH_OMEGA_V6_WINDOWS.ps1' -TimeoutSec 30" || goto :download_error\r\necho [2/5] Fetching exact deployed sovereign agent...\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '${rawRoot}/scripts/omega_sovereign_agent.py' -OutFile '%OMEGA_TMP%\\omega_sovereign_agent.py' -TimeoutSec 30" || goto :download_error\r\necho [3/5] Fetching exact deployed R208 acceptance prover...\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '${rawRoot}/scripts/PROVE_OMEGA_V6_WINDOWS.ps1' -OutFile '%OMEGA_TMP%\\PROVE_OMEGA_V6_WINDOWS.ps1' -TimeoutSec 30" || goto :download_error\r\nfindstr /C:"R209 launch requested" "%OMEGA_TMP%\\LAUNCH_OMEGA_V6_WINDOWS.ps1" >nul || goto :contract_error\r\nfindstr /C:"PC ONLINE will only be claimed" "%OMEGA_TMP%\\omega_sovereign_agent.py" >nul || goto :contract_error\r\nfindstr /C:"OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208" "%OMEGA_TMP%\\PROVE_OMEGA_V6_WINDOWS.ps1" >nul || goto :contract_error\r\necho [4/5] Repairing stale or generation-unbound sovereign heartbeat state...\r\npowershell -NoProfile -ExecutionPolicy Bypass -File "%OMEGA_TMP%\\LAUNCH_OMEGA_V6_WINDOWS.ps1" -RootOverride "%OMEGA_ROOT%" -AgentScriptOverride "%OMEGA_TMP%\\omega_sovereign_agent.py" -AcceptanceProverOverride "%OMEGA_TMP%\\PROVE_OMEGA_V6_WINDOWS.ps1" -ForceRepair || goto :repair_error\r\necho [5/5] R209 returned after current authenticated generation-bound heartbeat proof.\r\necho R208 physical acceptance was then evaluated separately against production truth; inspect OMEGA logs for its exact result.\r\nexit /b 0\r\n:install_required\r\necho INSTALL REQUIRED: canonical-root.txt or the verified OMEGA .venv is missing.\r\necho Run the canonical INSTALL_OMEGA_V6_WINDOWS.ps1 from the installed repository first.\r\nexit /b 30\r\n:download_error\r\necho DOWNLOAD ERROR: exact canonical recovery sources could not be retrieved. No older source was substituted.\r\nexit /b 31\r\n:contract_error\r\necho CONTRACT ERROR: downloaded files did not match the R209/R208 recovery contract. Nothing was executed.\r\nexit /b 32\r\n:repair_error\r\necho RECOVERY FAILED: localhost runtime may be healthy, but current authenticated heartbeat proof was not established.\r\necho Review the installed OMEGA logs. PC ONLINE is not claimed by this bootstrap.\r\nexit /b 33\r\n`;
+  const cmd = `@echo off\r\nsetlocal EnableExtensions\r\nchcp 65001 >nul\r\nset "OMEGA_R209_SHA=${gitSha}"\r\nset "OMEGA_ROOT_FILE=%LOCALAPPDATA%\\OMEGA\\canonical-root.txt"\r\nset "OMEGA_TMP=%TEMP%\\OMEGA-R209-${shortSha}"\r\necho OMEGA R209 Sovereign Heartbeat Self-Heal\r\necho Canonical SHA: %OMEGA_R209_SHA%\r\necho Hosted authority: ${origin}\r\necho This bootstrap contains no pairing credential. Pairing is requested only after local execution begins.\r\nif not exist "%OMEGA_ROOT_FILE%" goto :install_required\r\nfor /f "usebackq delims=" %%R in ("%OMEGA_ROOT_FILE%") do if not defined OMEGA_ROOT set "OMEGA_ROOT=%%R"\r\nif not defined OMEGA_ROOT goto :install_required\r\nif not exist "%OMEGA_ROOT%\\.venv\\Scripts\\python.exe" goto :install_required\r\nif not exist "%OMEGA_TMP%" mkdir "%OMEGA_TMP%"\r\necho [1/5] Fetching exact deployed recovery launcher...\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '${rawRoot}/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1' -OutFile '%OMEGA_TMP%\\LAUNCH_OMEGA_V6_WINDOWS.ps1' -TimeoutSec 30" || goto :download_error\r\necho [2/5] Fetching exact deployed sovereign agent...\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '${rawRoot}/scripts/omega_sovereign_agent.py' -OutFile '%OMEGA_TMP%\\omega_sovereign_agent.py' -TimeoutSec 30" || goto :download_error\r\necho [3/5] Fetching exact deployed R208 acceptance prover...\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '${rawRoot}/scripts/PROVE_OMEGA_V6_WINDOWS.ps1' -OutFile '%OMEGA_TMP%\\PROVE_OMEGA_V6_WINDOWS.ps1' -TimeoutSec 30" || goto :download_error\r\nfindstr /C:"R209 launch requested" "%OMEGA_TMP%\\LAUNCH_OMEGA_V6_WINDOWS.ps1" >nul || goto :contract_error\r\nfindstr /C:"PC ONLINE will only be claimed" "%OMEGA_TMP%\\omega_sovereign_agent.py" >nul || goto :contract_error\r\nfindstr /C:"OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208" "%OMEGA_TMP%\\PROVE_OMEGA_V6_WINDOWS.ps1" >nul || goto :contract_error\r\necho [4/5] Requesting hosted short-lived pairing and repairing stale sovereign heartbeat state...\r\npowershell -NoProfile -ExecutionPolicy Bypass -File "%OMEGA_TMP%\\LAUNCH_OMEGA_V6_WINDOWS.ps1" -RootOverride "%OMEGA_ROOT%" -AgentScriptOverride "%OMEGA_TMP%\\omega_sovereign_agent.py" -AcceptanceProverOverride "%OMEGA_TMP%\\PROVE_OMEGA_V6_WINDOWS.ps1" -CloudBase "${origin}" -ForceRepair || goto :repair_error\r\necho [5/5] R209 returned after current authenticated hosted heartbeat proof.\r\necho R208 physical acceptance was then evaluated separately against production truth; inspect OMEGA logs for its exact result.\r\nexit /b 0\r\n:install_required\r\necho INSTALL REQUIRED: canonical-root.txt or the verified OMEGA .venv is missing.\r\necho Run the canonical INSTALL_OMEGA_V6_WINDOWS.ps1 from the installed repository first.\r\nexit /b 30\r\n:download_error\r\necho DOWNLOAD ERROR: exact canonical recovery sources could not be retrieved. No older source was substituted.\r\nexit /b 31\r\n:contract_error\r\necho CONTRACT ERROR: downloaded files did not match the R209/R208 recovery contract. Nothing was executed.\r\nexit /b 32\r\n:repair_error\r\necho RECOVERY FAILED: localhost runtime may be healthy, but current authenticated hosted heartbeat proof was not established.\r\necho Review the installed OMEGA logs. PC ONLINE is not claimed by this bootstrap.\r\nexit /b 33\r\n`;
 
   return new Response(cmd, {
     status: 200,
@@ -105,7 +165,11 @@ function bootstrap(env: any): Response {
   });
 }
 
-export async function handleSovereignHeartbeatRecoveryR209(request: Request, env: any): Promise<Response | null> {
+export async function handleSovereignHeartbeatRecoveryR209(
+  request: Request,
+  env: any,
+  canonicalFetch?: CanonicalFetch,
+): Promise<Response | null> {
   const url = new URL(request.url);
   if (url.pathname === "/api/system/r209/manifest" || url.pathname === "/api/system/r209/manifest/") {
     if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
@@ -113,7 +177,11 @@ export async function handleSovereignHeartbeatRecoveryR209(request: Request, env
   }
   if (url.pathname === "/api/hybrid/launcher" || url.pathname === "/api/hybrid/launcher/") {
     if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
-    return bootstrap(env);
+    return bootstrap(request, env);
+  }
+  if (url.pathname === "/api/hybrid/pairing-envelope" || url.pathname === "/api/hybrid/pairing-envelope/") {
+    if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
+    return pairingEnvelope(request, canonicalFetch);
   }
   return null;
 }
