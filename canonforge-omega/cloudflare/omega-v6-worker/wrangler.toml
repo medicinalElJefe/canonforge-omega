@@ -28,6 +28,7 @@ SAI_INTELLIGENCE_RUNTIME_ID = "r179-real-provider-backed-multi-agent-sai"
 SAI_B059_TRAINING_ID = "r179-exact-15-authority-compiled-indexed-calibrated-sai"
 SAI_AI_FUSION_ID = "r179-workers-ai-plus-verified-b059-grounding"
 SWARM_GOVERNOR_ID = "r180-adaptive-interactive-reserve-self-development-governor"
+LIVE_ACCEPTANCE_ID = "r181-current-heartbeat-exact-b059-grounded-query-acceptance"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
