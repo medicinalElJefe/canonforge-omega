@@ -6,7 +6,7 @@
 // @ts-ignore Wrangler Text module configured in wrangler.toml.
 import agentSource from "../../../scripts/omega_hybrid_agent_r198.py";
 
-export const SOVEREIGN_AGENT_R198_SHA256 = "1d90b82422c4b7b9f4cfd216a3704d6a3f53b43a6fda520b24e2766242fd3760";
+export const SOVEREIGN_AGENT_R198_SHA256 = "945f3e1fe9e9acf67691a9eaecf4afe5d43f9df317aed036bc50f99f27546082";
 export const SOVEREIGN_AGENT_TRANSPORT_VERSION = "R34.1";
 export const SOVEREIGN_AGENT_COMPATIBILITY_REVISION = "R132";
 export const SOVEREIGN_AGENT_CLOSURE_REVISION = "R198";
