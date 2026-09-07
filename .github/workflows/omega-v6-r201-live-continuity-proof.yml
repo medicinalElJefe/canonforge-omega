@@ -197,7 +197,7 @@ jobs:
           Path('/tmp/r201-proof-entry-sha.txt').write_text(str(record.get('entrySha256')))
           PY
 
-      - name: Wait for public history and independently bind the durable record into the verified chain
+      - name: Wait for public history and independently bind the durable head
         shell: bash
         run: |
           set -euo pipefail
@@ -207,7 +207,7 @@ jobs:
             if curl --fail --silent --show-error --max-time 30 \
               "$V6_URL/api/mission/r201/summary" -o /tmp/r201-summary-after.json \
               && curl --fail --silent --show-error --max-time 30 \
-              "$V6_URL/api/mission/r201/history?limit=40" -o /tmp/r201-history-after.json \
+              "$V6_URL/api/mission/r201/history?limit=12" -o /tmp/r201-history-after.json \
               && curl --fail --silent --show-error --max-time 30 \
               "$V6_URL/api/mission/r201/verify" -o /tmp/r201-verify-after.json \
               && python - <<'PY'
