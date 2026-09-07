@@ -12,6 +12,16 @@ const HEADERS = {
   "access-control-allow-headers": "content-type,authorization,x-omega-bridge-secret",
 };
 
+const HYBRID_OPS_R204 = new Set([
+  "TRAIN_LOCAL","INDEX","READ_TEXT","SEARCH_TEXT","HASH_TREE","SAFE_IMPORT",
+  "WORKBOOK_AUDIT","BUILD","TEST","PACKAGE","SUPPORT_BUNDLE","APPLY_PATCH",
+  "OPEN_URL","WAIT","CLICK","KEY","TYPE_TEXT","SCROLL","ASSERT_WINDOW",
+  "READ_VISIBLE_TEXT","RECORD_MACRO","REPLAY_MACRO",
+]);
+const HYBRID_PROFILES_R204 = new Set([
+  "AUTO_BUILD","NODE_BUILD","PYTHON_TEST","DOTNET_BUILD","WINDOWS_AUTOMATION","BROWSER_AUTOMATION",
+]);
+
 function json(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value, null, 2), { status, headers: HEADERS });
 }
@@ -103,6 +113,7 @@ async function manifest(env: any) {
       "VERIFY_R201_R202_R203_CONTINUITY",
       "VERIFY_BOUNDED_SELF_BUILD_PIPELINE",
       "PREPARE_RECEIPT_BOUND_SAI_HYBRID_BRIDGE",
+      "MATERIALIZE_ONLY_EXPLICIT_ALLOW_LISTED_HOST_OPERATIONS",
       "R203_AUTHENTICATED_NATIVE_QUEUE_ONLY_IF_CURRENT_HOST_PROOF",
       "SYNC_RETURNED_HOST_EVIDENCE",
       "SEPARATE_CANON_ADMISSION",
@@ -113,11 +124,13 @@ async function manifest(env: any) {
       "/api/intelligence/r204/bridge/prepare",
       "/api/intelligence/r204/bridge/execute",
     ],
+    hybridOperations: [...HYBRID_OPS_R204],
     boundaries: {
       aiOutputIsNotCanon: true,
       saiOutputIsNotCanon: true,
       pcOnlineRequiresCurrentAuthenticatedHeartbeat: true,
       bridgePreparationIsNotHostExecution: true,
+      explicitHostOperationsRequired: true,
       hostQueueIsNotHostCompletion: true,
       selfBuildDraftIsNotGitMutation: true,
       successorEvidenceIsNotAutomaticPromotion: true,
@@ -249,7 +262,7 @@ async function prepareBridge(request: Request, env: any, ctx: any, canonicalFetc
       pcOnline: healthState?.hybrid?.pcOnline === true,
       executionAuthorized: false,
       reason: healthState?.hybrid?.pcOnline === true
-        ? "Current host proof exists, but explicit bridge execution confirmation and the existing paired bridge credential are still required."
+        ? "Current host proof exists, but explicit bridge execution confirmation, explicit allow-listed host operations, and the existing paired bridge credential are still required."
         : "Bridge preparation is complete; native execution remains withheld until current authenticated host proof exists.",
     },
     authority: "SAI_AI_BRIDGE_PREPARATION_NOT_HOST_EXECUTION_NOT_CANON",
@@ -261,15 +274,46 @@ async function prepareBridge(request: Request, env: any, ctx: any, canonicalFetc
   return json({ ...core, receiptSha256 }, ready ? 200 : 503);
 }
 
+function explicitHybridPlan(hybrid: AnyObj) {
+  const requested = Array.isArray(hybrid.allowedOps)
+    ? hybrid.allowedOps.map((value: unknown) => text(value).toUpperCase()).filter(Boolean)
+    : [];
+  const unsupported = requested.filter((op: string) => !HYBRID_OPS_R204.has(op));
+  const allowedOps = [...new Set(requested.filter((op: string) => HYBRID_OPS_R204.has(op)))];
+  if (!allowedOps.length) return { ok: false, code: "R204_EXPLICIT_ALLOW_LISTED_HOST_OPERATIONS_REQUIRED", unsupported, allowedOps: [] as string[], draft: null };
+  if (unsupported.length) return { ok: false, code: "R204_UNSUPPORTED_HOST_OPERATION", unsupported, allowedOps, draft: null };
+  const projectPath = text(hybrid.projectPath || ".") || ".";
+  const profile = HYBRID_PROFILES_R204.has(text(hybrid.profile).toUpperCase()) ? text(hybrid.profile).toUpperCase() : "AUTO_BUILD";
+  const steps = allowedOps.map((op: string, index: number) => ({
+    id: `R204-${String(index + 1).padStart(2, "0")}`,
+    op,
+    label: `R204 SAI-bridged explicit ${op}`,
+    ...(op === "WAIT" ? {} : { path: projectPath }),
+    ...(op === "BUILD" || op === "TEST" ? { profile } : {}),
+  }));
+  return {
+    ok: true,
+    code: "R204_EXPLICIT_HOST_PLAN_MATERIALIZED",
+    unsupported: [],
+    allowedOps,
+    draft: {
+      schema: "OMEGA_GOVERNED_ACTION_DRAFT_R204",
+      projectPath,
+      allowedDomains: Array.isArray(hybrid.allowedDomains) ? hybrid.allowedDomains.map(String).slice(0, 12) : [],
+      steps,
+    },
+  };
+}
+
 async function executeBridge(request: Request, env: any, ctx: any, canonicalFetch: CanonicalFetch, input: AnyObj) {
   const packet = input.preparePacket;
   if (!packet || packet.schema !== SAI_HYBRID_BRIDGE_SCHEMA_R204 || packet.release !== WHOLE_SYSTEM_CONTROL_RELEASE_R204) {
     return json({ ok: false, code: "R204_VALID_PREPARE_PACKET_REQUIRED", canonicalMutation: false, hostStateMutation: false, promotionAuthorized: false }, 422);
   }
   const given = text(packet.receiptSha256);
-  const core: AnyObj = { ...packet };
-  delete core.receiptSha256;
-  const recomputed = await sha(core);
+  const packetCore: AnyObj = { ...packet };
+  delete packetCore.receiptSha256;
+  const recomputed = await sha(packetCore);
   if (!/^[0-9a-f]{64}$/i.test(given) || recomputed.toLowerCase() !== given.toLowerCase() || packet.ok !== true) {
     return json({ ok: false, code: "R204_PREPARE_RECEIPT_INTEGRITY_FAILED", given, recomputed, canonicalMutation: false, hostStateMutation: false, promotionAuthorized: false }, 409);
   }
@@ -282,6 +326,11 @@ async function executeBridge(request: Request, env: any, ctx: any, canonicalFetc
   }
 
   const hybrid = input.hybrid && typeof input.hybrid === "object" ? input.hybrid : {};
+  const hostPlan = explicitHybridPlan(hybrid);
+  if (!hostPlan.ok) {
+    return json({ ...hostPlan, ok: false, canonicalMutation: false, hostStateMutation: false, promotionAuthorized: false }, 422);
+  }
+
   const lineageIntent = [
     packet.intent,
     "",
@@ -301,6 +350,8 @@ async function executeBridge(request: Request, env: any, ctx: any, canonicalFetc
     hybrid: {
       ...hybrid,
       objective: text(hybrid.objective || packet.intent),
+      allowedOps: hostPlan.allowedOps,
+      draft: hostPlan.draft,
       confirmedMission: true,
     },
   }, { "x-omega-bridge-secret": bridgeSecret });
@@ -312,6 +363,8 @@ async function executeBridge(request: Request, env: any, ctx: any, canonicalFetc
     bridgePrepareReceiptSha256: given,
     saiReceiptSha256: packet.lineage?.saiReceiptSha256 ?? null,
     fusionReceiptSha256: packet.lineage?.fusionReceiptSha256 ?? null,
+    requestedHostOperations: hostPlan.allowedOps,
+    hostPlanSha256: await sha(hostPlan.draft),
     downstreamStatus: result.status,
     downstream: result.body,
     state: result.body?.state ?? result.body?.hybrid?.state ?? (result.ok ? "BRIDGE_DOWNSTREAM_RETURNED" : "BRIDGE_WITHHELD_OR_FAILED"),
