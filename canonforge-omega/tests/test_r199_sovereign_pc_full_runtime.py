@@ -10,7 +10,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
-RUNTIME_ENTRY = WORKER / "src" / "runtimeEntryR199.ts"
+CANONICAL_ENTRY = WORKER / "src" / "runtimeEntryR169.ts"
+R199_ENTRY = WORKER / "src" / "runtimeEntryR199.ts"
+GATEWAY = WORKER / "src" / "sovereignPcGatewayR199.ts"
 RUNTIME_DO = WORKER / "src" / "sovereignPcRuntimeR199.ts"
 SURFACE = WORKER / "src" / "sovereignPcSurfaceR199.ts"
 AGENT_TS = WORKER / "src" / "sovereignAgentR199.ts"
@@ -47,10 +49,10 @@ def test_python_agents_are_syntactically_valid_and_explicitly_r199():
         assert "powercfg" not in source.lower()
 
 
-def test_wrangler_activates_r199_without_removing_existing_durable_objects():
+def test_wrangler_preserves_canonical_identity_while_activating_r199_capability():
     source = text(WRANGLER)
-    assert 'main = "src/runtimeEntryR199.ts"' in source
-    assert 'BUILD_ID = "r199-sovereign-pc-full-runtime"' in source
+    assert 'main = "src/runtimeEntryR169.ts"' in source
+    assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in source
     assert 'SOVEREIGN_PC_R199_ID = "r199-project-aware-verified-return-runtime"' in source
     assert 'type = "Text"' in source and 'globs = ["**/*.py"]' in source
     for binding in (
@@ -65,17 +67,41 @@ def test_wrangler_activates_r199_without_removing_existing_durable_objects():
         assert f'name = "{binding}"' in source
 
 
-def test_r199_entry_wraps_preserved_runtime_and_intercepts_hybrid_routes_first():
-    source = text(RUNTIME_ENTRY)
+def test_canonical_entry_integrates_r199_without_replacing_existing_route_stack():
+    source = text(CANONICAL_ENTRY)
+    assert 'handleSovereignPcGatewayR199' in source
+    assert 'enhanceSovereignPcSurfaceR199' in source
+    assert 'export { OmegaRuntime } from "./sovereignPcRuntimeR199"' in source
+    # Inherited route stack remains present.
+    for inherited in ("handleEarthSarFusionR198", "handleSourceGroundingR197", "handleCloudSwarmR185", "handleComputeRequest"):
+        assert inherited in source
+    assert "const sovereignPc = await handleSovereignPcGatewayR199(request, env);" in source
+    assert "if (sovereignPc) return sovereignPc;" in source
+
+
+def test_r199_standalone_entry_remains_a_valid_wrapper_reference():
+    source = text(R199_ENTRY)
     assert 'from "./runtimeEntryR169"' in source
     assert 'export { OmegaRuntime } from "./sovereignPcRuntimeR199"' in source
-    assert "currentRuntime.fetch(request, env, ctx)" in source
-    assert 'pathname === "/omega-hybrid-agent.py"' in source
-    assert 'pathname === "/api/hybrid/agent-download"' in source
-    assert 'pathname === "/api/hybrid/connector-manifest"' in source
-    assert 'pathname === "/api/hybrid/status"' in source
-    assert 'pathname === "/api/hybrid/jobs"' in source
+    assert "current.fetch(request, env, ctx)" in source
     assert "enhanceSovereignPcSurfaceR199" in source
+
+
+def test_gateway_exposes_pair_download_status_job_and_receipt_routes():
+    source = text(GATEWAY)
+    for route in (
+        "/omega-hybrid-agent.py",
+        "/api/hybrid/agent-download",
+        "/api/hybrid/connector-manifest",
+        "/api/hybrid/status",
+        "/api/hybrid/jobs",
+        "/api/runtime/snapshot",
+        "/api/runtime/events",
+        "/api/missions",
+    ):
+        assert route in source
+    assert "R127_ZERO_DRIFT_SHA256_PLUS_R199_VERIFIED_RETURN" in source
+    assert "PC ONLINE REQUIRES CURRENT AUTHENTICATED HEARTBEAT" in source
 
 
 def test_server_requires_verified_return_not_just_a_connected_agent():
@@ -88,13 +114,14 @@ def test_server_requires_verified_return_not_just_a_connected_agent():
         "RETURN_REJECTED",
         "resultFingerprint",
         "returnVerification",
-        "canonicalJson",
+        "receiptCanonicalJson",
+        "observedHash",
+        "serverReceiptSha256",
     ):
         assert token in source
-    # Regression gate: a successful mission cannot be admitted merely because a packet arrived.
-    assert "verified" in source.lower()
-    assert "COMPLETE" in source
-    assert "RETURN_VERIFIED_SUCCESS" in source
+    assert 'const finalStatus = returnedState === "RETURNED_SUCCESS" ? "COMPLETE" : "FAILED";' in source
+    assert 'const complete = finalStatus === "COMPLETE";' in source
+    assert 'status: complete ? "COMPLETE" : "HOLD_REPAIR_REQUIRED"' in source
 
 
 def test_r199_agent_asset_is_hash_manifested_and_zero_drift_served():
@@ -115,7 +142,8 @@ def test_operator_surface_exposes_full_pipeline_and_pc_protection():
     assert "NO IMPLICIT INSTALLS" in source
     assert "NO OS TWEAKING" in source
     assert "Resource guard is blocking heavy work to protect the PC" in source
-    assert "RETURN_VERIFIED" in source
+    assert "returnVerification" in source
+    assert "verify.verified" in source
 
 
 def test_bridge_project_discovery_selects_nested_buildable_project(tmp_path: Path):
@@ -171,8 +199,8 @@ def test_legacy_token_transport_is_now_project_aware_and_failure_truthful():
         "require_success",
         "PROJECT_NOT_FOUND",
         "OMEGA_SOVEREIGN_RETURN_RECEIPT_R199",
+        '"VERIFIED"',
+        '"FAILED"',
     ):
         assert token in source
-    assert '"state": "VERIFIED"' in source
-    assert '"state": "FAILED"' in source
     assert "if int(result.get(\"exit_code\", 1)) != 0" in source
