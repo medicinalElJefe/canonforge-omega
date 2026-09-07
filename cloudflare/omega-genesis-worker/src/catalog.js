@@ -35,5 +35,6 @@ export const CAPABILITIES=[
 {id:"CAP-029",name:"Reciprocal V6↔Genesis convergence manifest",menu:"11 Archive Merge",gate:"Non-recursive peer observation + canonical authority separation",status:"LIVE_CORE"},
 {id:"CAP-030",name:"OMEGA V6 public-product convergence transport",menu:"01 Runtime Core",gate:"Service-binding observation + operational authority separation",status:"LIVE_CORE"},
 {id:"CAP-031",name:"Legacy OmegaRuntime Durable Object preservation bridge",menu:"10 Recovery / Packaging",gate:"Preserve historical V6 Durable Object lineage without granting Genesis V6 release authority",status:"LIVE_CORE"},
-{id:"CAP-032",name:"Role-separated V3 reciprocal convergence contract",menu:"02 Proof & Governance",gate:"Schema identity + explicit authority compatibility + no cross-runtime mutation",status:"LIVE_CORE"}
+{id:"CAP-032",name:"Role-separated V3 reciprocal convergence contract",menu:"02 Proof & Governance",gate:"Schema identity + explicit authority compatibility + no cross-runtime mutation",status:"LIVE_CORE"},
+{id:"CAP-033",name:"R191 universal surface observer and machine-screen authority alignment",menu:"02 Proof & Governance",gate:"Canonical R191 observation + Optical SCREEN machine routing + no cross-runtime promotion",status:"LIVE_CORE"}
 ];
