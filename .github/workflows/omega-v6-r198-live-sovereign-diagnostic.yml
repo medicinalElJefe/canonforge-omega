@@ -54,7 +54,8 @@ jobs:
             fi
           done
           echo '=== LIVE R132 AGENT ==='
-          curl --fail --silent --show-error --max-time 25 "$LIVE/omega-hybrid-agent.py" -o /tmp/agent.py
+          curl --fail --silent --show-error --max-time 25 -D /tmp/agent.headers "$LIVE/omega-hybrid-agent.py" -o /tmp/agent.py
+          cat /tmp/agent.headers
           sha256sum /tmp/agent.py
           wc -c /tmp/agent.py
           python - <<'PY'
@@ -63,8 +64,7 @@ jobs:
           keys=('project','approved_root','return','result','mission','job','poll','build','package','sha256','heartbeat')
           hits=[]
           for i,line in enumerate(lines,1):
-              low=line.lower()
-              if any(k in low for k in keys): hits.append(i)
+              if any(k in line.lower() for k in keys): hits.append(i)
           ranges=[]
           for i in hits:
               a=max(1,i-4); b=min(len(lines),i+8)
@@ -75,3 +75,8 @@ jobs:
               print(f'--- agent lines {a}-{b} ---')
               for n in range(a,b+1): print(f'{n:04d}: {lines[n-1]}')
           PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r198-live-agent-source
+          path: /tmp/agent.py
+          if-no-files-found: error
