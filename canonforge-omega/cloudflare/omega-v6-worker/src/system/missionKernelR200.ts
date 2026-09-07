@@ -156,7 +156,8 @@ function planTasks(intent: string, body: AnyObj): MissionTask[] {
       ...(body.earthBbox ? { bbox: body.earthBbox } : {}),
     }, false, "Query real public SAR catalogs without promoting metadata to inferred displacement."));
   }
-  if ((includesAny(intent, KEYWORDS.ai) || body.useAI !== false) && text(intent)) {
+  const aiRequested = body.useAI === true || (body.useAI !== false && includesAny(intent, KEYWORDS.ai));
+  if (aiRequested && text(intent)) {
     tasks.push(task("sai-grounded-synthesis", "ANALYZE", "MENU-10", "specialist_execute", {
       operation: body.aiOperation || "sai.query",
       prompt: intent,

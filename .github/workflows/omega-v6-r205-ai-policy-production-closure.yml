@@ -1,0 +1,252 @@
+name: OMEGA V6 R205 explicit AI policy production closure
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r205-ai-policy-production-closure.yml
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts
+      - canonforge-omega/tests/test_r205_explicit_ai_policy_hotfix.py
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r205-ai-policy-production-closure.yml
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts
+      - canonforge-omega/tests/test_r205_explicit_ai_policy_hotfix.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r205-ai-policy-production
+  cancel-in-progress: false
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  R205_MIN_CANONICAL_SHA: 53968145a05c101fcc8a6e3b361e1f8310b5d575
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  prove-ai-policy-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prove R205 ancestry and bounded AI-policy delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$R205_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R205_MIN_CANONICAL_SHA" HEAD
+          grep -F 'const aiRequested = body.useAI === true || (body.useAI !== false && includesAny(intent, KEYWORDS.ai));' canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts
+          ! grep -F 'if ((includesAny(intent, KEYWORDS.ai) || body.useAI !== false) && text(intent))' canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Prove full inherited runtime plus explicit-AI policy
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r205_explicit_ai_policy_hotfix.py
+          python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck and dry-run cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run
+
+  deploy-and-close-r205:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: prove-ai-policy-candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact canonical closure commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Prove exact canonical merge lineage and closure-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$R205_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R205_MIN_CANONICAL_SHA" HEAD
+          mapfile -t parents < <(git show -s --format='%P' "$GITHUB_SHA" | tr ' ' '\n')
+          test "${#parents[@]}" -eq 2
+          PREVIOUS_CANONICAL="${parents[0]}"
+          git merge-base --is-ancestor "$R205_MIN_CANONICAL_SHA" "$PREVIOUS_CANONICAL"
+          mapfile -t changed < <(git diff --name-only "$PREVIOUS_CANONICAL" HEAD)
+          allowed=(
+            '.github/workflows/omega-v6-r205-ai-policy-production-closure.yml'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts'
+            'canonforge-omega/tests/test_r205_explicit_ai_policy_hotfix.py'
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for candidate in "${allowed[@]}"; do [[ "$path" = "$candidate" ]] && ok=true; done
+            if [[ "$ok" != true ]]; then echo "R205_AI_POLICY_UNEXPECTED_DELTA $path"; exit 1; fi
+          done
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+          echo "R205_AI_POLICY_EXACT_HEAD_VERIFIED $GITHUB_SHA"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Re-prove contract and complete regression matrix
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r205_explicit_ai_policy_hotfix.py
+          python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and typecheck exact canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Bind exact canonical SHA without source mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          source=Path('wrangler.toml').read_text(encoding='utf-8')
+          marker='[vars]\n'
+          assert marker in source
+          assert 'CANONICAL_GIT_SHA =' not in source
+          sha=os.environ['GITHUB_SHA']
+          Path('wrangler.r205-closure.toml').write_text(source.replace(marker, marker+f'CANONICAL_GIT_SHA = "{sha}"\n',1), encoding='utf-8')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.r205-closure.toml
+          git diff --exit-code -- wrangler.toml
+      - name: Dry-run exact closure config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.r205-closure.toml
+      - name: Final exact-head check before mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+      - name: Deploy exact canonical closure SHA
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.r205-closure.toml
+      - name: Prove explicit AI-off, AI-on, R201 durability, R204 preservation, and R205 surface live
+        id: liveproof
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r205-closure
+          matched=false
+          for attempt in $(seq 1 70); do
+            rm -f /tmp/r205-closure/manifest.json
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/r205-closure/manifest.json \
+              && EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r205-closure/manifest.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_WHOLE_SYSTEM_CONTROL_MANIFEST_R205', d
+          assert d.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], d
+          PY
+            then matched=true; break; fi
+            sleep 3
+          done
+          test "$matched" = true
+
+          curl --fail --silent --show-error --max-time 30 -X POST "$V6_URL/api/mission/r200/plan" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"Analyze this evidence chain without model synthesis.","useAI":false,"allModes":true,"allDomains":false}' \
+            -o /tmp/r205-closure/plan-ai-off.json
+          curl --fail --silent --show-error --max-time 30 -X POST "$V6_URL/api/mission/r200/plan" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"Analyze this evidence chain with model synthesis.","useAI":true,"allModes":true,"allDomains":false}' \
+            -o /tmp/r205-closure/plan-ai-on.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          off=json.loads(Path('/tmp/r205-closure/plan-ai-off.json').read_text())
+          on=json.loads(Path('/tmp/r205-closure/plan-ai-on.json').read_text())
+          off_ids=[t.get('id') for t in off.get('tasks',[])]
+          on_ids=[t.get('id') for t in on.get('tasks',[])]
+          assert off_ids == ['correlated-snapshot','proof-state'], off_ids
+          assert 'sai-grounded-synthesis' in on_ids, on_ids
+          assert off.get('canonicalMutation') is False and off.get('promotionAuthorized') is False, off
+          print('R205_EXPLICIT_AI_POLICY_LIVE_VERIFIED', off_ids, on_ids)
+          PY
+
+          curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors --max-time 45 \
+            -X POST "$V6_URL/api/mission/r201/execute" \
+            -H 'content-type: application/json' \
+            --data '{"intent":"R205 closure: confirm durable mission evidence-chain integrity.","useAI":false,"allModes":true,"allDomains":false}' \
+            -o /tmp/r205-closure/r201-execute.json
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/api/mission/r201/verify" -o /tmp/r205-closure/r201-verify.json
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r204/manifest" -o /tmp/r205-closure/r204.json
+          curl --fail --silent --show-error --max-time 30 -D /tmp/r205-closure/root.headers "$V6_URL/" -o /tmp/r205-closure/root.html
+          EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          e=json.loads(Path('/tmp/r205-closure/r201-execute.json').read_text())
+          v=json.loads(Path('/tmp/r205-closure/r201-verify.json').read_text())
+          r204=json.loads(Path('/tmp/r205-closure/r204.json').read_text())
+          assert e.get('ok') is True, e
+          assert e.get('state') == 'EXECUTED_RECORDED_CHAIN_VERIFIED', e
+          m=e.get('mission') or {}
+          results=(m.get('execution') or {}).get('results') or []
+          assert [r.get('task',{}).get('id') for r in results] == ['correlated-snapshot','proof-state'], results
+          assert (m.get('execution') or {}).get('requiredTasks') == 2, m
+          assert (m.get('execution') or {}).get('requiredReturned') == 2, m
+          assert (m.get('execution') or {}).get('requiredVerified') == 2, m
+          assert e.get('durableRecorded') is True and e.get('durableVerified') is True, e
+          assert v.get('ok') is True and v.get('verified') is True and v.get('failures') == [], v
+          assert r204.get('schema') == 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204', r204
+          assert r204.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], r204
+          html=Path('/tmp/r205-closure/root.html').read_text(errors='replace').lower()
+          headers=Path('/tmp/r205-closure/root.headers').read_text(errors='replace').lower()
+          assert 'omegawholesystemsurfacer205' in html, html[:1000]
+          assert 'x-omega-whole-system-surface: r205-professional-whole-system-surface' in headers, headers
+          print('R205_R201_DURABILITY_AND_R204_PRESERVATION_LIVE_VERIFIED')
+          PY
+      - name: Roll back if live closure proof fails
+        if: steps.liveproof.outcome != 'success'
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler rollback --message 'OMEGA R205 AI-policy closure rollback: live proof failed'
+          exit 1
+      - name: Upload R205 closure proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r205-ai-policy-closure-${{ github.run_id }}
+          path: /tmp/r205-closure/
+          if-no-files-found: ignore
