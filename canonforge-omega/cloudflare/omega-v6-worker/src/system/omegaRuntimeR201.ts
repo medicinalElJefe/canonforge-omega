@@ -41,6 +41,7 @@ type LedgerState = {
   release: string;
   createdAt: string;
   updatedAt: string;
+  anchorSha256: string | null;
   headSha256: string | null;
   entries: LedgerEntry[];
 };
@@ -58,6 +59,10 @@ function finite(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function residualCount(residuals: AnyObj): number {
+  return Object.values(residuals || {}).reduce((n: number, v: any) => n + (Array.isArray(v) ? v.length : 0), 0);
+}
+
 async function sha(value: unknown): Promise<string> {
   const bytes = new TextEncoder().encode(typeof value === "string" ? value : JSON.stringify(value));
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -71,6 +76,7 @@ function blankLedger(): LedgerState {
     release: DURABLE_MISSION_LEDGER_R201,
     createdAt: now,
     updatedAt: now,
+    anchorSha256: null,
     headSha256: null,
     entries: [],
   };
@@ -133,6 +139,7 @@ function ledgerSummary(ledger: LedgerState) {
     release: ledger.release,
     authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
     entryCount: ledger.entries.length,
+    anchorSha256: ledger.anchorSha256,
     headSha256: ledger.headSha256,
     createdAt: ledger.createdAt,
     updatedAt: ledger.updatedAt,
@@ -143,7 +150,7 @@ function ledgerSummary(ledger: LedgerState) {
       entrySha256: latest.entrySha256,
       admissionState: latest.admission?.state || null,
       requiredVerified: latest.execution.requiredVerified,
-      residualCount: Object.values(latest.residuals || {}).reduce((n: number, v: any) => n + (Array.isArray(v) ? v.length : 0), 0),
+      residualCount: residualCount(latest.residuals),
     } : null,
     canonicalMutation: false,
     hostStateMutation: false,
@@ -151,16 +158,71 @@ function ledgerSummary(ledger: LedgerState) {
   };
 }
 
+function publicEntry(entry: LedgerEntry) {
+  return {
+    missionId: entry.missionId,
+    recordedAt: entry.recordedAt,
+    planSha256: entry.planSha256,
+    missionReceiptSha256: entry.missionReceiptSha256,
+    entrySha256: entry.entrySha256,
+    prevEntrySha256: entry.prevEntrySha256,
+    receiptIntegrityVerified: entry.receiptIntegrityVerified,
+    modeCount: entry.modes.activeCount,
+    execution: entry.execution,
+    residualCount: residualCount(entry.residuals),
+    admissionState: entry.admission?.state || null,
+  };
+}
+
 export class OmegaRuntime extends BaseOmegaRuntime {
   async loadMissionLedgerR201(): Promise<LedgerState> {
     const existing = await this.ctx.storage.get(LEDGER_KEY) as LedgerState | undefined;
     if (!existing || existing.schema !== DURABLE_MISSION_LEDGER_SCHEMA_R201 || !Array.isArray(existing.entries)) return blankLedger();
-    return existing;
+    return {
+      ...existing,
+      anchorSha256: existing.anchorSha256 ?? existing.entries[0]?.prevEntrySha256 ?? null,
+      headSha256: existing.headSha256 ?? existing.entries.at(-1)?.entrySha256 ?? null,
+    };
   }
 
   async saveMissionLedgerR201(ledger: LedgerState) {
     ledger.updatedAt = new Date().toISOString();
     await this.ctx.storage.put(LEDGER_KEY, ledger);
+  }
+
+  async verifyMissionLedgerR201() {
+    const ledger = await this.loadMissionLedgerR201();
+    let expectedPrev = ledger.anchorSha256;
+    const failures: AnyObj[] = [];
+    for (let i = 0; i < ledger.entries.length; i++) {
+      const entry = ledger.entries[i];
+      const core: AnyObj = { ...entry };
+      delete core.entrySha256;
+      const recomputed = await sha(core);
+      if (entry.prevEntrySha256 !== expectedPrev) {
+        failures.push({ index: i, missionId: entry.missionId, class: "R201_PREV_LINK_MISMATCH", expected: expectedPrev, actual: entry.prevEntrySha256 });
+      }
+      if (recomputed.toLowerCase() !== text(entry.entrySha256).toLowerCase()) {
+        failures.push({ index: i, missionId: entry.missionId, class: "R201_ENTRY_SHA256_MISMATCH", expected: recomputed, actual: entry.entrySha256 });
+      }
+      expectedPrev = entry.entrySha256;
+    }
+    const expectedHead = ledger.entries.length ? ledger.entries[ledger.entries.length - 1].entrySha256 : null;
+    if (ledger.headSha256 !== expectedHead) failures.push({ class: "R201_HEAD_SHA256_MISMATCH", expected: expectedHead, actual: ledger.headSha256 });
+    return {
+      ok: failures.length === 0,
+      verified: failures.length === 0,
+      schema: "OMEGA_DURABLE_MISSION_CHAIN_VERIFICATION_R201",
+      release: DURABLE_MISSION_LEDGER_R201,
+      entryCount: ledger.entries.length,
+      anchorSha256: ledger.anchorSha256,
+      headSha256: ledger.headSha256,
+      failures,
+      authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+      canonicalMutation: false,
+      hostStateMutation: false,
+      promotionAuthorized: false,
+    };
   }
 
   async recordMissionR201(packet: any): Promise<Response> {
@@ -220,9 +282,18 @@ export class OmegaRuntime extends BaseOmegaRuntime {
     };
     const entry: LedgerEntry = { ...base, entrySha256: await sha(base) };
     ledger.entries.push(entry);
-    if (ledger.entries.length > LEDGER_LIMIT) ledger.entries = ledger.entries.slice(-LEDGER_LIMIT);
+    if (ledger.entries.length > LEDGER_LIMIT) {
+      ledger.entries = ledger.entries.slice(-LEDGER_LIMIT);
+      ledger.anchorSha256 = ledger.entries[0]?.prevEntrySha256 ?? ledger.anchorSha256;
+    }
     ledger.headSha256 = entry.entrySha256;
     await this.saveMissionLedgerR201(ledger);
+    await this.event("MISSION_CONTINUITY_RECORDED", `R201 recorded mission ${missionId} into the durable evidence chain.`, {
+      missionId,
+      missionReceiptSha256: entry.missionReceiptSha256,
+      entrySha256: entry.entrySha256,
+      admissionState: entry.admission?.state || null,
+    });
 
     return json({
       ok: true,
@@ -259,8 +330,30 @@ export class OmegaRuntime extends BaseOmegaRuntime {
       });
     }
 
+    if (path === "/mission-ledger/public-history" && request.method === "GET") {
+      const ledger = await this.loadMissionLedgerR201();
+      const limit = Math.max(1, Math.min(96, Number(url.searchParams.get("limit") || 24)));
+      return json({
+        ok: true,
+        schema: "OMEGA_DURABLE_MISSION_PUBLIC_HISTORY_R201",
+        release: DURABLE_MISSION_LEDGER_R201,
+        summary: ledgerSummary(ledger),
+        entries: ledger.entries.slice(-limit).map(publicEntry),
+        privacyBoundary: "Mission intent, specialist payloads, downstream evidence bodies, stored task errors, and secrets are omitted from the public history surface.",
+        authority: "DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE",
+        canonicalMutation: false,
+        hostStateMutation: false,
+        promotionAuthorized: false,
+      });
+    }
+
     if (path === "/mission-ledger/summary" && request.method === "GET") {
       return json({ ok: true, ...ledgerSummary(await this.loadMissionLedgerR201()) });
+    }
+
+    if (path === "/mission-ledger/verify" && request.method === "GET") {
+      const verification = await this.verifyMissionLedgerR201();
+      return json(verification, verification.verified ? 200 : 409);
     }
 
     if (path.startsWith("/mission-ledger/mission/") && request.method === "GET") {
