@@ -14,11 +14,22 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def is_v6_workflow(path: Path, text: str) -> bool:
+    lowered = text.lower()
+    return path.name.startswith("omega-v6") or "omega-v6-worker" in lowered or "omegav6.jeffdeweyeljefe.workers.dev" in lowered
+
+
 def workflow_mutation_lines():
     publishers = []
     rollbacks = []
-    for path in sorted(WORKFLOWS.glob("omega-v6*.y*ml")):
-        for lineno, raw in enumerate(read(path).splitlines(), 1):
+    credentialed = []
+    for path in sorted(WORKFLOWS.glob("*.y*ml")):
+        text = read(path)
+        if not is_v6_workflow(path, text):
+            continue
+        if "CLOUDFLARE_API_TOKEN" in text or "CLOUDFLARE_ACCOUNT_ID" in text:
+            credentialed.append(path.name)
+        for lineno, raw in enumerate(text.splitlines(), 1):
             line = raw.split("#", 1)[0].strip().lower()
             if not line:
                 continue
@@ -35,7 +46,7 @@ def workflow_mutation_lines():
                 publishers.append((path.name, lineno, raw.strip()))
             if "wrangler rollback" in line:
                 rollbacks.append((path.name, lineno, raw.strip()))
-    return publishers, rollbacks
+    return publishers, rollbacks, credentialed
 
 
 def test_r213_release_forward_owns_exhaustive_r185_gate_and_rollback():
@@ -45,6 +56,8 @@ def test_r213_release_forward_owns_exhaustive_r185_gate_and_rollback():
     assert "python canonforge-omega/scripts/verify_r185_live_federation.py" in text
     assert '--expected-sha "$GITHUB_SHA"' in text
     assert '--workers 12' in text
+    assert "assert s.get('ok') is True, s" in text
+    assert "R211 aggregate status.ok: TRUE" in text
     assert "if: steps.liveproof.outcome != 'success'" in text
     assert "npx wrangler rollback" in text
     assert "R185 172 advertised public routes: LIVE VERIFIED" in text
@@ -52,11 +65,12 @@ def test_r213_release_forward_owns_exhaustive_r185_gate_and_rollback():
     assert "R185 manifest + deployment identity stable across complete sweep: VERIFIED" in text
 
 
-def test_r213_release_forward_is_the_only_v6_production_mutation_authority():
-    publishers, rollbacks = workflow_mutation_lines()
+def test_r213_release_forward_is_the_only_v6_production_mutation_authority_repository_wide():
+    publishers, rollbacks, credentialed = workflow_mutation_lines()
     assert publishers, "R213 must retain one exact-head production publisher"
     assert {item[0] for item in publishers} == {RELEASE.name}, publishers
     assert {item[0] for item in rollbacks} == {RELEASE.name}, rollbacks
+    assert set(credentialed) == {RELEASE.name}, credentialed
     release_text = read(RELEASE)
     assert "CLOUDFLARE_API_TOKEN" in release_text
     assert "CLOUDFLARE_ACCOUNT_ID" in release_text
@@ -64,6 +78,18 @@ def test_r213_release_forward_is_the_only_v6_production_mutation_authority():
     assert "CLOUDFLARE_API_TOKEN" not in verify_text
     assert "CLOUDFLARE_ACCOUNT_ID" not in verify_text
     assert "OMEGA_V6_VERIFY_PROOF_ONLY_R213" in verify_text
+
+
+def test_r213_general_verify_remains_full_strength_but_non_mutating():
+    text = read(VERIFY)
+    assert "python scripts/check_cloudflare_contract.py --strict" in text
+    assert "python -m pytest -q" in text
+    assert "npm run typecheck" in text
+    assert "npx wrangler deploy --dry-run --outdir .verify-dry-run" in text
+    assert "federated-machine-services:" in text
+    assert "OMEGA_V6_VERIFY_PROOF_ONLY_R213" in text
+    assert "CLOUDFLARE_API_TOKEN" not in text
+    assert "CLOUDFLARE_ACCOUNT_ID" not in text
 
 
 def test_r213_legacy_publishers_are_diagnostic_only():
