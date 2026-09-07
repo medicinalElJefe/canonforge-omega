@@ -1,8 +1,9 @@
+import canonicalRuntime from "../heartbeatTruth";
+
 export const SOVEREIGN_HEARTBEAT_RECOVERY_RELEASE_R209 = "r209-sovereign-heartbeat-self-heal";
 export const SOVEREIGN_HEARTBEAT_RECOVERY_SCHEMA_R209 = "OMEGA_SOVEREIGN_HEARTBEAT_RECOVERY_MANIFEST_R209";
 
-type CanonicalFetch = (request: Request) => Promise<Response>;
-
+const canonical: any = canonicalRuntime;
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
   "cache-control": "no-store",
@@ -32,7 +33,7 @@ async function manifest(env: any): Promise<Response> {
     canonicalGitSha: gitSha,
     deploymentIdentityBound: Boolean(gitSha),
     predecessor: "R208_PHYSICAL_SOVEREIGN_ACCEPTANCE_CLOSURE",
-    purpose: "Make the R208 physical-acceptance prerequisite self-healing while restoring the established hosted short-lived pairing authority used by the Windows bridge.",
+    purpose: "Make the R208 physical-acceptance prerequisite self-healing while preserving the established hosted short-lived pairing authority used by the Windows bridge.",
     recoveryLaw: [
       "PRESERVE_R208_PHYSICAL_ACCEPTANCE_PROVER",
       "PRESERVE_FIXED_LOCALHOST_127_0_0_1_8127",
@@ -90,14 +91,11 @@ async function manifest(env: any): Promise<Response> {
   return json({ ...core, receiptSha256: await sha256(core) });
 }
 
-async function pairingEnvelope(request: Request, canonicalFetch: CanonicalFetch | undefined): Promise<Response> {
-  if (!canonicalFetch) {
-    return json({ ok: false, code: "R209_CANONICAL_PAIRING_AUTHORITY_UNAVAILABLE", canonicalMutation: false, promotionAuthorized: false }, 503);
-  }
+async function pairingEnvelope(request: Request, env: any, ctx: any): Promise<Response> {
   const target = new URL(request.url);
   target.pathname = "/api/hybrid/launcher";
   target.search = "";
-  const upstream = await canonicalFetch(new Request(target.toString(), { method: "GET", headers: request.headers }));
+  const upstream = await canonical.fetch(new Request(target.toString(), { method: "GET", headers: request.headers }), env, ctx);
   const body = await upstream.text();
   if (!upstream.ok || !body.includes("OMEGA Sovereign PC Link") || !body.includes("OMEGA_TOKEN=") || !body.includes("OMEGA_SERVER=")) {
     return json({
@@ -115,7 +113,7 @@ async function pairingEnvelope(request: Request, canonicalFetch: CanonicalFetch 
     const statusUrl = new URL(request.url);
     statusUrl.pathname = "/api/hybrid/status";
     statusUrl.search = "";
-    const statusResponse = await canonicalFetch(new Request(statusUrl.toString(), { method: "GET", headers: { accept: "application/json" } }));
+    const statusResponse = await canonical.fetch(new Request(statusUrl.toString(), { method: "GET", headers: { accept: "application/json" } }), env, ctx);
     if (statusResponse.ok) {
       const status: any = await statusResponse.json();
       const raw = status?.pairingGeneration;
@@ -165,11 +163,7 @@ function bootstrap(request: Request, env: any): Response {
   });
 }
 
-export async function handleSovereignHeartbeatRecoveryR209(
-  request: Request,
-  env: any,
-  canonicalFetch?: CanonicalFetch,
-): Promise<Response | null> {
+export async function handleSovereignHeartbeatRecoveryR209(request: Request, env: any, ctx: any): Promise<Response | null> {
   const url = new URL(request.url);
   if (url.pathname === "/api/system/r209/manifest" || url.pathname === "/api/system/r209/manifest/") {
     if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
@@ -181,7 +175,7 @@ export async function handleSovereignHeartbeatRecoveryR209(
   }
   if (url.pathname === "/api/hybrid/pairing-envelope" || url.pathname === "/api/hybrid/pairing-envelope/") {
     if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
-    return pairingEnvelope(request, canonicalFetch);
+    return pairingEnvelope(request, env, ctx);
   }
   return null;
 }
