@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT.parent / ".github" / "workflows"
 RELEASE = WORKFLOWS / "omega-v6-release-forward-production.yml"
+VERIFY = WORKFLOWS / "omega-v6-verify.yml"
 R185 = WORKFLOWS / "omega-v6-r185-live-172-cloud-proof.yml"
 VERIFIER = ROOT / "scripts" / "verify_r185_live_federation.py"
 
@@ -20,6 +21,10 @@ def workflow_mutation_lines():
         for lineno, raw in enumerate(read(path).splitlines(), 1):
             line = raw.split("#", 1)[0].strip().lower()
             if not line:
+                continue
+            # Source-audit workflows may grep for forbidden deployment strings. Those
+            # observations are not executable publication commands.
+            if "grep" in line:
                 continue
             publishes = (
                 ("wrangler deploy" in line and "--dry-run" not in line)
@@ -55,6 +60,10 @@ def test_r213_release_forward_is_the_only_v6_production_mutation_authority():
     release_text = read(RELEASE)
     assert "CLOUDFLARE_API_TOKEN" in release_text
     assert "CLOUDFLARE_ACCOUNT_ID" in release_text
+    verify_text = read(VERIFY)
+    assert "CLOUDFLARE_API_TOKEN" not in verify_text
+    assert "CLOUDFLARE_ACCOUNT_ID" not in verify_text
+    assert "OMEGA_V6_VERIFY_PROOF_ONLY_R213" in verify_text
 
 
 def test_r213_legacy_publishers_are_diagnostic_only():
