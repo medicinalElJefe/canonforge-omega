@@ -13,6 +13,23 @@ export const DRIVE_CORPUS_EVIDENCE_R195 = {
   corroboratingLedgerTitle: "OMEGA_ONE_SYSTEM_J_DRIVE_1728D_AUTOPING_LEDGER.xlsx",
 } as const;
 
+export const DRIVE_REGISTRY_COLUMNS_R195 = [
+  "ID",
+  "Family",
+  "Software / Artifact",
+  "One-System Role",
+  "Menu Setting",
+  "Primary Capability",
+  "Disposition",
+  "Wiring Notes",
+  "Menu ID",
+  "Growth Tier",
+  "Runtime Port",
+  "Input Contract",
+  "Output Contract",
+  "Upgrade Sequence",
+] as const;
+
 let cached: any | null = null;
 let cachedText: string | null = null;
 let cachedDigest: string | null = null;
@@ -38,6 +55,20 @@ async function inflateDriveCorpusR195(): Promise<string> {
   return cachedText;
 }
 
+function normalizeRegistryRowsR195(snapshot: any): any {
+  if (!snapshot || typeof snapshot !== "object") return snapshot;
+  const aliases = new Set(["registry", "softwareRegistry", "software_registry", "software"].map(value => value.replace(/[^a-z0-9]/gi, "").toLowerCase()));
+  for (const [key, value] of Object.entries(snapshot)) {
+    const normalizedKey = key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+    if (!aliases.has(normalizedKey) || !Array.isArray(value)) continue;
+    snapshot[key] = value.map((row: any) => {
+      if (!Array.isArray(row)) return row;
+      return Object.fromEntries(DRIVE_REGISTRY_COLUMNS_R195.map((column, index) => [column, row[index] ?? null]));
+    });
+  }
+  return snapshot;
+}
+
 export async function driveCorpusIntegrityR195() {
   await inflateDriveCorpusR195();
   return {
@@ -47,12 +78,14 @@ export async function driveCorpusIntegrityR195() {
     compression: "gzip+base64-chunks",
     chunks: 5,
     driveEvidence: DRIVE_CORPUS_EVIDENCE_R195,
+    registryEncoding: "14_COLUMN_ROW_ARRAY_NORMALIZED_TO_NAMED_RECORDS_AT_READ_BOUNDARY",
+    registryColumns: DRIVE_REGISTRY_COLUMNS_R195,
     canonicalMutation: false,
   };
 }
 
 export async function readDriveCorpusSnapshotR195(): Promise<any> {
   if (cached) return cached;
-  cached = JSON.parse(await inflateDriveCorpusR195());
+  cached = normalizeRegistryRowsR195(JSON.parse(await inflateDriveCorpusR195()));
   return cached;
 }
