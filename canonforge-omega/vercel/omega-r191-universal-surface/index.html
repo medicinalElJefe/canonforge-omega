@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>OMEGA R191 · Universal Surface Mirror</title>
+  <style>
+    :root{font:14px/1.5 Inter,ui-sans-serif,system-ui;background:#05070b;color:#f4f7fb;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 18% 0,#172039 0,#080c14 38%,#040609 78%);min-height:100vh}a{color:inherit;text-decoration:none}.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #293650;background:#060a10e8;backdrop-filter:blur(18px)}.brand{font-weight:900;letter-spacing:.12em}.tag{border:1px solid #34455f;border-radius:999px;padding:7px 10px;color:#b4c2d7}.wrap{max-width:1480px;margin:auto;padding:18px}.hero{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.55fr);gap:14px}.card{border:1px solid #2b3950;border-radius:18px;background:#0a1019e6;padding:16px;box-shadow:0 20px 80px #0006}.hero h1{font-size:clamp(2.2rem,5vw,5rem);line-height:.92;margin:8px 0 12px}.muted{color:#98a7bd}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:1px solid #34455f;border-radius:10px;padding:9px 11px;background:#0e1724}.btn:hover{background:#142238}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.surface{min-height:165px;display:flex;flex-direction:column;justify-content:space-between}.surface:hover{border-color:#718bb6;background:#0e1827}.eyebrow{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#7f91ac}.status{display:flex;gap:8px;align-items:center}.dot{width:10px;height:10px;border-radius:50%;background:#6f798b}.dot.ok{background:#41d17f;box-shadow:0 0 16px #41d17f66}.dot.warn{background:#e7b84d}.dot.bad{background:#e46565}.receipt{white-space:pre-wrap;word-break:break-word;max-height:390px;overflow:auto;font:12px/1.45 ui-monospace,SFMono-Regular,monospace;color:#aab8cd}.footer{margin:18px 0 40px;color:#78869a}@media(max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:760px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.top{align-items:flex-start;flex-direction:column}}@media(max-width:520px){.grid{grid-template-columns:1fr}.wrap{padding:11px}.actions .btn{flex:1;text-align:center}}
+  </style>
+</head>
+<body>
+  <header class="top"><div class="brand">OMEGA · R191 MIRROR</div><div class="tag">CANON REMAINS OMEGA V6</div></header>
+  <main class="wrap">
+    <section class="hero">
+      <article class="card">
+        <div class="eyebrow">Deploy-ready external mirror</div>
+        <h1>Same surface truth.<br>Different host.</h1>
+        <p class="muted">This static mirror reads the canonical R191 Universal Surface Fabric from OMEGA V6. It does not create a second Canon, does not grant Vercel write authority, and does not convert a reachable external URL into a successful same-URL promotion claim.</p>
+        <div class="actions"><a class="btn" href="https://omegav6.jeffdeweyeljefe.workers.dev/fabric">Canonical Fabric</a><a class="btn" href="https://omegav6.jeffdeweyeljefe.workers.dev/instrument">Whole Instrument</a><a class="btn" href="https://omegav6.jeffdeweyeljefe.workers.dev/truth">Capability Truth</a><a class="btn" href="https://omegav6.jeffdeweyeljefe.workers.dev/validate">Validation</a></div>
+      </article>
+      <aside class="card"><div class="eyebrow">Canonical status</div><h2 id="state">Checking OMEGA V6…</h2><p class="muted" id="detail">Write authority, reachability, execution proof and promotion authority remain distinct.</p><button class="btn" id="refresh">Refresh</button><pre class="receipt" id="receipt"></pre></aside>
+    </section>
+    <section class="grid" id="grid"></section>
+    <div class="footer">PC ONLINE requires a current authenticated Sovereign heartbeat. Optical screening is not RCWA/FDTD/FEM validation. Full-wave validation is not fabrication measurement. Vercel same-URL promotion is not proved until the target project is writable and the exact deployed URL passes post-deploy proof.</div>
+  </main>
+<script>
+const API='https://omegav6.jeffdeweyeljefe.workers.dev/api/fabric/r191/status';
+const grid=document.getElementById('grid');
+function esc(v){return String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));}
+function render(list){grid.innerHTML=(list||[]).map(s=>{const r=s.reachable;const cls=r===true?'ok':r===false?'bad':'warn';const label=r===true?'reachable':r===false?'unreachable':'declared';return '<a class="card surface" href="'+esc(s.href)+'" target="_blank" rel="noopener"><div><div class="eyebrow">'+esc(s.id)+' · '+esc(s.kind)+'</div><h3>'+esc(s.label)+'</h3><p class="muted">'+esc(s.role)+'</p></div><div><div>'+esc(s.authority)+'</div><div class="status"><span class="dot '+cls+'"></span><span>'+label+(s.status?' · HTTP '+esc(s.status):'')+'</span></div></div></a>';}).join('');}
+async function load(){document.getElementById('state').textContent='Checking OMEGA V6…';try{const r=await fetch(API,{cache:'no-store'});const j=await r.json();render(j.surfaces);document.getElementById('state').textContent=j.canonicalFabricReady?'Canonical fabric ready':'Canonical fabric has blocked surfaces';document.getElementById('detail').textContent=j.everywherePromotionProved?'Everywhere promotion proved':'External same-URL promotion remains separately gated';document.getElementById('receipt').textContent=JSON.stringify({release:j.release,canonicalGitSha:j.canonicalGitSha,canonicalFabricReady:j.canonicalFabricReady,everywherePromotionProved:j.everywherePromotionProved,vercel:j.vercel},null,2);}catch(e){document.getElementById('state').textContent='Canonical status unavailable';document.getElementById('receipt').textContent=String(e);}}
+document.getElementById('refresh').addEventListener('click',load);load();
+</script>
+</body>
+</html>
