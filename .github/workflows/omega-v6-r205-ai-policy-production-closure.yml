@@ -7,6 +7,8 @@ on:
       - .github/workflows/omega-v6-r205-ai-policy-production-closure.yml
       - .github/workflows/omega-v6-r201-live-continuity-proof.yml
       - .github/workflows/omega-v6-r204-live-proof.yml
+      - .github/workflows/omega-v6-r192-navigation-home-proof.yml
+      - .github/workflows/omega-v6-r193-full-restoration-proof.yml
       - canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts
       - canonforge-omega/tests/test_r205_explicit_ai_policy_hotfix.py
   push:
@@ -15,6 +17,8 @@ on:
       - .github/workflows/omega-v6-r205-ai-policy-production-closure.yml
       - .github/workflows/omega-v6-r201-live-continuity-proof.yml
       - .github/workflows/omega-v6-r204-live-proof.yml
+      - .github/workflows/omega-v6-r192-navigation-home-proof.yml
+      - .github/workflows/omega-v6-r193-full-restoration-proof.yml
       - canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts
       - canonforge-omega/tests/test_r205_explicit_ai_policy_hotfix.py
   workflow_dispatch:
@@ -50,6 +54,8 @@ jobs:
           grep -F 'Wait for R201 durable read surfaces and capture pre-execution state' .github/workflows/omega-v6-r201-live-continuity-proof.yml
           grep -F 'Wait for public history and independently bind the durable head' .github/workflows/omega-v6-r201-live-continuity-proof.yml
           grep -F 'Wait for inherited live runtime coherence after exact-SHA settlement' .github/workflows/omega-v6-r204-live-proof.yml
+          grep -F 'R192 route $route not settled yet' .github/workflows/omega-v6-r192-navigation-home-proof.yml
+          grep -F 'R193 route $route not settled yet' .github/workflows/omega-v6-r193-full-restoration-proof.yml
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -98,6 +104,8 @@ jobs:
             '.github/workflows/omega-v6-r205-ai-policy-production-closure.yml'
             '.github/workflows/omega-v6-r201-live-continuity-proof.yml'
             '.github/workflows/omega-v6-r204-live-proof.yml'
+            '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+            '.github/workflows/omega-v6-r193-full-restoration-proof.yml'
             'canonforge-omega/cloudflare/omega-v6-worker/src/system/missionKernelR200.ts'
             'canonforge-omega/tests/test_r205_explicit_ai_policy_hotfix.py'
           )
