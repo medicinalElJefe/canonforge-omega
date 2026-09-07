@@ -91,7 +91,7 @@ async function manifest(env: any): Promise<Response> {
   return json({ ...core, receiptSha256: await sha256(core) });
 }
 
-async function pairingEnvelope(request: Request, env: any, ctx: any): Promise<Response> {
+async function pairingEnvelope(request: Request, env: any, ctx?: any): Promise<Response> {
   const target = new URL(request.url);
   target.pathname = "/api/hybrid/launcher";
   target.search = "";
@@ -163,7 +163,7 @@ function bootstrap(request: Request, env: any): Response {
   });
 }
 
-export async function handleSovereignHeartbeatRecoveryR209(request: Request, env: any, ctx: any): Promise<Response | null> {
+export async function handleSovereignHeartbeatRecoveryR209(request: Request, env: any, ctx?: any): Promise<Response | null> {
   const url = new URL(request.url);
   if (url.pathname === "/api/system/r209/manifest" || url.pathname === "/api/system/r209/manifest/") {
     if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
