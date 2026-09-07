@@ -34,8 +34,9 @@ const script = `<script id="omegaUniversalNavR192Runtime">(()=>{const nav=docume
 export async function enhanceUniversalNavigationR192(response: Response, pathname: string): Promise<Response> {
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
-  const html = await response.text();
+  let html = await response.text();
   if (!/<body[\s>]/i.test(html) || html.includes('id="omegaUniversalNavR192"')) return new Response(html, { status: response.status, headers: response.headers });
+  if (pathname === "/" || pathname === "") html = html.replace('<div id="omegaLaunch">', '<div id="omegaLaunch" class="hidden">');
   const withStyle = html.includes("</head>") ? html.replace("</head>", style + "</head>") : style + html;
   const withNav = withStyle.replace(/<body([^>]*)>/i, `<body$1>${navMarkup(pathname)}`);
   const body = withNav.includes("</body>") ? withNav.replace("</body>", script + "</body>") : withNav + script;
