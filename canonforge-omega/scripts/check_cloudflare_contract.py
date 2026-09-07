@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import subprocess
 from pathlib import Path
 
 SOURCE_SUFFIXES = {".ts", ".js", ".mjs", ".mts"}
+CANONICAL_REF = "refs/heads/omega-v6-full-convergence"
 
 
 def exported_classes(source_root: Path) -> set[str]:
@@ -62,6 +65,73 @@ def _export_section(wrangler: str, class_name: str) -> str:
     return match.group(1) if match else ""
 
 
+def release_lineage_guard() -> dict:
+    """Prevent automatic production deployment from ordinary direct pushes.
+
+    The repository branch is not currently server-side protected. This compensating
+    release gate therefore requires canonical deployment candidates to be two-parent
+    merge commits whose first parent is the exact prior canonical head reported by
+    the push event. `git cat-file` is used so the check remains valid in shallow CI
+    checkouts: parent identities are part of the commit object itself.
+    """
+    enforced = (
+        os.environ.get("GITHUB_ACTIONS") == "true"
+        and os.environ.get("GITHUB_EVENT_NAME") == "push"
+        and os.environ.get("GITHUB_REF") == CANONICAL_REF
+    )
+    if not enforced:
+        return {
+            "enforced": False,
+            "ok": True,
+            "status": "NOT_APPLICABLE",
+            "reason": "release-lineage guard applies only to canonical GitHub Actions push promotion",
+        }
+
+    sha = os.environ.get("GITHUB_SHA") or "HEAD"
+    try:
+        commit_text = subprocess.check_output(
+            ["git", "cat-file", "-p", sha],
+            text=True,
+            stderr=subprocess.STDOUT,
+        )
+        parents = [line.split(" ", 1)[1].strip() for line in commit_text.splitlines() if line.startswith("parent ")]
+    except Exception as exc:
+        return {
+            "enforced": True,
+            "ok": False,
+            "status": "HOLD",
+            "reason": f"could not resolve canonical promotion commit lineage: {exc}",
+        }
+
+    event_before = None
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if event_path:
+        try:
+            payload = json.loads(Path(event_path).read_text(encoding="utf-8"))
+            event_before = str(payload.get("before") or "").strip() or None
+        except Exception:
+            event_before = None
+
+    exactly_two_parents = len(parents) == 2
+    preserves_previous_head = bool(event_before and parents and parents[0] == event_before)
+    ok = exactly_two_parents and preserves_previous_head
+    return {
+        "enforced": True,
+        "ok": ok,
+        "status": "PASS" if ok else "HOLD",
+        "commit": sha,
+        "parents": parents,
+        "event_before": event_before,
+        "exactly_two_parents": exactly_two_parents,
+        "preserves_previous_head": preserves_previous_head,
+        "reason": (
+            "canonical deployment commit is a two-parent merge over the exact prior canonical head"
+            if ok
+            else "automatic canonical deployment requires a two-parent merge over the exact prior canonical head; ordinary direct pushes are held"
+        ),
+    }
+
+
 def evaluate(contract_path: Path, source_root: Path, wrangler_path: Path | None = None) -> dict:
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
     required = set(contract.get("required_exports") or [])
@@ -116,8 +186,9 @@ def evaluate(contract_path: Path, source_root: Path, wrangler_path: Path | None 
     no_required_tombstones = all('state = "deleted"' not in _export_section(wrangler, class_name) for class_name in required)
     binding_preserved = all(item["binding_preserved"] for item in class_checks.values())
     lifecycle_preserved = all(item["lifecycle_preserved"] for item in class_checks.values()) and no_legacy_replay and no_required_tombstones
+    release_lineage = release_lineage_guard()
 
-    compatible = not missing and not missing_markers and binding_preserved and lifecycle_preserved
+    compatible = not missing and not missing_markers and binding_preserved and lifecycle_preserved and release_lineage["ok"]
     return {
         "status": "PASS" if compatible else "HOLD",
         "compatible": compatible,
@@ -134,7 +205,8 @@ def evaluate(contract_path: Path, source_root: Path, wrangler_path: Path | None 
         "no_legacy_replay": no_legacy_replay,
         "no_required_tombstones": no_required_tombstones,
         "class_checks": class_checks,
-        "boundary": "HOLD means do not deploy over the canonical Worker until every observed live Durable Object export, binding, recovered behavior marker, and storage lifecycle is preserved without replay or tombstone.",
+        "release_lineage": release_lineage,
+        "boundary": "HOLD means do not deploy over the canonical Worker until every observed live Durable Object export, binding, recovered behavior marker, storage lifecycle, and canonical release-lineage gate is preserved without replay or tombstone.",
     }
 
 
