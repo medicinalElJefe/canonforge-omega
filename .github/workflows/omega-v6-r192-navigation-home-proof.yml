@@ -37,6 +37,7 @@ jobs:
           python -m pytest -q \
             tests/test_r192_navigation_home_repair.py \
             tests/test_r208_r192_edge_coherence.py \
+            tests/test_r208_corpus_coverage.py \
             tests/test_r191_universal_surface_fabric.py \
             tests/test_r190_whole_system_acceptance.py \
             tests/test_r189_whole_instrument_convergence.py \
