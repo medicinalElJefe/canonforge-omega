@@ -34,6 +34,9 @@ jobs:
       - name: Compile
         working-directory: canonforge-omega
         run: python -m compileall -q omega_runtime api omega_144d_core omega_fusion_core
+      - name: Strict Cloudflare authority contract
+        working-directory: canonforge-omega
+        run: python scripts/check_cloudflare_contract.py --strict
       - name: Full runtime tests
         working-directory: canonforge-omega
         run: python -m pytest -q
@@ -53,6 +56,9 @@ jobs:
         run: |
           npm install
           npm run typecheck
+      - name: Dry-run complete Worker without mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .verify-dry-run
 
   federated-machine-services:
     runs-on: ubuntu-latest
@@ -131,4 +137,4 @@ jobs:
           test -f .github/workflows/omega-v6-release-forward-production.yml
           grep -F 'name: OMEGA V6 release-forward exact-head production' .github/workflows/omega-v6-release-forward-production.yml
           echo 'OMEGA_V6_VERIFY_PROOF_ONLY_R213'
-          echo 'The general verify workflow does not mutate production. Release-forward owns the exact-head deployment and rollback transaction.'
+          echo 'The general verify workflow runs full tests, strict authority contract, TypeScript, Worker dry-run, and federated-machine proofs but never mutates production. Release-forward owns the exact-head deployment and rollback transaction.'
