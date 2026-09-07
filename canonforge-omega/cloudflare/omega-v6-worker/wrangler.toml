@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR169.ts"
-# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R199/R200/R201 correlate established organs
-# above that entry without replacing Durable Objects, specialist engines, or the canonical heartbeat authority.
+main = "src/runtimeEntryR202.ts"
+# R202 delegates the established R169→R201 public route/render stack byte-for-byte at fetch time.
+# Only the historical OMEGA_RUNTIME export is hardened for authenticated return admission;
+# the R201 evidence ledger and all existing Durable Object namespaces remain distinct and preserved.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -47,6 +47,7 @@ EARTH_SAR_TRUTH_R198_ID = "r198-real-public-sar-truth-fusion"
 ONE_SYSTEM_CORRELATION_R199_ID = "r199-one-system-reconstitution"
 MISSION_KERNEL_R200_ID = "r200-canonical-mission-kernel"
 DURABLE_MISSION_LEDGER_R201_ID = "r201-durable-mission-evidence-ledger"
+HYBRID_RETURN_ADMISSION_R202_ID = "r202-authenticated-return-admission"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
@@ -84,8 +85,8 @@ class_name = "OmegaSwarmOrganismCoordinator"
 name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
-# Existing namespaces remain live. R201 is a new evidence-only SQLite namespace;
-# declarative exports provision it without replaying historical migration tags.
+# Existing namespaces remain live. R201 is the dedicated evidence-only SQLite namespace;
+# R202 changes no namespace identity, storage backend, migration tag, or tombstone state.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"
