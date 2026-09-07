@@ -72,8 +72,9 @@ jobs:
           set -euo pipefail
           matched=false
           for attempt in $(seq 1 60); do
-            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
-            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+            rm -f /tmp/r191.json
+            if curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json \
+              && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
           import json, os
           from pathlib import Path
           try:
@@ -84,6 +85,7 @@ jobs:
               raise SystemExit(1)
           PY
             then matched=true; break; fi
+            echo "R193 exact canonical identity not settled yet (attempt $attempt/60)."
             sleep 5
           done
           test "$matched" = true
@@ -121,12 +123,27 @@ jobs:
           i=0
           for route in "${routes[@]}"; do
             i=$((i+1))
-            curl --fail --silent --show-error --max-time 25 -D "/tmp/r193-$i.headers" "$LIVE$route" -o "/tmp/r193-$i.html"
-            grep -qi '^content-type: text/html' "/tmp/r193-$i.headers"
-            grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/r193-$i.headers"
-            grep -qi '^x-omega-workspace: r193-full-restoration-workspace' "/tmp/r193-$i.headers"
-            grep -F 'id="omegaUniversalNavR192"' "/tmp/r193-$i.html"
-            grep -F 'id="omegaR193Rail"' "/tmp/r193-$i.html"
+            route_settled=false
+            for attempt in $(seq 1 45); do
+              rm -f "/tmp/r193-$i.headers" "/tmp/r193-$i.html"
+              if curl --fail --silent --show-error --max-time 25 -D "/tmp/r193-$i.headers" "$LIVE$route" -o "/tmp/r193-$i.html" \
+                && grep -qi '^content-type: text/html' "/tmp/r193-$i.headers" \
+                && grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/r193-$i.headers" \
+                && grep -qi '^x-omega-workspace: r193-full-restoration-workspace' "/tmp/r193-$i.headers" \
+                && grep -Fq 'id="omegaUniversalNavR192"' "/tmp/r193-$i.html" \
+                && grep -Fq 'id="omegaR193Rail"' "/tmp/r193-$i.html"; then
+                route_settled=true
+                break
+              fi
+              echo "R193 route $route not settled yet (attempt $attempt/45)."
+              sleep 2
+            done
+            if [ "$route_settled" != true ]; then
+              echo "R193_ROUTE_NOT_SETTLED $route"
+              cat "/tmp/r193-$i.headers" 2>/dev/null || true
+              head -c 1500 "/tmp/r193-$i.html" 2>/dev/null || true
+              exit 1
+            fi
           done
 
           grep -F 'Living Operator Field' /tmp/r193-1.html
@@ -135,13 +152,14 @@ jobs:
           grep -F 'applyMode(id)' /tmp/r193-1.html
           grep -F 'applyShell(value)' /tmp/r193-1.html
 
-          curl --fail --silent --show-error --max-time 20 -D /tmp/r193-manifest.headers "$LIVE/api/workspace/r193/manifest" -o /tmp/r193-manifest.json
-          grep -qi '^content-type: application/json' /tmp/r193-manifest.headers
-          if grep -qi '^x-omega-workspace:' /tmp/r193-manifest.headers; then
-            echo 'R193 must not HTML-wrap JSON/API responses'
-            exit 1
-          fi
-          python - <<'PY'
+          workspace_settled=false
+          for attempt in $(seq 1 45); do
+            rm -f /tmp/r193-manifest.headers /tmp/r193-manifest.json /tmp/r193-health.json
+            if curl --fail --silent --show-error --max-time 20 -D /tmp/r193-manifest.headers "$LIVE/api/workspace/r193/manifest" -o /tmp/r193-manifest.json \
+              && grep -qi '^content-type: application/json' /tmp/r193-manifest.headers \
+              && ! grep -qi '^x-omega-workspace:' /tmp/r193-manifest.headers \
+              && curl --fail --silent --show-error --max-time 20 "$LIVE/api/workspace/r193/health" -o /tmp/r193-health.json \
+              && python - <<'PY'
           import json
           from pathlib import Path
           d=json.loads(Path('/tmp/r193-manifest.json').read_text())
@@ -153,14 +171,22 @@ jobs:
           assert d['interactive_shells']==[144,1728,20736]
           assert d['performance_policy']['duplicate_runtime_authority'] is False
           assert d['performance_policy']['duplicate_state_authority'] is False
+          h=json.loads(Path('/tmp/r193-health.json').read_text())
+          assert h=={'ok': True, 'release': 'r193-full-restoration-workspace', 'schema': 'OMEGA_V6_R193_FULL_RESTORATION_V1', 'workspaces': 8, 'systems': 19, 'modes': 15, 'interactive_shells': [144,1728,20736]}
           PY
-
-          curl --fail --silent --show-error --max-time 20 "$LIVE/api/workspace/r193/health" -o /tmp/r193-health.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          d=json.loads(Path('/tmp/r193-health.json').read_text())
-          assert d=={'ok': True, 'release': 'r193-full-restoration-workspace', 'schema': 'OMEGA_V6_R193_FULL_RESTORATION_V1', 'workspaces': 8, 'systems': 19, 'modes': 15, 'interactive_shells': [144,1728,20736]}
-          PY
+            then
+              workspace_settled=true
+              break
+            fi
+            echo "R193 workspace API surfaces not settled yet (attempt $attempt/45)."
+            sleep 2
+          done
+          if [ "$workspace_settled" != true ]; then
+            echo 'R193_WORKSPACE_APIS_NOT_SETTLED'
+            cat /tmp/r193-manifest.headers 2>/dev/null || true
+            cat /tmp/r193-manifest.json 2>/dev/null || true
+            cat /tmp/r193-health.json 2>/dev/null || true
+            exit 1
+          fi
 
           echo "R193_FULL_RESTORATION_LIVE_VERIFIED $EXPECTED_SHA"
