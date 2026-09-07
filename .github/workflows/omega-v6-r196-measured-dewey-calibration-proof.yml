@@ -7,8 +7,10 @@ on:
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyCalibrationGuardR196.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyRepresentationR196.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyWaterContinuityR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyCalibrationSurfaceR196.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/tests/test_r196_measured_dewey_calibration.py'
+      - 'canonforge-omega/tests/test_r196_calibration_surface.py'
       - 'canonforge-omega/tests/test_r195_dewey_water_continuity_compute.py'
       - 'canonforge-omega/tests/test_r195_drive_corpus_one_system.py'
       - '.github/workflows/omega-v6-r196-measured-dewey-calibration-proof.yml'
@@ -18,8 +20,10 @@ on:
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyCalibrationR196.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyCalibrationGuardR196.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/compute/deweyRepresentationR196.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/deweyCalibrationSurfaceR196.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/tests/test_r196_measured_dewey_calibration.py'
+      - 'canonforge-omega/tests/test_r196_calibration_surface.py'
       - '.github/workflows/omega-v6-r196-measured-dewey-calibration-proof.yml'
   workflow_dispatch:
 
@@ -41,6 +45,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_r196_measured_dewey_calibration.py \
+            tests/test_r196_calibration_surface.py \
             tests/test_r195_dewey_water_continuity_compute.py \
             tests/test_r195_drive_corpus_one_system.py \
             tests/test_r195_residual_restoration_planner.py \
