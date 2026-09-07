@@ -16,28 +16,32 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def test_r209_reuses_agent_only_with_current_authenticated_generation_bound_proof():
+def test_r209_reuses_agent_only_with_current_authenticated_hosted_generation_bound_proof():
     text = read(LAUNCHER)
     assert "[switch]$ForceRepair" in text
     assert "[string]$RootOverride" in text
     assert "[string]$AgentScriptOverride" in text
     assert "[string]$AcceptanceProverOverride" in text
-    assert "agent-pairing-generation.txt" in text
+    assert "[string]$CloudBase = 'https://omegav6.jeffdeweyeljefe.workers.dev'" in text
+    assert "[string]$PairingEnvelopePath = '/api/hybrid/pairing-envelope'" in text
+    assert "hosted-pairing-generation.txt" in text
+    assert "$hostedBefore" in text
     assert "$heartbeatBefore" in text
     assert "$authenticatedBefore" in text
     assert "$generationBound" in text
     assert "$reuseAgent = [bool]($null -ne $agentProcess -and -not $ForceRepair -and $heartbeatBefore -and $authenticatedBefore -and $generationBound)" in text
     assert "Stop-OmegaAgent $agentProcess $reason" in text
-    assert "heartbeat stale or absent" in text
-    assert "heartbeat authentication incomplete" in text
-    assert "pairing generation changed or is not bound to this agent launch" in text
+    assert "hosted heartbeat stale or absent" in text
+    assert "hosted heartbeat authentication incomplete" in text
+    assert "hosted pairing generation changed or is not bound to this agent launch" in text
 
 
-def test_r209_pairing_stays_local_ephemeral_and_verified_venv_only():
+def test_r209_pairing_uses_hosted_authority_but_executes_only_verified_venv_locally():
     text = read(LAUNCHER)
     assert "Join-Path $Root '.venv\\Scripts\\python.exe'" in text
-    assert '$HybridLauncher = "$Base/api/hybrid/launcher"' in text
-    assert "requesting fresh one-time pairing envelope from local sovereign runtime" in text
+    assert '$HostedHybridStatus = "$CloudBase/api/hybrid/status"' in text
+    assert '$HostedPairingEnvelope = "$CloudBase$PairingEnvelopePath"' in text
+    assert "requesting fresh hosted one-time pairing envelope" in text
     assert "set \"OMEGA_TOKEN=([^\"\\r\\n]+)\"" in text
     assert "set \"OMEGA_SERVER=([^\"\\r\\n]+)\"" in text
     assert "Remove-Item $PairingEnvelope" in text
@@ -46,21 +50,21 @@ def test_r209_pairing_stays_local_ephemeral_and_verified_venv_only():
     assert "--token" in text and "--root" in text and "--interval" in text
     assert "Start-Process -FilePath $env:ComSpec" not in text
     assert "where py" not in text.lower()
-    assert "pairingToken" not in read(WORKER)
+    assert "Get-HostedHybridStatus" in text
 
 
-def test_r209_fails_closed_and_withholds_r208_deep_acceptance_without_heartbeat():
+def test_r209_fails_closed_and_withholds_r208_deep_acceptance_without_hosted_heartbeat():
     text = read(LAUNCHER)
-    assert "current authenticated generation-bound heartbeat did not arrive" in text
+    assert "current authenticated hosted generation-bound heartbeat did not arrive" in text
     assert "Remove-Item $PairingGenerationFile" in text
     assert "PC ONLINE is not claimed and R208 deep acceptance is withheld" in text
-    assert "authenticated generation-bound heartbeat did not become current" in text
+    assert "authenticated hosted generation-bound heartbeat did not become current" in text
     heartbeat_gate = text.index("if (-not $heartbeatCurrent)")
-    r208_proof = text.index("running preserved R208 physical sovereign acceptance proof after R209 heartbeat recovery")
+    r208_proof = text.index("running preserved R208 physical sovereign acceptance proof after R209 hosted heartbeat recovery")
     assert heartbeat_gate < r208_proof
 
 
-def test_r209_preserves_complete_r208_physical_acceptance_closure():
+def test_r209_preserves_complete_r208_physical_acceptance_closure_and_root_binding():
     launcher = read(LAUNCHER)
     prover = read(PROVER)
     required = [
@@ -82,12 +86,15 @@ def test_r209_preserves_complete_r208_physical_acceptance_closure():
     ]
     for token in required:
         assert token in prover, token
+    assert "[string]$RootOverride = ''" in prover
+    assert "$Root = (Resolve-Path $RootOverride).Path" in prover
     assert "PROVE_OMEGA_V6_WINDOWS.ps1" in launcher
+    assert "-RootOverride $Root -ProductionBase $CloudBase" in launcher
     assert "R208 acceptance receipt" in launcher
-    assert "heartbeat remains proven but no full-acceptance success claim is promoted" in launcher
+    assert "hosted heartbeat remains proven but no full-acceptance success claim is promoted" in launcher
 
 
-def test_r209_public_bootstrap_is_exact_sha_token_free_and_only_invokes_local_repair():
+def test_r209_public_bootstrap_is_exact_sha_and_contains_no_pairing_credential():
     text = read(WORKER)
     assert "OMEGA_SOVEREIGN_HEARTBEAT_RECOVERY_MANIFEST_R209" in text
     assert '"/api/hybrid/launcher"' in text
@@ -100,14 +107,34 @@ def test_r209_public_bootstrap_is_exact_sha_token_free_and_only_invokes_local_re
     assert "-RootOverride" in text
     assert "-AgentScriptOverride" in text
     assert "-AcceptanceProverOverride" in text
+    assert '-CloudBase "${origin}"' in text
     assert "-ForceRepair" in text
-    assert "OMEGA_TOKEN=" not in text
+    start = text.index("const cmd = `")
+    end = text.index("return new Response(cmd", start)
+    bootstrap_source = text[start:end]
+    assert "OMEGA_TOKEN=" not in bootstrap_source
     assert "cloudBootstrapDoesNotIssuePairingCredential: true" in text
     assert "cloudBootstrapDoesNotExecuteOnUserPcByItself: true" in text
     assert "currentAuthenticatedHeartbeatRequiredForPcOnline: true" in text
     assert "r208FullAcceptanceStillRequiresR181RcwaB059Conjunction: true" in text
     assert "canonicalMutation: false" in text
     assert "promotionAuthorized: false" in text
+
+
+def test_r209_pairing_envelope_is_ephemeral_delegation_to_preserved_canonical_authority():
+    text = read(WORKER)
+    assert 'import canonicalRuntime from "../heartbeatTruth";' in text
+    assert '"/api/hybrid/pairing-envelope"' in text
+    assert "pairingEnvelope(request, env, ctx)" in text
+    assert 'target.pathname = "/api/hybrid/launcher"' in text
+    assert "canonical.fetch" in text
+    assert 'body.includes("OMEGA_TOKEN=")' in text
+    assert 'body.includes("OMEGA_SERVER=")' in text
+    assert 'headers.set("cache-control", "no-store")' in text
+    assert 'headers.set("pragma", "no-cache")' in text
+    assert 'headers.set("x-omega-pairing-envelope", "hosted-canonical-ephemeral-r209")' in text
+    assert "hostedPairingEnvelopeIsCredentialBearingEphemeral: true" in text
+    assert "hostedPairingCredentialIsNotCanon: true" in text
 
 
 def test_r209_handler_precedes_existing_r205_and_canonical_fallback_without_authority_change():
