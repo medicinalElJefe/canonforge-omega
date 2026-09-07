@@ -60,4 +60,4 @@ def test_r189_is_preserved_inside_the_current_cumulative_release_chain():
     assert "R189_WHOLE_INSTRUMENT_CONVERGENCE" in whole
     assert "cumulativeCapabilityCoverageComplete" in whole
     assert "protectedBaseIdentityPreserved" in whole
-    assert "OMEGA_EXECUTION_REGIME_PORTFOLIO_R189" in whole
+    assert "EXECUTION_REGIMES_R189" in whole
