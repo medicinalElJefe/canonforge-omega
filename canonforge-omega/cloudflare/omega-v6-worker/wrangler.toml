@@ -60,7 +60,7 @@ class_name = "OmegaRuntime"
 
 [[durable_objects.bindings]]
 name = "OMEGA_MISSION_LEDGER_R201"
-class_name = "OmegaMissionLedger_R201"
+class_name = "OmegaMissionLedgerR201"
 
 [[durable_objects.bindings]]
 name = "OMEGA_SWARM_CELL"
