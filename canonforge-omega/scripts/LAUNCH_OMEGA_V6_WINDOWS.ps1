@@ -263,7 +263,7 @@ if (-not $SkipAcceptanceProof) {
   # Preserve the complete R208 closure. R209 only strengthens the prerequisite heartbeat.
   # The prover remains evidence-only and cannot mutate Canon or authorize promotion.
   Write-OmegaLog 'running preserved R208 physical sovereign acceptance proof after R209 heartbeat recovery'
-  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $AcceptanceProver
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $AcceptanceProver -RootOverride $Root
   $proofExit = $LASTEXITCODE
   if (Test-Path $AcceptanceReceipt) {
     try {
