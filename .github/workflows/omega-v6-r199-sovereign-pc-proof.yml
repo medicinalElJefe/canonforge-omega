@@ -1,0 +1,77 @@
+name: OMEGA V6 R199 Sovereign PC Proof
+
+on:
+  push:
+    branches:
+      - r199-sovereign-pc-full-runtime
+  pull_request:
+    branches:
+      - omega-v6-full-convergence
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r199-python-and-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check -q pytest
+      - name: Compile both sovereign agents
+        run: |
+          python -m py_compile canonforge-omega/scripts/omega_hybrid_agent_r199.py
+          python -m py_compile canonforge-omega/scripts/omega_sovereign_agent.py
+      - name: Run R199 acceptance gates
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r199_sovereign_pc_full_runtime.py
+
+  r199-worker-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: canonforge-omega/cloudflare/omega-v6-worker/package.json
+      - name: Install declared worker development dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Typecheck complete R199 worker entry
+        run: npm run typecheck
+      - name: Build Cloudflare deployment bundle without publishing
+        run: npx wrangler deploy --dry-run --outdir .r199-dry-run
+      - name: Verify connector survived bundling
+        run: |
+          test -f .r199-dry-run/index.js
+          grep -q "OMEGA_HYBRID_CONNECTOR_MANIFEST_R199" .r199-dry-run/index.js
+          grep -q "r199-project-aware-verified-return-runtime" .r199-dry-run/index.js
+
+  r199-preservation-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check -q pytest
+      - name: Run high-value inherited acceptance tests
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r193_full_restoration_workspace.py \
+            tests/test_r195_drive_corpus_one_system.py \
+            tests/test_r197_source_grounding_fallback.py
