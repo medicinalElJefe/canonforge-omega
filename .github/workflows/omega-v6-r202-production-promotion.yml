@@ -1,0 +1,331 @@
+name: OMEGA V6 R202 exact-head Cloudflare production promotion
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r202-production-promotion.yml
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r202-production-promotion.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r202-production
+  cancel-in-progress: false
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  R202_RUNTIME_BASE_SHA: 4433a238fc4abc1cafcffb273ddb14ebdf46368e
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  prove-control-and-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout candidate exactly
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove R202 runtime ancestry and control-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$R202_RUNTIME_BASE_SHA^{commit}"
+          git merge-base --is-ancestor "$R202_RUNTIME_BASE_SHA" HEAD
+          allowed='.github/workflows/omega-v6-r202-production-promotion.yml'
+          mapfile -t changed < <(git diff --name-only "$R202_RUNTIME_BASE_SHA" HEAD)
+          for path in "${changed[@]}"; do
+            if [[ "$path" != "$allowed" ]]; then
+              echo "R202_RUNTIME_DRIFT_BLOCKED $path"
+              exit 1
+            fi
+          done
+          git diff --quiet "$R202_RUNTIME_BASE_SHA" HEAD -- \
+            canonforge-omega/cloudflare/omega-v6-worker \
+            canonforge-omega/omega_runtime \
+            canonforge-omega/api \
+            canonforge-omega/config
+          echo "R202_RUNTIME_TREE_PRESERVED $R202_RUNTIME_BASE_SHA"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Re-prove full inherited OMEGA runtime
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+
+      - name: Typecheck exact R202 cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+
+      - name: Dry-run exact R202 Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run
+
+  deploy-exact-canonical-head:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: prove-control-and-runtime
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact promotion commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Re-prove exact canonical head before Cloudflare mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$R202_RUNTIME_BASE_SHA^{commit}"
+          git merge-base --is-ancestor "$R202_RUNTIME_BASE_SHA" HEAD
+          allowed='.github/workflows/omega-v6-r202-production-promotion.yml'
+          mapfile -t changed < <(git diff --name-only "$R202_RUNTIME_BASE_SHA" HEAD)
+          for path in "${changed[@]}"; do
+            [[ "$path" == "$allowed" ]] || { echo "R202_CANONICAL_DRIFT_BLOCKED $path"; exit 1; }
+          done
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          REMOTE_HEAD="$(git rev-parse "origin/$CANONICAL_BRANCH")"
+          test "$REMOTE_HEAD" = "$GITHUB_SHA"
+          echo "R202_EXACT_CANONICAL_HEAD_VERIFIED $GITHUB_SHA"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+
+      - name: Bind deployment identity to exact canonical SHA without source mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          source = Path('wrangler.toml').read_text(encoding='utf-8')
+          marker = '[vars]\n'
+          assert marker in source
+          assert 'CANONICAL_GIT_SHA =' not in source
+          sha = os.environ['GITHUB_SHA']
+          promoted = source.replace(marker, marker + f'CANONICAL_GIT_SHA = "{sha}"\n', 1)
+          Path('wrangler.r202-promotion.toml').write_text(promoted, encoding='utf-8')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.r202-promotion.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Dry-run exact promotion config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.r202-promotion.toml
+
+      - name: Final exact-head check immediately before deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+
+      - name: Deploy exact canonical R202 Worker to Cloudflare
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.r202-promotion.toml
+
+      - name: Prove live R202 deployment identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r202/manifest" -o /tmp/r202-manifest.json \
+              && EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r202-manifest.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_UNIFIED_CONTINUITY_POTENTIAL_MANIFEST_R202', d
+          assert d.get('release') == 'r202-unified-continuity-potential', d
+          assert d.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], d
+          assert re.fullmatch(r'[0-9a-f]{64}', str(d.get('receiptSha256',''))), d
+          assert d.get('canonicalMutation') is False, d
+          assert d.get('hostStateMutation') is False, d
+          assert d.get('promotionAuthorized') is False, d
+          assert 'R201_DURABLE_MISSION_CHAIN' in d.get('flow', []), d
+          assert 'R202_RECALIBRATION' in d.get('flow', []), d
+          PY
+            then matched=true; break; fi
+            sleep 3
+          done
+          test "$matched" = true
+          echo "R202_LIVE_IDENTITY_VERIFIED $GITHUB_SHA"
+
+      - name: Prove R195 full-corpus menu summary survived pagination boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r195/restoration?limit=1" -o /tmp/r195-restoration.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r195-restoration.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_RESIDUAL_RESTORATION_PLAN_R195', d
+          summary=d.get('menuSummary') or []
+          assert len(summary) >= 12, summary
+          assert sum(int(x.get('artifactCount') or 0) for x in summary) == int(d.get('totalArtifacts') or 0), (summary,d.get('totalArtifacts'))
+          audio=[x for x in summary if x.get('menuId') == '08 Audio / Signal']
+          assert len(audio) == 1, summary
+          assert (audio[0].get('cohort') or {}).get('apiPath') is None, audio[0]
+          assert 'complete R195 registry plan before response pagination' in d.get('summaryBoundary',''), d
+          PY
+
+      - name: Prove R202 potential snapshot uses current live authorities and explicit truth boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 60 \
+            "$V6_URL/api/system/r202/potential?intent=restore%20audio%20signal%20and%20preserve%20proof" \
+            -o /tmp/r202-potential.json
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r202-potential.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_UNIFIED_CONTINUITY_POTENTIAL_R202', d
+          assert d.get('release') == 'r202-unified-continuity-potential', d
+          truth=d.get('currentTruth') or {}
+          for key in ['capabilityTruthReady','driveCorpusReady','operatorSnapshotReady','durableMissionLedgerReady','durableMissionChainVerified','restorationEvidenceReady']:
+              assert truth.get(key) is True, (key, truth)
+          bounds=d.get('truthBoundaries') or {}
+          for key in ['chartedIsNotExecuted','cohortReachabilityIsNotArtifactProof','workbookScoreIsNotPhysicalTruth','durableHistoryIsNotCanonState','returnedIsNotVerified','recommendationIsNotAuthorization','buildCandidateIsNotPromotion']:
+              assert bounds.get(key) is True, (key,bounds)
+          p=d.get('potential') or {}
+          assert int(p.get('menuCount') or 0) > 0, p
+          assert isinstance(p.get('highestPriority'), list) and p.get('highestPriority'), p
+          assert re.fullmatch(r'[0-9a-f]{64}', str(d.get('receiptSha256',''))), d
+          assert d.get('canonicalMutation') is False and d.get('hostStateMutation') is False and d.get('promotionAuthorized') is False, d
+          PY
+
+      - name: Execute one bounded R202 closed continuity loop and verify durable chain
+        shell: bash
+        env:
+          PROOF_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' > /tmp/r202-execute-payload.json
+          import json, os
+          print(json.dumps({
+              'intent': f"R202 continuity proof run {os.environ['PROOF_RUN']}: confirm current correlated snapshot and proof-state continuity only.",
+              'useAI': False,
+              'allModes': True,
+              'allDomains': False,
+          }))
+          PY
+          curl --fail --silent --show-error --max-time 120 -X POST "$V6_URL/api/mission/r202/execute" \
+            -H 'content-type: application/json' \
+            --data-binary @/tmp/r202-execute-payload.json \
+            -o /tmp/r202-execute.json
+          curl --fail --silent --show-error --max-time 45 "$V6_URL/api/mission/r201/verify" -o /tmp/r201-verify-after-r202.json
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r202-execute.json').read_text())
+          v=json.loads(Path('/tmp/r201-verify-after-r202.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_CLOSED_LOOP_CONTINUITY_EXECUTION_R202', d
+          assert d.get('release') == 'r202-unified-continuity-potential', d
+          mission=d.get('durableMission') or {}
+          assert mission.get('ok') is True, mission
+          assert mission.get('durableRecorded') is True, mission
+          assert mission.get('durableVerified') is True, mission
+          assert re.fullmatch(r'[0-9a-f]{64}', str(mission.get('missionReceiptSha256',''))), mission
+          assert re.fullmatch(r'[0-9a-f]{64}', str(mission.get('continuityHeadSha256',''))), mission
+          assert (d.get('recalibratedPotential') or {}).get('chainVerified') is True, d
+          assert (d.get('admission') or {}).get('state') == 'EVIDENCE_LOOP_VERIFIED_SEPARATE_ADMISSION_STILL_REQUIRED', d
+          assert d.get('canonicalMutation') is False, d
+          assert d.get('hostStateMutation') is False, d
+          assert d.get('sourceMutationAuthorized') is False, d
+          assert d.get('deploymentAuthorized') is False, d
+          assert d.get('promotionAuthorized') is False, d
+          assert v.get('ok') is True and v.get('verified') is True and v.get('failures') == [], v
+          PY
+
+      - name: Prove historical runtime/heartbeat authority remains live after R202 deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/_omega/health" -o /tmp/omega-health.json
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/api/mission/r201/manifest" -o /tmp/r201-manifest-after-r202.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          h=json.loads(Path('/tmp/omega-health.json').read_text())
+          r=json.loads(Path('/tmp/r201-manifest-after-r202.json').read_text())
+          assert h.get('ok') is not False, h
+          assert r.get('ok') is True, r
+          assert r.get('durableBinding') == 'OMEGA_MISSION_LEDGER_R201', r
+          assert r.get('durableClass') == 'OmegaMissionLedgerR201', r
+          assert r.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', r
+          assert r.get('canonicalMutation') is False and r.get('hostStateMutation') is False and r.get('promotionAuthorized') is False, r
+          PY
+
+      - name: Upload R202 live production proof packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r202-live-production-proof-${{ github.run_id }}
+          path: |
+            /tmp/r202-manifest.json
+            /tmp/r195-restoration.json
+            /tmp/r202-potential.json
+            /tmp/r202-execute-payload.json
+            /tmp/r202-execute.json
+            /tmp/r201-verify-after-r202.json
+            /tmp/omega-health.json
+            /tmp/r201-manifest-after-r202.json
+
+      - name: Publish R202 production proof summary
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R202 exact-head Cloudflare promotion'
+            echo
+            echo "- Deployed canonical SHA: \`$GITHUB_SHA\`"
+            echo "- Runtime base SHA: \`$R202_RUNTIME_BASE_SHA\`"
+            echo '- Runtime tree changed by promotion control commit: `false`'
+            echo '- R202 live identity: verified'
+            echo '- R195 full-corpus menu summary: verified'
+            echo '- R202 current-potential dependencies: verified'
+            echo '- R202 -> R201 -> R200 durable mission loop: verified'
+            echo '- R201 durable chain after R202 execution: verified'
+            echo '- Historical runtime heartbeat authority: preserved'
+            echo '- CanonState mutation by R202: `false`'
+            echo '- HostState mutation by R202: `false`'
+            echo '- Source/deployment/successor promotion authority inside R202: `false`'
+          } >> "$GITHUB_STEP_SUMMARY"
