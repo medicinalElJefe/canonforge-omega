@@ -2,7 +2,7 @@ export const OPERATIONAL_PROVENANCE_RELEASE_R211 = "r211-operational-provenance-
 export const OPERATIONAL_PROVENANCE_SCHEMA_R211 = "OMEGA_OPERATIONAL_PROVENANCE_FABRIC_R211";
 
 type CanonicalFetch = (request: Request, env: any, ctx: any) => Promise<Response>;
-type EvidenceClass = "LIVE_VERIFIED" | "LIVE_OBSERVED" | "ARCHIVAL_SNAPSHOT" | "DERIVED" | "AVAILABLE" | "UNAVAILABLE";
+type EvidenceClass = "LIVE_VERIFIED" | "LIVE_OBSERVED" | "ARCHIVAL_SNAPSHOT" | "DERIVED" | "AVAILABLE" | "DEGRADED" | "UNAVAILABLE";
 type Probe = { id: string; domain: string; path: string; expected: string[] };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" };
@@ -44,7 +44,13 @@ function deepHas(value: any, key: string): boolean {
   return Object.values(value).some(child => child && typeof child === "object" && !Array.isArray(child) && deepHas(child, key));
 }
 
+function hasExpectedField(body: any, key: string): boolean {
+  if (key === "release") return deepHas(body, "release") || deepHas(body, "revision") || deepHas(body, "build");
+  return deepHas(body, key);
+}
+
 function classify(id: string, body: any, ok: boolean): EvidenceClass {
+  if (!ok && body && typeof body === "object" && (body.schema || body.release || body.revision || body.build)) return "DEGRADED";
   if (!ok) return "UNAVAILABLE";
   if (id === "drive") return body?.corpus?.integrity?.ok === true ? "ARCHIVAL_SNAPSHOT" : "AVAILABLE";
   if (id === "earthSar") return "LIVE_OBSERVED";
@@ -65,7 +71,7 @@ async function probe(request: Request, env: any, ctx: any, canonicalFetch: Canon
     const raw = await response.text();
     let body: any;
     try { body = JSON.parse(raw); } catch { body = { text: raw.slice(0, 1200) }; }
-    const fieldsPresent = spec.expected.every(key => deepHas(body, key));
+    const fieldsPresent = spec.expected.every(key => hasExpectedField(body, key));
     const ok = response.ok && body?.ok !== false && fieldsPresent;
     return { id: spec.id, domain: spec.domain, path: spec.path, status: response.status, ok, fieldsPresent, schema: body?.schema ?? null, release: body?.release ?? body?.revision ?? body?.build ?? null, evidenceClass: classify(spec.id, body, ok), body, elapsedMs: Date.now() - started, error: null as string | null };
   } catch (error) {
@@ -84,7 +90,7 @@ async function manifest(env: any) {
     purpose: "Read-only whole-system evidence correlation across existing OMEGA organs without creating a parallel runtime or authority plane.",
     sourceCount: SOURCES.length,
     sources: SOURCES,
-    provenanceClasses: ["LIVE_VERIFIED", "LIVE_OBSERVED", "ARCHIVAL_SNAPSHOT", "DERIVED", "AVAILABLE", "UNAVAILABLE"],
+    provenanceClasses: ["LIVE_VERIFIED", "LIVE_OBSERVED", "ARCHIVAL_SNAPSHOT", "DERIVED", "AVAILABLE", "DEGRADED", "UNAVAILABLE"],
     hierarchy: [12, 144, 1728, 20736, 248832],
     hierarchyBoundary: "atlas/address resolution levels; not literal physical dimensions",
     continuityOperator: ["partition", "exchange/transform", "invariant carry", "scar/residual carry", "re-contextualize/repartition"],
@@ -101,6 +107,8 @@ async function manifest(env: any) {
       pcOnlineRequiresCurrentAuthenticatedHeartbeat: true,
       returnedIsNotVerified: true,
       verifiedReturnIsNotCanonState: true,
+      degradedIsNotUnavailable: true,
+      revisionBuildAliasesAreValidReleaseIdentity: true,
     },
     r210ArchiveBoundary: "R210 content-addressed local proof retention remains non-Canon evidence and is preserved as predecessor authority context.",
     routes: { manifest: "/api/system/r211/manifest", status: "/api/system/r211/status", query: "/api/system/r211/query?domain=earth" },
@@ -133,6 +141,7 @@ async function status(request: Request, env: any, ctx: any, canonicalFetch: Cano
       archive: "R195 is an integrity-checked embedded Drive/archive snapshot; R210 separately preserves content-addressed local sovereign proof receipts. Neither is automatically current external Drive or CanonState.",
       earthSar: "R198 source-backed latest-available SAR catalog evidence is distinct from real-time radar and from InSAR deformation products.",
       solver: "Independent-solver availability is distinct from a solver execution receipt.",
+      health: "A source that responds with a valid OMEGA schema but reports a degraded internal state is DEGRADED, not UNAVAILABLE.",
       canon: "R211 correlates evidence; it cannot mutate CanonState, HostState, or promotion authority.",
     },
     canonicalMutation: false,
