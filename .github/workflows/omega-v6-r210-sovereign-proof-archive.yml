@@ -1,0 +1,114 @@
+name: OMEGA V6 R210 sovereign proof archive
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/scripts/ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_R209_WINDOWS.ps1'
+      - 'canonforge-omega/tests/test_r209_sovereign_convergence_diagnostics.py'
+      - 'canonforge-omega/tests/test_r210_sovereign_proof_archive.py'
+      - '.github/workflows/omega-v6-r210-sovereign-proof-archive.yml'
+  push:
+    branches:
+      - omega-v6-full-convergence
+    paths:
+      - 'canonforge-omega/scripts/ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_R209_WINDOWS.ps1'
+      - 'canonforge-omega/tests/test_r209_sovereign_convergence_diagnostics.py'
+      - 'canonforge-omega/tests/test_r210_sovereign_proof_archive.py'
+      - '.github/workflows/omega-v6-r210-sovereign-proof-archive.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-r210-content-addressed-proof:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Parse R209 and R210 PowerShell
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($file in @(
+            'canonforge-omega/scripts/PROVE_OMEGA_V6_R209_WINDOWS.ps1',
+            'canonforge-omega/scripts/ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file), [ref]$tokens, [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell parse failed: $file"
+            }
+          }
+
+      - name: Enforce R209 and R210 source invariants
+        working-directory: canonforge-omega
+        shell: pwsh
+        run: |
+          @'
+          import runpy
+          for path in (
+              'tests/test_r209_sovereign_convergence_diagnostics.py',
+              'tests/test_r210_sovereign_proof_archive.py',
+          ):
+              ns = runpy.run_path(path)
+              tests = sorted((n, v) for n, v in ns.items() if n.startswith('test_') and callable(v))
+              if not tests:
+                  raise SystemExit(f'no tests discovered: {path}')
+              for name, test in tests:
+                  test()
+                  print(f'PASS {path}::{name}')
+          '@ | python -
+
+      - name: Prove content addressing, idempotence, and corruption rejection
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archiver = Resolve-Path 'canonforge-omega/scripts/ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1'
+          $work = Join-Path $env:RUNNER_TEMP 'omega-r210-proof'
+          $archive = Join-Path $work 'archive'
+          New-Item -ItemType Directory -Force -Path $work | Out-Null
+
+          $r208 = [ordered]@{
+            schema = 'OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208'
+            capturedAt = (Get-Date).ToUniversalTime().ToString('o')
+            authority = 'LOCAL_OPERATOR_PHYSICAL_ACCEPTANCE_OBSERVATION_NOT_CANON'
+            canonicalMutation = $false
+            promotionAuthorized = $false
+            production = [ordered]@{ canonicalGitSha = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' }
+          }
+          $receipt = Join-Path $work 'r208.json'
+          $r208 | ConvertTo-Json -Depth 8 | Set-Content -Path $receipt -Encoding utf8
+
+          $first = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $archiver -ReceiptPath $receipt -Kind R208_ATTEMPT -Attempt 1 -ArchiveRoot $archive) -join "`n" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'first archive failed' }
+          if ($first.preexisting) { throw 'first archive incorrectly reported preexisting' }
+          if ($first.sha256 -notmatch '^[a-f0-9]{64}$') { throw 'bad content address' }
+
+          $second = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $archiver -ReceiptPath $receipt -Kind R208_ATTEMPT -Attempt 1 -ArchiveRoot $archive) -join "`n" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'second archive failed' }
+          if (-not $second.preexisting) { throw 'idempotent replay was not recognized' }
+          if ($first.sha256 -ne $second.sha256) { throw 'idempotent replay changed content address' }
+
+          $stored = Join-Path (Join-Path $archive 'R208_ATTEMPT') ($first.sha256 + '.json')
+          if (-not (Test-Path $stored)) { throw 'content-addressed archive file missing' }
+          Add-Content -Path $stored -Value 'corruption'
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $archiver -ReceiptPath $receipt -Kind R208_ATTEMPT -Attempt 1 -ArchiveRoot $archive *> $null
+          if ($LASTEXITCODE -eq 0) { throw 'corrupted archive entry was not rejected' }
+
+      - name: State authority boundary
+        shell: pwsh
+        run: |
+          Write-Host 'R210 retains local non-Canon evidence only.'
+          Write-Host 'Content addressing does not create R181/R208 acceptance, CanonState mutation, or promotion authority.'
+          Write-Host 'Hosted Windows CI is not the operator physical Sovereign PC.'
