@@ -1,4 +1,5 @@
 import { EVIDENCE_PLANE_RELEASE_R194 } from "../evidencePlaneR194";
+import { enhanceSovereignPcSurfaceR199 } from "../sovereignPcSurfaceR199";
 
 export const ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system";
 
@@ -18,7 +19,8 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   if (!type.includes("text/html")) return response;
   let html = await response.text();
   if (!html.includes('id="omegaR193Rail"') || html.includes('data-r195-one-system="true"')) {
-    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+    const unchanged = new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+    return enhanceSovereignPcSurfaceR199(unchanged, pathname);
   }
   const active = pathname === "/system" || pathname.startsWith("/system/") ? " active" : "";
   const item = `<a data-r195-one-system="true" data-predecessor="${EVIDENCE_PLANE_RELEASE_R194}" class="r193Item${active}" href="/system"><span class="r193Icon">Ω1</span><span class="r193Label"><b>ONE SYSTEM</b><small>Drive corpus · calculus · execution state · proof</small></span></a>`;
@@ -30,5 +32,6 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   const headers = new Headers(response.headers);
   headers.set("cache-control", "no-store");
   headers.set("x-omega-one-system", ONE_SYSTEM_NAVIGATION_RELEASE_R195);
-  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+  const oneSystem = new Response(html, { status: response.status, statusText: response.statusText, headers });
+  return enhanceSovereignPcSurfaceR199(oneSystem, pathname);
 }
