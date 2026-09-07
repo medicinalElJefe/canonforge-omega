@@ -1,0 +1,86 @@
+name: OMEGA V6 R198 sovereign closure diagnostic
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/omega-v6-r198-live-sovereign-diagnostic.yml'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/scripts/**'
+      - 'canonforge-omega/tests/test_r198_sovereign_build_closure.py'
+  workflow_dispatch:
+
+jobs:
+  r198-closure-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test sovereign Hybrid closure
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -q pytest
+          python -m py_compile canonforge-omega/scripts/omega_hybrid_agent_r198.py
+          python -m pytest -q canonforge-omega/tests/test_r198_sovereign_build_closure.py
+      - name: Typecheck and dry-bundle canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir /tmp/r198-worker-dry-run
+          find /tmp/r198-worker-dry-run -maxdepth 2 -type f -print
+
+  inspect-live-public-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect live public sovereign closure contract
+        shell: bash
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 25 "$LIVE/" -o /tmp/root.html
+          echo '=== ROOT CONTRACT ==='
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          h=Path('/tmp/root.html').read_text(errors='replace')
+          for n in ['RUN FULL SOVEREIGN BUILD','HOLD_PROJECT_NOT_FOUND','HELD_R141_RETURN_NOT_VERIFIED','Execution proof closure','omega-hybrid-agent']:
+              print(n, '=>', n in h)
+          paths=sorted(set(re.findall(r'/api/[A-Za-z0-9_./?=&${}-]+', h)))
+          for p in paths:
+              if any(k in p.lower() for k in ['hybrid','mission','return','job','build','project','agent','execution','convergence']):
+                  print('PATH',p[:220])
+          PY
+          echo '=== PUBLIC JSON SHAPES ==='
+          for path in /api/hybrid/status /api/development/status /api/convergence/edge; do
+            echo "-- $path"
+            if curl --fail --silent --show-error --max-time 25 "$LIVE$path" -o /tmp/body.json; then
+              python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/body.json').read_text())
+          def shape(x, depth=0):
+              if depth>3:return type(x).__name__
+              if isinstance(x,dict):return {k:shape(v,depth+1) for k,v in list(x.items())[:80] if not any(s in k.lower() for s in ['token','secret','authorization'])}
+              if isinstance(x,list):return [shape(v,depth+1) for v in x[:8]]
+              if isinstance(x,str):return x[:180]
+              return x
+          print(json.dumps(shape(d),indent=2)[:24000])
+          PY
+            else
+              echo UNAVAILABLE
+            fi
+          done
+          echo '=== LIVE AGENT BEFORE R198 DEPLOYMENT ==='
+          curl --fail --silent --show-error --max-time 25 -D /tmp/agent.headers "$LIVE/omega-hybrid-agent.py" -o /tmp/agent.py
+          cat /tmp/agent.headers
+          sha256sum /tmp/agent.py
+          wc -c /tmp/agent.py
+          grep -E "^(VERSION|CAPABILITY_REVISION|SOVEREIGN_CLOSURE_REVISION)=" /tmp/agent.py || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r198-live-agent-source
+          path: /tmp/agent.py
+          if-no-files-found: error

@@ -45,6 +45,7 @@ import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePla
 import { enhanceDeweyComputeSurfaceR195 } from "./deweyComputeSurfaceR195";
 import { enhanceDeweyCalibrationSurfaceR196 } from "./deweyCalibrationSurfaceR196";
 import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195";
+import { sovereignAgentR198Response } from "./sovereignAgentR198";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -75,6 +76,13 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  // R198 owns only the canonical downloadable Hybrid executor bytes. The authenticated
+  // register/heartbeat/poll/result authority remains in the protected canonical runtime.
+  if (url.pathname === "/omega-hybrid-agent.py" || url.pathname === "/omega-hybrid-agent.py/") {
+    if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
+    return sovereignAgentR198Response();
+  }
 
   const restorationPlanner = await handleRestorationPlannerR195(request, env, ctx, runtimeFetch);
   if (restorationPlanner) return restorationPlanner;
@@ -176,13 +184,16 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const response = await runtimeFetch(request, env, ctx);
-  const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
-  const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
-  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
-  const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
-  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, new URL(request.url).pathname);
-  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
-  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
+  const pathname = new URL(request.url).pathname;
+  // Never run HTML surface decorators across executable/text download contracts.
+  if (pathname === "/omega-hybrid-agent.py" || pathname === "/omega-hybrid-agent.py/") return response;
+  const r192 = await enhanceUniversalNavigationR192(response, pathname);
+  const r193 = await enhanceUniversalWorkspaceR193(r192, pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, pathname);
+  const dewey = await enhanceDeweyComputeSurfaceR195(r194, pathname);
+  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, pathname);
+  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, pathname);
+  return enhanceOneSystemNavigationR195(dewey, pathname);
 }
 
 export default { fetch: publicFetch };
