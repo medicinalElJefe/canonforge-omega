@@ -1,22 +1,15 @@
 name: OMEGA V6 R181 live AI SAI Sovereign acceptance proof
 
 on:
-  push:
-    branches: [omega-v6-full-convergence]
-    paths:
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/acceptance/liveAcceptanceR181.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/intelligence/saiAiFusionR179.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/sai/saiRuntimeR179.ts'
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/swarm/swarmGovernorR180.ts'
-      - 'canonforge-omega/api/app.py'
-      - 'canonforge-omega/omega_runtime/sai_b059.py'
-      - 'canonforge-omega/scripts/omega_sovereign_agent.py'
-      - '.github/workflows/omega-v6-r181-live-ai-sai-sovereign-proof.yml'
+  workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: omega-r181-live-acceptance
+  cancel-in-progress: true
 
 jobs:
   prove-live-ai-sai-sovereign-acceptance:
@@ -28,7 +21,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 120); do
+          for attempt in $(seq 1 60); do
             if curl --fail --silent --show-error "$V6_URL/api/acceptance/r181/manifest" -o /tmp/r181-manifest.json \
               && python - <<'PY'
           import json
@@ -46,7 +39,7 @@ jobs:
           assert b.get('canonicalMutation') is False and b.get('promotionAuthorized') is False, b
           PY
             then exit 0; fi
-            if [ "$attempt" -eq 120 ]; then
+            if [ "$attempt" -eq 60 ]; then
               echo "R181 acceptance surface did not settle on the public edge"
               cat /tmp/r181-manifest.json || true
               exit 1
@@ -54,7 +47,7 @@ jobs:
             sleep 2
           done
 
-      - name: Verify R180 load governor is live before intelligence proof
+      - name: Verify R182 continuity-stabilized R180 governor before intelligence proof
         shell: bash
         run: |
           set -euo pipefail
@@ -66,8 +59,14 @@ jobs:
           assert d['ok'] is True, d
           assert d['schema'] == 'OMEGA_SWARM_LOAD_GOVERNOR_R180', d
           assert d['revision'] == 'R180', d
+          assert d['continuityRevision'] == 'R182', d
           p=d['policy']
-          assert p['backgroundPausesWhenSaturated'] is True, p
+          assert p['backgroundPausesWhenSaturated'] is False, p
+          assert p['backgroundContinuityFloorWhenSaturated'] is True, p
+          assert p['backgroundContinuityFloorCells'] == 12, p
+          assert p['backgroundContinuityFloorProviderBudget'] == 0, p
+          assert p['hysteresisUsesPriorPressureWhenProvided'] is True, p
+          assert p['scarCarryRecorded'] is True, p
           assert p['developmentIsClampedBeforeInteractiveWork'] is True, p
           assert p['automaticSelfDevelopmentDefaultCeiling'] == 144, p
           assert p['providerCallsRemainBounded'] is True, p
