@@ -25,6 +25,7 @@ import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR1
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
 import { handleIndependentSolverValidationRequest } from "./validation/independentSolverR175";
 import { independentSolverLabResponse } from "./validation/independentSolverLabR175";
+import { handleWholeInstrumentR189 } from "./wholeInstrumentR189";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -49,6 +50,12 @@ function b059ManifestAlias(request: Request): Request {
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
     const url = new URL(request.url);
+
+    // R189 is an additive whole-instrument surface. It does not replace or shadow
+    // inherited application, compute, validation, federation, swarm, SAI or Canon routes.
+    const wholeInstrument = handleWholeInstrumentR189(request);
+    if (wholeInstrument) return wholeInstrument;
+
     if (url.pathname === "/compute" || url.pathname === "/compute/") return computeLabResponse();
     if (url.pathname === "/warp" || url.pathname === "/warp/") return warpComputationLabResponse();
     if (url.pathname === "/warp/build" || url.pathname === "/warp/build/") return warpBuildCandidateLabResponse();
