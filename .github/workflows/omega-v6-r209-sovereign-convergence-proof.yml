@@ -1,0 +1,86 @@
+name: OMEGA V6 R209 sovereign convergence diagnostics proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_R209_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/tests/test_r209_sovereign_convergence_diagnostics.py'
+      - '.github/workflows/omega-v6-r209-sovereign-convergence-proof.yml'
+  push:
+    branches:
+      - omega-v6-full-convergence
+    paths:
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_R209_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+      - 'canonforge-omega/tests/test_r209_sovereign_convergence_diagnostics.py'
+      - '.github/workflows/omega-v6-r209-sovereign-convergence-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-r209-source-and-boundary-proof:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Parse R208 and R209 PowerShell surfaces
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1',
+            'canonforge-omega/scripts/PROVE_OMEGA_V6_R209_WINDOWS.ps1',
+            'canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file),
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell parse failed: $file"
+            }
+          }
+
+      - name: Enforce R208 and R209 source invariants
+        working-directory: canonforge-omega
+        shell: pwsh
+        run: |
+          @'
+          import runpy
+          for path in (
+              'tests/test_r208_physical_sovereign_acceptance.py',
+              'tests/test_r209_sovereign_convergence_diagnostics.py',
+          ):
+              namespace = runpy.run_path(path)
+              tests = sorted(
+                  (name, value)
+                  for name, value in namespace.items()
+                  if name.startswith('test_') and callable(value)
+              )
+              if not tests:
+                  raise SystemExit(f'no invariant tests discovered in {path}')
+              for name, test in tests:
+                  test()
+                  print(f'PASS {path}::{name}')
+          '@ | python -
+
+      - name: State proof boundary
+        shell: pwsh
+        run: |
+          Write-Host 'R209 CI proves syntax and source invariants only.'
+          Write-Host 'R209 retries do not create acceptance proof; R208/R181 receipts remain authoritative.'
+          Write-Host 'A hosted Windows runner is not the operator physical Sovereign PC.'
