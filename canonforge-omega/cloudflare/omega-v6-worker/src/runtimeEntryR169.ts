@@ -53,7 +53,9 @@ export default {
     // R179 provider-backed cloud SAI remains a first-class organ.
     // B059 deterministic SAI remains Sovereign authority and must not be shadowed
     // by the cloud /api/sai namespace.
-    if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) return handleSaiAiFusionR179(request, env);
+    if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) {
+      return handleSaiAiFusionR179(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
+    }
     if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
     if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
     if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
