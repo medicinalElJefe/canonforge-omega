@@ -3,6 +3,7 @@ import { AnyObj, SWARM_CELL_COUNT, jsonResponse } from "./swarmCoreR169";
 export const SWARM_GOVERNOR_REVISION_R180 = "R180";
 export const SWARM_GOVERNOR_SCHEMA_R180 = "OMEGA_SWARM_LOAD_GOVERNOR_R180";
 export const SWARM_GOVERNOR_RECEIPT_R180 = "OMEGA_SWARM_GOVERNOR_RECEIPT_R180";
+export const SWARM_CONTINUITY_REVISION_R182 = "R182";
 
 export type SwarmPriorityR180 = "INTERACTIVE" | "VALIDATION" | "DEVELOPMENT" | "BACKGROUND";
 export type SwarmPressureR180 = "CALM" | "BUSY" | "SATURATED";
@@ -10,6 +11,9 @@ export type SwarmPressureR180 = "CALM" | "BUSY" | "SATURATED";
 const STAGES = Object.freeze([12, 36, 144, 288, 576, 1728]);
 const PRIORITIES = new Set<SwarmPriorityR180>(["INTERACTIVE", "VALIDATION", "DEVELOPMENT", "BACKGROUND"]);
 
+// R182 continuity law: pressure contracts work before it stops work. The saturated
+// BACKGROUND floor is deliberately deterministic/provider-free so interactive work
+// retains priority while self-development still advances through a tiny proof pulse.
 const LIMITS: Record<SwarmPriorityR180, Record<SwarmPressureR180, { cells: number; provider: number; concurrency: number }>> = {
   INTERACTIVE: {
     CALM: { cells: 288, provider: 8, concurrency: 8 },
@@ -29,7 +33,7 @@ const LIMITS: Record<SwarmPriorityR180, Record<SwarmPressureR180, { cells: numbe
   BACKGROUND: {
     CALM: { cells: 72, provider: 2, concurrency: 3 },
     BUSY: { cells: 24, provider: 1, concurrency: 1 },
-    SATURATED: { cells: 0, provider: 0, concurrency: 0 },
+    SATURATED: { cells: 12, provider: 0, concurrency: 1 },
   },
 };
 
@@ -59,18 +63,53 @@ function statusCounts(status: AnyObj): { active: number; queued: number; running
   return { active, queued, running, failures };
 }
 
-export function inferSwarmPressureR180(status: AnyObj = {}): { pressure: SwarmPressureR180; counts: AnyObj; reason: string } {
+function priorPressure(status: AnyObj): SwarmPressureR180 | null {
+  const raw = String(status?.governorPressure ?? status?.previousGovernorPressure ?? status?.previousPressure ?? "").toUpperCase();
+  return raw === "CALM" || raw === "BUSY" || raw === "SATURATED" ? raw : null;
+}
+
+export function inferSwarmPressureR180(status: AnyObj = {}): { pressure: SwarmPressureR180; counts: AnyObj; reason: string; hysteresisApplied: boolean; priorPressure: SwarmPressureR180 | null } {
   const counts = statusCounts(status);
   const backlog = Math.max(counts.queued, clampInt(status?.queueDepth ?? status?.backlog ?? 0, 0, 10000, 0));
   const failureRatio = Math.max(0, Math.min(1, n(status?.failureRatio, counts.failures && missionRows(status).length ? counts.failures / missionRows(status).length : 0)));
   const latencyMs = Math.max(0, n(status?.latencyMs ?? status?.p95LatencyMs, 0));
+  const prior = priorPressure(status);
+  const metrics = { ...counts, backlog, failureRatio, latencyMs };
+
+  // Escalation thresholds respond quickly. Release thresholds are deliberately
+  // lower, which gives the controller hysteresis and prevents CALM/BUSY/SATURATED
+  // oscillation under noisy load.
+  let pressure: SwarmPressureR180;
+  let reason: string;
   if (counts.active >= 8 || backlog >= 12 || failureRatio >= 0.35 || latencyMs >= 45000) {
-    return { pressure: "SATURATED", counts: { ...counts, backlog, failureRatio, latencyMs }, reason: "active/backlog/failure/latency circuit breaker" };
+    pressure = "SATURATED";
+    reason = "active/backlog/failure/latency circuit breaker";
+  } else if (counts.active >= 3 || backlog >= 4 || failureRatio >= 0.15 || latencyMs >= 15000) {
+    pressure = "BUSY";
+    reason = "interactive reserve protection";
+  } else {
+    pressure = "CALM";
+    reason = "capacity available";
   }
-  if (counts.active >= 3 || backlog >= 4 || failureRatio >= 0.15 || latencyMs >= 15000) {
-    return { pressure: "BUSY", counts: { ...counts, backlog, failureRatio, latencyMs }, reason: "interactive reserve protection" };
+
+  let hysteresisApplied = false;
+  if (prior === "SATURATED" && pressure !== "SATURATED") {
+    const releaseSafe = counts.active <= 4 && backlog <= 6 && failureRatio < 0.20 && latencyMs < 25000;
+    if (!releaseSafe) {
+      pressure = "SATURATED";
+      reason = "scar-carry hysteresis retained saturated state until recovery margin";
+      hysteresisApplied = true;
+    }
+  } else if (prior === "BUSY" && pressure === "CALM") {
+    const releaseSafe = counts.active <= 1 && backlog <= 1 && failureRatio < 0.08 && latencyMs < 8000;
+    if (!releaseSafe) {
+      pressure = "BUSY";
+      reason = "scar-carry hysteresis retained busy state until calm margin";
+      hysteresisApplied = true;
+    }
   }
-  return { pressure: "CALM", counts: { ...counts, backlog, failureRatio, latencyMs }, reason: "capacity available" };
+
+  return { pressure, counts: metrics, reason, hysteresisApplied, priorPressure: prior };
 }
 
 function normalizePriority(input: AnyObj): SwarmPriorityR180 {
@@ -99,11 +138,12 @@ export function governAutonomicMissionR180(input: AnyObj = {}, status: AnyObj = 
   const operatorAuthorizedFull = input?.operatorAuthorizedFull === true;
   const fullAdmitted = fullRequested && pressureState.pressure === "CALM" && priority !== "BACKGROUND" && expansionVerified && operatorAuthorizedFull;
   const hardCellCap = fullAdmitted ? SWARM_CELL_COUNT : base.cells;
-  const admitted = !(priority === "BACKGROUND" && pressureState.pressure === "SATURATED") && hardCellCap > 0;
+  const admitted = hardCellCap > 0;
   const effectiveCells = admitted ? Math.max(1, Math.min(requestedCells, hardCellCap)) : 0;
   const effectiveProvider = admitted ? Math.min(clampInt(input?.providerBudget, 0, 12, base.provider), base.provider) : 0;
   const effectiveConcurrency = admitted ? Math.min(clampInt(input?.branchConcurrency, 1, 12, base.concurrency || 1), base.concurrency || 1) : 0;
   const stageCeiling = nearestStage(effectiveCells);
+  const continuityFloorActive = priority === "BACKGROUND" && pressureState.pressure === "SATURATED";
   const rewritten = {
     ...input,
     priority,
@@ -113,18 +153,28 @@ export function governAutonomicMissionR180(input: AnyObj = {}, status: AnyObj = 
     allowFullAuto: fullAdmitted,
     operatorAuthorizedFull: fullAdmitted,
     governorRevision: SWARM_GOVERNOR_REVISION_R180,
+    continuityRevision: SWARM_CONTINUITY_REVISION_R182,
     governorPressure: pressureState.pressure,
+    continuityFloorActive,
   };
   const receipt = {
     schema: SWARM_GOVERNOR_RECEIPT_R180,
     revision: SWARM_GOVERNOR_REVISION_R180,
+    continuityRevision: SWARM_CONTINUITY_REVISION_R182,
     admitted,
     priority,
     pressure: pressureState.pressure,
     pressureReason: pressureState.reason,
     counts: pressureState.counts,
+    scarCarry: {
+      priorPressure: pressureState.priorPressure,
+      recentFailures: pressureState.counts.failures,
+      failureRatio: pressureState.counts.failureRatio,
+      hysteresisApplied: pressureState.hysteresisApplied,
+    },
     requested: { cells: requestedCells, providerBudget: input?.providerBudget ?? null, branchConcurrency: input?.branchConcurrency ?? null, fullRequested },
     admittedLimits: { cells: effectiveCells, providerBudget: effectiveProvider, branchConcurrency: effectiveConcurrency, stageCeiling },
+    continuityFloor: { active: continuityFloorActive, cells: continuityFloorActive ? 12 : null, providerBudget: continuityFloorActive ? 0 : null, branchConcurrency: continuityFloorActive ? 1 : null },
     interactiveReserveProtected: priority === "DEVELOPMENT" || priority === "BACKGROUND" || pressureState.pressure !== "CALM",
     fullExpansionAdmitted: fullAdmitted,
     expansionRequirements: { previousStageVerified: expansionVerified, operatorAuthorizedFull, pressureMustBeCalm: true },
@@ -140,10 +190,16 @@ export function swarmGovernorManifestR180(): Response {
     ok: true,
     schema: SWARM_GOVERNOR_SCHEMA_R180,
     revision: SWARM_GOVERNOR_REVISION_R180,
+    continuityRevision: SWARM_CONTINUITY_REVISION_R182,
     stages: [...STAGES],
     priorityLimits: LIMITS,
     policy: {
-      backgroundPausesWhenSaturated: true,
+      backgroundPausesWhenSaturated: false,
+      backgroundContinuityFloorWhenSaturated: true,
+      backgroundContinuityFloorCells: 12,
+      backgroundContinuityFloorProviderBudget: 0,
+      hysteresisUsesPriorPressureWhenProvided: true,
+      scarCarryRecorded: true,
       developmentIsClampedBeforeInteractiveWork: true,
       full1728Requires: ["CALM_PRESSURE", "PREVIOUS_STAGE_VERIFIED", "OPERATOR_AUTHORIZED_FULL"],
       automaticSelfDevelopmentDefaultCeiling: 144,
@@ -152,6 +208,6 @@ export function swarmGovernorManifestR180(): Response {
     },
     canonicalMutation: false,
     promotionAuthorized: false,
-    boundary: "The governor schedules and clamps execution capacity. It cannot promote a build, mutate Canon, convert model output into authority, or claim successful work without downstream execution receipts.",
+    boundary: "R182 preserves forward continuity by contracting background work to a 12-cell provider-free proof pulse under saturation. Interactive capacity remains protected; expansion is hysteretic and proof-gated; the governor cannot promote a build, mutate Canon, convert model output into authority, or claim successful work without downstream execution receipts.",
   });
 }
