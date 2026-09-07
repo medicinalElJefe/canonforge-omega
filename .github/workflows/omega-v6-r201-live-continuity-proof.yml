@@ -1,0 +1,265 @@
+name: OMEGA V6 R201 live durable mission continuity proof
+
+on:
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_call:
+    inputs:
+      expected_sha:
+        description: Exact canonical Git SHA expected on the deployed edge
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Optional exact canonical Git SHA expected on the deployed edge
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r201-live-continuity-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  prove-live-r201-continuity:
+    runs-on: ubuntu-latest
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+      EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+    steps:
+      - name: Wait for exact deployed canonical SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+              "$V6_URL/api/acceptance/r181/manifest" -o /tmp/r181-manifest.json \
+              && python - <<'PY'
+          import json, os
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r181-manifest.json').read_text())
+          expected = os.environ['EXPECTED_SHA'].strip()
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_LIVE_ACCEPTANCE_MANIFEST_R181', d
+          assert d.get('deploymentIdentityBound') is True, d
+          assert d.get('canonicalGitSha') == expected, (expected, d.get('canonicalGitSha'))
+          assert d.get('canonicalMutation') is False, d
+          assert d.get('promotionAuthorized') is False, d
+          PY
+            then
+              exit 0
+            fi
+            if [ "$attempt" -eq 90 ]; then
+              echo "R201 proof never observed the expected deployed canonical SHA: $EXPECTED_SHA"
+              cat /tmp/r181-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Verify R201 live manifest and isolated authority boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors \
+            "$V6_URL/api/mission/r201/manifest" -o /tmp/r201-manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('/tmp/r201-manifest.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_DURABLE_MISSION_ROUTE_MANIFEST_R201', d
+          assert d.get('release') == 'r201-durable-mission-execution-route', d
+          assert d.get('durableBinding') == 'OMEGA_MISSION_LEDGER_R201', d
+          assert d.get('durableClass') == 'OmegaMissionLedgerR201', d
+          assert d.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', d
+          assert d.get('canonicalMutation') is False, d
+          assert d.get('hostStateMutation') is False, d
+          assert d.get('promotionAuthorized') is False, d
+          assert 'historical OMEGA_RUNTIME/OmegaRuntime binding is unchanged' in d.get('canonicalRuntimeBoundary',''), d
+          expected = {
+              '/api/mission/r201/manifest', '/api/mission/r201/execute',
+              '/api/mission/r201/summary', '/api/mission/r201/history',
+              '/api/mission/r201/verify',
+          }
+          assert set(d.get('publicEndpoints') or []) == expected, d
+          assert d.get('flow') == [
+              'INTENT', 'R200_CANONICAL_MISSION_EXECUTION',
+              'R200_MISSION_RECEIPT_SHA256_VERIFICATION',
+              'R201_DURABLE_HASH_CHAIN_RECORD', 'R201_CONTINUITY_VERIFICATION',
+              'RETURN_MISSION_PLUS_DURABLE_RECEIPT',
+          ], d
+          PY
+
+      - name: Capture pre-execution durable state
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$V6_URL/api/mission/r201/summary" -o /tmp/r201-summary-before.json
+          curl --fail --silent --show-error "$V6_URL/api/mission/r201/verify" -o /tmp/r201-verify-before.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('/tmp/r201-summary-before.json').read_text())
+          v=json.loads(Path('/tmp/r201-verify-before.json').read_text())
+          assert s.get('ok') is True, s
+          assert s.get('release') == 'r201-durable-mission-evidence-ledger', s
+          assert s.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', s
+          assert s.get('canonicalMutation') is False and s.get('hostStateMutation') is False and s.get('promotionAuthorized') is False, s
+          assert v.get('ok') is True and v.get('verified') is True, v
+          assert v.get('schema') == 'OMEGA_DURABLE_MISSION_CHAIN_VERIFICATION_R201', v
+          Path('/tmp/r201-before-count.txt').write_text(str(int(s.get('entryCount') or 0)))
+          Path('/tmp/r201-before-head.txt').write_text(str(s.get('headSha256') or ''))
+          PY
+
+      - name: Execute one bounded read-only R200 mission through R201 durability
+        shell: bash
+        env:
+          PROOF_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' > /tmp/r201-payload.json
+          import json, os
+          print(json.dumps({
+              'intent': f"R201 continuity proof run {os.environ['PROOF_RUN']}: confirm durable mission evidence-chain integrity.",
+              'useAI': False,
+              'allModes': True,
+              'allDomains': False,
+          }))
+          PY
+          curl --fail --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+            -X POST "$V6_URL/api/mission/r201/execute" \
+            -H 'content-type: application/json' \
+            --data-binary @/tmp/r201-payload.json \
+            -o /tmp/r201-execute.json
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r201-execute.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_DURABLE_MISSION_EXECUTION_R201', d
+          assert d.get('release') == 'r201-durable-mission-execution-route', d
+          assert d.get('state') == 'EXECUTED_RECORDED_CHAIN_VERIFIED', d
+          assert d.get('durableRecorded') is True and d.get('durableVerified') is True, d
+          assert d.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', d
+          assert d.get('canonicalMutation') is False and d.get('hostStateMutation') is False and d.get('promotionAuthorized') is False, d
+          m=d.get('mission') or {}
+          assert m.get('schema') == 'OMEGA_CANONICAL_MISSION_R200', m
+          assert m.get('release') == 'r200-canonical-mission-kernel', m
+          assert re.fullmatch(r'[0-9a-f]{64}', str(m.get('planSha256',''))), m
+          assert re.fullmatch(r'[0-9a-f]{64}', str(m.get('missionReceiptSha256',''))), m
+          assert m.get('canonicalMutation') is False and m.get('promotionAuthorized') is False, m
+          results=(m.get('execution') or {}).get('results') or []
+          assert [r.get('task',{}).get('id') for r in results] == ['correlated-snapshot','proof-state'], results
+          assert all(r.get('task',{}).get('phase') in {'OBSERVE','VERIFY'} for r in results), results
+          assert all(r.get('task',{}).get('required') is True for r in results), results
+          assert (m.get('execution') or {}).get('requiredTasks') == 2, m
+          assert (m.get('execution') or {}).get('requiredReturned') == 2, m
+          assert (m.get('execution') or {}).get('requiredVerified') == 2, m
+          assert (m.get('residuals') or {}).get('requiredNotReturned') == [], m
+          assert (m.get('residuals') or {}).get('requiredReturnedNotVerified') == [], m
+          c=d.get('continuity') or {}
+          assert c.get('ok') is True, c
+          assert c.get('schema') == 'OMEGA_DURABLE_MISSION_RECORD_R201', c
+          assert c.get('state') in {'RECORDED','IDEMPOTENT_EXISTING_RECORD'}, c
+          record=c.get('record') or {}
+          assert record.get('missionReceiptSha256') == m.get('missionReceiptSha256'), (record,m)
+          assert re.fullmatch(r'[0-9a-f]{64}', str(record.get('entrySha256',''))), record
+          assert record.get('receiptIntegrityVerified') is True, record
+          verification=d.get('verification') or {}
+          assert verification.get('verified') is True and verification.get('failures') == [], verification
+          Path('/tmp/r201-proof-mission-id.txt').write_text(str(m.get('missionId')))
+          Path('/tmp/r201-proof-mission-receipt.txt').write_text(str(m.get('missionReceiptSha256')))
+          Path('/tmp/r201-proof-entry-sha.txt').write_text(str(record.get('entrySha256')))
+          PY
+
+      - name: Re-read public history and independently bind the durable head
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$V6_URL/api/mission/r201/summary" -o /tmp/r201-summary-after.json
+          curl --fail --silent --show-error "$V6_URL/api/mission/r201/history?limit=12" -o /tmp/r201-history-after.json
+          curl --fail --silent --show-error "$V6_URL/api/mission/r201/verify" -o /tmp/r201-verify-after.json
+          python - <<'PY'
+          import json, re, os
+          from pathlib import Path
+          before_count=int(Path('/tmp/r201-before-count.txt').read_text())
+          before_head=Path('/tmp/r201-before-head.txt').read_text().strip() or None
+          mission_id=Path('/tmp/r201-proof-mission-id.txt').read_text().strip()
+          mission_receipt=Path('/tmp/r201-proof-mission-receipt.txt').read_text().strip()
+          entry_sha=Path('/tmp/r201-proof-entry-sha.txt').read_text().strip()
+          s=json.loads(Path('/tmp/r201-summary-after.json').read_text())
+          h=json.loads(Path('/tmp/r201-history-after.json').read_text())
+          v=json.loads(Path('/tmp/r201-verify-after.json').read_text())
+          assert s.get('ok') is True, s
+          assert int(s.get('entryCount') or 0) >= before_count + 1, (before_count,s)
+          assert s.get('headSha256') == entry_sha, (entry_sha,s.get('headSha256'))
+          latest=s.get('latest') or {}
+          assert latest.get('missionId') == mission_id, latest
+          assert latest.get('missionReceiptSha256') == mission_receipt, latest
+          assert latest.get('entrySha256') == entry_sha, latest
+          assert h.get('ok') is True, h
+          assert h.get('schema') == 'OMEGA_DURABLE_MISSION_PUBLIC_HISTORY_R201', h
+          assert h.get('authority') == 'DURABLE_EVIDENCE_HISTORY_NOT_HOSTSTATE_NOT_CANONSTATE', h
+          assert h.get('canonicalMutation') is False and h.get('hostStateMutation') is False and h.get('promotionAuthorized') is False, h
+          entries=h.get('entries') or []
+          matches=[e for e in entries if e.get('missionReceiptSha256') == mission_receipt]
+          assert len(matches) == 1, (mission_receipt, entries)
+          e=matches[0]
+          assert e.get('missionId') == mission_id, e
+          assert e.get('entrySha256') == entry_sha, e
+          assert e.get('receiptIntegrityVerified') is True, e
+          assert 'intent' not in e and 'taskReceipts' not in e and 'residuals' not in e, e
+          if before_head:
+              assert e.get('prevEntrySha256') == before_head, (before_head,e)
+          assert v.get('ok') is True and v.get('verified') is True, v
+          assert v.get('failures') == [], v
+          assert v.get('headSha256') == entry_sha, (entry_sha,v)
+          assert int(v.get('entryCount') or 0) == int(s.get('entryCount') or 0), (v,s)
+          assert re.fullmatch(r'[0-9a-f]{64}', entry_sha), entry_sha
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text(
+              '## OMEGA R201 live durable mission continuity\n\n'
+              f"- Canonical SHA: `{os.environ['EXPECTED_SHA']}`\n"
+              f"- Mission: `{mission_id}`\n"
+              f"- R200 mission receipt: `{mission_receipt}`\n"
+              f"- R201 durable entry: `{entry_sha}`\n"
+              f"- Prior head: `{before_head or 'GENESIS'}`\n"
+              f"- Durable entries after proof: `{s.get('entryCount')}`\n"
+              f"- Chain verified: `{v.get('verified')}`\n"
+              '- Canon mutation: `false`\n'
+              '- Host-state mutation: `false`\n'
+              '- Promotion authorized: `false`\n',
+              encoding='utf-8'
+          )
+          print(json.dumps({
+              'status':'LIVE_R201_DURABLE_MISSION_CONTINUITY_VERIFIED',
+              'canonicalGitSha':os.environ['EXPECTED_SHA'],
+              'missionId':mission_id,
+              'missionReceiptSha256':mission_receipt,
+              'entrySha256':entry_sha,
+              'priorHeadSha256':before_head,
+              'entryCount':s.get('entryCount'),
+              'chainVerified':v.get('verified'),
+          }, sort_keys=True))
+          PY
+
+      - name: Upload R201 live continuity proof packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r201-live-durable-mission-continuity-${{ github.run_id }}
+          path: |
+            /tmp/r181-manifest.json
+            /tmp/r201-manifest.json
+            /tmp/r201-summary-before.json
+            /tmp/r201-verify-before.json
+            /tmp/r201-payload.json
+            /tmp/r201-execute.json
+            /tmp/r201-summary-after.json
+            /tmp/r201-history-after.json
+            /tmp/r201-verify-after.json
+          if-no-files-found: error
