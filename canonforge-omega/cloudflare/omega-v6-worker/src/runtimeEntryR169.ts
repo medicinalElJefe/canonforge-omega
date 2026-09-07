@@ -19,6 +19,7 @@ import { cumulativeCapabilityManifestR190 } from "./acceptance/cumulativeCapabil
 import { handleCumulativeCapabilityR191 } from "./acceptance/cumulativeCapabilityR191";
 import { handleCumulativeCapabilityR195 } from "./acceptance/cumulativeCapabilityR195";
 import { handleDriveCorpusSystemR195 } from "./system/driveCorpusSystemR195";
+import { handleRestorationPlannerR195 } from "./system/restorationRouteR195";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { computeLabResponse } from "./compute/computeLabR170";
@@ -67,6 +68,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const restorationPlanner = await handleRestorationPlannerR195(request, env, ctx, runtimeFetch);
+  if (restorationPlanner) return restorationPlanner;
 
   const driveCorpusSystem = await handleDriveCorpusSystemR195(request, env, ctx, runtimeFetch);
   if (driveCorpusSystem) return driveCorpusSystem;
