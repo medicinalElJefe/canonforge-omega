@@ -45,6 +45,8 @@ import { enhanceEvidencePlaneR194, handleEvidencePlaneR194 } from "./evidencePla
 import { enhanceDeweyComputeSurfaceR195 } from "./deweyComputeSurfaceR195";
 import { enhanceDeweyCalibrationSurfaceR196 } from "./deweyCalibrationSurfaceR196";
 import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195";
+import { handleEarthSarFusionR198 } from "./earthSarTruthFusionR198";
+import { enhanceEarthSarIntegratedRepairR198_1 } from "./earthSarIntegratedRepairR198_1";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -75,6 +77,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const earthSarR198 = await handleEarthSarFusionR198(request);
+  if (earthSarR198) return earthSarR198;
 
   const restorationPlanner = await handleRestorationPlannerR195(request, env, ctx, runtimeFetch);
   if (restorationPlanner) return restorationPlanner;
@@ -175,14 +180,15 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 }
 
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
+  const url = new URL(request.url);
   const response = await runtimeFetch(request, env, ctx);
-  const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
-  const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
-  const r194 = await enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
-  const dewey = await enhanceDeweyComputeSurfaceR195(r194, new URL(request.url).pathname);
-  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, new URL(request.url).pathname);
-  if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
-  return enhanceOneSystemNavigationR195(dewey, new URL(request.url).pathname);
+  const r192 = await enhanceUniversalNavigationR192(response, url.pathname);
+  const r193 = await enhanceUniversalWorkspaceR193(r192, url.pathname);
+  const r194 = await enhanceEvidencePlaneR194(r193, url.pathname);
+  const dewey = await enhanceDeweyComputeSurfaceR195(r194, url.pathname);
+  const calibrated = await enhanceDeweyCalibrationSurfaceR196(dewey, url.pathname);
+  const oneSystem = await enhanceOneSystemNavigationR195(calibrated !== dewey ? calibrated : dewey, url.pathname);
+  return enhanceEarthSarIntegratedRepairR198_1(oneSystem, request.url);
 }
 
 export default { fetch: publicFetch };
