@@ -1,0 +1,314 @@
+name: OMEGA V6 R205 exact-head whole-system production promotion
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r205-production-promotion.yml
+      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/oneSystemOperatorR199.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/wholeSystemControlR205.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/wholeSystemSurfaceR205.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/tests/test_r205_whole_system_professional_bridge.py
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - .github/workflows/omega-v6-r205-production-promotion.yml
+      - canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/oneSystemOperatorR199.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/system/wholeSystemControlR205.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/src/wholeSystemSurfaceR205.ts
+      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+      - canonforge-omega/tests/test_r205_whole_system_professional_bridge.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r205-production
+  cancel-in-progress: false
+
+env:
+  CANONICAL_BRANCH: omega-v6-full-convergence
+  R204_MIN_CANONICAL_SHA: fcbedd2c7654cd29197ae321c06bce2e63b1938c
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  prove-r205-cumulative-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove R204 ancestry and R205 additive scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$R204_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R204_MIN_CANONICAL_SHA" HEAD
+          test -f canonforge-omega/cloudflare/omega-v6-worker/src/system/wholeSystemControlR205.ts
+          test -f canonforge-omega/cloudflare/omega-v6-worker/src/wholeSystemSurfaceR205.ts
+          grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'WHOLE_SYSTEM_R205_ID = "r205-whole-system-professional-control"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          test "$(grep -c 'name = \"OMEGA_RUNTIME\"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml)" -eq 1
+          ! grep -q 'OMEGA_HYBRID_MISSION_LEDGER_R205' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove complete inherited runtime and focused R205 invariants
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r205_whole_system_professional_bridge.py
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck cumulative Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Dry-run cumulative R205 Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run
+
+  deploy-exact-canonical-r205:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: prove-r205-cumulative-candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact canonical promotion commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Prove exact canonical head and additive R205 merge lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$R204_MIN_CANONICAL_SHA^{commit}"
+          git merge-base --is-ancestor "$R204_MIN_CANONICAL_SHA" HEAD
+          mapfile -t parents < <(git show -s --format='%P' "$GITHUB_SHA" | tr ' ' '\n')
+          test "${#parents[@]}" -eq 2
+          PREVIOUS_CANONICAL="${parents[0]}"
+          git merge-base --is-ancestor "$R204_MIN_CANONICAL_SHA" "$PREVIOUS_CANONICAL"
+          mapfile -t changed < <(git diff --name-only "$PREVIOUS_CANONICAL" HEAD)
+          allowed=(
+            '.github/workflows/omega-v6-r205-production-promotion.yml'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/system/oneSystemOperatorR199.ts'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/system/wholeSystemControlR205.ts'
+            'canonforge-omega/cloudflare/omega-v6-worker/src/wholeSystemSurfaceR205.ts'
+            'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+            'canonforge-omega/tests/test_r205_whole_system_professional_bridge.py'
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for candidate in "${allowed[@]}"; do [[ "$path" = "$candidate" ]] && ok=true; done
+            if [[ "$ok" != true ]]; then echo "R205_UNEXPECTED_PROMOTION_DELTA $path"; exit 1; fi
+          done
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+          echo "R205_EXACT_CANONICAL_HEAD_VERIFIED $GITHUB_SHA"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Re-prove Durable Object contract and full R205 regression matrix
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r205_whole_system_professional_bridge.py
+          python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and typecheck exact canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Capture pre-deploy production health
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r205-proof
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/r205-proof/pre-health.json
+          curl --fail --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/api/system/r204/manifest" -o /tmp/r205-proof/pre-r204.json
+
+      - name: Bind deployment identity to exact canonical SHA without source mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          source=Path('wrangler.toml').read_text(encoding='utf-8')
+          marker='[vars]\n'
+          assert marker in source
+          assert 'CANONICAL_GIT_SHA =' not in source
+          sha=os.environ['GITHUB_SHA']
+          Path('wrangler.r205-promotion.toml').write_text(source.replace(marker, marker+f'CANONICAL_GIT_SHA = "{sha}"\n',1), encoding='utf-8')
+          PY
+          grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.r205-promotion.toml
+          git diff --exit-code -- wrangler.toml
+
+      - name: Dry-run exact R205 promotion config
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --dry-run --config wrangler.r205-promotion.toml
+
+      - name: Final exact-head check immediately before production mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+
+      - name: Deploy exact canonical R205 Worker to Cloudflare
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.r205-promotion.toml
+
+      - name: Prove live R205 identity, UI, fast mission path, AI/SAI control and R204 preservation
+        id: liveproof
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 70); do
+            rm -f /tmp/r205-proof/manifest.json /tmp/r205-proof/health.json
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/r205-proof/manifest.json \
+              && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r205/health" -o /tmp/r205-proof/health.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r204/manifest" -o /tmp/r205-proof/r204.json \
+              && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r199/snapshot?profile=mission" -o /tmp/r205-proof/r199-mission.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/mission/r201/verify" -o /tmp/r205-proof/r201-verify.json \
+              && curl --fail --silent --show-error --max-time 30 -D /tmp/r205-proof/root.headers "$V6_URL/" -o /tmp/r205-proof/root.html \
+              && EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          def load(p): return json.loads(Path(p).read_text())
+          sha=os.environ['EXPECTED_SHA']
+          m=load('/tmp/r205-proof/manifest.json')
+          h=load('/tmp/r205-proof/health.json')
+          r204=load('/tmp/r205-proof/r204.json')
+          snap=load('/tmp/r205-proof/r199-mission.json')
+          r201=load('/tmp/r205-proof/r201-verify.json')
+          assert m.get('ok') is True, m
+          assert m.get('schema') == 'OMEGA_WHOLE_SYSTEM_CONTROL_MANIFEST_R205', m
+          assert m.get('release') == 'r205-whole-system-professional-control', m
+          assert m.get('canonicalGitSha') == sha, m
+          assert re.fullmatch(r'[0-9a-f]{64}', str(m.get('receiptSha256',''))), m
+          b=m.get('boundaries') or {}
+          for key in ('aiOutputIsNotCanon','saiOutputIsNotCanon','pcOnlineRequiresCurrentAuthenticatedHeartbeat','bridgePreparationIsNotHostExecution','hostQueueIsNotHostCompletion','r204VerifiedReturnIsNotCanonState','selfBuildDraftIsNotGitMutation','successorEvidenceIsNotAutomaticPromotion'):
+              assert b.get(key) is True, (key,b)
+          assert h.get('schema') == 'OMEGA_WHOLE_SYSTEM_HEALTH_R205', h
+          assert h.get('release') == 'r205-whole-system-professional-control', h
+          assert h.get('canonicalGitSha') == sha, h
+          assert h.get('ok') is True, h
+          layers={x.get('id'):x for x in h.get('layers',[])}
+          for key in ('PROOF','CLOUD_AI','SAI_MULTI_AGENT','SAI_B059','R201_DURABILITY','R202_CONTINUITY','R203_HYBRID_CONTINUITY','R204_RETURN_ADMISSION','SELF_BUILD_DISCOVERY','SELF_BUILD_PATCH'):
+              assert layers.get(key,{}).get('ok') is True, (key,layers.get(key))
+          hybrid=h.get('hybrid') or {}
+          if hybrid.get('pcOnline'):
+              assert hybrid.get('heartbeatCurrent') is True and hybrid.get('authenticated') is True, hybrid
+          assert r204.get('schema') == 'OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204', r204
+          assert r204.get('canonicalGitSha') == sha, r204
+          assert snap.get('schema') == 'OMEGA_ONE_SYSTEM_CORRELATED_SNAPSHOT_R199', snap
+          assert snap.get('profile') == 'mission', snap
+          assert snap.get('pcOnline') is False and snap.get('heartbeatCurrent') is False, snap
+          assert (snap.get('truth') or {}).get('missionSnapshotDoesNotClaimHostState') is True, snap
+          ids={x.get('id') for x in snap.get('results',[])}
+          assert {'STATE','ONE_SYSTEM','WORKSPACE','FABRIC','SAI_AI','BUILD'} <= ids, ids
+          assert not ({'CONVERGENCE','SWARM','RECOVERY','EARTH_SOURCES'} & ids), ids
+          assert r201.get('ok') is True and r201.get('verified') is True and r201.get('failures') == [], r201
+          html=Path('/tmp/r205-proof/root.html').read_text(errors='replace')
+          headers=Path('/tmp/r205-proof/root.headers').read_text(errors='replace').lower()
+          assert 'omegawholesystemsurfacer205' in html.lower(), html[:1000]
+          assert 'omega whole system' in html.lower(), html[:1000]
+          assert 'x-omega-whole-system-surface: r205-professional-whole-system-surface' in headers, headers
+          PY
+            then matched=true; break; fi
+            sleep 3
+          done
+          test "$matched" = true
+          echo "R205_LIVE_WHOLE_SYSTEM_VERIFIED $GITHUB_SHA"
+
+      - name: Roll back immediately if R205 live proof failed
+        if: steps.liveproof.outcome != 'success'
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R205_POST_DEPLOY_PROOF_FAILED: rolling back immediately.'
+          npx wrangler rollback --message 'OMEGA R205 automatic rollback: whole-system live proof failed'
+          curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/r205-proof/rollback-health.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r205-proof/rollback-health.json').read_text())
+          assert d.get('ok') is not False, d
+          print('R205_ROLLBACK_HEALTH_VERIFIED')
+          PY
+          exit 1
+
+      - name: Upload exact R205 production proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r205-live-production-proof-${{ github.run_id }}
+          path: /tmp/r205-proof/
+          if-no-files-found: ignore
+
+      - name: Publish R205 promotion proof summary
+        if: steps.liveproof.outcome == 'success'
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R205 exact-head whole-system promotion'
+            echo
+            echo "- Deployed canonical SHA: \`$GITHUB_SHA\`"
+            echo '- Full inherited pytest matrix: verified'
+            echo '- Cloudflare Durable Object contract: verified'
+            echo '- Worker typecheck + dry-run: verified'
+            echo '- R205 manifest exact deployment identity: verified'
+            echo '- R205 Cloud AI / SAI / B059 health: verified'
+            echo '- R199 fast mission snapshot: verified without PC-state claim'
+            echo '- R201 durable chain: verified'
+            echo '- R203 Hybrid continuity + R204 verified-return gate: preserved'
+            echo '- Professional R205 whole-system surface: live'
+            echo '- Native PC online claim: only when current authenticated heartbeat proves it'
+            echo '- Failed post-deploy proof policy: automatic Wrangler rollback'
+          } >> "$GITHUB_STEP_SUMMARY"
