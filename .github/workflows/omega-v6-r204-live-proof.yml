@@ -143,15 +143,20 @@ jobs:
             exit 1
           fi
 
-      - name: Prove inherited live runtime remains coherent
+      - name: Wait for inherited live runtime coherence after exact-SHA settlement
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$V6_URL/_omega/health" -o /tmp/v6-health.json
-          curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json
-          python - <<'PY'
+          settled=false
+          for attempt in $(seq 1 60); do
+            rm -f /tmp/v6-health.json /tmp/v6-convergence.json
+            if curl --fail --silent --show-error --max-time 30 \
+              "$V6_URL/_omega/health" -o /tmp/v6-health.json \
+              && curl --fail --silent --show-error --max-time 30 \
+              "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json \
+              && python - <<'PY'
           import json
           from pathlib import Path
           health = json.loads(Path('/tmp/v6-health.json').read_text())
@@ -164,6 +169,19 @@ jobs:
           if convergence.get('v6_release_authority') != 'omega-v6-full-convergence': raise SystemExit(1)
           if convergence.get('genesis_may_deploy_v6') is not False: raise SystemExit(1)
           PY
+            then
+              settled=true
+              break
+            fi
+            echo "Inherited V6/Genesis convergence not settled yet (attempt $attempt/60)."
+            sleep 2
+          done
+          if [ "$settled" != true ]; then
+            echo 'R204_INHERITED_RUNTIME_NOT_SETTLED'
+            cat /tmp/v6-health.json 2>/dev/null || true
+            cat /tmp/v6-convergence.json 2>/dev/null || true
+            exit 1
+          fi
 
       - name: Publish exact live R204 proof summary
         if: always()
@@ -182,5 +200,5 @@ jobs:
             echo '- R204 verified-return truth boundaries: live-proven'
             echo '- R201/R203 durable evidence continuity: manifest-proven preserved'
             echo '- CanonState / HostState / promotion authority: not granted by R204'
-            echo '- Inherited V6/Genesis role-separated convergence: rechecked'
+            echo '- Inherited V6/Genesis role-separated convergence: rechecked after edge settlement'
           } >> "$GITHUB_STEP_SUMMARY"
