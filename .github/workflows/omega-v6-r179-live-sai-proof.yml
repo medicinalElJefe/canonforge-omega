@@ -1,0 +1,115 @@
+name: OMEGA V6 R179 live SAI intelligence proof
+
+on:
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/sai/**'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - '.github/workflows/omega-v6-r179-live-sai-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  prove-r179-real-sai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+    steps:
+      - name: Wait for R179 manifest after canonical deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 120); do
+            if curl --fail --silent --show-error "$V6_URL/api/sai/manifest" -o /tmp/sai-manifest.json \
+              && python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/sai-manifest.json').read_text())
+          assert d.get('ok') is True, d
+          assert d.get('schema') == 'OMEGA_SAI_MANIFEST_R179', d
+          assert d.get('revision') == 'R179', d
+          assert d.get('runtime') == 'REAL_PROVIDER_BACKED_MULTI_AGENT_INFERENCE', d
+          assert d.get('operationalIntelligenceReady') is True, d
+          assert (d.get('hierarchy') or {}).get('cells') == 1728, d
+          assert (d.get('hierarchy') or {}).get('lanes') == 20736, d
+          training=d.get('training') or {}
+          assert training.get('exactTrainingManifestComplete') is False, training
+          assert training.get('state') == 'OPERATIONAL_INFERENCE_NOT_FULLY_FINE_TUNED', training
+          assert d.get('canonicalMutation') is False, d
+          PY
+            then
+              exit 0
+            fi
+            if [ "$attempt" -eq 120 ]; then
+              echo "R179 SAI manifest did not settle on the public edge"
+              cat /tmp/sai-manifest.json || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Execute real provider-backed SAI mission
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/sai-request.json <<'JSON'
+          {
+            "prompt": "Audit the OMEGA SAI runtime itself. Explain the difference between the real provider-backed inference now available and the still-unproven claim that OMEGA-specific training is complete. Preserve the 1728-cell and 20736-lane software address hierarchy, Canon authority, evidence boundaries, and additive-build rule.",
+            "depth": 4,
+            "maxTokens": 700
+          }
+          JSON
+          curl --fail --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors \
+            -X POST "$V6_URL/api/sai/infer" \
+            -H 'content-type: application/json' \
+            --data-binary @/tmp/sai-request.json \
+            -o /tmp/sai-result.json
+
+      - name: Verify live model, swarm and proof receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/sai-result.json').read_text())
+          assert d.get('ok') is True, d
+          result=d.get('result') or {}
+          receipt=d.get('receipt') or {}
+          specialists=d.get('specialists') or []
+          training=d.get('training') or {}
+          assert result.get('schema') == 'OMEGA_SAI_REAL_INTELLIGENCE_R179', result
+          assert result.get('revision') == 'R179', result
+          assert isinstance(result.get('answer'), str) and len(result['answer'].strip()) > 40, result
+          assert result.get('specialistCount') == 4, result
+          assert int(result.get('successfulSpecialists') or 0) >= 1, result
+          assert result.get('authority') == 'MODEL_SYNTHESIS_NOT_CANON', result
+          assert result.get('canonicalMutation') is False, result
+          assert result.get('promotionAuthorized') is False, result
+          assert receipt.get('schema') == 'OMEGA_SAI_INFERENCE_RECEIPT_R179', receipt
+          assert receipt.get('providerBacked') is True, receipt
+          assert receipt.get('swarmBacked') is True, receipt
+          assert receipt.get('sourceBoundPolicy') is True, receipt
+          assert receipt.get('canonicalMutation') is False, receipt
+          assert receipt.get('authority') == 'RETURNED_NOT_ADMITTED', receipt
+          assert len(str(receipt.get('resultSha256') or '')) == 64, receipt
+          assert len(str(receipt.get('receiptSha256') or '')) == 64, receipt
+          good=[x for x in specialists if x.get('ok') is True]
+          assert good, specialists
+          assert all(x.get('provider') for x in good), good
+          assert all((x.get('receipt') or {}).get('resultSha256') for x in good), good
+          assert training.get('exactTrainingManifestComplete') is False, training
+          assert training.get('workersAiBound') is True, training
+          assert training.get('swarmCellsBound') is True, training
+          print(json.dumps({
+            'status':'LIVE_R179_REAL_SAI_VERIFIED',
+            'missionId':result.get('missionId'),
+            'provider':result.get('provider'),
+            'successfulSpecialists':result.get('successfulSpecialists'),
+            'resultSha256':receipt.get('resultSha256'),
+            'receiptSha256':receipt.get('receiptSha256'),
+            'trainingTruth':training.get('state'),
+          }, sort_keys=True))
+          PY
