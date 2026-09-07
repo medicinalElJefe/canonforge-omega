@@ -11,12 +11,6 @@ on:
       - .github/workflows/omega-v6-r204-live-proof.yml
   push:
     branches: [omega-v6-full-convergence]
-    paths:
-      - canonforge-omega/cloudflare/omega-v6-worker/src/omegaRuntimeR204.ts
-      - canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
-      - canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
-      - canonforge-omega/scripts/check_cloudflare_contract.py
-      - .github/workflows/omega-v6-r204-live-proof.yml
   workflow_dispatch:
 
 permissions:
