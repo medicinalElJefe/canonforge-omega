@@ -1,5 +1,6 @@
 import { EVIDENCE_PLANE_RELEASE_R194 } from "../evidencePlaneR194";
 import { reconstituteOneSystemR199, ONE_SYSTEM_CORRELATION_RELEASE_R199 } from "./oneSystemCorrelationR199";
+import { correlateOneSystemTruthStripR199 } from "./oneSystemTruthStripR199";
 
 export const ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system";
 
@@ -19,8 +20,6 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   if (!type.includes("text/html")) return response;
   let html = await response.text();
 
-  // Preserve the R195 restoration organ and historical rail binding as donor content.
-  // R199 hides the old global rail and makes the 12-function one-system shell authoritative.
   if (html.includes('id="omegaR193Rail"') && !html.includes('data-r195-one-system="true"')) {
     const active = pathname === "/system" || pathname.startsWith("/system/") ? " active" : "";
     const item = `<a data-r195-one-system="true" data-predecessor="${EVIDENCE_PLANE_RELEASE_R194}" class="r193Item${active}" href="/system"><span class="r193Icon">Ω1</span><span class="r193Label"><b>ONE SYSTEM</b><small>Drive corpus · calculus · execution state · proof</small></span></a>`;
@@ -38,5 +37,6 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   headers.set("x-omega-one-system", ONE_SYSTEM_NAVIGATION_RELEASE_R195);
   headers.set("x-omega-one-system-correlation", ONE_SYSTEM_CORRELATION_RELEASE_R199);
   const preserved = new Response(html, { status: response.status, statusText: response.statusText, headers });
-  return reconstituteOneSystemR199(preserved, pathname);
+  const reconstituted = await reconstituteOneSystemR199(preserved, pathname);
+  return correlateOneSystemTruthStripR199(reconstituted);
 }
