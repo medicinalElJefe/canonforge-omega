@@ -30,6 +30,7 @@ import { handleUniversalSurfaceFabricR191 } from "./federation/universalSurfaceF
 import { handleIndependentSolverValidationRequest } from "./validation/independentSolverR175";
 import { independentSolverLabResponse } from "./validation/independentSolverLabR175";
 import { handleWholeInstrumentR189 } from "./wholeInstrumentR189";
+import { enhanceUniversalNavigationR192 } from "./universalNavigationR192";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -61,27 +62,20 @@ function json(data: unknown, status = 200): Response {
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
 
-  // R191 is an additive universal surface registry. It does not create another
-  // Canon authority or shadow any inherited specialized route.
   const universalSurfaceFabric = await handleUniversalSurfaceFabricR191(request, env);
   if (universalSurfaceFabric) return universalSurfaceFabric;
 
   const r191Canon = handleCumulativeCapabilityR191(request);
   if (r191Canon) return r191Canon;
 
-  // R189 remains the admitted additive whole-instrument surface.
   const wholeInstrument = handleWholeInstrumentR189(request);
   if (wholeInstrument) return wholeInstrument;
 
-  // R190 does not create another runtime. It proves the existing dispatcher and
-  // exposes its capability truth through the same route authority.
   if (url.pathname === "/truth" || url.pathname === "/truth/") return wholeSystemTruthR190();
   if (url.pathname.startsWith("/api/acceptance/r190/")) {
     return handleWholeSystemAcceptanceR190(request, env, ctx, runtimeFetch);
   }
 
-  // R190 cumulative Canon extends the immutable R189 61-group predecessor with
-  // the capability-truth admission organ. It is read-only and has no promotion authority.
   if (url.pathname === "/api/canon/r190/manifest" || url.pathname === "/api/canon/r190/manifest/") {
     if (request.method !== "GET") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET"] }, 405);
     return json(cumulativeCapabilityManifestR190());
@@ -96,7 +90,6 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
   if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
 
-  // R185 exposes the 172-cloud federation as both human-readable node links and machine surfaces.
   if (url.pathname === "/cloud" || url.pathname === "/clouds" || url.pathname.startsWith("/cloud/") || url.pathname.startsWith("/api/clouds/r185/")) {
     return handleCloudSwarmR185(request, env);
   }
@@ -105,9 +98,6 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
     return handleLiveAcceptanceR181(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
   }
 
-  // R179 provider-backed cloud SAI remains a first-class organ.
-  // B059 deterministic SAI remains Sovereign authority and must not be shadowed
-  // by the cloud /api/sai namespace.
   if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) {
     return handleSaiAiFusionR179(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
   }
@@ -115,7 +105,6 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
   if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
-  // Preserve R189 accumulated capability canon unchanged as predecessor history.
   if (url.pathname.startsWith("/api/canon/r189/")) return handleCumulativeCapabilityR189(request);
 
   if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
@@ -135,4 +124,9 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
   return canonical.fetch(request, env, ctx);
 }
 
-export default { fetch: runtimeFetch };
+async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
+  const response = await runtimeFetch(request, env, ctx);
+  return enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
+}
+
+export default { fetch: publicFetch };

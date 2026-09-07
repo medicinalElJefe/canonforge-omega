@@ -1,0 +1,103 @@
+name: OMEGA V6 R192 navigation home proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/universalNavigationR192.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/test_r192_navigation_home_repair.py'
+      - '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r192-navigation-home-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r192:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Verify R192 plus cumulative predecessor regression
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r191_universal_surface_fabric.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_r189_whole_instrument_convergence.py \
+            tests/test_r188_motion_time.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and typecheck complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Prove Worker package dry-run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r192-dry-run
+
+  prove-live-r192:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r192
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact canonical SHA and verify every primary human route
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
+            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              d=json.loads(Path('/tmp/r191.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          if d.get('canonicalGitSha') != os.environ['EXPECTED_SHA']:
+              raise SystemExit(1)
+          PY
+            then matched=true; break; fi
+            sleep 5
+          done
+          test "$matched" = true
+
+          routes=(/ /fabric /instrument /truth /clouds /sai /compute /validate /convergence)
+          for route in "${routes[@]}"; do
+            safe=$(printf '%s' "$route" | tr '/ ' '__')
+            curl --fail --silent --show-error --max-time 20 -D "/tmp/${safe}.headers" "$LIVE$route" -o "/tmp/${safe}.html"
+            grep -qi '^content-type: text/html' "/tmp/${safe}.headers"
+            grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/${safe}.headers"
+            grep -F 'id="omegaUniversalNavR192"' "/tmp/${safe}.html"
+          done
+
+          grep -F 'Living Operator Field' /tmp/_.html
+          grep -F 'id="omegaLaunch" class="hidden"' /tmp/_.html
+          grep -F 'OMEGA · R191 SURFACE FABRIC' /tmp/_fabric.html
+
+          curl --fail --silent --show-error --max-time 20 -D /tmp/api.headers "$LIVE/api/fabric/r191/status" -o /tmp/api.json
+          grep -qi '^content-type: application/json' /tmp/api.headers
+          if grep -qi '^x-omega-navigation:' /tmp/api.headers; then
+            echo 'R192 must not inject navigation into JSON/API responses'
+            exit 1
+          fi
+
+          echo "R192_NAVIGATION_HOME_LIVE_VERIFIED $EXPECTED_SHA"
