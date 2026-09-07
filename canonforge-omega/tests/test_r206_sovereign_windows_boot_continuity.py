@@ -19,14 +19,14 @@ def test_r206_launcher_keeps_one_canonical_localhost_identity():
     assert "will not silently move the canonical Hybrid endpoint" in text
 
 
-def test_r206_launcher_binds_pairing_launcher_to_approved_repository_root():
+def test_r206_approved_repository_root_binding_survives_r207_successor():
     text = read(LAUNCHER)
     assert '"$Base/api/hybrid/launcher"' in text
-    assert "Join-Path $Root 'START_OMEGA_PC_LINK.cmd'" in text
+    assert "Join-Path $Root '.omega_pairing_once.cmd'" in text
     assert "OMEGA Sovereign PC Link" in text
     assert "/api/hybrid/agent" in text
     assert "omega_sovereign_agent\\.py" in text
-    assert "Start-Process -FilePath $env:ComSpec" in text
+    assert "'--root', \"`\"$Root`\"\"" in text
     assert "-WorkingDirectory $Root" in text
 
 
