@@ -193,6 +193,7 @@ jobs:
           for key in ('driveSnapshotIsNotLiveDriveTelemetry','publicSarCatalogIsNotRealTimeRadar','sarMetadataIsNotInSarDeformation','solverAvailableIsNotSolverExecuted','cloudConfiguredIsNotCloudExecutionProof','pcOnlineRequiresCurrentAuthenticatedHeartbeat','returnedIsNotVerified','verifiedReturnIsNotCanonState'):
               assert b.get(key) is True, (key,b)
           assert s.get('schema')=='OMEGA_OPERATIONAL_PROVENANCE_STATUS_R211' and s.get('canonicalGitSha')==sha, s
+          assert s.get('ok') is True, s
           ph=s.get('physicalHost') or {}
           if ph.get('pcOnline'):
               assert ph.get('heartbeatCurrent') is True and ph.get('authenticated') is True, ph
@@ -248,6 +249,7 @@ jobs:
             echo '- Worker typecheck: PASS'
             echo '- Wrangler dry-run: PASS'
             echo '- Production deploy: PASS'
+            echo '- R211 aggregate status.ok: TRUE'
             echo '- R211 provenance manifest/status/Earth query: LIVE VERIFIED'
             echo '- R205/R204/R181 exact identity: LIVE VERIFIED'
             echo '- R201 durable chain: VERIFIED'
