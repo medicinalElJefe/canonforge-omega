@@ -1,4 +1,4 @@
-name: OMEGA V6 R198.1 guarded production deploy
+name: OMEGA V6 R198.2 guarded production deploy
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Full Sovereign preservation and R198.1 repair contract
+      - name: Full Sovereign preservation and R198.2 repair contract
         working-directory: canonforge-omega
         run: |
           python -m pip install -U pip pytest
@@ -86,22 +86,42 @@ jobs:
           print('R198_QUERY_PRESERVED', q)
           PY
 
-      - name: Prove repaired Earth UI replaces intrusive R198 panel
+      - name: Prove NASA GIBS real Earth context source responds
         run: |
           set -euo pipefail
-          curl -fsS --max-time 45 'https://omegav6.jeffdeweyeljefe.workers.dev/?app=Earth' > earth-r1981.html
-          grep -q 'omegaSarIntegratedR198_1Runtime' earth-r1981.html
-          grep -q 'REAL SAR' earth-r1981.html
-          if grep -q 'omegaSarTruthR198Runtime' earth-r1981.html; then
+          rm -f nasa-context.jpg nasa-context-date.txt
+          for OFFSET in 1 2 3 4 5 6 7 8; do
+            DATE="$(date -u -d "$OFFSET day ago" +%F)"
+            URL="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1&LAYERS=VIIRS_SNPP_CorrectedReflectance_TrueColor&STYLES=&FORMAT=image%2Fjpeg&TRANSPARENT=false&SRS=EPSG%3A4326&BBOX=-180,-90,180,90&WIDTH=1024&HEIGHT=512&TIME=$DATE"
+            TYPE="$(curl -fsSL --max-time 60 -o nasa-context.jpg -w '%{content_type}' "$URL" || true)"
+            SIZE="$(wc -c < nasa-context.jpg 2>/dev/null || echo 0)"
+            if [[ "$TYPE" == image/* ]] && [[ "$SIZE" -gt 10000 ]]; then
+              printf '%s\n' "$DATE" > nasa-context-date.txt
+              echo "NASA_GIBS_CONTEXT_OK date=$DATE type=$TYPE bytes=$SIZE"
+              break
+            fi
+          done
+          test -s nasa-context-date.txt
+
+      - name: Prove repaired Earth UI and R198.2 context are live
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 45 'https://omegav6.jeffdeweyeljefe.workers.dev/?app=Earth' > earth-r1982.html
+          grep -q 'omegaSarIntegratedR198_1Runtime' earth-r1982.html
+          grep -q 'omegaSarVisualContextR198_2Runtime' earth-r1982.html
+          grep -q 'NASA GIBS' earth-r1982.html
+          grep -q 'VIIRS_SNPP_CorrectedReflectance_TrueColor' earth-r1982.html
+          grep -q 'REAL SAR' earth-r1982.html
+          if grep -q 'omegaSarTruthR198Runtime' earth-r1982.html; then
             echo 'OLD_INTRUSIVE_R198_PANEL_STILL_PRESENT'
             exit 1
           fi
 
-      - name: Prove R198.1 does not leak into non-Earth workspace
+      - name: Prove Earth-only visual layers do not leak into Hybrid
         run: |
           set -euo pipefail
-          curl -fsS --max-time 45 'https://omegav6.jeffdeweyeljefe.workers.dev/?app=Hybrid' > hybrid-r1981.html
-          if grep -q 'omegaSarIntegratedR198_1Runtime' hybrid-r1981.html; then
-            echo 'EARTH_SAR_UI_LEAKED_INTO_HYBRID'
+          curl -fsS --max-time 45 'https://omegav6.jeffdeweyeljefe.workers.dev/?app=Hybrid' > hybrid-r1982.html
+          if grep -q 'omegaSarIntegratedR198_1Runtime' hybrid-r1982.html || grep -q 'omegaSarVisualContextR198_2Runtime' hybrid-r1982.html; then
+            echo 'EARTH_VISUAL_LAYER_LEAKED_INTO_HYBRID'
             exit 1
           fi
