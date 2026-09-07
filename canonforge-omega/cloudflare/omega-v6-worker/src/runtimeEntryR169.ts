@@ -134,11 +134,10 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 }
 
 async function publicFetch(request: Request, env: any, ctx: any): Promise<Response> {
-  const pathname = new URL(request.url).pathname;
   const response = await runtimeFetch(request, env, ctx);
-  const r192 = await enhanceUniversalNavigationR192(response, pathname);
-  const r193 = await enhanceUniversalWorkspaceR193(r192, pathname);
-  return enhanceEvidencePlaneR194(r193, pathname);
+  const r192 = await enhanceUniversalNavigationR192(response, new URL(request.url).pathname);
+  const r193 = await enhanceUniversalWorkspaceR193(r192, new URL(request.url).pathname);
+  return enhanceEvidencePlaneR194(r193, new URL(request.url).pathname);
 }
 
 export default { fetch: publicFetch };
