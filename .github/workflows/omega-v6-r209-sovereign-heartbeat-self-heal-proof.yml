@@ -53,16 +53,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prove canonical R208 ancestry
+      - name: Prove canonical R208 ancestry and hosted-pairing law
         shell: bash
         run: |
           set -euo pipefail
           git cat-file -e "$R208_MIN_CANONICAL_SHA^{commit}"
           git merge-base --is-ancestor "$R208_MIN_CANONICAL_SHA" HEAD
           grep -F 'R209 launch requested' canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1
+          grep -F "CloudBase = 'https://omegav6.jeffdeweyeljefe.workers.dev'" canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1
+          grep -F "PairingEnvelopePath = '/api/hybrid/pairing-envelope'" canonforge-omega/scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1
           grep -F 'OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208' canonforge-omega/scripts/PROVE_OMEGA_V6_WINDOWS.ps1
           grep -F 'SOVEREIGN_HEARTBEAT_RECOVERY_R209_ID = "r209-sovereign-heartbeat-self-heal"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
           grep -F 'handleSovereignHeartbeatRecoveryR209' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F '"/api/hybrid/pairing-envelope"' canonforge-omega/cloudflare/omega-v6-worker/src/system/sovereignHeartbeatRecoveryR209.ts
+          grep -F 'cloudBootstrapDoesNotIssuePairingCredential: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/sovereignHeartbeatRecoveryR209.ts
 
       - uses: actions/setup-python@v5
         with:
@@ -168,14 +172,14 @@ jobs:
             tests\test_r209_sovereign_heartbeat_self_heal.py
           if ($LASTEXITCODE -ne 0) { throw 'R209 Windows invariant suite failed' }
 
-      - name: Execute healthy reuse then pairing-generation drift self-heal
+      - name: Execute hosted-authority emulation, healthy reuse, and generation-drift self-heal
         run: |
           $ErrorActionPreference = 'Stop'
           $root = (Resolve-Path '.').Path
           $base = 'http://127.0.0.1:8127'
           $env:OMEGA_PUBLIC_URL = $base
           $env:OMEGA_APPROVED_ROOT = $root
-          $generationFile = Join-Path $env:LOCALAPPDATA 'OMEGA\agent-pairing-generation.txt'
+          $generationFile = Join-Path $env:LOCALAPPDATA 'OMEGA\hosted-pairing-generation.txt'
           $rotateFile = Join-Path $env:TEMP 'omega-r209-ci-rotation.cmd'
 
           function Get-CanonicalAgent {
@@ -194,7 +198,7 @@ jobs:
             if (-not $status.authenticated) { throw "$Stage heartbeat is not authenticated" }
             if (-not $status.pcOnline) { throw "$Stage PC state is not online" }
             if (-not $status.proof) { throw "$Stage heartbeat proof is missing" }
-            if (-not (Test-Path $generationFile)) { throw "$Stage pairing-generation sidecar missing" }
+            if (-not (Test-Path $generationFile)) { throw "$Stage hosted pairing-generation sidecar missing" }
             $stored = [int64](Get-Content -Raw $generationFile).Trim()
             if ($stored -ne [int64]$status.pairingGeneration) { throw "$Stage pairing generation is not bound" }
             return $status
@@ -204,17 +208,17 @@ jobs:
           try {
             Remove-Item $generationFile -Force -ErrorAction SilentlyContinue
 
-            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof -ForceRepair
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof -CloudBase $base -PairingEnvelopePath '/api/hybrid/launcher' -ForceRepair
             if ($LASTEXITCODE -ne 0) { throw "R209 initial recovery launch exited $LASTEXITCODE" }
-            $firstStatus = Assert-Current 'initial recovery'
+            $firstStatus = Assert-Current 'initial hosted-authority recovery'
             $firstAgent = Get-CanonicalAgent
             if (-not $firstAgent) { throw 'R209 initial canonical agent process missing' }
             $firstPid = [int]$firstAgent.ProcessId
             $firstGeneration = [int64]$firstStatus.pairingGeneration
 
-            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof -CloudBase $base -PairingEnvelopePath '/api/hybrid/launcher'
             if ($LASTEXITCODE -ne 0) { throw "R209 healthy reuse launch exited $LASTEXITCODE" }
-            $reuseStatus = Assert-Current 'healthy reuse'
+            $reuseStatus = Assert-Current 'healthy hosted-authority reuse'
             $reuseAgent = Get-CanonicalAgent
             if (-not $reuseAgent -or [int]$reuseAgent.ProcessId -ne $firstPid) {
               throw 'R209 replaced a healthy generation-bound agent instead of reusing it'
@@ -227,17 +231,17 @@ jobs:
             Remove-Item $rotateFile -Force -ErrorAction SilentlyContinue
             $rotated = Invoke-RestMethod -Uri "$base/api/hybrid/status" -TimeoutSec 5
             if ([int64]$rotated.pairingGeneration -le $firstGeneration) {
-              throw 'R209 test failed to create pairing-generation drift'
+              throw 'R209 test failed to create hosted pairing-generation drift'
             }
             $externallyRotatedGeneration = [int64]$rotated.pairingGeneration
 
-            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser -SkipAcceptanceProof -CloudBase $base -PairingEnvelopePath '/api/hybrid/launcher'
             if ($LASTEXITCODE -ne 0) { throw "R209 generation-drift repair launch exited $LASTEXITCODE" }
-            $repairedStatus = Assert-Current 'generation drift repair'
+            $repairedStatus = Assert-Current 'hosted generation-drift repair'
             $repairedAgent = Get-CanonicalAgent
             if (-not $repairedAgent) { throw 'R209 repaired canonical agent process missing' }
             if ([int]$repairedAgent.ProcessId -eq $firstPid) {
-              throw 'R209 failed to replace the generation-unbound agent'
+              throw 'R209 failed to replace the hosted-generation-unbound agent'
             }
             if ([int64]$repairedStatus.pairingGeneration -le $externallyRotatedGeneration) {
               throw 'R209 repair did not rotate a fresh one-time pairing generation'
@@ -245,6 +249,7 @@ jobs:
 
             [ordered]@{
               schema = 'OMEGA_WINDOWS_SOVEREIGN_HEARTBEAT_SELF_HEAL_PROOF_R209'
+              hostedAuthorityEmulatedBy = $base
               initialAgentPid = $firstPid
               reusedAgentPid = [int]$reuseAgent.ProcessId
               repairedAgentPid = [int]$repairedAgent.ProcessId
@@ -255,12 +260,12 @@ jobs:
               authenticated = [bool]$repairedStatus.authenticated
               pcOnline = [bool]$repairedStatus.pcOnline
               r208AcceptanceExecuted = $false
-              authority = 'WINDOWS_CI_TRANSPORT_SELF_HEAL_PROOF_NOT_OPERATOR_PC_ACCEPTANCE'
+              authority = 'WINDOWS_CI_HOSTED_AUTHORITY_EMULATION_NOT_OPERATOR_PC_ACCEPTANCE'
               canonicalMutation = $false
               promotionAuthorized = $false
             } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 'r209-self-heal-proof.json'
             $passed = $true
-            Write-Host 'R209_WINDOWS_GENERATION_DRIFT_SELF_HEAL_VERIFIED_NOT_USER_PC'
+            Write-Host 'R209_WINDOWS_HOSTED_GENERATION_DRIFT_SELF_HEAL_VERIFIED_NOT_USER_PC'
           }
           finally {
             Remove-Item $rotateFile -Force -ErrorAction SilentlyContinue
@@ -281,7 +286,7 @@ jobs:
           @'
           ## OMEGA R209 Windows heartbeat self-heal proof
 
-          This runner proves Windows transport/recovery mechanics: the installer-equivalent verified `.venv`, native `grcwa`, current authenticated localhost heartbeat, healthy-agent reuse, pairing-generation drift detection, scoped stale-agent replacement, fresh one-time pairing, and fail-closed recovery.
+          This runner proves Windows transport/recovery mechanics by emulating the hosted pairing authority on localhost: installer-equivalent verified `.venv`, native `grcwa`, current authenticated heartbeat, healthy-agent reuse, pairing-generation drift detection, scoped stale-agent replacement, fresh one-time pairing, and fail-closed recovery.
 
           R208 physical acceptance is deliberately skipped in this CI integration step. This runner is not the operator's physical Sovereign PC and cannot satisfy R181 user-device acceptance.
           '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
@@ -444,7 +449,11 @@ jobs:
           assert b.get('r208FullAcceptanceStillRequiresR181RcwaB059Conjunction') is True, b
           assert b.get('cloudBootstrapDoesNotIssuePairingCredential') is True, b
           assert b.get('cloudBootstrapDoesNotExecuteOnUserPcByItself') is True, b
+          assert b.get('hostedPairingEnvelopeIsCredentialBearingEphemeral') is True, b
           assert b.get('canonicalMutation') is False and b.get('promotionAuthorized') is False, b
+          pairing=r209.get('hostedPairingEnvelope') or {}
+          assert pairing.get('endpoint') == '/api/hybrid/pairing-envelope', pairing
+          assert pairing.get('delegatesToPreservedCanonicalPairingAuthority') is True, pairing
 
           assert r205.get('canonicalGitSha') == expected, r205
           assert r204.get('canonicalGitSha') == expected, r204
@@ -456,9 +465,9 @@ jobs:
           assert expected in launcher, launcher[:1500]
           raw=f'raw.githubusercontent.com/medicinalElJefe/canonforge-omega/{expected}/canonforge-omega'
           assert raw in launcher, launcher[:3000]
-          assert '-RootOverride' in launcher and '-AgentScriptOverride' in launcher and '-AcceptanceProverOverride' in launcher and '-ForceRepair' in launcher, launcher[:4000]
+          assert '-RootOverride' in launcher and '-AgentScriptOverride' in launcher and '-AcceptanceProverOverride' in launcher and '-CloudBase' in launcher and '-ForceRepair' in launcher, launcher[:5000]
           assert 'OMEGA_TOKEN=' not in launcher, 'public R209 bootstrap must never contain a pairing credential'
-          assert 'OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208' in launcher, launcher[:4000]
+          assert 'OMEGA_PHYSICAL_SOVEREIGN_ACCEPTANCE_R208' in launcher, launcher[:5000]
           PY
             then
               settled=true
@@ -471,7 +480,7 @@ jobs:
             echo 'R209_LIVE_EXACT_SHA_PROOF_NOT_SETTLED'
             cat /tmp/r209-live/r209.json 2>/dev/null || true
             cat /tmp/r209-live/launcher.headers 2>/dev/null || true
-            head -c 4000 /tmp/r209-live/launcher.cmd 2>/dev/null || true
+            head -c 5000 /tmp/r209-live/launcher.cmd 2>/dev/null || true
             exit 1
           fi
           echo "R209_LIVE_EXACT_SHA_TOKEN_FREE_SELF_HEAL_BOOTSTRAP_VERIFIED $GITHUB_SHA"
