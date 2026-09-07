@@ -6,6 +6,7 @@ SRC = WORKER / "src"
 R199 = (SRC / "system" / "oneSystemCorrelationR199.ts").read_text(encoding="utf-8")
 TRUTH = (SRC / "system" / "oneSystemTruthStripR199.ts").read_text(encoding="utf-8")
 OPERATOR = (SRC / "system" / "oneSystemOperatorR199.ts").read_text(encoding="utf-8")
+SURFACE = (SRC / "system" / "oneSystemOperatorSurfaceR199.ts").read_text(encoding="utf-8")
 NAV195 = (SRC / "system" / "oneSystemNavigationR195.ts").read_text(encoding="utf-8")
 ENTRY = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
 
@@ -75,9 +76,11 @@ def test_r199_preserves_r195_release_identity_recovery_then_final_projection():
     assert 'ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system"' in NAV195
     assert 'from "./oneSystemCorrelationR199"' in NAV195
     assert 'from "./oneSystemTruthStripR199"' in NAV195
+    assert 'from "./oneSystemOperatorSurfaceR199"' in NAV195
     assert "const preserved = new Response(html" in NAV195
     assert "const reconstituted = await reconstituteOneSystemR199(preserved, pathname)" in NAV195
-    assert "return correlateOneSystemTruthStripR199(reconstituted)" in NAV195
+    assert "const correlated = await correlateOneSystemTruthStripR199(reconstituted)" in NAV195
+    assert "return enhanceOneSystemOperatorSurfaceR199(correlated)" in NAV195
     assert 'headers.set("x-omega-one-system"' in NAV195
     assert 'headers.set("x-omega-one-system-correlation"' in NAV195
     assert "RESIDUAL RESTORATION / WEAKEST-LINK QUEUE" in NAV195
@@ -152,12 +155,27 @@ def test_r199_operator_snapshot_correlates_runtime_instead_of_separate_ui_truths
     assert "heartbeatCurrent: Boolean(pc.heartbeat_current)" in OPERATOR
 
 
+def test_r199_operator_console_is_collapsed_and_executes_through_control_plane():
+    assert 'id="omegaR199Operator"' in SURFACE
+    assert "#omegaR199Operator{position:fixed" in SURFACE
+    assert "display:none" in SURFACE
+    assert "#omegaR199Operator.open{display:grid}" in SURFACE
+    assert "id='r199OperateBtn'" in SURFACE
+    assert "/api/system/r199/operate" in SURFACE
+    assert "/api/system/r199/snapshot" in SURFACE
+    assert "RUN + RECEIPT" in SURFACE
+    assert "CORRELATED SNAPSHOT" in SURFACE
+    assert "RECEIPT BEFORE ADMISSION" in SURFACE
+    assert "e.ctrlKey||e.metaKey" in SURFACE
+
+
 def test_r199_truthfully_exposes_unrestored_audio_instead_of_inventing_route():
     assert 'label: "AUDIO", href: "#"' in R199
     assert 'state: "RESTORE_REQUIRED"' in R199
     assert "MENU_09_AUDIO_HAS_ARCHIVE_AUTHORITY_BUT_NO_ADMITTED_CANONICAL_CLOUD_SURFACE" in R199
     assert "does not yet have an admitted canonical cloud execution surface" in R199
     assert "R199_AUDIO_RESTORE_REQUIRED" in OPERATOR
+    assert "AUDIO remains visible as RESTORE REQUIRED" in SURFACE
 
 
 def test_r199_preserves_20736_as_atlas_resolution_not_physical_dimension():
@@ -173,3 +191,4 @@ def test_r199_mobile_and_desktop_keep_primary_field_uncovered_when_closed():
     assert "--r199bar:44px" in R199
     assert "r199Open" in R199
     assert "opacity:0;pointer-events:none" in R199
+    assert "@media(max-width:760px)" in SURFACE
