@@ -5,8 +5,6 @@ import {
   type DeweyState,
   type GovernedModeId,
   handleDeweyWaterContinuityR195,
-  inversePair011,
-  pair011,
 } from "./deweyWaterContinuityR195";
 
 export const DEWEY_CALIBRATION_RELEASE_R196 = "r196-measured-dewey-calibration-fabric";
@@ -243,10 +241,6 @@ async function evaluateRows(
   };
 }
 
-async function hashKey(row: ObservationRow): Promise<string> {
-  return sha256({ group: row.group, id: row.id });
-}
-
 async function splitRows(rows: ObservationRow[], policy: string, holdoutFraction: number) {
   const grouped = new Map<string, ObservationRow[]>();
   for (const row of rows) {
@@ -256,8 +250,8 @@ async function splitRows(rows: ObservationRow[], policy: string, holdoutFraction
   }
   let groups = [...grouped.entries()];
   if (policy === "temporal") {
-    const missing = rows.filter(row => !row.observedAt);
-    if (missing.length) throw new Error("TEMPORAL_SPLIT_REQUIRES_OBSERVED_AT");
+    const invalid = rows.filter(row => !row.observedAt || !Number.isFinite(Date.parse(row.observedAt)));
+    if (invalid.length) throw new Error("TEMPORAL_SPLIT_REQUIRES_VALID_OBSERVED_AT");
     groups.sort((a, b) => {
       const ta = Math.max(...a[1].map(r => Date.parse(r.observedAt || "")));
       const tb = Math.max(...b[1].map(r => Date.parse(r.observedAt || "")));
@@ -314,6 +308,7 @@ async function calibrateRows(rows: ObservationRow[], options: Obj = {}, evidence
   if (errors.length) throw new Error(errors.join(";"));
   if (rows.length < 4) throw new Error("MINIMUM_4_ROWS_REQUIRED_FOR_CALIBRATION_AND_HOLDOUT");
   if (rows.length > 96) throw new Error("MAXIMUM_96_ROWS_PER_WORKER_CALIBRATION_REQUEST");
+  if (new Set(rows.map(row => row.group)).size < 2) throw new Error("MINIMUM_2_INDEPENDENT_GROUPS_REQUIRED_FOR_HOLDOUT");
 
   const splitPolicy = String(options.splitPolicy || "hash").toLowerCase();
   const holdoutFraction = clamp(finite(options.holdoutFraction, 0.25), 0.1, 0.5);
@@ -370,11 +365,12 @@ async function calibrateRows(rows: ObservationRow[], options: Obj = {}, evidence
   const candidateHoldout = await evaluateRows(split.holdoutRows, candidate, baseline, huberDelta, 0);
   const trainRelativeImprovement = (baselineTrain.dataLoss - bestTrain.dataLoss) / Math.max(1e-12, baselineTrain.dataLoss);
   const holdoutRelativeImprovement = (baselineHoldout.dataLoss - candidateHoldout.dataLoss) / Math.max(1e-12, baselineHoldout.dataLoss);
-  const requiredRelativeImprovement = clamp(finite(options.requiredHoldoutRelativeImprovement, 0), -1, 1);
+  const requiredRelativeImprovement = clamp(finite(options.requiredHoldoutRelativeImprovement, 0), 0, 1);
   const allMeasured = rows.every(row => row.evidenceClass === "MEASURED" && Boolean(row.provenance));
   const allMeasuredWithReceiptClaim = allMeasured && rows.every(row => Boolean(row.sourceReceiptSha256));
   const evidenceClasses = [...new Set(rows.map(row => row.evidenceClass))];
-  const generalizes = holdoutRelativeImprovement >= requiredRelativeImprovement;
+  const generalizationGap = candidateHoldout.dataLoss - bestTrain.dataLoss;
+  const generalizes = holdoutRelativeImprovement > requiredRelativeImprovement + 1e-12;
   const admissibleAsModelCandidate = split.proof.leakageFree && generalizes && Number.isFinite(candidateHoldout.dataLoss);
   const empiricalAuthority = evidenceAuthority === "SERVER_VERIFIED_EVIDENCE_LEDGER";
   const evidenceStatus = empiricalAuthority && allMeasuredWithReceiptClaim
@@ -411,7 +407,8 @@ async function calibrateRows(rows: ObservationRow[], options: Obj = {}, evidence
     comparison: {
       trainRelativeImprovement,
       holdoutRelativeImprovement,
-      generalizationGap: bestTrain.dataLoss - candidateHoldout.dataLoss,
+      generalizationGap,
+      generalizationGapDefinition: "candidate_holdout_data_loss - candidate_train_data_loss",
       requiredHoldoutRelativeImprovement: requiredRelativeImprovement,
       generalizes,
     },
@@ -446,40 +443,6 @@ async function calibrateRows(rows: ObservationRow[], options: Obj = {}, evidence
     boundary: DEWEY_CALIBRATION_BOUNDARY_R196,
   };
   return { ...core, receiptSha256: await sha256(core) };
-}
-
-function dualRail(value: number) {
-  return { positive: Math.max(value, 0), negative: Math.max(-value, 0) };
-}
-
-function dualRailPair(b: number, c: number) {
-  const exact = pair011(b, c);
-  const construct = dualRail(exact.construct);
-  const prune = dualRail(exact.prune);
-  return {
-    input: { b, c },
-    exactNetBasis: exact,
-    rails: {
-      construct: { ...construct, net: construct.positive - construct.negative, total: construct.positive + construct.negative, opposition: Math.min(construct.positive, construct.negative) },
-      prune: { ...prune, net: prune.positive - prune.negative, total: prune.positive + prune.negative, opposition: Math.min(prune.positive, prune.negative) },
-    },
-    inverseFromNet: inversePair011(construct.positive - construct.negative, prune.positive - prune.negative),
-    boundary: "Dual rails are a nonnegative representation envelope around the exact signed orthonormal net basis. Opposition/history may be carried separately; the rails do not replace the exact basis invariant.",
-  };
-}
-
-function t12(phase: number, turns: number) {
-  const k = Math.trunc(turns);
-  const wrapped = ((phase + k) % 12 + 12) % 12;
-  const inverse = ((wrapped - k) % 12 + 12) % 12;
-  return {
-    inputPhase: ((phase % 12) + 12) % 12,
-    turns: k,
-    outputPhase: wrapped,
-    inversePhase: inverse,
-    reversibleError: Math.abs(inverse - (((phase % 12) + 12) % 12)),
-    boundary: "T12 is a reversible cyclic address/phase transform. It does not imply a physical twelve-dimensional space or an automatic STAY/TURN/ESCALATE decision.",
-  };
 }
 
 async function evaluateRequest(body: Obj) {
@@ -531,10 +494,12 @@ async function benchmark(body: Obj) {
     splitPolicy: body.splitPolicy || "temporal",
     maxEvaluations: body.maxEvaluations ?? 72,
     rounds: body.rounds ?? 5,
-    requiredHoldoutRelativeImprovement: body.requiredHoldoutRelativeImprovement ?? -0.01,
+    requiredHoldoutRelativeImprovement: body.requiredHoldoutRelativeImprovement ?? 0,
   }, "R196_SYNTHETIC_BENCHMARK");
-  return {
-    ...result,
+  const calibrationReceiptSha256 = result.receiptSha256;
+  const { receiptSha256: _innerReceipt, ...calibration } = result;
+  const core = {
+    ...calibration,
     benchmark: {
       hiddenParams: hidden,
       generatedRows: n,
@@ -542,6 +507,15 @@ async function benchmark(body: Obj) {
       physicalMeasurement: false,
       empiricalCalibration: false,
     },
+    receiptChain: {
+      calibrationReceiptSha256,
+      envelope: "OMEGA_DEWEY_SYNTHETIC_BENCHMARK_R196",
+      parentReceiptPreserved: true,
+    },
+  };
+  return {
+    ...core,
+    receiptSha256: await sha256(core),
   };
 }
 
@@ -564,6 +538,7 @@ function manifest() {
       required: ["id", "initialState", "observedNextState"],
       recommended: ["group", "observedAt", "mode", "steps", "evidenceClass", "provenance", "sourceReceiptSha256"],
       evidenceClasses: ["MEASURED", "USER_DECLARED_UNVERIFIED", "SYNTHETIC", "DERIVED"],
+      minimumIndependentGroupsForHoldout: 2,
       maximumRowsPerWorkerCalibration: 96,
     },
     split: {
@@ -576,8 +551,10 @@ function manifest() {
       maximumEvaluations: 192,
       objective: "weighted Huber data loss + baseline regularization",
       holdout: "evaluated only after candidate selection",
+      admissionRequiresStrictPositiveHoldoutImprovement: true,
     },
     representations: {
+      authority: "deweyRepresentationR196",
       dualRail011_01m1: true,
       t12ReversiblePhase: true,
       fixed3773SymmetryRule: false,
@@ -600,9 +577,13 @@ function manifest() {
 export async function handleDeweyCalibrationR196(request: Request): Promise<Response | null> {
   const url = new URL(request.url);
   if (!url.pathname.startsWith("/api/compute/dewey/r196/")) return null;
+  if (url.pathname === "/api/compute/dewey/r196/representation") return null;
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
-  if (request.method === "GET" && url.pathname === "/api/compute/dewey/r196/manifest") return json(manifest());
-  if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET manifest", "POST evaluate|calibrate|representation|benchmark"] }, 405);
+  if (request.method === "GET" && url.pathname === "/api/compute/dewey/r196/manifest") {
+    const core = manifest();
+    return json({ ...core, receiptSha256: await sha256(core) });
+  }
+  if (request.method !== "POST") return json({ ok: false, code: "METHOD_NOT_ALLOWED", allowed: ["GET manifest", "POST evaluate|calibrate|benchmark"] }, 405);
   const body = await request.json().catch(() => ({})) as Obj;
   try {
     if (url.pathname === "/api/compute/dewey/r196/evaluate") {
@@ -613,14 +594,6 @@ export async function handleDeweyCalibrationR196(request: Request): Promise<Resp
       const rows = (Array.isArray(body.rows) ? body.rows : []).map(normalizeRow);
       return json(await calibrateRows(rows, body.options || {}, "USER_REQUEST_BODY_UNVERIFIED"));
     }
-    if (url.pathname === "/api/compute/dewey/r196/representation") {
-      const b = finite(body.b, 0.7);
-      const c = finite(body.c, 0.2);
-      const phase = finite(body.phase, 0);
-      const turns = finite(body.turns, 0);
-      const core = { ok: true, schema: "OMEGA_DEWEY_REPRESENTATION_R196", dualRail: dualRailPair(b, c), t12: t12(phase, turns), canonicalMutation: false };
-      return json({ ...core, receiptSha256: await sha256(core) });
-    }
     if (url.pathname === "/api/compute/dewey/r196/benchmark") return json(await benchmark(body));
     return json({ ok: false, code: "NOT_FOUND" }, 404);
   } catch (error) {
@@ -628,4 +601,4 @@ export async function handleDeweyCalibrationR196(request: Request): Promise<Resp
   }
 }
 
-export { calibrateRows as calibrateDeweyRowsR196, dualRailPair as dualRailPairR196, t12 as t12R196 };
+export { calibrateRows as calibrateDeweyRowsR196 };
