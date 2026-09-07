@@ -1,6 +1,6 @@
 import base, { type Env } from "./index";
 import { enhanceHdLaunchNavigation } from "./launchHdNavigation";
-export { OmegaRuntime } from "./omegaRuntime";
+export { OmegaRuntime } from "./omegaRuntimeR203";
 
 const GENESIS = "https://omega-genesis-v1.jeffdeweyeljefe.workers.dev";
 

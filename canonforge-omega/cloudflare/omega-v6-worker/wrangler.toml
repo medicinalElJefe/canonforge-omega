@@ -1,7 +1,7 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R199/R200/R201/R202 correlate established organs
+# runtimeEntryR169 remains the preserved deployment entrypoint. R199/R200/R201/R202/R203 correlate established organs
 # above that entry without replacing Durable Objects, specialist engines, or the canonical heartbeat authority.
 compatibility_date = "2026-08-29"
 workers_dev = true
@@ -48,6 +48,7 @@ ONE_SYSTEM_CORRELATION_R199_ID = "r199-one-system-reconstitution"
 MISSION_KERNEL_R200_ID = "r200-canonical-mission-kernel"
 DURABLE_MISSION_LEDGER_R201_ID = "r201-durable-mission-evidence-ledger"
 CONTINUITY_POTENTIAL_R202_ID = "r202-unified-continuity-potential"
+HYBRID_RETURN_ADMISSION_R203_ID = "r203-authenticated-return-admission"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
@@ -86,7 +87,7 @@ name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
 # Existing namespaces remain live. R201 is a dedicated evidence-only SQLite namespace;
-# R202 adds no Durable Object and therefore cannot create a shadow state namespace.
+# R202 and R203 add no Durable Object and therefore cannot create shadow state namespaces.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"
