@@ -41,8 +41,8 @@
     },
     {
       "path": ".github/workflows/deploy-genesis-cloudflare.yml",
-      "sha256": "6238f9aa27cbb36496fb9da31dcabc29dafd9ce1c4ef1e0f1cd25f5c212255d3",
-      "bytes": 8250
+      "sha256": "1002583c97d845b8037d2834168fbbe98c65f0d5e5a788a2ab7ee1042995e60f",
+      "bytes": 9127
     },
     {
       "path": ".github/workflows/deploy-v6-cloudflare.yml",
@@ -146,13 +146,13 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "94ed5c97680d46224a8b9c4c37392012ca17568abaf9c97a194675630f077816",
-      "bytes": 7051
+      "sha256": "a02f772cd035c31668210fd5f858244c5e9010216a553c39d83be8cda1f6e3cf",
+      "bytes": 7306
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/convergence.js",
-      "sha256": "6c42c4c9885f809446a6ef7d30fbee212192eb99adbd276ee20bd3ca92c093ea",
-      "bytes": 12181
+      "sha256": "742cf1fec77082b6ed27b7e32ad056ff636eb78783e6e3f41a93d76354337e5f",
+      "bytes": 14942
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/index.js",
@@ -181,8 +181,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/wrangler.toml",
-      "sha256": "ebf2f88894e947658ef9643c3ebb5735f1c882a938b948b461fc9e84b0ddc7f6",
-      "bytes": 526
+      "sha256": "3ecab92c8561920c05d0b9c9882769d5b20fdedbcb770283f8b23b7a38b8dfd0",
+      "bytes": 717
     },
     {
       "path": "cloudflare/omegav6-worker/package.json",
@@ -401,8 +401,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "d61eece4cbb438382a6b5ac770cdd4067197f38a477fb22c658580839dffd5b2",
-      "bytes": 6799
+      "sha256": "5af5475850e6f8c4fb9de93b78372b3914571582d1e36af8a71cf646fe4c5e79",
+      "bytes": 7068
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -791,8 +791,8 @@
     },
     {
       "path": "tests/test_genesis_r191_surface_convergence.py",
-      "sha256": "69ad6897148f98482467e52f61a50d69c58458c8fbb7a14b028d3d7197b920af",
-      "bytes": 4202
+      "sha256": "b2240f9354d0ed1f87922ad730378b6be23c645089fe824d9c8de56148421435",
+      "bytes": 7618
     },
     {
       "path": "tests/test_host_bootstrap.py",
@@ -821,8 +821,8 @@
     },
     {
       "path": "tests/test_reciprocal_convergence_capability_v2.py",
-      "sha256": "0710791af8ec9e1e38aca1fb7caab96309c72332c6edbcfb959b3435b5fe76a0",
-      "bytes": 2059
+      "sha256": "927d2b9101a1478a3b1057aef20284a144abec57d41f464351c4684debc1584a",
+      "bytes": 2250
     },
     {
       "path": "tests/test_render_acceptance.py",
