@@ -6,6 +6,7 @@ import { handleWarpBuildCandidateRequest } from "./swarm/warpBuildCandidateR178"
 import { warpBuildCandidateLabResponse } from "./swarm/warpBuildCandidateLabR178";
 import { handleSuccessorGateR183 } from "./swarm/successorGateR183";
 import { handleImprovementDiscoveryR184 } from "./swarm/improvementDiscoveryR184";
+import { handleCloudSwarmR185 } from "./swarm/cloudSwarmR185";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
@@ -52,6 +53,11 @@ export default {
     if (url.pathname === "/validate/cross-runtime" || url.pathname === "/validate/cross-runtime/") return crossRuntimeLabResponse();
     if (url.pathname === "/validate/independent" || url.pathname === "/validate/independent/") return independentSolverLabResponse();
     if (url.pathname === "/federation" || url.pathname === "/federation/") return federatedOrganLabResponse();
+
+    // R185 exposes the 172-cloud federation as both human-readable node links and machine surfaces.
+    if (url.pathname === "/cloud" || url.pathname === "/clouds" || url.pathname.startsWith("/cloud/") || url.pathname.startsWith("/api/clouds/r185/")) {
+      return handleCloudSwarmR185(request, env);
+    }
 
     if (url.pathname.startsWith("/api/acceptance/r181/")) {
       return handleLiveAcceptanceR181(request, env, ctx, (nextRequest, nextEnv, nextCtx) => canonical.fetch(nextRequest, nextEnv, nextCtx));
