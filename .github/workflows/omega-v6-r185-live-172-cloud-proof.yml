@@ -1,0 +1,88 @@
+name: OMEGA V6 R185 live 172-cloud proof
+
+on:
+  workflow_run:
+    workflows: ["OMEGA V6 verify"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  verify-live-172-cloud-federation:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify R185 manifest and all 172 cloud links
+        shell: bash
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 5 --retry-delay 1 --retry-all-errors \
+            "$V6_URL/api/clouds/r185/manifest" -o /tmp/r185-manifest.json
+          curl --fail --silent --show-error --retry 5 --retry-delay 1 --retry-all-errors \
+            "$V6_URL/api/clouds/r185/health" -o /tmp/r185-health.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          value = json.loads(Path('/tmp/r185-manifest.json').read_text())
+          health = json.loads(Path('/tmp/r185-health.json').read_text())
+          assert value.get('ok') is True, value
+          assert value.get('schema') == 'OMEGA_172_CLOUD_FEDERATION_R185', value
+          assert value.get('revision') == 'R185', value
+          assert value.get('nodeCount') == 172, value
+          assert value.get('allNodesConfigured') is True, value
+          assert value.get('durableObjectBindingAvailable') is True, value
+          assert health.get('ok') is True, health
+          assert health.get('schema') == 'OMEGA_172_CLOUD_HEALTH_R185', health
+          assert health.get('configuredNodes') == 172, health
+          assert health.get('independentlyNamedStateNodes') == 172, health
+          assert health.get('durableObjectBindingAvailable') is True, health
+          nodes = value.get('nodes') or []
+          assert len(nodes) == 172, len(nodes)
+          public = [((n.get('links') or {}).get('public')) for n in nodes]
+          machine = [((n.get('links') or {}).get('machine')) for n in nodes]
+          durable = [n.get('durableObjectName') for n in nodes]
+          assert len(set(public)) == 172, 'public links are not unique'
+          assert len(set(machine)) == 172, 'machine links are not unique'
+          assert len(set(durable)) == 172, 'durable object names are not unique'
+          assert len(value.get('waves') or []) == 15, value.get('waves')
+          print('R185 manifest and health prove 172 unique configured cloud nodes and 15 bounded execution waves.')
+          PY
+
+          : > /tmp/r185-cloud-links.txt
+          for n in $(seq -w 1 172); do
+            public="$V6_URL/cloud/$n"
+            machine="$V6_URL/api/clouds/r185/node/$n"
+            printf '%s\n' "$public" >> /tmp/r185-cloud-links.txt
+            curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$public" -o /dev/null
+            curl --fail --silent --show-error --retry 4 --retry-delay 1 --retry-all-errors "$machine" -o /tmp/r185-node.json
+            EXPECTED="$n" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          expected = os.environ['EXPECTED']
+          value = json.loads(Path('/tmp/r185-node.json').read_text())
+          assert value.get('ok') is True, (expected, value)
+          assert value.get('schema') == 'OMEGA_CLOUD_NODE_STATUS_R185', (expected, value)
+          node = value.get('node') or {}
+          runtime = value.get('runtime') or {}
+          assert node.get('id') == f'omega-cloud-{expected}', (expected, node)
+          assert node.get('ordinal') == int(expected), (expected, node)
+          assert (node.get('links') or {}).get('public', '').endswith(f'/cloud/{expected}'), (expected, node)
+          assert runtime.get('reachable') is True, (expected, runtime)
+          assert node.get('separateCloudProviderInstanceClaim') is False, (expected, node)
+          assert node.get('canonicalMutation') is False, (expected, node)
+          PY
+          done
+
+          count="$(wc -l < /tmp/r185-cloud-links.txt | tr -d ' ')"
+          test "$count" = "172"
+          echo "R185_LIVE_172_CLOUD_LINKS_VERIFIED=$count"
+
+      - name: Publish exact 172-link inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r185-172-cloud-links
+          path: /tmp/r185-cloud-links.txt
+          if-no-files-found: error
