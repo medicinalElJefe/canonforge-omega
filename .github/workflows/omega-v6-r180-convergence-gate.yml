@@ -1,0 +1,49 @@
+name: OMEGA V6 R180 B059 SAI Swarm Convergence Gate
+
+on:
+  push:
+    branches:
+      - feature/r180-b059-sai-swarm-governor-convergence
+  pull_request:
+    branches:
+      - omega-v6-full-convergence
+  workflow_dispatch:
+
+jobs:
+  convergence-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify R179 B059 + R180 convergence contracts
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip pytest
+          python -m pytest -q \
+            tests/test_omega_runtime.py \
+            tests/test_r179_sai_training_runtime.py \
+            tests/test_r179_b059_integrated_training.py \
+            tests/test_r179_ai_sai_fusion.py \
+            tests/test_r180_b059_sai_swarm_governor_convergence.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Worker dependencies
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm install
+
+      - name: Typecheck converged Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npm run typecheck
+
+      - name: Wrangler dry run
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run
