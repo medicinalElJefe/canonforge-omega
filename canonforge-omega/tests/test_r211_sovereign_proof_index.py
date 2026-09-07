@@ -57,3 +57,10 @@ def test_r211_output_is_deterministically_sorted():
     s = source()
     assert "Sort-Object Name" in s
     assert "Sort-Object @{Expression='capturedAt';Ascending=$true}, @{Expression='sha256';Ascending=$true}" in s
+
+
+def test_r211_relative_paths_work_on_windows_powershell_51():
+    s = source()
+    assert "function Get-OmegaRelativePath" in s
+    assert "MakeRelativeUri" in s
+    assert "[System.IO.Path]::GetRelativePath" not in s
