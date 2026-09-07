@@ -98,7 +98,11 @@ function tableRows(snapshot: any, id: string): Row[] {
   if (!spec || !snapshot || typeof snapshot !== "object") return [];
   const aliases = new Set(spec.aliases.map(nk));
   for (const [key, value] of Object.entries(snapshot)) {
-    if (aliases.has(nk(key)) && Array.isArray(value)) return value as Row[];
+    if (!aliases.has(nk(key))) continue;
+    if (Array.isArray(value)) return value as Row[];
+    if (value && typeof value === "object" && Array.isArray((value as any).rows)) {
+      return (value as any).rows as Row[];
+    }
   }
   return [];
 }
@@ -106,7 +110,7 @@ function tableRows(snapshot: any, id: string): Row[] {
 function page(rows: Row[], url: URL) {
   const q = (url.searchParams.get("q") || "").trim().toLowerCase();
   const offset = Math.max(0, Math.trunc(Number(url.searchParams.get("offset") || 0) || 0));
-  const limit = Math.min(500, Math.max(1, Math.trunc(Number(url.searchParams.get("limit") || 50) || 50));
+  const limit = Math.min(500, Math.max(1, Math.trunc(Number(url.searchParams.get("limit") || 50) || 50)));
   const matches = q ? rows.filter(row => JSON.stringify(row).toLowerCase().includes(q)) : rows;
   return { total: rows.length, matched: matches.length, offset, limit, rows: matches.slice(offset, offset + limit) };
 }
