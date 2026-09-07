@@ -39,22 +39,18 @@ jobs:
           npm install
           npm run typecheck
           npx wrangler deploy --dry-run --outdir .r213-dry-run
-      - name: Observe current live R205 blocker through R211 without mutation
+      - name: Observe authoritative current live R205 blocker without mutation
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/r213-live
           curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 45 \
-            "$V6_URL/api/system/r211/query?id=wholeSystem" \
+            "$V6_URL/api/system/r205/health" \
             -o /tmp/r213-live/whole-system.json
           python - <<'PY'
           import json
           from pathlib import Path
-          d=json.loads(Path('/tmp/r213-live/whole-system.json').read_text())
-          assert d.get('schema') == 'OMEGA_OPERATIONAL_PROVENANCE_QUERY_R211', d
-          rows=d.get('results') or []
-          assert len(rows)==1 and rows[0].get('id')=='wholeSystem', rows
-          evidence=rows[0].get('evidence') or {}
+          evidence=json.loads(Path('/tmp/r213-live/whole-system.json').read_text())
           assert evidence.get('schema') == 'OMEGA_WHOLE_SYSTEM_HEALTH_R205', evidence
           print('R213_LIVE_R205_OK', evidence.get('ok'))
           print('R213_LIVE_R205_STATE', evidence.get('state'))
