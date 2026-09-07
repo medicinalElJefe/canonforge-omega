@@ -26,10 +26,9 @@
   ],
   "quick_required_routes": [
     "/api/instrument/r189/manifest",
-    "/api/omega/state",
-    "/api/omega/proof?limit=2",
-    "/api/restoration",
-    "/api/earth/catalog",
+    "/api/state/workbench/schema",
+    "/api/core/evidence-ledger/schema",
+    "/api/core/replay/schema",
     "/api/compute/manifest",
     "/api/validate/manifest",
     "/api/validate/independent/manifest",
@@ -38,6 +37,10 @@
     "/truth"
   ],
   "full_additional_routes": [
+    "/api/omega/state",
+    "/api/omega/proof?limit=2",
+    "/api/restoration",
+    "/api/earth/catalog",
     "/api/sai/status",
     "/api/hybrid/status",
     "/api/acceptance/r181/probe",
@@ -47,7 +50,9 @@
   "full_acceptance_requirements": [
     "verified R189 whole-instrument predecessor",
     "exact deployed Git identity",
-    "all quick required routes verified",
+    "all Worker-local quick core contracts verified",
+    "current sovereign state, proof and restoration evidence",
+    "current Earth source catalog when Earth observation is claimed",
     "current authenticated sovereign heartbeat",
     "exact B059 deep verification within declared deterministic training scope",
     "grounded B059 query receipt",
@@ -55,6 +60,7 @@
     "independent R175 level-4 revalidation of the native RCWA result"
   ],
   "truth_boundaries": {
+    "local_core_is_not_external_evidence": true,
     "source_presence_is_not_execution": true,
     "route_return_is_not_verification": true,
     "manifest_is_not_native_execution": true,
