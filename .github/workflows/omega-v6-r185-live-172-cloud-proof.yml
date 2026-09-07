@@ -1,6 +1,12 @@
 name: OMEGA V6 R185 live 172-cloud proof
 
 on:
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r185-live-172-cloud-proof.yml'
+      - '.github/workflows/omega-v6-verify.yml'
   workflow_run:
     workflows: ["OMEGA V6 verify"]
     types: [completed]
@@ -9,10 +15,51 @@ on:
 jobs:
   verify-live-172-cloud-federation:
     if: >-
+      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'omega-v6-full-convergence')
     runs-on: ubuntu-latest
+    concurrency:
+      group: omega-r185-live-172-cloud-proof
+      cancel-in-progress: true
     steps:
+      - name: Wait for exact canonical SHA deployment
+        shell: bash
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          settled=false
+          for attempt in $(seq 1 90); do
+            curl --silent --show-error --retry 2 --retry-delay 1 --retry-all-errors \
+              "$V6_URL/api/acceptance/r181/manifest" -o /tmp/r181-manifest.json || true
+            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              value = json.loads(Path('/tmp/r181-manifest.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          expected = os.environ['EXPECTED_SHA']
+          if value.get('ok') is not True: raise SystemExit(1)
+          if value.get('deploymentIdentityBound') is not True: raise SystemExit(1)
+          if value.get('canonicalGitSha') != expected: raise SystemExit(1)
+          PY
+            then
+              settled=true
+              echo "R185 exact deployed SHA settled: $EXPECTED_SHA"
+              break
+            fi
+            echo "Waiting for canonical deploy of $EXPECTED_SHA ($attempt/90)"
+            sleep 3
+          done
+          if [ "$settled" != "true" ]; then
+            echo "R185_EXACT_SHA_SETTLE_FAILED expected=$EXPECTED_SHA"
+            cat /tmp/r181-manifest.json || true
+            exit 1
+          fi
+
       - name: Verify R185 manifest and all 172 cloud links
         shell: bash
         env:
