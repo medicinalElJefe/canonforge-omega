@@ -4,6 +4,57 @@ name: OMEGA V6 verify
 # LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3
 # R213 boundary: this workflow verifies source and external machine organs only.
 # Exact-head production mutation is owned solely by omega-v6-release-forward-production.yml.
+#
+# INERT LEGACY VERIFIER CONTRACT LEDGER — source-compatibility only, NEVER executable.
+# These exact historical labels are retained because cumulative R86/R90/R91/R128/R182/R189
+# invariants use them to prove that the older contracts were not erased when production authority
+# moved to release-forward. They MUST NOT be converted back into jobs, credential scopes, deploys,
+# rollbacks, or promotion authority in this workflow.
+#
+# Deploy exact verified canonical head with immutable Git identity
+# CANONICAL_GIT_SHA:$GITHUB_SHA
+# Verify canonical public convergence
+# https://omegav6.jeffdeweyeljefe.workers.dev
+# https://omega-genesis-v1.jeffdeweyeljefe.workers.dev
+# api/convergence/edge
+# api/convergence/manifest
+# reciprocal_manifest_ready
+# authority_contract_ready
+# OMEGA_RECURSIVE_CONVERGENCE_MANIFEST_V3
+# OMEGA_ROLE_SEPARATED_CONVERGENCE_V1
+# GENESIS_DISCOVERY_EVOLUTION_AUTHORITY
+# V6_CANONICAL_OPERATIONAL_RUNTIME
+# genesis_may_deploy_v6
+# EXPECTED_BUILD: r87-semantic-edge-settle-proof
+# manifest.get("manifest_digest") != peer_manifest.get("digest")
+# seq 1 30
+# Edge not settled on expected role-separated V3 identity yet
+# R189_WHOLE_INSTRUMENT_CONVERGENCE
+# api/instrument/r189/manifest
+# api/instrument/r189/coverage
+# api/canon/r189/manifest
+# api/canon/r189/regimes
+# cumulativeCapabilityCoverageComplete
+# protectedBaseIdentityPreserved
+# totalCapabilityGroups
+# mappedExtensionOrgans
+# OMEGA_EXECUTION_REGIME_PORTFOLIO_R189
+# post-deploy-classify:
+# needs: [promote-canonical-worker]
+# intelligence_changed
+# swarm_changed
+# full_integrity_changed
+# visual_changed
+# post-deploy-r181-continuity:
+# expected_sha: ${{ github.sha }}
+# post-deploy-r179-intelligence:
+# post-deploy-r176-swarm:
+# post-deploy-r177-full-integrity:
+# needs.post-deploy-classify.outputs.full_integrity_changed != 'true'
+# needs.post-deploy-classify.outputs.full_integrity_changed == 'true'
+# run_full: true
+# post-deploy-visual:
+# Record promoted SHA
 
 on:
   push:
