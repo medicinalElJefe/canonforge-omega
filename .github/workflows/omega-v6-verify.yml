@@ -139,7 +139,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run deploy -- --var "CANONICAL_GIT_SHA:$GITHUB_SHA"
-      - name: Verify canonical public convergence, R174 federation and R189 whole instrument
+      - name: Verify canonical public convergence, R174 federation and R189 cumulative whole instrument
         shell: bash
         env:
           V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
@@ -153,6 +153,9 @@ jobs:
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/convergence/edge" -o /tmp/v6-convergence.json || true
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/federation/r174/health" -o /tmp/r174-federation.json || true
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/instrument/r189/manifest" -o /tmp/r189-manifest.json || true
+            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/instrument/r189/coverage" -o /tmp/r189-coverage.json || true
+            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/canon/r189/manifest" -o /tmp/r189-canon.json || true
+            curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/api/canon/r189/regimes" -o /tmp/r189-regimes.json || true
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$V6_URL/instrument" -o /tmp/r189-instrument.html || true
             curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors "$GENESIS_URL/api/convergence/manifest" -o /tmp/genesis-manifest.json || true
             if EXPECTED_BUILD="$EXPECTED_BUILD" python - <<'PY'
@@ -163,6 +166,9 @@ jobs:
               edge = json.loads(Path("/tmp/v6-convergence.json").read_text())
               federation = json.loads(Path("/tmp/r174-federation.json").read_text())
               r189 = json.loads(Path("/tmp/r189-manifest.json").read_text())
+              coverage_route = json.loads(Path("/tmp/r189-coverage.json").read_text())
+              canon_route = json.loads(Path("/tmp/r189-canon.json").read_text())
+              regimes_route = json.loads(Path("/tmp/r189-regimes.json").read_text())
               instrument_html = Path("/tmp/r189-instrument.html").read_text()
               manifest = json.loads(Path("/tmp/genesis-manifest.json").read_text())
           except Exception:
@@ -207,34 +213,63 @@ jobs:
           if hierarchy.get("cells") != 1728 or hierarchy.get("lanes") != 20736: raise SystemExit(1)
           if r189.get("schema") != "OMEGA_WHOLE_INSTRUMENT_MANIFEST_v1": raise SystemExit(1)
           if r189.get("revision") != "R189_WHOLE_INSTRUMENT_CONVERGENCE": raise SystemExit(1)
+          if r189.get("protectedBaseIdentity") != os.environ["EXPECTED_BUILD"]: raise SystemExit(1)
           preservation = r189.get("preservation") or {}
           if preservation.get("additiveSuccessor") is not True: raise SystemExit(1)
           if preservation.get("inheritedRoutesPreserved") is not True: raise SystemExit(1)
           if preservation.get("inheritedVisualShellPreserved") is not True: raise SystemExit(1)
           if preservation.get("durableObjectNamespacesPreserved") is not True: raise SystemExit(1)
+          if preservation.get("cumulativeCapabilityCoverageComplete") is not True: raise SystemExit(1)
+          if preservation.get("protectedBaseIdentityPreserved") is not True: raise SystemExit(1)
           if preservation.get("canonicalMutation") is not False: raise SystemExit(1)
           if preservation.get("autonomousPromotion") is not False: raise SystemExit(1)
           domain_ids = {d.get("id") for d in (r189.get("domains") or [])}
-          required_domains = {"FIELD","EARTH","MODES","SKINS","COMPUTE","VALIDATE","CROSS_RUNTIME","RCWA","FEDERATION","SWARM","CLOUD172","SAI","HYBRID","MOTION","BUILD","SUCCESSOR","DISCOVERY","EVIDENCE","PATCH","MEMORY","RECOVERY"}
+          required_domains = {"FIELD","CANON","EARTH","MODES","SKINS","CALCULUS","VISUAL","WORKSPACE","COMPUTE","VALIDATE","CROSS_RUNTIME","RCWA","FEDERATION","SWARM","CLOUD172","SAI","HYBRID","MOTION","BUILD","SUCCESSOR","DISCOVERY","EVIDENCE","PATCH","MEMORY","RECOVERY"}
           if not required_domains.issubset(domain_ids): raise SystemExit(1)
           profiles = {p.get("id"): p.get("cells") for p in (r189.get("executionProfiles") or [])}
           if profiles != {"PULSE":12,"FLOCK":24,"ORGAN":144,"WARP":576,"FULL":1728}: raise SystemExit(1)
+          if r189.get("executionRegimes") != ["ASYNC_INDEPENDENT","CAUSAL_DAG","BOUNDED_WAVE","SYNCHRONIZED_BARRIER_R188","HETEROGENEOUS_FEDERATED"]: raise SystemExit(1)
           if r189.get("continuityLaw") != ["FRAME","PARTITION","TRANSFORM","EXCHANGE","INVARIANT_CARRY","SCAR_CARRY","RECONTEXTUALIZE","FORECAST","SYNTHESIZE","EXECUTE","OBSERVE","PROVE"]: raise SystemExit(1)
-          if "OMEGA · R189" not in instrument_html or "One instrument." not in instrument_html: raise SystemExit(1)
+          cumulative = r189.get("cumulativeCanon") or {}
+          coverage = cumulative.get("coverage") or {}
+          if cumulative.get("totalCapabilityGroups") != 61: raise SystemExit(1)
+          if len(cumulative.get("baseFamilies") or []) != 24: raise SystemExit(1)
+          if len(cumulative.get("extensionOrgans") or []) != 37: raise SystemExit(1)
+          if len(cumulative.get("executionRegimes") or []) != 5: raise SystemExit(1)
+          if coverage.get("complete") is not True: raise SystemExit(1)
+          if coverage.get("mappedExtensionOrgans") != 37: raise SystemExit(1)
+          if coverage.get("totalCapabilityGroups") != 61: raise SystemExit(1)
+          if coverage.get("unmappedExtensionOrgans") not in ([], None): raise SystemExit(1)
+          if coverage.get("invalidDomainMappings") not in ([], None): raise SystemExit(1)
+          if coverage_route.get("schema") != "OMEGA_R189_CUMULATIVE_SURFACE_COVERAGE_v1": raise SystemExit(1)
+          if coverage_route.get("complete") is not True: raise SystemExit(1)
+          if coverage_route.get("baseFamilyCount") != 24: raise SystemExit(1)
+          if coverage_route.get("extensionOrganCount") != 37: raise SystemExit(1)
+          if coverage_route.get("mappedExtensionOrgans") != 37: raise SystemExit(1)
+          if coverage_route.get("totalCapabilityGroups") != 61: raise SystemExit(1)
+          if canon_route.get("schema") != "OMEGA_CUMULATIVE_CAPABILITY_CANON_R189": raise SystemExit(1)
+          if canon_route.get("totalCapabilityGroups") != 61: raise SystemExit(1)
+          if canon_route.get("baseFamilyCount") != 24 or canon_route.get("extensionOrganCount") != 37: raise SystemExit(1)
+          if regimes_route.get("schema") != "OMEGA_EXECUTION_REGIME_PORTFOLIO_R189": raise SystemExit(1)
+          if len(regimes_route.get("regimes") or []) != 5: raise SystemExit(1)
+          if "OMEGA · R189" not in instrument_html or "One instrument." not in instrument_html or "61" not in instrument_html: raise SystemExit(1)
           PY
             then
               verified=true
               break
             fi
-            echo "Edge not settled on expected role-separated identity yet; R189 federation/instrument proof not settled (attempt $attempt/30)."
+            echo "Edge not settled on expected role-separated V3 identity yet; R189 cumulative federation/instrument proof not settled (attempt $attempt/30)."
             sleep 2
           done
           if [ "$verified" != "true" ]; then
-            echo "LIVE_CONVERGENCE_VERIFY_FAILED after R189 edge-settle window."
+            echo "LIVE_CONVERGENCE_VERIFY_FAILED after R189 cumulative edge-settle window."
             echo "V6 health:"; cat /tmp/v6-health.json || true
             echo "V6 convergence:"; cat /tmp/v6-convergence.json || true
             echo "R174 federation:"; cat /tmp/r174-federation.json || true
             echo "R189 manifest:"; cat /tmp/r189-manifest.json || true
+            echo "R189 coverage:"; cat /tmp/r189-coverage.json || true
+            echo "R189 cumulative Canon:"; cat /tmp/r189-canon.json || true
+            echo "R189 regimes:"; cat /tmp/r189-regimes.json || true
             echo "Genesis manifest:"; cat /tmp/genesis-manifest.json || true
             exit 1
           fi
@@ -245,13 +280,17 @@ jobs:
           edge=json.loads(Path("/tmp/v6-convergence.json").read_text())
           federation=json.loads(Path("/tmp/r174-federation.json").read_text())
           r189=json.loads(Path("/tmp/r189-manifest.json").read_text())
+          coverage=json.loads(Path("/tmp/r189-coverage.json").read_text())
           manifest=json.loads(Path("/tmp/genesis-manifest.json").read_text())
           print(json.dumps({
-            "status":"LIVE_CONVERGENCE_VERIFIED__R189_WHOLE_INSTRUMENT",
-            "inherited_status":"LIVE_CONVERGENCE_VERIFIED__R174_FEDERATED_ORGAN_FABRIC",
+            "status":"LIVE_CONVERGENCE_VERIFIED__R189_CUMULATIVE_WHOLE_INSTRUMENT",
+            "inherited_status":"LIVE_CONVERGENCE_VERIFIED__ROLE_SEPARATED_V3",
             "v6_build":health.get("build"),
             "r189_revision":r189.get("revision"),
             "r189_domains":len(r189.get("domains") or []),
+            "r189_capability_groups":coverage.get("totalCapabilityGroups"),
+            "r189_extension_coverage":coverage.get("mappedExtensionOrgans"),
+            "r189_execution_regimes":coverage.get("executionRegimeCount"),
             "authority_contract":manifest.get("authority_contract"),
             "genesis_manifest_digest":manifest.get("manifest_digest"),
             "v6_observed_manifest_digest":((edge.get("genesis") or {}).get("manifest") or {}).get("digest"),
