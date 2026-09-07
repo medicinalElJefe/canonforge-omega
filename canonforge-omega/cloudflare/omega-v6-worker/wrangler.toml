@@ -1,8 +1,8 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R198 is integrated additively through
-# the existing R195 final navigation/enhancement chain and does not replace the canonical entrypoint.
+# runtimeEntryR169 remains the preserved deployment entrypoint. R199/R200 correlate established organs
+# above that entry without replacing Durable Objects, specialist engines, or the canonical heartbeat authority.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -44,6 +44,8 @@ DRIVE_CORPUS_ONE_SYSTEM_R195_ID = "r195-drive-corpus-one-system"
 DEWEY_WATER_CONTINUITY_R195_ID = "r195-dewey-water-continuity-compute"
 DRIVE_CORPUS_SHA256_R195 = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655"
 EARTH_SAR_TRUTH_R198_ID = "r198-real-public-sar-truth-fusion"
+ONE_SYSTEM_CORRELATION_R199_ID = "r199-one-system-reconstitution"
+MISSION_KERNEL_R200_ID = "r200-canonical-mission-kernel"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
