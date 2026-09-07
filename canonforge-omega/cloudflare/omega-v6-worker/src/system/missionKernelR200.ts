@@ -96,6 +96,22 @@ async function readBody(response: Response): Promise<any> {
   catch { return { text: raw.slice(0, 5000) }; }
 }
 
+async function verifyOperatorReceipt(result: any) {
+  const given = text(result?.receiptSha256);
+  if (!/^[0-9a-f]{64}$/i.test(given) || !result || typeof result !== "object") {
+    return { verified: false, class: "OPERATOR_RECEIPT_SHA256_MISSING", given: given || null, recomputed: null };
+  }
+  const core: AnyObj = { ...result };
+  delete core.receiptSha256;
+  const recomputed = await sha(core);
+  return {
+    verified: recomputed.toLowerCase() === given.toLowerCase(),
+    class: recomputed.toLowerCase() === given.toLowerCase() ? "OPERATOR_RECEIPT_SHA256_VERIFIED" : "OPERATOR_RECEIPT_SHA256_MISMATCH",
+    given,
+    recomputed,
+  };
+}
+
 function modePriority(intent: string): string[] {
   const out: string[] = ["FULL_OVERALL_CANON", "NO_NOTHING_TRUTH", "UNIFIED_COHERENCE", "FULL_SPHERE", "PROOF_ADMISSION", "WOVEN_CONTINUITY", "GUIDANCE_FIELD"];
   const add = (...ids: string[]) => ids.forEach(id => { if (!out.includes(id)) out.push(id); });
@@ -186,12 +202,14 @@ async function createPlan(body: AnyObj) {
     createdAt,
     allModesRequested: body.allModes !== false,
     modePolicy: "ALL_CANONICAL_LENSES_ACTIVE; PRIORITY_ORDER_IS_INTENT_DEPENDENT; EXECUTION_REMAINS_SPECIALIST_ROUTED",
+    modeScopeBoundary: "This registry contains the established named canonical lenses currently encoded in the runtime. Drive/corpus mode families remain source authorities and may extend the registry only through explicit recovery/admission rather than invented names.",
     activeModes: MODE_ENSEMBLE_R200.map(mode => ({ ...mode, state: "ACTIVE_LENS" })),
     priorityModes: modePriority(intent),
     tasks: planTasks(intent, body),
     truthBoundaries: {
       visualIsNotExecutionProof: true,
       returnedIsNotVerified: true,
+      receiptIntegrityIsNotPhysicalValidation: true,
       modelOutputIsNotCanonState: true,
       pcOnlineRequiresAuthenticatedHeartbeat: true,
       forecastIsNotObservedState: true,
@@ -218,13 +236,20 @@ async function invokeOperator(request: Request, env: any, ctx: any, canonicalFet
       body: JSON.stringify({ menuId: task.menuId, action: task.action, payload: task.payload }),
     }), env, ctx);
     const result = await readBody(response);
+    const receiptIntegrity = await verifyOperatorReceipt(result);
     const executionState = result?.executionState || {};
+    const specialistVerified = Boolean(executionState.verified || result?.verification?.verified || result?.downstream?.result?.verification?.verified || result?.downstream?.result?.executionState?.verified);
+    const routeReceiptTask = task.action === "observe" || task.action === "snapshot" || task.phase === "VERIFY" || task.phase === "BUILD";
+    const verified = receiptIntegrity.verified && (routeReceiptTask ? result?.downstream?.ok !== false : specialistVerified);
     return {
       task,
       status: response.status,
       ok: response.ok && result?.ok !== false && result?.downstream?.ok !== false,
       returned: Boolean(executionState.returned ?? result?.downstream?.result ?? result),
-      verified: Boolean(executionState.verified || result?.verification?.verified || result?.downstream?.result?.verification?.verified || result?.downstream?.result?.executionState?.verified),
+      verified,
+      receiptIntegrity,
+      specialistVerified,
+      verificationClass: verified ? (specialistVerified ? "RECEIPT_INTEGRITY_PLUS_SPECIALIST_VERIFICATION" : "OPERATOR_ROUTE_RECEIPT_INTEGRITY") : "VERIFICATION_RESIDUAL",
       elapsedMs: Date.now() - started,
       receipt: result,
     };
@@ -235,6 +260,9 @@ async function invokeOperator(request: Request, env: any, ctx: any, canonicalFet
       ok: false,
       returned: false,
       verified: false,
+      receiptIntegrity: { verified: false, class: "OPERATOR_RECEIPT_UNAVAILABLE" },
+      specialistVerified: false,
+      verificationClass: "EXECUTION_ERROR",
       elapsedMs: Date.now() - started,
       error: error instanceof Error ? error.message : String(error),
     };
@@ -255,9 +283,12 @@ async function executeMission(request: Request, env: any, ctx: any, canonicalFet
   const required = results.filter(r => r.task.required);
   const requiredReturned = required.filter(r => r.returned).length;
   const requiredVerified = required.filter(r => r.verified).length;
+  const receiptIntegrityVerified = results.filter(r => r.receiptIntegrity?.verified).length;
+  const specialistVerified = results.filter(r => r.specialistVerified).length;
   const residuals = {
     requiredNotReturned: required.filter(r => !r.returned).map(r => r.task.id),
     requiredReturnedNotVerified: required.filter(r => r.returned && !r.verified).map(r => r.task.id),
+    receiptIntegrityFailed: results.filter(r => r.task.state === "READY" && r.returned && !r.receiptIntegrity?.verified).map(r => r.task.id),
     optionalInputRequired: results.filter(r => r.task.state === "INPUT_REQUIRED").map(r => r.task.id),
     restoreRequired: results.filter(r => r.task.state === "RESTORE_REQUIRED").map(r => r.task.id),
     failed: results.filter(r => r.task.state === "READY" && !r.ok).map(r => r.task.id),
@@ -275,6 +306,8 @@ async function executeMission(request: Request, env: any, ctx: any, canonicalFet
       requiredTasks: required.length,
       requiredReturned,
       requiredVerified,
+      receiptIntegrityVerified,
+      specialistVerified,
       coherence,
       results,
     },
@@ -296,13 +329,13 @@ async function executeMission(request: Request, env: any, ctx: any, canonicalFet
       headline: plan.intent,
       missionState: zeroRequiredResidual ? "REQUIRED_SET_VERIFIED" : "RESIDUALS_PRESENT",
       priorityModes: plan.priorityModes.slice(0, 12),
-      taskStates: results.map(r => ({ id: r.task.id, phase: r.task.phase, returned: r.returned, verified: r.verified, residual: r.residual || null })),
+      taskStates: results.map(r => ({ id: r.task.id, phase: r.task.phase, returned: r.returned, verified: r.verified, receiptIntegrityVerified: Boolean(r.receiptIntegrity?.verified), specialistVerified: Boolean(r.specialistVerified), residual: r.residual || null })),
     },
     admission: {
       state: zeroRequiredResidual ? "ELIGIBLE_FOR_SEPARATE_ADMISSION_REVIEW" : "HOLD",
       canonicalMutation: false,
       promotionAuthorized: false,
-      reason: zeroRequiredResidual ? "Required mission tasks returned with verification; separate authority is still required for canon mutation or promotion." : "Required execution/verification residuals remain.",
+      reason: zeroRequiredResidual ? "Required mission route receipts are integrity-verified; any specialist/physical claim still requires its specialist verification class and separate canon/promotion authority." : "Required execution/verification residuals remain.",
     },
     truthBoundaries: plan.truthBoundaries,
     canonicalMutation: false,
@@ -319,8 +352,9 @@ async function manifest() {
     purpose: "Compose one canonical mission packet above R199/R195/R178 authorities without duplicating specialist engines.",
     modes: MODE_ENSEMBLE_R200,
     modeCount: MODE_ENSEMBLE_R200.length,
+    modeScopeBoundary: "Established named canonical lens registry; source corpus can extend only through explicit recovery/admission.",
     endpoints: ["/api/mission/r200/manifest", "/api/mission/r200/plan", "/api/mission/r200/execute"],
-    missionFlow: ["INTENT", "CANONICAL_PLAN", "ALL_MODE_LENS_ENSEMBLE", "SPECIALIST_ROUTING", "EXECUTION_RECEIPTS", "VERIFICATION", "RESIDUAL_CARRY", "RENDER_PROJECTION", "SEPARATE_ADMISSION"],
+    missionFlow: ["INTENT", "CANONICAL_PLAN", "ALL_MODE_LENS_ENSEMBLE", "SPECIALIST_ROUTING", "EXECUTION_RECEIPTS", "RECEIPT_INTEGRITY_VERIFICATION", "SPECIALIST_VERIFICATION", "RESIDUAL_CARRY", "RENDER_PROJECTION", "SEPARATE_ADMISSION"],
     upstreamAuthorities: ["R199_ONE_SYSTEM_OPERATOR", "R195_SPECIALIST_EXECUTION", "R198_EARTH_SOURCES", "R178_BUILD_CANDIDATE", "R190_PROOF_ADMISSION"],
     canonicalMutation: false,
     promotionAuthorized: false,
