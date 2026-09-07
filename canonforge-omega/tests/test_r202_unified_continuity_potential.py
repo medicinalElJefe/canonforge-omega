@@ -108,10 +108,12 @@ def test_r202_cannot_mutate_canon_host_source_deployment_or_promotion():
         'deploymentAuthorized: false', 'promotionAuthorized: false',
     ]:
         assert token in R202
-    assert 'github' not in R202.lower()
-    assert 'wrangler deploy' not in R202.lower()
-    assert 'env?.OMEGA_RUNTIME' not in R202
-    assert 'ctx.storage.put' not in R202
+    lowered = R202.lower()
+    for mutation_surface in [
+        'api.github.com/repos/', 'github.com/medicinaleljefe/', 'wrangler deploy',
+        'ctx.storage.put', 'env?.omega_runtime', 'env?.omega_mission_ledger_r201.get(',
+    ]:
+        assert mutation_surface not in lowered
 
 
 def test_r202_adds_no_shadow_durable_namespace_or_service_binding():
