@@ -146,8 +146,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/catalog.js",
-      "sha256": "a02f772cd035c31668210fd5f858244c5e9010216a553c39d83be8cda1f6e3cf",
-      "bytes": 7306
+      "sha256": "91a018c7759334b3ed4c12f675c1835711b3535ea9571e0b1edca3a2002e907e",
+      "bytes": 7552
     },
     {
       "path": "cloudflare/omega-genesis-worker/src/convergence.js",
@@ -181,8 +181,8 @@
     },
     {
       "path": "cloudflare/omega-genesis-worker/wrangler.toml",
-      "sha256": "3ecab92c8561920c05d0b9c9882769d5b20fdedbcb770283f8b23b7a38b8dfd0",
-      "bytes": 717
+      "sha256": "acb28f319a67a8a31cbf8ca824c78ccc1f4b429bfb0fe0217536a1c46bad573c",
+      "bytes": 737
     },
     {
       "path": "cloudflare/omegav6-worker/package.json",
@@ -401,8 +401,8 @@
     },
     {
       "path": "omega_genesis/capabilities.py",
-      "sha256": "5af5475850e6f8c4fb9de93b78372b3914571582d1e36af8a71cf646fe4c5e79",
-      "bytes": 7068
+      "sha256": "1a7be0ae59ab462cfaadea34b439a461dcd77e22254886752bd46d83a7330b8b",
+      "bytes": 7328
     },
     {
       "path": "omega_genesis/capacity.py",
@@ -453,6 +453,11 @@
       "path": "omega_genesis/evolution.py",
       "sha256": "d2a4fc50250772dc30d8a725d2b9f983b9863920f5b1c33f5f4fc7f65d35d237",
       "bytes": 12277
+    },
+    {
+      "path": "omega_genesis/federation_identity.py",
+      "sha256": "ef646893919a2d35d880a879ebef09372c4e5ce906cc2f342ce1183c7c3b052d",
+      "bytes": 2372
     },
     {
       "path": "omega_genesis/forecast.py",
@@ -785,14 +790,19 @@
       "bytes": 3776
     },
     {
+      "path": "tests/test_federation_service_identity.py",
+      "sha256": "9822f744bddeb5bdd90eb2f29ead9a4acbfebef5ee6bbe14c14503e9da7636f4",
+      "bytes": 2171
+    },
+    {
       "path": "tests/test_genesis.py",
       "sha256": "5567691d97d515cc90fa55736a885c847a4d3983d9a9f5ede5303bc870ea7e65",
       "bytes": 14598
     },
     {
       "path": "tests/test_genesis_r191_surface_convergence.py",
-      "sha256": "b2240f9354d0ed1f87922ad730378b6be23c645089fe824d9c8de56148421435",
-      "bytes": 7618
+      "sha256": "c4e450e639bd9c7249f62b88ef136e9ca9343bc366ed77675a77a58925dbc9cf",
+      "bytes": 8612
     },
     {
       "path": "tests/test_host_bootstrap.py",
