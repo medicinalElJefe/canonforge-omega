@@ -1,5 +1,4 @@
 import { EVIDENCE_PLANE_RELEASE_R194 } from "../evidencePlaneR194";
-import { handleEarthSarFusionR198, enhanceEarthSarTruthR198 } from "../earthSarTruthFusionR198";
 
 export const ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system";
 
@@ -14,21 +13,12 @@ grid.appendChild(card);const esc=v=>String(v??'');
 async function loadResidual(){const summary=document.getElementById('r195ResidualSummary'),rows=document.getElementById('r195ResidualRows');summary.textContent='Probing 12 master menu cohorts…';try{const r=await fetch('/api/system/r195/restoration?limit=24',{cache:'no-store',headers:{accept:'application/json'}}),d=await r.json();document.getElementById('r195ResidualTotal').textContent=String(d.totalArtifacts??'—');document.getElementById('r195ResidualVerified').textContent=String(d.individuallyVerifiedArtifacts??'—');document.getElementById('r195ResidualOpen').textContent=String(d.residual?.unresolved??'—');document.getElementById('r195ResidualCohorts').textContent=String(d.cohortProof?.ready??'—')+'/'+String(d.cohortProof?.total??'—');summary.textContent=(d.individuallyVerifiedBoundary||'')+' Admission: '+(d.admissionSequence||[]).join(' → ');rows.textContent='';for(const item of d.residual?.weakestFirst||[]){const el=document.createElement('div');el.className='r195ResidualRow';const a=document.createElement('div'),b=document.createElement('div'),c=document.createElement('div');const title=document.createElement('b');title.textContent=esc(item.id)+' · '+esc(item.artifact||item.family);const detail=document.createElement('div');detail.className='muted';detail.textContent=esc(item.family)+' · '+esc(item.menuId);a.append(title,detail);const state=document.createElement('div');state.className='r195ResidualState';state.dataset.severity=String(item.severity??'');state.textContent=esc(item.state);const cohort=document.createElement('div');cohort.className='muted';cohort.textContent=item.cohort?esc(item.cohort.proofClass)+' · '+(item.cohort.bodyOk?'COHORT READY':'COHORT DEGRADED'):'NO PROOF COHORT';b.append(state,cohort);const code=document.createElement('code');code.textContent=(item.requiredEvidence||[]).join(' → ');c.append(code);el.append(a,b,c);rows.appendChild(el)}}catch(e){summary.textContent='Residual planner unavailable: '+String(e);rows.textContent=''}}
 document.getElementById('r195ResidualRefresh')?.addEventListener('click',loadResidual);loadResidual();})();</script>`;
 
-function rebuiltResponse(html: string, response: Response): Response {
-  return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
-}
-
 export async function enhanceOneSystemNavigationR195(response: Response, pathname: string): Promise<Response> {
-  if (pathname.startsWith("/api/earth/sar/r198/")) {
-    const sar = await handleEarthSarFusionR198(new Request("https://omega-r198.internal" + pathname, { method: "GET" }));
-    if (sar) return sar;
-  }
-
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
   let html = await response.text();
   if (!html.includes('id="omegaR193Rail"') || html.includes('data-r195-one-system="true"')) {
-    return enhanceEarthSarTruthR198(rebuiltResponse(html, response), pathname);
+    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
   }
   const active = pathname === "/system" || pathname.startsWith("/system/") ? " active" : "";
   const item = `<a data-r195-one-system="true" data-predecessor="${EVIDENCE_PLANE_RELEASE_R194}" class="r193Item${active}" href="/system"><span class="r193Icon">Ω1</span><span class="r193Label"><b>ONE SYSTEM</b><small>Drive corpus · calculus · execution state · proof</small></span></a>`;
@@ -40,6 +30,5 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   const headers = new Headers(response.headers);
   headers.set("cache-control", "no-store");
   headers.set("x-omega-one-system", ONE_SYSTEM_NAVIGATION_RELEASE_R195);
-  const out = new Response(html, { status: response.status, statusText: response.statusText, headers });
-  return enhanceEarthSarTruthR198(out, pathname);
+  return new Response(html, { status: response.status, statusText: response.statusText, headers });
 }
