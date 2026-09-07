@@ -20,6 +20,42 @@ EXECUTION_REGIMES_R189 = (
     "HETEROGENEOUS_FEDERATED",
 )
 
+# The original F00-F23 manifest mixes package-relative and omega_runtime-relative
+# implementation labels.  Preserve that legacy manifest semantically, and bind it
+# to concrete repository anchors here rather than reinterpreting its historical
+# metadata.  The existing legacy tests remain part of the full regression suite.
+BASE_FAMILY_ANCHORS_R189 = (
+    "omega_runtime/system_manifest.py",
+    "omega_runtime/runtime.py",
+    "api/app.py",
+    "web/index.html",
+    "omega_runtime/render.py",
+    "omega_runtime/state.py",
+    "omega_runtime/state_store.py",
+    "omega_runtime/memory.py",
+    "omega_runtime/bridge.py",
+    "omega_runtime/atlas.py",
+    "omega_runtime/mode188.py",
+    "omega_runtime/proof.py",
+    "omega_runtime/scales.py",
+    "omega_runtime/relations.py",
+    "omega_runtime/dynamics.py",
+    "omega_runtime/translation.py",
+    "omega_runtime/corpus.py",
+    "omega_runtime/knowledge.py",
+    "omega_runtime/relativity.py",
+    "omega_runtime/donor.py",
+    "omega_144d_core/rc144_core.py",
+    "omega_fusion_core/core/universal_moment.py",
+    "docs/SOURCE_CONVERGENCE.md",
+    "INSTALL_OMEGA_V6_WINDOWS.bat",
+    "scripts/INSTALL_OMEGA_V6_WINDOWS.ps1",
+    "scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1",
+    "tests/test_omega_runtime.py",
+    "tests/test_system_manifest_security.py",
+    "tests/test_system_alignment_contract.py",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class CapabilityOrganR189:
@@ -255,6 +291,7 @@ def _canonical_payload() -> Dict[str, object]:
         "schema": CUMULATIVE_SCHEMA_R189,
         "revision": CUMULATIVE_REVISION_R189,
         "baseFamilies": list(base_family_ids_r189()),
+        "baseFamilyAnchors": list(BASE_FAMILY_ANCHORS_R189),
         "extensionOrgans": [
             {
                 "id": organ.capability_id,
@@ -281,14 +318,7 @@ def capability_baseline_hash_r189() -> str:
 
 
 def required_artifacts_r189() -> tuple[str, ...]:
-    ordered: list[str] = []
-    for family in FAMILIES:
-        for artifact in family.implementation:
-            if artifact.endswith("/"):
-                continue
-            normalized = artifact.replace("\\", "/")
-            if normalized and normalized not in ordered:
-                ordered.append(normalized)
+    ordered: list[str] = list(BASE_FAMILY_ANCHORS_R189)
     for organ in CAPABILITY_ORGANS_R189:
         for artifact in organ.artifacts:
             normalized = artifact.replace("\\", "/")
