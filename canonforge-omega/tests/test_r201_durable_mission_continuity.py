@@ -10,14 +10,16 @@ BASE_RUNTIME = (SRC / "omegaRuntime.ts").read_text(encoding="utf-8")
 WRANGLER = (WORKER / "wrangler.toml").read_text(encoding="utf-8")
 
 
-def test_r201_extends_existing_omega_runtime_instead_of_replacing_it():
+def test_r201_reuses_recovered_runtime_behavior_without_replacing_canonical_runtime():
     assert 'import { OmegaRuntime as BaseOmegaRuntime } from "../omegaRuntime"' in RUNTIME
     assert 'export class OmegaRuntime extends BaseOmegaRuntime' in RUNTIME
-    assert 'export { OmegaRuntime } from "./system/omegaRuntimeR201"' in ENTRY
+    assert 'export { OmegaRuntime } from "./heartbeatTruth"' in ENTRY
+    assert 'export { OmegaRuntime as OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201"' in ENTRY
     for inherited_key in ['"devices"', '"jobs"', '"missions"', '"events"', '"thread"']:
         assert inherited_key in BASE_RUNTIME
-    assert 'class_name = "OmegaRuntime"' in WRANGLER
-    assert 'name = "OMEGA_RUNTIME"' in WRANGLER
+    assert WRANGLER.count('name = "OMEGA_RUNTIME"') == 1
+    assert WRANGLER.count('class_name = "OmegaRuntime"') == 1
+    assert '[exports.OmegaRuntime]' in WRANGLER
 
 
 def test_r201_sits_above_r200_without_changing_r200_contract():
@@ -82,22 +84,28 @@ def test_r201_never_promotes_history_to_host_or_canon_authority():
         assert 'promotionAuthorized: false' in source
     assert 'pc_online' not in RUNTIME
     assert 'nativeExecutionClaimed' not in RUNTIME
+    assert 'The historical OMEGA_RUNTIME/OmegaRuntime binding is unchanged' in ROUTE
 
 
-def test_r201_routes_and_release_are_registered_without_new_do_class():
+def test_r201_routes_and_release_register_new_evidence_only_sqlite_class():
     for path in [
         '/api/mission/r201/manifest', '/api/mission/r201/execute', '/api/mission/r201/summary',
         '/api/mission/r201/history', '/api/mission/r201/verify',
     ]:
         assert path in ROUTE
     assert 'DURABLE_MISSION_LEDGER_R201_ID = "r201-durable-mission-evidence-ledger"' in WRANGLER
-    assert WRANGLER.count('class_name = "OmegaRuntime"') == 1
+    assert 'name = "OMEGA_MISSION_LEDGER_R201"' in WRANGLER
+    assert 'class_name = "OmegaMissionLedgerR201"' in WRANGLER
+    assert '[exports.OmegaMissionLedgerR201]' in WRANGLER
     assert '[exports.OmegaRuntime]' in WRANGLER
     assert 'storage = "sqlite"' in WRANGLER
+    assert '[[migrations]]' not in WRANGLER
 
 
-def test_r201_uses_a_dedicated_named_ledger_instance_not_a_guessed_pc_state_id():
+def test_r201_uses_dedicated_evidence_binding_and_named_instance_not_pc_state_runtime():
     assert 'omega-r201-durable-mission-evidence-ledger-v1' in ROUTE
+    assert 'env?.OMEGA_MISSION_LEDGER_R201' in ROUTE
     assert 'idFromName(DURABLE_MISSION_SINGLETON_R201)' in ROUTE
+    assert 'env?.OMEGA_RUNTIME' not in ROUTE
     assert 'hostStateMutation: false' in ROUTE
     assert 'Pair this browser' not in ROUTE
