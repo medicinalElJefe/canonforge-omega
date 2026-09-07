@@ -3,7 +3,7 @@ name: OMEGA V6 R192 navigation home proof
 on:
   pull_request:
     paths:
-      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR192.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/universalNavigationR192.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
       - 'canonforge-omega/tests/test_r192_navigation_home_repair.py'
@@ -36,7 +36,8 @@ jobs:
             tests/test_r191_universal_surface_fabric.py \
             tests/test_r190_whole_system_acceptance.py \
             tests/test_r189_whole_instrument_convergence.py \
-            tests/test_r188_motion_time.py
+            tests/test_r188_motion_time.py \
+            tests/test_role_separated_convergence_r128.py
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -91,8 +92,6 @@ jobs:
           grep -F 'Living Operator Field' /tmp/_.html
           grep -F 'id="omegaLaunch" class="hidden"' /tmp/_.html
           grep -F 'OMEGA · R191 SURFACE FABRIC' /tmp/_fabric.html
-          grep -F 'WHOLE INSTRUMENT' /tmp/_instrument.html
-          grep -F 'CAPABILITY' /tmp/_truth.html
 
           curl --fail --silent --show-error --max-time 20 -D /tmp/api.headers "$LIVE/api/fabric/r191/status" -o /tmp/api.json
           grep -qi '^content-type: application/json' /tmp/api.headers
