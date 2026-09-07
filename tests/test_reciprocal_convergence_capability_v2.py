@@ -26,8 +26,10 @@ def test_manifest_is_non_recursive_and_peer_probe_is_separate():
     snapshot_start = source.index("async function reciprocalSnapshot")
     manifest_block = source[manifest_start:snapshot_start]
     assert "probe(" not in manifest_block
-    assert 'probe(V6_URL+"/_omega/health")' in source
-    assert 'probe(V6_URL+"/api/convergence/edge")' in source
+    assert "probePeer(" not in manifest_block
+    assert 'probePeer(env?.OMEGA_V6,V6_URL+"/_omega/health","/_omega/health","omega-v6")' in source
+    assert 'probePeer(env?.OMEGA_V6,V6_URL+"/api/convergence/edge","/api/convergence/edge","omega-v6")' in source
+    assert 'binding.fetch(request)' in source
 
 
 def test_manifest_exposes_sanitized_genome_and_truth_boundaries():
