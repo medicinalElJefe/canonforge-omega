@@ -1,0 +1,102 @@
+{
+  "schema": "OMEGA_CUMULATIVE_CAPABILITY_CANON_R189",
+  "revision": "R189",
+  "predecessor": {
+    "revision": "R188",
+    "canonical_git_sha": "cba7d9a9b4720beeb6c79c6c211ba8e7fbc87a18",
+    "require_exact_parent_for_initial_r189": true
+  },
+  "canonical_branch": "omega-v6-full-convergence",
+  "laws": {
+    "upgrade": "ADD_OR_STRENGTHEN_WITHOUT_OVERWRITING_ADMITTED_CAPABILITY",
+    "promotion": "PROVE_PREDECESSOR_PRESERVATION_PLUS_MATERIAL_IMPROVEMENT",
+    "candidate_truth": "CALLER_CAPABILITY_LIST_IS_NOT_SUFFICIENT_FOR_NON_REGRESSION",
+    "artifact_truth": "PROTECTED_IMPLEMENTATION_AND_TEST_ARTIFACTS_MUST_REMAIN_PRESENT",
+    "semantic_truth": "FULL_EXISTING_REGRESSION_SUITE_MUST_REMAIN_GREEN",
+    "deprecation": "EXPLICIT_MIGRATION_PROOF_COMPATIBILITY_ROUTE_AND_ROLLBACK_REQUIRED",
+    "scar_carry": true,
+    "history_carry": true,
+    "rollback_parent_required": true
+  },
+  "base_families": [
+    "F00", "F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11",
+    "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23"
+  ],
+  "extension_organs": [
+    "R85_RUNTIME_RECOVERY",
+    "R89_GENESIS_BINDING",
+    "R91_CAPABILITY_ROUTER",
+    "R94_RELATION_WORKBENCH",
+    "R95_MEMORY_SCAR_FORECAST",
+    "R106_UNIFIED_OPERATIONAL_CORE",
+    "R107_R115_PROOF_LEARNING_CHAIN",
+    "R118_R130_HD_SPATIAL_VISUAL",
+    "R136_R147_CALCULUS_VISUAL_RELATIVITY",
+    "R148_MEMORY_CONTINUITY",
+    "R149_INTELLIGENCE_REASONING",
+    "R150_CREATE_SIMULATE",
+    "R151_SOVEREIGN_DEVICE_COMPUTE",
+    "R152_EARTH_TRUTH",
+    "R154_BUILD_EVOLUTION_GOVERNANCE",
+    "R159_R167_ENVIRONMENT_WORKSPACE_TRUTH",
+    "R168_CLOUDFLARE_DO_SAI_HYBRID",
+    "R169_SWARM_NAMESPACE",
+    "R170_COMPUTATION",
+    "R171_PRECISION_CONVERGENCE",
+    "R172_VALIDATION_FABRIC",
+    "R173_CROSS_RUNTIME",
+    "R174_FEDERATED_ORGANS",
+    "R175_INDEPENDENT_SOLVER",
+    "R176_WARP_COMPUTATION",
+    "R177_WARP_INTEGRITY",
+    "R178_CANDIDATE_LAB",
+    "R179_B059_AI_SAI",
+    "R180_LOAD_GOVERNOR",
+    "R181_LIVE_ACCEPTANCE",
+    "R182_CONTINUITY_DEPLOY_FIRST",
+    "R183_SUCCESSOR_SUPERIORITY",
+    "R184_IMPROVEMENT_DISCOVERY",
+    "R185_172_CLOUD_FEDERATION",
+    "R186_EXECUTION_EVIDENCE",
+    "R187_BOUNDED_SELF_PATCH",
+    "R188_MOTION_TIME"
+  ],
+  "execution_regimes": [
+    "ASYNC_INDEPENDENT",
+    "CAUSAL_DAG",
+    "BOUNDED_WAVE",
+    "SYNCHRONIZED_BARRIER_R188",
+    "HETEROGENEOUS_FEDERATED"
+  ],
+  "execution_regime_rule": {
+    "R188": "SPECIALIZED_SYNCHRONIZED_BARRIER_REGIME_NOT_UNIVERSAL_SCHEDULER",
+    "selection": "USE_THE_LEAST_CONSTRAINING_REGIME_THAT_PRESERVES_CAUSAL_AND_PROOF_REQUIREMENTS",
+    "parallelism": "INDEPENDENT_WORK_MAY_PROGRESS_CONCURRENTLY",
+    "ordering": "ONLY_TRUE_DEPENDENCIES_FORCE_SEQUENCE",
+    "load": "BOUNDED_WAVES_PROTECT_INTERACTIVE_CAPACITY",
+    "federation": "SPECIALIZED_ORGANS_RETAIN_DISTINCT_ROLES_AND_AUTHORITIES"
+  },
+  "topology": {
+    "public_cloud_nodes": 172,
+    "logical_swarm_cells": 1728,
+    "atlas_resolution_levels": [12, 144, 1728, 20736, 248832],
+    "atlas_semantics": "ADDRESS_AND_RESOLUTION_LEVELS_NOT_LITERAL_PHYSICAL_DIMENSIONS"
+  },
+  "promotion_requirements": [
+    "legacy_24_family_manifest_preserved",
+    "all_r189_protected_artifacts_present",
+    "full_python_regression_suite_green",
+    "worker_typescript_green",
+    "wrangler_dry_run_green",
+    "independent_solver_proof_green",
+    "exact_sha_deploy",
+    "post_deploy_172_cloud_proof_green",
+    "material_successor_improvement_proved"
+  ],
+  "authority": {
+    "self_development_may_generate_candidates": true,
+    "self_development_may_delete_admitted_capability": false,
+    "candidate_may_self_promote": false,
+    "promotion_remains_proof_governed": true
+  }
+}
