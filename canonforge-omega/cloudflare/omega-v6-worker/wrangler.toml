@@ -1,8 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR169.ts"
+main = "src/runtimeEntryR198.ts"
 # Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# runtimeEntryR169 remains the preserved deployment entrypoint. R192 navigation, R193 workspace,
-# R194 evidence separation, R195 Drive execution truth, and R195 deterministic Dewey compute are additive successor layers.
+# runtimeEntryR169 remains the preserved R197 deployment entrypoint underneath R198. R198 wraps it additively:
+# no prior route, Durable Object, Hybrid truth, SAI authority, calibration, workspace, evidence, or navigation layer is removed.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -43,6 +43,7 @@ EVIDENCE_PLANE_R194_ID = "r194-dual-plane-evidence-restoration"
 DRIVE_CORPUS_ONE_SYSTEM_R195_ID = "r195-drive-corpus-one-system"
 DEWEY_WATER_CONTINUITY_R195_ID = "r195-dewey-water-continuity-compute"
 DRIVE_CORPUS_SHA256_R195 = "8b66519d36387f3a9ca3f9a10a7dd5da0b806c4fc7b29d9a4353e94e9859e655"
+EARTH_SAR_TRUTH_R198_ID = "r198-real-public-sar-truth-fusion"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
