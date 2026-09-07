@@ -47,6 +47,7 @@ import { enhanceDeweyCalibrationSurfaceR196 } from "./deweyCalibrationSurfaceR19
 import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195";
 import { handleEarthSarFusionR198 } from "./earthSarTruthFusionR198";
 import { enhanceEarthSarIntegratedRepairR198_1 } from "./earthSarIntegratedRepairR198_1";
+import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_2";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaSwarmCell } from "./swarm/swarmCellR169";
@@ -192,7 +193,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   if (earthApp) {
     const earthBase = calibrated !== dewey ? calibrated : dewey;
     const oneSystemEarth = await enhanceOneSystemNavigationR195(earthBase, new URL(request.url).pathname);
-    return enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);
+    const nativeSarEarth = await enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);
+    return enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
   }
 
   if (calibrated !== dewey) return enhanceOneSystemNavigationR195(calibrated, new URL(request.url).pathname);
