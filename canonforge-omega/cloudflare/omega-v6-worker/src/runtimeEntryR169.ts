@@ -10,6 +10,7 @@ import { handleCloudSwarmR185 } from "./swarm/cloudSwarmR185";
 import { handleSuccessorEvidenceR186 } from "./swarm/successorEvidenceR186";
 import { handleSourcePatchR187 } from "./swarm/sourcePatchR187";
 import { handleMotionTimeR188 } from "./swarm/motionTimeR188";
+import { handleCumulativeCapabilityR189 } from "./cumulativeCapabilityR189";
 import { handleSaiRequest, saiLabResponse } from "./sai/saiRuntimeR179";
 import { handleSaiAiFusionR179 } from "./intelligence/saiAiFusionR179";
 import { handleLiveAcceptanceR181 } from "./acceptance/liveAcceptanceR181";
@@ -75,6 +76,10 @@ export default {
     if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
     if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
     if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
+
+    // R189 is additive governance: it exposes the full accumulated capability canon
+    // and execution-regime portfolio without replacing any earlier route.
+    if (url.pathname.startsWith("/api/canon/r189/")) return handleCumulativeCapabilityR189(request);
 
     if (url.pathname.startsWith("/api/federation/r174/")) return handleFederatedOrganRequest(request, env);
     if (url.pathname.startsWith("/api/swarm/motion/r188/")) return handleMotionTimeR188(request, env);
