@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+
+from .sai_b059 import probe as probe_b059
 
 CORPUS_SCHEMA = "OMEGA_SAI_CORPUS_MANIFEST_R179"
 TRAINING_SCHEMA = "OMEGA_SAI_TRAINING_RECEIPT_R179"
@@ -100,7 +101,7 @@ def compile_corpus(root: Path, output_dir: Path) -> dict:
         "chunkCount": len(chunk_rows),
         "sourceBytes": byte_total,
         "corpusSha256": sha256_file(corpus_path),
-        "trainingMeaning": "Corpus compilation and retrieval indexing are not neural weight training.",
+        "trainingMeaning": "This is a repository retrieval bootstrap. It is not the OMEGA SAI B059 trained authority and it is not neural weight training.",
         "canonicalMutation": False,
     }
     manifest = {**manifest_core, "manifestSha256": sha256_text(canonical_json(manifest_core))}
@@ -142,14 +143,14 @@ def build_retrieval_model(output_dir: Path, manifest: dict) -> dict:
     model_core = {
         "schema": MODEL_SCHEMA,
         "revision": REVISION,
-        "kind": "PROOF_GROUNDED_LOCAL_RETRIEVAL_INDEX",
+        "kind": "REPOSITORY_PROOF_GROUNDED_RETRIEVAL_BOOTSTRAP",
         "corpusSha256": manifest["corpusSha256"],
         "manifestSha256": manifest["manifestSha256"],
         "chunkCount": chunk_count,
         "vocabularySize": len(inverted),
         "invertedIndex": inverted,
         "neuralWeightsTrained": False,
-        "modelAdmission": "RETRIEVAL_READY_NEURAL_TRAINING_UNPROVEN",
+        "modelAdmission": "REPOSITORY_RETRIEVAL_BOOTSTRAP_NOT_SAI_AUTHORITY",
         "canonicalMutation": False,
     }
     model = {**model_core, "modelSha256": sha256_text(canonical_json(model_core))}
@@ -166,6 +167,7 @@ def evaluate(output_dir: Path, manifest: dict, model: dict) -> dict:
         "model_manifest_bound": model["manifestSha256"] == manifest["manifestSha256"],
         "retrieval_vocabulary_nonempty": model["vocabularySize"] > 0,
         "truthful_training_boundary": model["neuralWeightsTrained"] is False,
+        "not_b059_authority": model["modelAdmission"] == "REPOSITORY_RETRIEVAL_BOOTSTRAP_NOT_SAI_AUTHORITY",
     }
     passed = all(checks.values())
     evaluation_core = {
@@ -173,8 +175,8 @@ def evaluate(output_dir: Path, manifest: dict, model: dict) -> dict:
         "revision": REVISION,
         "checks": checks,
         "passed": passed,
-        "admission": "RETRIEVAL_ADMITTED" if passed else "REJECTED",
-        "neuralModelAdmission": "NOT_EVALUATED",
+        "admission": "REPOSITORY_RETRIEVAL_ADMITTED" if passed else "REJECTED",
+        "saiB059Admission": "SEPARATE_EXACT_RELEASE_VERIFICATION_REQUIRED",
         "canonicalMutation": False,
     }
     return {**evaluation_core, "evaluationSha256": sha256_text(canonical_json(evaluation_core))}
@@ -184,13 +186,15 @@ def train(root: Path, output_dir: Path) -> dict:
     manifest = compile_corpus(root, output_dir)
     model = build_retrieval_model(output_dir, manifest)
     evaluation = evaluate(output_dir, manifest, model)
+    b059 = probe_b059(root)
     receipt_core = {
         "schema": TRAINING_SCHEMA,
         "revision": REVISION,
-        "state": "RETRIEVAL_READY_NEURAL_TRAINING_REQUIRED" if evaluation["passed"] else "FAILED",
+        "state": "REPOSITORY_RETRIEVAL_READY_B059_AUTHORITY_REQUIRED" if evaluation["passed"] else "FAILED",
         "corpus": manifest,
         "model": {k: v for k, v in model.items() if k != "invertedIndex"},
         "evaluation": evaluation,
+        "b059": b059,
         "artifacts": {
             "corpus": str(output_dir / "corpus.jsonl"),
             "manifest": str(output_dir / "corpus-manifest.json"),
@@ -199,32 +203,35 @@ def train(root: Path, output_dir: Path) -> dict:
         "neuralWeightsTrained": False,
         "fullyTrainedClaim": False,
         "canonicalMutation": False,
-        "truthBoundary": "R179 proves local corpus compilation and a deterministic proof-grounded retrieval index. It does not claim neural fine-tuning until a separately identified trainer returns evaluated weight/model receipts.",
+        "truthBoundary": "This bootstrap keeps current repository text searchable. OMEGA SAI B059 is the established trained deterministic SAI and only its exact 15-authority compiled release may assert fully_trained_within_declared_scope after hash + runtime verification. Foundation-model weight training is a separate capability class.",
     }
     receipt = {**receipt_core, "receiptSha256": sha256_text(canonical_json(receipt_core))}
     (output_dir / "training-receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return receipt
 
 
-def status(output_dir: Path) -> dict:
+def status(output_dir: Path, root: Path | None = None) -> dict:
     path = output_dir / "training-receipt.json"
+    b059 = probe_b059(root)
     if not path.exists():
-        return {"schema": TRAINING_SCHEMA, "revision": REVISION, "state": "NOT_TRAINED", "fullyTrainedClaim": False}
+        return {"schema": TRAINING_SCHEMA, "revision": REVISION, "state": "NOT_INDEXED", "fullyTrainedClaim": False, "b059": b059}
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return {"schema": TRAINING_SCHEMA, "revision": REVISION, "state": "RECEIPT_INVALID", "fullyTrainedClaim": False}
+        return {"schema": TRAINING_SCHEMA, "revision": REVISION, "state": "RECEIPT_INVALID", "fullyTrainedClaim": False, "b059": b059}
+    data["b059"] = b059
     return data
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="OMEGA R179 proof-governed SAI corpus and retrieval training runtime")
+    parser = argparse.ArgumentParser(description="OMEGA R179 repository retrieval bootstrap; exact B059 remains the trained SAI authority")
     parser.add_argument("--root", default=".")
     parser.add_argument("--output", default=".omega/sai-training/release")
     parser.add_argument("--status", action="store_true")
     args = parser.parse_args()
+    root = Path(args.root).resolve()
     output = Path(args.output).resolve()
-    result = status(output) if args.status else train(Path(args.root), output)
+    result = status(output, root) if args.status else train(root, output)
     print(json.dumps(result, sort_keys=True, ensure_ascii=False))
     return 0 if result.get("state") not in {"FAILED", "RECEIPT_INVALID"} else 1
 
