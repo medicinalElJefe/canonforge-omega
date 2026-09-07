@@ -32,10 +32,10 @@ const B059_SOVEREIGN_PATHS = new Set([
   "/api/sai/traverse",
 ]);
 
-function rewritePath(request: Request, pathname: string): Request {
+function b059ManifestAlias(request: Request): Request {
   const target = new URL(request.url);
-  target.pathname = pathname;
-  return new Request(target.toString(), request);
+  target.pathname = "/api/sai/manifest";
+  return new Request(target.toString(), { method: "GET", headers: request.headers });
 }
 
 export default {
@@ -54,7 +54,7 @@ export default {
     // B059 deterministic SAI remains Sovereign authority and must not be shadowed
     // by the cloud /api/sai namespace.
     if (url.pathname === "/api/chat" || url.pathname.startsWith("/api/intelligence/r179/")) return handleSaiAiFusionR179(request, env);
-    if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(rewritePath(request, "/api/sai/manifest"), env, ctx);
+    if (url.pathname === "/api/sai/b059/manifest") return canonical.fetch(b059ManifestAlias(request), env, ctx);
     if (B059_SOVEREIGN_PATHS.has(url.pathname)) return canonical.fetch(request, env, ctx);
     if (url.pathname.startsWith("/api/sai/")) return handleSaiRequest(request, env);
 
