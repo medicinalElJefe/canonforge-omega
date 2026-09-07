@@ -66,6 +66,12 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
   $exitCode = 0
   $errorText = $null
 
+  # Every attempt must bind to evidence created by that attempt. R208 receipts are
+  # explicitly local/non-Canon observations, so removing the previous latest file is
+  # safe and prevents a failed R208 invocation from being mistaken for fresh proof.
+  Remove-Item $R208ReceiptPath -Force -ErrorAction SilentlyContinue
+  $latest = $null
+
   try {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $R208Prover -ProductionBase $ProductionBase
     $exitCode = $LASTEXITCODE
@@ -77,11 +83,17 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
   if (Test-Path $R208ReceiptPath) {
     try {
       $latest = Get-Content -Raw -Path $R208ReceiptPath | ConvertFrom-Json
+      $receiptCaptured = [DateTimeOffset]::Parse([string]$latest.capturedAt)
+      $attemptStarted = [DateTimeOffset]::Parse($started)
+      if ($receiptCaptured -lt $attemptStarted.AddSeconds(-1)) {
+        throw "R208 receipt predates current R209 attempt: $($latest.capturedAt) < $started"
+      }
       $blockers = @(Get-Blockers $latest)
       $fullAcceptance = [bool]$latest.fullAcceptance
       $attempts += [ordered]@{
         attempt = $attempt
         capturedAt = $started
+        r208ReceiptCapturedAt = [string]$latest.capturedAt
         r208ExitCode = $exitCode
         fullAcceptance = $fullAcceptance
         acceptanceState = [string]$latest.acceptanceState
@@ -95,18 +107,22 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
       Write-Host "Attempt $attempt/$MaxAttempts full=$fullAcceptance blockers=$($blockers -join ',')"
       if ($fullAcceptance) { break }
     } catch {
+      $latest = $null
+      $fullAcceptance = $false
       $attempts += [ordered]@{
         attempt = $attempt
         capturedAt = $started
         r208ExitCode = $exitCode
         fullAcceptance = $false
-        acceptanceState = 'R208_RECEIPT_PARSE_FAILED'
-        blockers = @('R208_RECEIPT_PARSE_FAILED')
+        acceptanceState = 'R208_RECEIPT_PARSE_OR_FRESHNESS_FAILED'
+        blockers = @('R208_RECEIPT_PARSE_OR_FRESHNESS_FAILED')
         recoveryAction = 'INSPECT_R208_UPSTREAM_RECEIPT'
         error = $_.Exception.Message
       }
     }
   } else {
+    $latest = $null
+    $fullAcceptance = $false
     $attempts += [ordered]@{
       attempt = $attempt
       capturedAt = $started
@@ -129,6 +145,9 @@ $finalAction = 'INSPECT_R208_UPSTREAM_RECEIPT'
 if ($null -ne $latest) {
   $finalBlockers = @(Get-Blockers $latest)
   $finalAction = Get-RecoveryAction $finalBlockers
+} elseif ($attempts.Count -gt 0) {
+  $finalBlockers = @($attempts[$attempts.Count - 1].blockers)
+  $finalAction = [string]$attempts[$attempts.Count - 1].recoveryAction
 }
 
 $receipt = [ordered]@{
@@ -149,6 +168,7 @@ $receipt = [ordered]@{
   boundaries = [ordered]@{
     retriesDoNotCreateProof = $true
     onlyR208R181ReceiptsDetermineAcceptance = $true
+    staleR208ReceiptsRejected = $true
     windowsCiIsPhysicalPcProof = $false
     providerWeightsAreOmegaTrained = $false
     canonicalMutation = $false
