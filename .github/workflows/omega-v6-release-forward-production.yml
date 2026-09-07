@@ -16,19 +16,20 @@ concurrency:
 
 env:
   CANONICAL_BRANCH: omega-v6-full-convergence
-  MIN_CANONICAL_SHA: 596b5365d271c6abaa9604a1c880b2c04f3010df
+  MIN_CANONICAL_SHA: 878f331a38ac01ace480858f9f135e441ad3a1f6
   V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
 
 jobs:
   prove-exact-canonical:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Prove lineage and preserved authority entrypoints
+      - name: Prove R212 ancestry and preserved authority entrypoints
         shell: bash
         run: |
           set -euo pipefail
@@ -38,6 +39,7 @@ jobs:
           grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
           test -f canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts
           test -f canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1
+          test -f canonforge-omega/scripts/verify_r185_live_federation.py
 
       - uses: actions/setup-python@v5
         with:
@@ -69,6 +71,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
     needs: prove-exact-canonical
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout exact canonical SHA
         uses: actions/checkout@v4
@@ -160,7 +163,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler deploy --config wrangler.release-forward.toml
 
-      - name: Prove live exact identity and cumulative truth surfaces
+      - name: Prove live exact identity, cumulative truth, and all 172 R185 nodes
         id: liveproof
         continue-on-error: true
         shell: bash
@@ -190,6 +193,7 @@ jobs:
           for key in ('driveSnapshotIsNotLiveDriveTelemetry','publicSarCatalogIsNotRealTimeRadar','sarMetadataIsNotInSarDeformation','solverAvailableIsNotSolverExecuted','cloudConfiguredIsNotCloudExecutionProof','pcOnlineRequiresCurrentAuthenticatedHeartbeat','returnedIsNotVerified','verifiedReturnIsNotCanonState'):
               assert b.get(key) is True, (key,b)
           assert s.get('schema')=='OMEGA_OPERATIONAL_PROVENANCE_STATUS_R211' and s.get('canonicalGitSha')==sha, s
+          assert s.get('ok') is True, s
           ph=s.get('physicalHost') or {}
           if ph.get('pcOnline'):
               assert ph.get('heartbeatCurrent') is True and ph.get('authenticated') is True, ph
@@ -206,9 +210,19 @@ jobs:
             sleep 3
           done
           test "$matched" = true
-          echo "RELEASE_FORWARD_LIVE_EXACT_HEAD_VERIFIED $GITHUB_SHA"
 
-      - name: Roll back immediately if live exact-head proof failed
+          python canonforge-omega/scripts/verify_r185_live_federation.py \
+            --base "$V6_URL" \
+            --expected-sha "$GITHUB_SHA" \
+            --output-dir /tmp/release-forward-proof \
+            --workers 12
+
+          git fetch --no-tags origin "$CANONICAL_BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
+          echo "RELEASE_FORWARD_LIVE_EXACT_HEAD_AND_R185_FEDERATION_VERIFIED $GITHUB_SHA"
+
+      - name: Roll back immediately if any live exact-head proof failed
         if: steps.liveproof.outcome != 'success'
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         env:
@@ -217,8 +231,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo 'RELEASE_FORWARD_POST_DEPLOY_PROOF_FAILED: rolling back.'
-          npx wrangler rollback --message 'OMEGA release-forward automatic rollback: exact-head live proof failed'
+          echo 'RELEASE_FORWARD_POST_DEPLOY_PROOF_FAILED: rolling back exact canonical deployment.'
+          npx wrangler rollback --message 'OMEGA release-forward automatic rollback: cumulative or R185 federation proof failed'
           curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/release-forward-proof/rollback-health.json
           exit 1
 
@@ -235,9 +249,13 @@ jobs:
             echo '- Worker typecheck: PASS'
             echo '- Wrangler dry-run: PASS'
             echo '- Production deploy: PASS'
+            echo '- R211 aggregate status.ok: TRUE'
             echo '- R211 provenance manifest/status/Earth query: LIVE VERIFIED'
             echo '- R205/R204/R181 exact identity: LIVE VERIFIED'
             echo '- R201 durable chain: VERIFIED'
+            echo '- R185 172 advertised public routes: LIVE VERIFIED'
+            echo '- R185 172 machine routes and Durable Object runtimes: LIVE VERIFIED'
+            echo '- R185 manifest + deployment identity stable across complete sweep: VERIFIED'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload production proof packet

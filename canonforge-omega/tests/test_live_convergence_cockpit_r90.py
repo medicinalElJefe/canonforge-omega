@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WRAPPER = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "heartbeatTruth.ts"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 CONVERGENCE = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "convergence.ts"
-VERIFY = ROOT.parent / ".github" / "workflows" / "omega-v6-verify.yml"
+RELEASE = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 
 
 def test_r90_adds_user_visible_live_convergence_surface():
@@ -43,15 +43,16 @@ def test_r90_preserves_service_binding_and_public_probe_fallback_contract():
     assert "genesis_transport_boundary" in wrapper
 
 
-def test_r90_does_not_rebrand_or_weaken_existing_promotion_verifier():
+def test_r90_does_not_rebrand_or_weaken_current_production_authority():
     wrangler = WRANGLER.read_text(encoding="utf-8")
-    verify = VERIFY.read_text(encoding="utf-8")
+    release = RELEASE.read_text(encoding="utf-8")
     assert 'BUILD_ID = "r87-semantic-edge-settle-proof"' in wrangler
     assert 'TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"' in wrangler
     assert 'CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"' in wrangler
-    assert "LIVE_CONVERGENCE_VERIFIED" in verify
-    assert "reciprocal_manifest_ready" in verify
-    assert "manifest_digest" in verify
+    assert "release-forward exact-head production" in release
+    assert "canonicalGitSha" in release
+    assert "/api/acceptance/r181/manifest" in release
+    assert "R185 manifest + deployment identity stable across complete sweep: VERIFIED" in release
 
 
 def test_r90_reports_client_measured_freshness_and_does_not_infer_pc_online_from_transport():

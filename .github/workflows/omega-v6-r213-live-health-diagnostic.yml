@@ -1,0 +1,132 @@
+name: OMEGA V6 R213 live whole-system diagnostic
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts'
+      - 'canonforge-omega/tests/test_r213_provenance_health_closure.py'
+      - '.github/workflows/omega-v6-r213-live-health-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  diagnose-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Prove R213 source invariants and full regression
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck and dry-run complete Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          npx wrangler deploy --dry-run --outdir .r213-dry-run
+      - name: Capture public R205 and R211 route behavior without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r213-live
+          PROBE="r213-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          for spec in \
+            "r205|$V6_URL/api/system/r205/health?r213Proof=$PROBE" \
+            "r211-id|$V6_URL/api/system/r211/query?id=wholeSystem&r213Proof=$PROBE" \
+            "r211-status|$V6_URL/api/system/r211/status?r213Proof=$PROBE" \
+            "r211-earth|$V6_URL/api/system/r211/query?domain=earth&r213Proof=$PROBE"
+          do
+            name="${spec%%|*}"; url="${spec#*|}"
+            code=$(curl --silent --show-error --max-time 45 -D "/tmp/r213-live/$name.headers" -o "/tmp/r213-live/$name.json" -w '%{http_code}' "$url" || true)
+            printf '%s\n' "$code" > "/tmp/r213-live/$name.http"
+            echo "R213_ROUTE $name HTTP=$code"
+            echo "R213_ROUTE_HEADERS $name"
+            sed -n '1,30p' "/tmp/r213-live/$name.headers" || true
+            echo "R213_ROUTE_BODY $name"
+            head -c 3000 "/tmp/r213-live/$name.json" || true
+            echo
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/r213-live')
+          def load(name):
+              p = root / f'{name}.json'
+              try:
+                  return json.loads(p.read_text())
+              except Exception:
+                  return None
+          def code(name):
+              try:
+                  return int((root / f'{name}.http').read_text().strip())
+              except Exception:
+                  return 0
+
+          earth = load('r211-earth')
+          status = load('r211-status')
+          body = load('r205')
+          query = load('r211-id')
+
+          routed = {
+              'r205': bool(body and body.get('schema') == 'OMEGA_WHOLE_SYSTEM_HEALTH_R205'),
+              'r211Id': bool(query and query.get('schema') == 'OMEGA_OPERATIONAL_PROVENANCE_QUERY_R211'),
+              'r211Status': bool(status and status.get('schema') == 'OMEGA_OPERATIONAL_PROVENANCE_STATUS_R211'),
+              'r211Earth': bool(earth and earth.get('schema') == 'OMEGA_OPERATIONAL_PROVENANCE_QUERY_R211'),
+          }
+          summary = {
+              'schema': 'OMEGA_R213_PREDEPLOY_LIVE_DIAGNOSTIC_V1',
+              'sourceGatePassed': True,
+              'productionMutation': False,
+              'liveRoutes': routed,
+              'http': {name: code(name) for name in ('r205','r211-id','r211-status','r211-earth')},
+              'liveR211AggregateOk': status.get('ok') if routed['r211Status'] else None,
+              'interpretation': (
+                  'CURRENT_PUBLIC_RUNTIME_HAS_R205_R211' if all(routed.values())
+                  else 'CURRENT_PUBLIC_RUNTIME_DRIFT_OBSERVED_PREDEPLOY'
+              ),
+              'admissionBoundary': 'This diagnostic observes current public production before promotion. Exact-head admission and rollback are owned by omega-v6-release-forward-production.yml after canonical merge.',
+          }
+          (root / 'diagnostic-summary.json').write_text(json.dumps(summary, indent=2, sort_keys=True))
+          print('R213_PREDEPLOY_DIAGNOSTIC', json.dumps(summary, sort_keys=True))
+
+          if routed['r205']:
+              print('R213_LIVE_R205_OK', body.get('ok'))
+              print('R213_LIVE_R205_STATE', body.get('state'))
+              print('R213_LIVE_R205_SHA', body.get('canonicalGitSha'))
+              for layer in body.get('layers') or []:
+                  print('R213_LAYER', layer.get('id'), 'OK='+str(layer.get('ok')), 'STATE='+str(layer.get('state')), 'STATUS='+str(layer.get('status')), 'SCHEMA='+str(layer.get('schema')))
+              print('R213_HYBRID', json.dumps(body.get('hybrid') or {}, sort_keys=True))
+              print('R213_AISAI', json.dumps(body.get('aiSai') or {}, sort_keys=True))
+              print('R213_SELFBUILD', json.dumps(body.get('selfBuild') or {}, sort_keys=True))
+          else:
+              print('R213_PUBLIC_R205_NOT_ROUTED', repr(body))
+          if query:
+              print('R213_R211_ID_RESPONSE', json.dumps(query, sort_keys=True)[:6000])
+          if routed['r211Status']:
+              print('R213_R211_STATUS_OK', status.get('ok'))
+              print('R213_R211_STATUS_SOURCES', json.dumps(status.get('sources') or [], sort_keys=True)[:12000])
+          else:
+              print('R213_PUBLIC_R211_NOT_ROUTED', repr(status))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: omega-r213-live-health-${{ github.run_id }}
+          path: /tmp/r213-live/
+          if-no-files-found: ignore

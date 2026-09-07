@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TS = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "swarm" / "successorEvidenceR186.ts"
 ENTRY = ROOT / "cloudflare" / "omega-v6-worker" / "src" / "runtimeEntryR169.ts"
 WORKFLOW = ROOT.parent / ".github" / "workflows" / "omega-v6-r185-live-172-cloud-proof.yml"
+RELEASE = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
+VERIFIER = ROOT / "scripts" / "verify_r185_live_federation.py"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
 
@@ -165,12 +167,16 @@ def test_r186_route_is_first_class_and_identity_declared():
     assert 'SUCCESSOR_EVIDENCE_R186_ID = "r186-execution-derived-live-connection-successor-evidence"' in wrangler
 
 
-def test_r186_makes_172_link_proof_push_triggered_and_exact_sha_settled():
+def test_r186_exact_sha_172_link_proof_is_preserved_under_release_forward_sequence():
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    assert "push:" in workflow
-    assert "branches: [omega-v6-full-convergence]" in workflow
-    assert "Wait for exact canonical SHA deployment" in workflow
-    assert "/api/acceptance/r181/manifest" in workflow
-    assert "canonicalGitSha" in workflow
-    assert "EXPECTED_SHA" in workflow
-    assert "seq -w 1 172" in workflow
+    release = RELEASE.read_text(encoding="utf-8")
+    verifier = VERIFIER.read_text(encoding="utf-8")
+    assert 'workflows: ["OMEGA V6 release-forward exact-head production"]' in workflow
+    assert "github.event.workflow_run.conclusion == 'success'" in workflow
+    assert '--expected-sha "$EXPECTED_SHA"' in workflow
+    assert "/api/acceptance/r181/manifest" in verifier
+    assert "canonicalGitSha" in verifier
+    assert "expected_sha" in verifier
+    assert "NODE_COUNT = 172" in verifier
+    assert "verify_r185_live_federation.py" in release
+    assert '--expected-sha "$GITHUB_SHA"' in release
