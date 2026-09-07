@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 SRC = WORKER / "src"
-ENTRY = (SRC / "runtimeEntryR202.ts").read_text(encoding="utf-8")
+ENTRY = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
 RUNTIME = (SRC / "omegaRuntimeR202.ts").read_text(encoding="utf-8")
 R201_RUNTIME = (SRC / "system" / "omegaRuntimeR201.ts").read_text(encoding="utf-8")
 WRANGLER = (WORKER / "wrangler.toml").read_text(encoding="utf-8")
@@ -24,11 +24,13 @@ def load_contract_check():
     return module
 
 
-def test_r202_is_a_narrow_wrapper_over_the_current_r169_through_r201_public_stack():
-    assert 'import currentRuntime from "./runtimeEntryR169"' in ENTRY
+def test_r202_binds_only_the_historical_omega_runtime_export_beneath_canonical_r169():
+    assert 'main = "src/runtimeEntryR169.ts"' in WRANGLER
+    assert 'main = "src/heartbeatTruth.ts"' in WRANGLER  # preserved semantic authority marker
+    assert 'import canonicalRuntime from "./heartbeatTruth"' in ENTRY
     assert 'export { OmegaRuntime } from "./omegaRuntimeR202"' in ENTRY
     assert 'export { OmegaRuntime as OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201"' in ENTRY
-    assert "current.fetch(request, env, ctx)" in ENTRY
+    assert 'return canonical.fetch(request, env, ctx)' in ENTRY
     for export in (
         "OmegaSwarmCell",
         "OmegaSwarmCoordinator",
@@ -41,7 +43,6 @@ def test_r202_is_a_narrow_wrapper_over_the_current_r169_through_r201_public_stac
 
 
 def test_r202_preserves_r201_evidence_ledger_and_every_durable_namespace():
-    assert 'main = "src/runtimeEntryR202.ts"' in WRANGLER
     assert 'DURABLE_MISSION_LEDGER_R201_ID = "r201-durable-mission-evidence-ledger"' in WRANGLER
     assert 'HYBRID_RETURN_ADMISSION_R202_ID = "r202-authenticated-return-admission"' in WRANGLER
     assert 'name = "OMEGA_MISSION_LEDGER_R201"' in WRANGLER
