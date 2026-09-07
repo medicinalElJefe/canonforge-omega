@@ -5,6 +5,7 @@ WORKER = ROOT / "cloudflare" / "omega-v6-worker"
 SRC = WORKER / "src"
 R199 = (SRC / "system" / "oneSystemCorrelationR199.ts").read_text(encoding="utf-8")
 TRUTH = (SRC / "system" / "oneSystemTruthStripR199.ts").read_text(encoding="utf-8")
+OPERATOR = (SRC / "system" / "oneSystemOperatorR199.ts").read_text(encoding="utf-8")
 NAV195 = (SRC / "system" / "oneSystemNavigationR195.ts").read_text(encoding="utf-8")
 ENTRY = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
 
@@ -95,17 +96,75 @@ def test_r199_truth_strip_uses_existing_shared_convergence_packet_for_v6_genesis
     assert "PC UNPROVEN · no current authenticated heartbeat" in TRUTH
 
 
+def test_r199_operator_is_a_real_control_plane_not_only_navigation():
+    assert 'ONE_SYSTEM_OPERATOR_SCHEMA_R199 = "OMEGA_ONE_SYSTEM_OPERATOR_R199"' in OPERATOR
+    assert OPERATOR.count('id: "MENU-') == 12
+    for route in [
+        "/api/system/r199/manifest",
+        "/api/system/r199/snapshot",
+        "/api/system/r199/operate",
+    ]:
+        assert route in OPERATOR
+    for action in [
+        "specialist_execute",
+        "earth_search",
+        "corpus_analyze",
+        "prepare_build_candidate",
+    ]:
+        assert action in OPERATOR
+    assert 'handleOneSystemOperatorR199' in ENTRY
+    assert "const oneSystemOperator = await handleOneSystemOperatorR199(request, env, ctx, runtimeFetch)" in ENTRY
+
+
+def test_r199_operator_routes_to_existing_authorities_and_returns_receipts():
+    for path in [
+        "/api/system/r195/execute",
+        "/api/earth/sar/r198/search",
+        "/api/system/r195/analyze",
+        "/api/swarm/build/candidate",
+        "/api/convergence/edge",
+        "/api/omega/state",
+        "/api/system/r195/restoration?limit=24",
+    ]:
+        assert path in OPERATOR
+    assert "OMEGA_ONE_SYSTEM_OPERATOR_RECEIPT_R199" in OPERATOR
+    assert "receiptSha256" in OPERATOR
+    assert "canonicalMutation: false" in OPERATOR
+    assert "promotionAuthorized: false" in OPERATOR
+    assert "CANDIDATE_NOT_CANON" in OPERATOR
+
+
+def test_r199_operator_snapshot_correlates_runtime_instead_of_separate_ui_truths():
+    for probe in [
+        '"STATE", "/api/omega/state"',
+        '"CONVERGENCE", "/api/convergence/edge"',
+        '"ONE_SYSTEM", "/api/system/r195/status"',
+        '"WORKSPACE", "/api/workspace/r193/manifest"',
+        '"FABRIC", "/api/fabric/r191/manifest"',
+        '"SAI_AI", "/api/intelligence/r179/manifest"',
+        '"SWARM", "/api/clouds/r185/manifest"',
+        '"BUILD", "/api/swarm/build/manifest"',
+        '"RECOVERY", "/api/system/r195/restoration?limit=1"',
+        '"EARTH_SOURCES", "/api/earth/sar/r198/sources"',
+    ]:
+        assert probe in OPERATOR
+    assert "pcOnline: Boolean(pc.pc_online)" in OPERATOR
+    assert "heartbeatCurrent: Boolean(pc.heartbeat_current)" in OPERATOR
+
+
 def test_r199_truthfully_exposes_unrestored_audio_instead_of_inventing_route():
     assert 'label: "AUDIO", href: "#"' in R199
     assert 'state: "RESTORE_REQUIRED"' in R199
     assert "MENU_09_AUDIO_HAS_ARCHIVE_AUTHORITY_BUT_NO_ADMITTED_CANONICAL_CLOUD_SURFACE" in R199
     assert "does not yet have an admitted canonical cloud execution surface" in R199
+    assert "R199_AUDIO_RESTORE_REQUIRED" in OPERATOR
 
 
 def test_r199_preserves_20736_as_atlas_resolution_not_physical_dimension():
     assert 'href: "/?app=Field&shell=20736"' in R199
     assert "Address-resolution expansion without claiming physical dimension" in R199
     assert "NO_PHYSICAL_DIMENSION_CLAIM_FROM_ATLAS_RESOLUTION" in R199
+    assert "atlas20736IsAddressResolutionNotPhysicalDimension: true" in OPERATOR
 
 
 def test_r199_mobile_and_desktop_keep_primary_field_uncovered_when_closed():
