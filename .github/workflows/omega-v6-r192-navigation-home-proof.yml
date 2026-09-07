@@ -64,8 +64,9 @@ jobs:
           set -euo pipefail
           matched=false
           for attempt in $(seq 1 60); do
-            curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json || true
-            if EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+            rm -f /tmp/r191.json
+            if curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r191.json \
+              && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
           import json, os
           from pathlib import Path
           try:
@@ -76,6 +77,7 @@ jobs:
               raise SystemExit(1)
           PY
             then matched=true; break; fi
+            echo "R192 exact canonical identity not settled yet (attempt $attempt/60)."
             sleep 5
           done
           test "$matched" = true
@@ -83,20 +85,47 @@ jobs:
           routes=(/ /fabric /instrument /truth /clouds /sai /compute /validate /convergence)
           for route in "${routes[@]}"; do
             safe=$(printf '%s' "$route" | tr '/ ' '__')
-            curl --fail --silent --show-error --max-time 20 -D "/tmp/${safe}.headers" "$LIVE$route" -o "/tmp/${safe}.html"
-            grep -qi '^content-type: text/html' "/tmp/${safe}.headers"
-            grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/${safe}.headers"
-            grep -F 'id="omegaUniversalNavR192"' "/tmp/${safe}.html"
+            route_settled=false
+            for attempt in $(seq 1 45); do
+              rm -f "/tmp/${safe}.headers" "/tmp/${safe}.html"
+              if curl --fail --silent --show-error --max-time 20 -D "/tmp/${safe}.headers" "$LIVE$route" -o "/tmp/${safe}.html" \
+                && grep -qi '^content-type: text/html' "/tmp/${safe}.headers" \
+                && grep -qi '^x-omega-navigation: r192-navigation-home-repair' "/tmp/${safe}.headers" \
+                && grep -Fq 'id="omegaUniversalNavR192"' "/tmp/${safe}.html"; then
+                route_settled=true
+                break
+              fi
+              echo "R192 route $route not settled yet (attempt $attempt/45)."
+              sleep 2
+            done
+            if [ "$route_settled" != true ]; then
+              echo "R192_ROUTE_NOT_SETTLED $route"
+              cat "/tmp/${safe}.headers" 2>/dev/null || true
+              head -c 1500 "/tmp/${safe}.html" 2>/dev/null || true
+              exit 1
+            fi
           done
 
           grep -F 'Living Operator Field' /tmp/_.html
           grep -F 'id="omegaLaunch" class="hidden"' /tmp/_.html
           grep -F 'OMEGA · R191 SURFACE FABRIC' /tmp/_fabric.html
 
-          curl --fail --silent --show-error --max-time 20 -D /tmp/api.headers "$LIVE/api/fabric/r191/status" -o /tmp/api.json
-          grep -qi '^content-type: application/json' /tmp/api.headers
-          if grep -qi '^x-omega-navigation:' /tmp/api.headers; then
-            echo 'R192 must not inject navigation into JSON/API responses'
+          api_settled=false
+          for attempt in $(seq 1 45); do
+            rm -f /tmp/api.headers /tmp/api.json
+            if curl --fail --silent --show-error --max-time 20 -D /tmp/api.headers "$LIVE/api/fabric/r191/status" -o /tmp/api.json \
+              && grep -qi '^content-type: application/json' /tmp/api.headers \
+              && ! grep -qi '^x-omega-navigation:' /tmp/api.headers; then
+              api_settled=true
+              break
+            fi
+            echo "R192 JSON status route not settled yet (attempt $attempt/45)."
+            sleep 2
+          done
+          if [ "$api_settled" != true ]; then
+            echo 'R192_API_STATUS_NOT_SETTLED'
+            cat /tmp/api.headers 2>/dev/null || true
+            cat /tmp/api.json 2>/dev/null || true
             exit 1
           fi
 
