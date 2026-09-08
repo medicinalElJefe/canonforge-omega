@@ -3,6 +3,7 @@ type RuntimeFetch = (request: Request, env: any, ctx: any) => Promise<Response>;
 const SCHEMA = "OMEGA_GOVERNED_LOCAL_TRAINING_R221";
 const RELEASE = "r221-governed-local-training-and-r195-closure";
 const TRAINING_KIND = "sai_repository_index";
+const TRAINING_RECEIPT_SCHEMA = "OMEGA_SAI_TRAINING_RECEIPT_R179";
 const ACTIVE_STATES = new Set(["QUEUED", "LEASED", "RUNNING"]);
 const TERMINAL_STATES = new Set(["VERIFIED", "BLOCKED", "FAILED", "CANCELLED"]);
 
@@ -69,21 +70,40 @@ function allDevelopmentJobs(development: any): any[] {
   return ordered;
 }
 
+function verifiedTrainingReceipt(job: any): boolean {
+  const evidence = job?.evidence;
+  const receipt = evidence?.repository_index;
+  return Boolean(
+    job?.kind === TRAINING_KIND
+      && job?.state === "VERIFIED"
+      && evidence?.kind === TRAINING_KIND
+      && evidence?.native_execution === true
+      && evidence?.canonical_mutation === false
+      && receipt?.schema === TRAINING_RECEIPT_SCHEMA
+      && receipt?.evaluation?.passed === true
+      && receipt?.neuralWeightsTrained === false
+      && receipt?.fullyTrainedClaim === false
+      && typeof receipt?.receiptSha256 === "string"
+      && receipt.receiptSha256.length === 64
+      && typeof receipt?.artifacts?.retrievalModel === "string"
+      && receipt.artifacts.retrievalModel.length > 0,
+  );
+}
+
 function trainingFacts(r220: any, development: any) {
   const jobs = allDevelopmentJobs(development).filter(job => job?.kind === TRAINING_KIND);
   const activeTraining = [...jobs].reverse().find(job => ACTIVE_STATES.has(String(job?.state || ""))) || null;
   const latestTraining = jobs.length ? jobs[jobs.length - 1] : null;
   const latestTerminal = [...jobs].reverse().find(job => TERMINAL_STATES.has(String(job?.state || ""))) || null;
   const linkProven = r220?.linkProven === true;
-  const latestVerified = [...jobs].reverse().find(
-    job => job?.state === "VERIFIED" && job?.evidence && Object.keys(job.evidence).length > 0,
-  ) || null;
+  const latestVerified = [...jobs].reverse().find(verifiedTrainingReceipt) || null;
 
   let state = linkProven ? "READY_TO_TRAIN" : "LINK_REQUIRED";
   const activeState = String(activeTraining?.state || "");
   if (activeState === "QUEUED") state = "TRAINING_QUEUED";
   if (activeState === "LEASED" || activeState === "RUNNING") state = "TRAINING_RUNNING";
   if (!activeTraining && latestTerminal?.state === "VERIFIED" && latestVerified?.id === latestTerminal.id) state = "TRAINING_VERIFIED";
+  if (!activeTraining && latestTerminal?.state === "VERIFIED" && latestVerified?.id !== latestTerminal.id) state = "TRAINING_RECEIPT_INVALID";
   if (!activeTraining && latestTerminal?.state === "BLOCKED") state = "TRAINING_BLOCKED";
   if (!activeTraining && latestTerminal?.state === "FAILED") state = "TRAINING_FAILED";
   if (!activeTraining && latestTerminal?.state === "CANCELLED") state = "TRAINING_CANCELLED";
@@ -94,6 +114,7 @@ function trainingFacts(r220: any, development: any) {
     eligibleToTrain: linkProven && !activeTraining,
     trainingActive: Boolean(activeTraining),
     trainingExecutionProven: Boolean(latestVerified),
+    trainingReceiptSchema: TRAINING_RECEIPT_SCHEMA,
     trainingJobId: activeTraining?.id || latestTraining?.id || null,
     activeTrainingJob: activeTraining,
     latestTrainingJob: latestTraining,
@@ -108,9 +129,12 @@ function truthBoundary() {
     connectedDoesNotMeanRunning: true,
     runningRequiresLeasedSaiRepositoryIndexJob: true,
     verifiedRequiresReturnedEvidence: true,
+    verifiedRequiresR179TrainingReceipt: true,
     exactTrainingKind: TRAINING_KIND,
+    exactTrainingReceiptSchema: TRAINING_RECEIPT_SCHEMA,
     trainingScope: "LOCAL_REPOSITORY_INDEX_ONLY",
     foundationModelWeightsTrainedClaim: false,
+    fullyTrainedClaim: false,
     arbitraryShell: false,
     arbitraryJobKind: false,
     canonicalMutation: false,
@@ -273,7 +297,7 @@ Array.from(panel.querySelectorAll('button,a')).forEach(function(el){if(el.id!=='
 var button=document.createElement('button');button.className='btn primary';button.id='omegaR221TrainLocal';button.textContent='Train locally now';button.disabled=true;controls.appendChild(button);
 var card=document.createElement('div');card.id='omegaR221Training';card.className='job';card.innerHTML='<span>LOCAL SAI TRAINING</span><span class="muted" id="omegaR221TrainingMessage">Waiting for current authenticated Hybrid proof…</span><b id="omegaR221TrainingState">CHECKING</b>';rail.insertBefore(card,rail.firstChild);
 var proof=document.createElement('details');proof.className='proof';proof.innerHTML='<summary>Local training dispatch proof</summary><pre id="omegaR221TrainingProof">No R221 training proof loaded.</pre>';var side=panel.querySelector('.hybridStage aside.panel');if(side)side.appendChild(proof);
-function setState(d){var state=String(d&&d.state||'STATUS_UNAVAILABLE');var msg='Current authenticated Hybrid proof is required before local training can be queued.';if(state==='READY_TO_TRAIN')msg='PC link is current. Train locally will enqueue the real sai_repository_index job.';if(state==='TRAINING_QUEUED')msg='Local SAI repository indexing is queued; this is not execution proof.';if(state==='TRAINING_RUNNING')msg='The authenticated sovereign host leased the local SAI repository-index job and is executing it.';if(state==='TRAINING_VERIFIED')msg='Local SAI repository indexing returned VERIFIED evidence from the sovereign host.';if(state==='TRAINING_BLOCKED')msg='Local training is BLOCKED. Inspect the returned job evidence/error and repair the stated prerequisite.';if(state==='TRAINING_FAILED')msg='Local training FAILED. Inspect the returned job evidence/error before retrying.';if(state==='TRAINING_CANCELLED')msg='Local training was cancelled and is not verified.';document.getElementById('omegaR221TrainingState').textContent=state;document.getElementById('omegaR221TrainingMessage').textContent=msg;button.disabled=!(d&&d.eligibleToTrain===true);document.getElementById('omegaR221TrainingProof').textContent=JSON.stringify(d,null,2);}
+function setState(d){var state=String(d&&d.state||'STATUS_UNAVAILABLE');var msg='Current authenticated Hybrid proof is required before local training can be queued.';if(state==='READY_TO_TRAIN')msg='PC link is current. Train locally will enqueue the real sai_repository_index job.';if(state==='TRAINING_QUEUED')msg='Local SAI repository indexing is queued; this is not execution proof.';if(state==='TRAINING_RUNNING')msg='The authenticated sovereign host leased the local SAI repository-index job and is executing it.';if(state==='TRAINING_VERIFIED')msg='Local SAI repository indexing returned a verified R179 training receipt from the sovereign host.';if(state==='TRAINING_RECEIPT_INVALID')msg='The host returned VERIFIED, but the R179 local-training receipt contract did not validate. Training remains unproven.';if(state==='TRAINING_BLOCKED')msg='Local training is BLOCKED. Inspect the returned job evidence/error and repair the stated prerequisite.';if(state==='TRAINING_FAILED')msg='Local training FAILED. Inspect the returned job evidence/error before retrying.';if(state==='TRAINING_CANCELLED')msg='Local training was cancelled and is not verified.';document.getElementById('omegaR221TrainingState').textContent=state;document.getElementById('omegaR221TrainingMessage').textContent=msg;button.disabled=!(d&&d.eligibleToTrain===true);document.getElementById('omegaR221TrainingProof').textContent=JSON.stringify(d,null,2);}
 async function load(){try{var r=await fetch('/api/system/r221/status',{cache:'no-store'});var d=await r.json();setState(d);}catch(e){setState({state:'STATUS_UNAVAILABLE',eligibleToTrain:false,error:String(e)});}}
 button.addEventListener('click',async function(){button.disabled=true;button.textContent='Queueing local training…';try{var r=await fetch('/api/system/r221/train-local',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({confirmed:true}),cache:'no-store'});var d=await r.json();setState(d);button.textContent=r.ok?'Local training queued':'Training blocked';}catch(e){setState({state:'STATUS_UNAVAILABLE',eligibleToTrain:false,error:String(e)});button.textContent='Training failed';}setTimeout(function(){button.textContent='Train locally now';load();},1800);});
 load();setInterval(function(){if(document.body.contains(panel))load();},4000);
