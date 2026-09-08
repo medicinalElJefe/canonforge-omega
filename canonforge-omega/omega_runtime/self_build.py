@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import hashlib
 import json
 import uuid
 
@@ -16,6 +17,17 @@ from .warp_candidate import (
     candidate_job_payload,
     validate_candidate_capsule,
 )
+
+
+R221_PIPELINE_SCHEMA = "OMEGA_R221_TRAIN_RCWA_PIPELINE"
+R221_TRAINING_KIND = "sai_repository_index"
+R221_TRAINING_RECEIPT_SCHEMA = "OMEGA_SAI_TRAINING_RECEIPT_R179"
+R221_RCWA_KIND = "cross_runtime_validate"
+R221_RCWA_CHALLENGE_SCHEMA = "OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175"
+R221_RCWA_RESULT_SCHEMA = "OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175"
+R221_RCWA_NATIVE_RESULT_SCHEMA = "OMEGA_RESULT_v1"
+R221_RCWA_RECEIPT_SCHEMA = "OMEGA_SOVEREIGN_RCWA_RECEIPT_R175"
+R221_ACTIVE_STATES = {"QUEUED", "LEASED", "RUNNING"}
 
 
 class BuildMode(str, Enum):
@@ -85,7 +97,9 @@ class SovereignBuildController:
     R178 can import a cryptographically identified, strictly accounted R177 warp
     candidate into its fixed local validation sequence. R179 additionally requires
     exact OMEGA SAI B059 host verification in the ordinary continuous acceptance
-    cycle. Neither path grants release promotion by itself.
+    cycle. R221 makes the operator-approved R179 -> R175 native-RCWA transition a
+    controller-owned persisted state transition so an open browser is not required.
+    None of these paths grants release promotion by itself.
     """
 
     def __init__(self, state_path: Path, approved_root: Path) -> None:
@@ -120,6 +134,185 @@ class SovereignBuildController:
         self.mode = mode
         self._save()
         return self.status()
+
+    @staticmethod
+    def _canonical_json(value: Any) -> str:
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
+
+    @classmethod
+    def _sha256(cls, value: Any) -> str:
+        text = value if isinstance(value, str) else cls._canonical_json(value)
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _is_r221_training(job: BuildJob) -> bool:
+        payload = job.payload if isinstance(job.payload, dict) else {}
+        return bool(
+            job.kind == R221_TRAINING_KIND
+            and payload.get("requested_by") == "R221_TRAIN_LOCALLY"
+            and payload.get("pipeline_schema") == R221_PIPELINE_SCHEMA
+            and isinstance(payload.get("r221_pipeline_id"), str)
+        )
+
+    @staticmethod
+    def _is_r221_rcwa(job: BuildJob, pipeline_id: str | None = None) -> bool:
+        payload = job.payload if isinstance(job.payload, dict) else {}
+        return bool(
+            job.kind == R221_RCWA_KIND
+            and payload.get("schema") == R221_RCWA_CHALLENGE_SCHEMA
+            and payload.get("pipeline_schema") == R221_PIPELINE_SCHEMA
+            and payload.get("r221_stage") == "RCWA_NATIVE_CALIBRATION"
+            and isinstance(payload.get("r221_pipeline_id"), str)
+            and (pipeline_id is None or payload.get("r221_pipeline_id") == pipeline_id)
+        )
+
+    @staticmethod
+    def _r221_resume_mode(job: BuildJob) -> BuildMode:
+        raw = str((job.payload or {}).get("r221_resume_mode") or BuildMode.DEVELOPMENT_LOOP.value)
+        try:
+            mode = BuildMode(raw)
+        except ValueError:
+            return BuildMode.DEVELOPMENT_LOOP
+        return BuildMode.DEVELOPMENT_LOOP if mode == BuildMode.MANUAL else mode
+
+    @classmethod
+    def _valid_r221_training_evidence(cls, job: BuildJob) -> bool:
+        evidence = job.evidence if isinstance(job.evidence, dict) else {}
+        receipt = evidence.get("repository_index") if isinstance(evidence.get("repository_index"), dict) else {}
+        return bool(
+            cls._is_r221_training(job)
+            and evidence.get("kind") == R221_TRAINING_KIND
+            and evidence.get("native_execution") is True
+            and evidence.get("canonical_mutation") is False
+            and receipt.get("schema") == R221_TRAINING_RECEIPT_SCHEMA
+            and (receipt.get("evaluation") or {}).get("passed") is True
+            and receipt.get("neuralWeightsTrained") is False
+            and receipt.get("fullyTrainedClaim") is False
+            and isinstance(receipt.get("receiptSha256"), str)
+            and len(receipt.get("receiptSha256")) == 64
+            and isinstance((receipt.get("artifacts") or {}).get("retrievalModel"), str)
+            and bool((receipt.get("artifacts") or {}).get("retrievalModel"))
+        )
+
+    @classmethod
+    def _valid_r221_rcwa_evidence(cls, job: BuildJob) -> bool:
+        evidence = job.evidence if isinstance(job.evidence, dict) else {}
+        result = evidence.get("native_result") if isinstance(evidence.get("native_result"), dict) else {}
+        receipt = evidence.get("native_receipt") if isinstance(evidence.get("native_receipt"), dict) else (result.get("receipt") or {})
+        return bool(
+            cls._is_r221_rcwa(job)
+            and evidence.get("schema") == R221_RCWA_RESULT_SCHEMA
+            and evidence.get("blocked") is False
+            and evidence.get("native_execution") is True
+            and evidence.get("independent_solver_family_claim") is True
+            and evidence.get("canonical_mutation") is False
+            and result.get("schema") == R221_RCWA_NATIVE_RESULT_SCHEMA
+            and result.get("solver") == "rcwa"
+            and result.get("solver_family") == "MAXWELL_RCWA"
+            and isinstance(result.get("solver_version"), str)
+            and result.get("solver_version", "").startswith("grcwa:")
+            and result.get("converged") is True
+            and result.get("native_execution") is True
+            and result.get("canonical_mutation") is False
+            and receipt.get("schema") == R221_RCWA_RECEIPT_SCHEMA
+            and receipt.get("solver") == "rcwa"
+            and receipt.get("solver_family") == "MAXWELL_RCWA"
+            and receipt.get("converged") is True
+            and receipt.get("native_execution") is True
+            and receipt.get("canonical_mutation") is False
+            and all(isinstance(receipt.get(key), str) and len(receipt.get(key)) == 64 for key in ("input_sha256", "result_sha256", "receipt_sha256"))
+        )
+
+    @staticmethod
+    def _r221_calibration_queue(pipeline_id: str, training_job_id: str) -> Dict[str, Any]:
+        return {
+            "schema": "OMEGA_FULLWAVE_QUEUE_v1",
+            "revision": "R221",
+            "job_id": f"r221_rcwa_calibration_{pipeline_id}",
+            "source_packet_id": f"r221_training_{training_job_id}",
+            "solver": "rcwa",
+            "geometry": {"pitch_nm": 900, "width_nm": 900, "length_nm": 900, "height_nm": 300, "theta_deg": 0},
+            "wavelength_nm": 1550,
+            "polarization": "s",
+            "material_model": {"n_incident": 1.0, "n_feature": 2.0, "n_background": 2.0, "n_substrate": 1.45},
+            "numerics": {
+                "nx": 32,
+                "ny": 32,
+                "harmonics_low": 9,
+                "harmonics_high": 17,
+                "convergence_tolerance": 0.02,
+                "energy_tolerance": 0.02,
+                "incidence_theta_deg": 0,
+                "incidence_phi_deg": 0,
+            },
+            "proof": {"gate": "STAY", "mode188_score": 1.05, "scope": "R221_NATIVE_RCWA_PIPELINE_CALIBRATION_FIXTURE"},
+            "lineage": [
+                f"r221:{pipeline_id}:training:{training_job_id}",
+                "r221:hash-bound-calibration-fixture",
+                "r175:sovereign-native-grcwa",
+            ],
+            "calibration_fixture": True,
+            "external_measurement_claim": False,
+            "fabrication_validation_claim": False,
+            "physical_dimension_claim": False,
+            "canonical_mutation": False,
+        }
+
+    @classmethod
+    def _r221_rcwa_payload(cls, training_job: BuildJob) -> Dict[str, Any]:
+        pipeline_id = str(training_job.payload.get("r221_pipeline_id"))
+        queue = cls._r221_calibration_queue(pipeline_id, training_job.id)
+        queue_json = cls._canonical_json(queue)
+        queue_sha = cls._sha256(queue_json)
+        core = {
+            "schema": R221_RCWA_CHALLENGE_SCHEMA,
+            "revision": "R175",
+            "queue_job_canonical_json": queue_json,
+            "queue_job_sha256": queue_sha,
+            "source_packet_id": queue["source_packet_id"],
+            "requested_solver": "rcwa",
+            "solver_family": "MAXWELL_RCWA",
+            "authority": "INDEPENDENT_SOLVER_CHALLENGE_NOT_VALIDATION",
+            "canonical_mutation": False,
+            "external_measurement_claim": False,
+            "physical_dimension_claim": False,
+        }
+        challenge_sha = cls._sha256(core)
+        return {
+            **core,
+            "challenge_id": f"r175_{challenge_sha[:20]}",
+            "challenge_sha256": challenge_sha,
+            "queue_job": queue,
+            "pipeline_schema": R221_PIPELINE_SCHEMA,
+            "r221_pipeline_id": pipeline_id,
+            "r221_training_job_id": training_job.id,
+            "r221_stage": "RCWA_NATIVE_CALIBRATION",
+            "r221_rcwa_retry": False,
+            "r221_resume_mode": cls._r221_resume_mode(training_job).value,
+            "calibration_fixture": True,
+            "deployment_authorized": False,
+            "promotion_authorized": False,
+        }
+
+    def _existing_r221_rcwa(self, pipeline_id: str) -> Optional[BuildJob]:
+        rows = [job for job in self.jobs if self._is_r221_rcwa(job, pipeline_id)]
+        return rows[-1] if rows else None
+
+    def _enqueue_r221_rcwa(self, training_job: BuildJob) -> BuildJob:
+        pipeline_id = str(training_job.payload.get("r221_pipeline_id"))
+        existing = self._existing_r221_rcwa(pipeline_id)
+        if existing is not None:
+            return existing
+        return self.enqueue(
+            R221_RCWA_KIND,
+            "R221 controller-owned post-training native RCWA calibration: execute the exact hash-bound R175 full-wave fixture with grcwa on the authenticated sovereign host. No browser, fallback, Canon, deployment, or promotion dependency is permitted.",
+            self._r221_rcwa_payload(training_job),
+        )
+
+    def _resume_r221(self, job: BuildJob) -> None:
+        self.mode = self._r221_resume_mode(job)
+        self._save()
+        self.ensure_next_job()
 
     def _validate_candidate_job_payload(self, kind: str, payload: Dict[str, Any]) -> None:
         if payload.get("schema") != WARP_BUILD_IMPORT_SCHEMA_R178:
@@ -156,6 +349,20 @@ class SovereignBuildController:
             raise ValueError(f"unsupported governed build job: {kind}")
         normalized_payload = payload or {}
         self._validate_candidate_job_payload(kind, normalized_payload)
+
+        pipeline_id = normalized_payload.get("r221_pipeline_id")
+        pipeline_stage = normalized_payload.get("r221_stage")
+        if normalized_payload.get("pipeline_schema") == R221_PIPELINE_SCHEMA and isinstance(pipeline_id, str) and isinstance(pipeline_stage, str):
+            for existing in reversed(self.jobs):
+                if (
+                    existing.kind == kind
+                    and existing.state in R221_ACTIVE_STATES
+                    and (existing.payload or {}).get("pipeline_schema") == R221_PIPELINE_SCHEMA
+                    and (existing.payload or {}).get("r221_pipeline_id") == pipeline_id
+                    and (existing.payload or {}).get("r221_stage") == pipeline_stage
+                ):
+                    return existing
+
         now = self._now()
         job = BuildJob(
             id=str(uuid.uuid4()),
@@ -325,7 +532,30 @@ class SovereignBuildController:
         job.updated_at = self._now()
         job.evidence = evidence or job.evidence
         job.error = error
+
+        if self._is_r221_training(job) and state == JobState.VERIFIED and not self._valid_r221_training_evidence(job):
+            job.state = JobState.BLOCKED.value
+            job.error = "R221_TRAINING_RECEIPT_INVALID"
+            state = JobState.BLOCKED
+        if self._is_r221_rcwa(job) and state == JobState.VERIFIED and not self._valid_r221_rcwa_evidence(job):
+            job.state = JobState.BLOCKED.value
+            job.error = "R221_NATIVE_RCWA_RECEIPT_INVALID"
+            state = JobState.BLOCKED
+
         self._save()
+
+        if self._is_r221_training(job):
+            if state == JobState.VERIFIED:
+                self._enqueue_r221_rcwa(job)
+            elif state in {JobState.FAILED, JobState.BLOCKED, JobState.CANCELLED}:
+                self._resume_r221(job)
+            return job
+
+        if self._is_r221_rcwa(job):
+            if state in {JobState.VERIFIED, JobState.FAILED, JobState.BLOCKED, JobState.CANCELLED}:
+                self._resume_r221(job)
+            return job
+
         if state == JobState.VERIFIED and self._is_candidate_job(job):
             advanced = self._advance_candidate(job)
             if advanced is None:
@@ -373,6 +603,19 @@ class SovereignBuildController:
             "recent_jobs": [asdict(job) for job in self.jobs[-20:]],
             "safe_job_kinds": sorted(SAFE_JOB_KINDS),
             "validation_sequence": VALIDATION_SEQUENCE,
+            "r221_train_rcwa": {
+                "controller_owned_transitions": True,
+                "browser_required_for_progress": False,
+                "training_receipt_schema": R221_TRAINING_RECEIPT_SCHEMA,
+                "rcwa_challenge_schema": R221_RCWA_CHALLENGE_SCHEMA,
+                "rcwa_receipt_schema": R221_RCWA_RECEIPT_SCHEMA,
+                "terminal_failure_restores_prior_non_manual_mode": True,
+                "active_stage_deduplication": True,
+                "no_fallback": True,
+                "canonical_mutation": False,
+                "deployment_authorized": False,
+                "promotion_authorized": False,
+            },
             "sai_r179": {
                 "required_in_continuous_acceptance": True,
                 "release": "OMEGA SAI B059",
