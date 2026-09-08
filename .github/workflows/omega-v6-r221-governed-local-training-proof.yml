@@ -66,7 +66,12 @@ jobs:
           grep -F 'verifiedRequiresR179TrainingReceipt: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
           grep -F 'canonicalMutation: false' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
           grep -F 'runtimeInflation: "SINGLE_FLIGHT_PER_WORKER_ISOLATE"' canonforge-omega/cloudflare/omega-v6-worker/src/system/driveCorpusSnapshotR195.ts
-          ! grep -q 'wrangler deploy --config' .github/workflows/omega-v6-r221-governed-local-training-proof.yml
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('.github/workflows/omega-v6-r221-governed-local-training-proof.yml').read_text(encoding='utf-8')
+          forbidden = 'wrangler ' + 'deploy --config'
+          assert forbidden not in text
+          PY
 
   windows-real-local-training:
     runs-on: windows-latest
