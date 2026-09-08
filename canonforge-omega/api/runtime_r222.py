@@ -9,6 +9,7 @@ import secrets
 import time
 
 from fastapi import HTTPException
+from starlette.routing import Mount
 
 from api.app import APPROVED_BUILD_ROOT, GATEWAY_TOKEN, _pairing, app
 
@@ -98,3 +99,25 @@ def hybrid_local_contract_r222() -> dict:
         "inboundCloudToPcRequired": False,
         "canonicalPort": 8127,
     }
+
+
+def _ensure_successor_api_precedes_ui_mount() -> None:
+    """Keep the catch-all static UI behind API routes added by successor modules.
+
+    `api.app` intentionally mounts the UI last relative to its own routes. R222 imports
+    that preserved app and extends it, which means the inherited `/` Mount would
+    otherwise sit ahead of the new R222 API routes and can truthfully return a static
+    404 before FastAPI reaches them. Move only the named UI mount to the tail. This does
+    not replace the app, duplicate a runtime, or alter any authority/evidence state.
+    """
+    ui_mounts = [
+        route
+        for route in app.router.routes
+        if isinstance(route, Mount) and getattr(route, "name", None) == "ui"
+    ]
+    for route in ui_mounts:
+        app.router.routes.remove(route)
+        app.router.routes.append(route)
+
+
+_ensure_successor_api_precedes_ui_mount()
