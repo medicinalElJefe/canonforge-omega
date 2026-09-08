@@ -13,6 +13,8 @@ def test_r222_local_runtime_adds_signed_outbound_enrollment_without_replacing_ap
     local = read(ROOT / "api" / "runtime_r222.py")
     assert 'uvicorn.run("api.runtime_r222:app"' in cli
     assert "from api.app import APPROVED_BUILD_ROOT, GATEWAY_TOKEN, _pairing, app" in local
+    assert "FastAPI(" not in local
+    assert "app = FastAPI" not in local
     assert '@app.get("/api/hybrid/enrollment")' in local
     assert '@app.get("/api/hybrid/r222/local-contract")' in local
     assert "hmac.new(GATEWAY_TOKEN.encode" in local
@@ -22,9 +24,8 @@ def test_r222_local_runtime_adds_signed_outbound_enrollment_without_replacing_ap
 
 
 def test_r222_successor_api_routes_are_reordered_ahead_of_inherited_catch_all_ui_mount():
-    # Keep this regression source-only so generic historical non-regression jobs do not
-    # acquire a new FastAPI installation requirement. The R207 Windows integration proof
-    # starts the real runtime and is the executable route-reachability proof.
+    # This regression proves ownership/routing semantics, not comments or formatting.
+    # R207 Windows integration remains the executable route-reachability proof.
     local = read(ROOT / "api" / "runtime_r222.py")
     enrollment = local.index('@app.get("/api/hybrid/enrollment")')
     contract = local.index('@app.get("/api/hybrid/r222/local-contract")')
@@ -34,11 +35,14 @@ def test_r222_successor_api_routes_are_reordered_ahead_of_inherited_catch_all_ui
     assert enrollment < reorder_def
     assert contract < reorder_def
     assert reorder_def < reorder_call
+    assert "from api.app import APPROVED_BUILD_ROOT, GATEWAY_TOKEN, _pairing, app" in local
+    assert "FastAPI(" not in local
+    assert "app = FastAPI" not in local
     assert "from starlette.routing import Mount" in local
     assert 'isinstance(route, Mount) and getattr(route, "name", None) == "ui"' in local
+    assert "for route in ui_mounts:" in local
     assert "app.router.routes.remove(route)" in local
     assert "app.router.routes.append(route)" in local
-    assert "does not replace the app" in local
 
 
 def test_r222_preserves_exact_durable_object_identity_and_removes_hybrid_gateway_fallback():
