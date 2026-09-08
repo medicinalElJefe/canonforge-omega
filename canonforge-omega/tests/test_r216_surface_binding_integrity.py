@@ -10,7 +10,7 @@ def test_r216_preserves_actual_r169_worker_entrypoint_and_wraps_its_public_bound
     assert 'main = "src/runtimeEntryR169.ts"' in wrangler
     assert 'import canonicalRuntime from "./heartbeatTruth"' in entry
     assert 'import { enhanceSurfaceBindingIntegrityR216 } from "./surfaceBindingIntegrityR216"' in entry
-    assert "const r205 = await enhanceWholeSystemSurfaceR205(finalResponse)" in entry
+    assert "return enhanceWholeSystemSurfaceR205(finalResponse)" in entry
     assert "return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null)" in entry
     assert "export default { fetch: publicFetch }" in entry
 
