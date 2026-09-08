@@ -6,7 +6,7 @@ WORKFLOW = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-pro
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
 DEPLOY_STEP = "Deploy exact canonical Worker to Cloudflare and bind version ID"
-LIVE_PROOF_STEP = "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes"
+LIVE_PROOF_STEP = "Prove live exact identity, R217 lease, cumulative truth, version lock, and all 172 R185 nodes"
 RESTORE_STEP = "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed"
 
 
@@ -15,6 +15,10 @@ def test_v6_promotion_requires_live_post_deploy_convergence_proof():
     assert DEPLOY_STEP in source
     assert LIVE_PROOF_STEP in source
     assert "https://omegav6.jeffdeweyeljefe.workers.dev" in source
+    assert "/api/system/r217/release-lease" in source
+    assert "OMEGA_RELEASE_PROVENANCE_R217" in source
+    assert "expected-release-lease.txt" in source
+    assert "RELEASE_LEASE_MISMATCH" in source
     assert "/api/system/r211/manifest" in source
     assert "/api/system/r205/manifest" in source
     assert "/api/system/r204/manifest" in source
@@ -37,12 +41,14 @@ def test_live_proof_runs_after_deploy_and_before_success_record_or_restore_decis
     assert deploy < proof < restore < record
 
 
-def test_failed_admission_restores_the_exact_predeploy_version_set():
+def test_failed_admission_restores_the_exact_predeploy_version_set_only_when_owned():
     source = WORKFLOW.read_text(encoding="utf-8")
     assert "pre-restore-payload.json" in source
     assert "pre-version-ids.json" in source
     assert '"$DEPLOYMENTS_URL?force=true"' in source
     assert "RESTORE_TARGET_MISMATCH" in source
+    assert "RESTORE_WITHHELD_PRODUCTION_WRITER_RACE" in source
+    assert "EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION" in source
     assert "exit 1" in source
 
 
