@@ -113,7 +113,7 @@ jobs:
           npm install
           npm run typecheck
 
-      - name: Capture exact pre-deploy production and rollback target
+      - name: Capture pre-deploy production evidence
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -135,16 +135,10 @@ jobs:
           current=deployments[0]
           versions=current.get('versions') or []
           assert versions, current
-          restore={
-              'strategy': current.get('strategy') or 'percentage',
-              'versions': [
-                  {'version_id': v['version_id'], 'percentage': v['percentage']}
-                  for v in versions
-              ],
-          }
+          active=[str(v.get('version_id','')).lower() for v in versions if float(v.get('percentage',0)) > 0]
+          assert active, current
           Path('/tmp/release-forward-proof/pre-deployment-id.txt').write_text(str(current.get('id') or ''))
-          Path('/tmp/release-forward-proof/pre-version-ids.json').write_text(json.dumps([v['version_id'] for v in versions]))
-          Path('/tmp/release-forward-proof/pre-restore-payload.json').write_text(json.dumps(restore, separators=(',',':')))
+          Path('/tmp/release-forward-proof/pre-version-ids.json').write_text(json.dumps(active))
           PY
           curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/release-forward-proof/pre-health.json || true
           curl --fail --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/release-forward-proof/pre-r205.json || true
@@ -185,7 +179,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
 
-      - name: Deploy exact canonical Worker to Cloudflare and bind version ID
+      - name: Deploy exact canonical Worker to Cloudflare
         id: deploy
         continue-on-error: true
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
@@ -205,41 +199,9 @@ jobs:
           Path('/tmp/release-forward-proof/expected-version-id.txt').write_text(match.group(1).lower())
           PY
 
-      - name: Assert deployed version is still the active Cloudflare deployment
-        id: versionlock
-        if: steps.deploy.outcome == 'success'
-        continue-on-error: true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          DEPLOYMENTS_URL="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$V6_SCRIPT_NAME/deployments"
-          curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            "$DEPLOYMENTS_URL" -o /tmp/release-forward-proof/post-deployments.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          packet=json.loads(Path('/tmp/release-forward-proof/post-deployments.json').read_text())
-          expected=Path('/tmp/release-forward-proof/expected-version-id.txt').read_text().strip().lower()
-          deployments=(packet.get('result') or {}).get('deployments') or []
-          assert packet.get('success') is True and deployments, packet
-          current=deployments[0]
-          versions=current.get('versions') or []
-          active=[str(v.get('version_id','')).lower() for v in versions if float(v.get('percentage',0)) > 0]
-          if active != [expected]:
-              Path('/tmp/release-forward-proof/PRODUCTION_WRITER_RACE.txt').write_text(
-                  'expected_version='+expected+'\nactive_versions='+json.dumps(active)+'\nactive_deployment='+str(current.get('id'))+'\n'
-              )
-              raise AssertionError(('PRODUCTION_WRITER_RACE', expected, active, current.get('id')))
-          Path('/tmp/release-forward-proof/expected-deployment-id.txt').write_text(str(current.get('id') or ''))
-          PY
-
       - name: Prove live exact identity, cumulative truth, and all 172 R185 nodes
         id: liveproof
-        if: steps.deploy.outcome == 'success' && steps.versionlock.outcome == 'success'
+        if: steps.deploy.outcome == 'success'
         continue-on-error: true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -260,8 +222,7 @@ jobs:
           deployments=(packet.get('result') or {}).get('deployments') or []
           assert packet.get('success') is True and deployments, packet
           current=deployments[0]
-          versions=current.get('versions') or []
-          active=[str(v.get('version_id','')).lower() for v in versions if float(v.get('percentage',0)) > 0]
+          active=[str(v.get('version_id','')).lower() for v in (current.get('versions') or []) if float(v.get('percentage',0)) > 0]
           if active != [expected]:
               Path('/tmp/release-forward-proof/PRODUCTION_WRITER_RACE.txt').write_text(
                   'expected_version='+expected+'\nactive_versions='+json.dumps(active)+'\nactive_deployment='+str(current.get('id'))+'\n'
@@ -270,6 +231,7 @@ jobs:
           PY
           }
 
+          assert_deployment_lock
           matched=false
           for attempt in $(seq 1 70); do
             assert_deployment_lock
@@ -325,75 +287,61 @@ jobs:
           git fetch --no-tags origin "$CANONICAL_BRANCH"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
-          echo "RELEASE_FORWARD_LIVE_EXACT_HEAD_VERSION_LOCK_AND_R185_FEDERATION_VERIFIED $GITHUB_SHA"
+          echo "RELEASE_FORWARD_LIVE_EXACT_HEAD_AND_R185_FEDERATION_VERIFIED $GITHUB_SHA"
 
       - name: Roll back immediately if any live exact-head proof failed
         if: steps.liveproof.outcome != 'success'
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         shell: bash
         run: |
           set -euo pipefail
-          echo 'RELEASE_FORWARD_ADMISSION_FAILED: restoring exact pre-deploy Cloudflare deployment.'
+          echo 'RELEASE_FORWARD_POST_DEPLOY_PROOF_FAILED: checking deployment ownership before rollback.'
+          if [ ! -s /tmp/release-forward-proof/expected-version-id.txt ]; then
+            echo 'DEPLOYMENT_VERSION_UNBOUND: no rollback is safe.'
+            exit 1
+          fi
           DEPLOYMENTS_URL="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$V6_SCRIPT_NAME/deployments"
-          test -s /tmp/release-forward-proof/pre-restore-payload.json
-
-          restore_exact() {
-            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
-              -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' \
-              --data-binary @/tmp/release-forward-proof/pre-restore-payload.json \
-              "$DEPLOYMENTS_URL?force=true" -o /tmp/release-forward-proof/restore-deployment.json || return 1
-            curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
-              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-              "$DEPLOYMENTS_URL" -o /tmp/release-forward-proof/restored-deployments.json || return 1
-            python - <<'PY'
+          curl --fail --silent --show-error --retry 3 --retry-delay 1 --retry-all-errors --max-time 30 \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "$DEPLOYMENTS_URL" -o /tmp/release-forward-proof/rollback-owner-check.json
+          python - <<'PY'
           import json
           from pathlib import Path
-          expected=set(json.loads(Path('/tmp/release-forward-proof/pre-version-ids.json').read_text()))
-          packet=json.loads(Path('/tmp/release-forward-proof/restored-deployments.json').read_text())
+          packet=json.loads(Path('/tmp/release-forward-proof/rollback-owner-check.json').read_text())
+          expected=Path('/tmp/release-forward-proof/expected-version-id.txt').read_text().strip().lower()
           deployments=(packet.get('result') or {}).get('deployments') or []
           assert packet.get('success') is True and deployments, packet
           current=deployments[0]
-          actual={str(v.get('version_id')) for v in (current.get('versions') or []) if float(v.get('percentage',0)) > 0}
-          assert actual == expected, ('RESTORE_TARGET_MISMATCH', expected, actual, current)
+          active=[str(v.get('version_id','')).lower() for v in (current.get('versions') or []) if float(v.get('percentage',0)) > 0]
+          owned=(active == [expected])
+          Path('/tmp/release-forward-proof/rollback-owned.txt').write_text('true' if owned else 'false')
+          if not owned:
+              Path('/tmp/release-forward-proof/ROLLBACK_WITHHELD_PRODUCTION_WRITER_RACE.txt').write_text(
+                  'expected_owned_version='+expected+'\ncurrent_active_versions='+json.dumps(active)+'\ncurrent_deployment='+str(current.get('id'))+'\n'
+              )
           PY
-          }
-
-          if ! restore_exact; then
-            echo 'EXACT_DEPLOYMENT_RESTORE_FAILED: attempting bounded Wrangler rollback only for a single-version prior deployment.'
-            PRE_COUNT="$(python - <<'PY'
-          import json
-          from pathlib import Path
-          print(len(json.loads(Path('/tmp/release-forward-proof/pre-version-ids.json').read_text())))
-          PY
-          )"
-            test "$PRE_COUNT" = "1"
-            ROLLBACK_VERSION="$(python - <<'PY'
-          import json
-          from pathlib import Path
-          print(json.loads(Path('/tmp/release-forward-proof/pre-version-ids.json').read_text())[0])
-          PY
-          )"
-            (
-              cd canonforge-omega/cloudflare/omega-v6-worker
-              npx wrangler rollback "$ROLLBACK_VERSION" --config wrangler.release-forward.toml --message 'OMEGA release-forward automatic rollback: exact restore fallback'
-            )
+          if [ "$(cat /tmp/release-forward-proof/rollback-owned.txt)" != "true" ]; then
+            echo 'PRODUCTION_WRITER_RACE: another deployment owns production; rollback withheld.'
+            exit 1
           fi
-
+          echo 'DEPLOYMENT_OWNERSHIP_CONFIRMED: rolling back only the version created by this run.'
+          npx wrangler rollback --message 'OMEGA release-forward automatic rollback: cumulative or R185 federation proof failed'
           curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            "$DEPLOYMENTS_URL" -o /tmp/release-forward-proof/restored-deployments-final.json
+            "$DEPLOYMENTS_URL" -o /tmp/release-forward-proof/post-rollback-deployments.json
           python - <<'PY'
           import json
           from pathlib import Path
           expected=set(json.loads(Path('/tmp/release-forward-proof/pre-version-ids.json').read_text()))
-          packet=json.loads(Path('/tmp/release-forward-proof/restored-deployments-final.json').read_text())
+          packet=json.loads(Path('/tmp/release-forward-proof/post-rollback-deployments.json').read_text())
           deployments=(packet.get('result') or {}).get('deployments') or []
           assert packet.get('success') is True and deployments, packet
           current=deployments[0]
-          actual={str(v.get('version_id')) for v in (current.get('versions') or []) if float(v.get('percentage',0)) > 0}
-          assert actual == expected, ('FINAL_RESTORE_TARGET_MISMATCH', expected, actual, current)
+          actual={str(v.get('version_id','')).lower() for v in (current.get('versions') or []) if float(v.get('percentage',0)) > 0}
+          assert actual == expected, ('ROLLBACK_TARGET_MISMATCH', expected, actual, current)
           PY
           curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/release-forward-proof/rollback-health.json || true
           exit 1
@@ -406,13 +354,12 @@ jobs:
             echo '## OMEGA release-forward production proof'
             echo
             echo "- Exact canonical SHA: $GITHUB_SHA"
-            echo "- Exact Worker version: $(cat /tmp/release-forward-proof/expected-version-id.txt)"
+            echo "- Worker version locked through admission: $(cat /tmp/release-forward-proof/expected-version-id.txt)"
             echo '- Full Python suite: PASS'
             echo '- Cloudflare contract: PASS'
             echo '- Worker typecheck: PASS'
             echo '- Wrangler dry-run: PASS'
             echo '- Production deploy: PASS'
-            echo '- Cloudflare deployment version lock: PASS'
             echo '- R211 aggregate status.ok: TRUE'
             echo '- R211 provenance manifest/status/Earth query: LIVE VERIFIED'
             echo '- R205/R204/R181 exact identity: LIVE VERIFIED'
