@@ -84,4 +84,5 @@ def test_r91_preserves_existing_release_identities_under_current_release_authori
     assert "release-forward exact-head production" in release
     assert "/api/system/r211/manifest" in release
     assert "verify_r185_live_federation.py" in release
-    assert "Roll back immediately if any live exact-head proof failed" in release
+    assert "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed" in release
+    assert "pre-restore-payload.json" in release
