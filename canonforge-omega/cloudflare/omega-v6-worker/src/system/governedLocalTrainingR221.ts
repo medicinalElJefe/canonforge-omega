@@ -11,6 +11,7 @@ const RCWA_RESULT_SCHEMA = "OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175";
 const RCWA_NATIVE_RESULT_SCHEMA = "OMEGA_RESULT_v1";
 const RCWA_RECEIPT_SCHEMA = "OMEGA_SOVEREIGN_RCWA_RECEIPT_R175";
 const ACTIVE_STATES = new Set(["QUEUED", "LEASED", "RUNNING"]);
+const RESUMABLE_MODES = new Set(["DEVELOPMENT_LOOP", "CONTINUOUS_SOVEREIGN_BUILD"]);
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data, null, 2), {
@@ -59,12 +60,22 @@ function allDevelopmentJobs(development: any): any[] {
   const recent = Array.isArray(development?.recent_jobs) ? development.recent_jobs : [];
   const active = development?.active_job || null;
   const ordered: any[] = [];
-  const seen = new Set<string>();
-  for (const job of [...recent, active].filter(Boolean)) {
+  const indexById = new Map<string, number>();
+  for (const job of recent.filter(Boolean)) {
     const id = String(job?.id || "");
-    if (id && seen.has(id)) continue;
-    if (id) seen.add(id);
+    if (id && indexById.has(id)) {
+      ordered[indexById.get(id)!] = job;
+      continue;
+    }
+    if (id) indexById.set(id, ordered.length);
     ordered.push(job);
+  }
+  if (active) {
+    const id = String(active?.id || "");
+    if (id && indexById.has(id)) {
+      ordered.splice(indexById.get(id)!, 1);
+    }
+    ordered.push(active);
   }
   return ordered;
 }
@@ -82,6 +93,7 @@ function isR221Rcwa(job: any, pipelineId?: string | null): boolean {
   return Boolean(
     job?.kind === RCWA_KIND
       && job?.payload?.schema === RCWA_CHALLENGE_SCHEMA
+      && job?.payload?.pipeline_schema === PIPELINE_SCHEMA
       && job?.payload?.r221_stage === "RCWA_NATIVE_CALIBRATION"
       && typeof job?.payload?.r221_pipeline_id === "string"
       && (!pipelineId || job.payload.r221_pipeline_id === pipelineId),
@@ -148,6 +160,11 @@ function latestR221Training(jobs: any[]): any | null {
   return rows.length ? rows[rows.length - 1] : null;
 }
 
+function normalizedResumeMode(training: any, development: any): string {
+  const requested = String(training?.payload?.r221_resume_mode || development?.mode || "DEVELOPMENT_LOOP");
+  return RESUMABLE_MODES.has(requested) ? requested : "DEVELOPMENT_LOOP";
+}
+
 function pipelineFacts(r220: any, hybrid: any, development: any) {
   const jobs = allDevelopmentJobs(development);
   const training = latestR221Training(jobs);
@@ -156,6 +173,7 @@ function pipelineFacts(r220: any, hybrid: any, development: any) {
   const rcwa = rcwaJobs.length ? rcwaJobs[rcwaJobs.length - 1] : null;
   const activeTraining = training && ACTIVE_STATES.has(String(training.state || "")) ? training : null;
   const activeRcwa = rcwa && ACTIVE_STATES.has(String(rcwa.state || "")) ? rcwa : null;
+  const activePipelineJob = activeTraining || activeRcwa;
   const trainingVerified = verifiedTrainingReceipt(training);
   const rcwaVerified = verifiedRcwaReceipt(rcwa);
   const linkProven = r220?.linkProven === true;
@@ -163,9 +181,10 @@ function pipelineFacts(r220: any, hybrid: any, development: any) {
   const currentActiveIsPipeline = Boolean(
     currentActive && (currentActive.id === training?.id || currentActive.id === rcwa?.id),
   );
-  const preexistingStage = activeTraining && currentActive && currentActive.id !== activeTraining.id ? currentActive : null;
+  const preexistingStage = activePipelineJob && currentActive && currentActive.id !== activePipelineJob.id ? currentActive : null;
   const nextActive = rcwaVerified && currentActive && currentActive.id !== rcwa?.id ? currentActive : null;
   const mode = String(development?.mode || "");
+  const resumeDevelopmentMode = normalizedResumeMode(training, development);
   const heartbeatRcwa = hybrid?.proof?.rcwa || hybrid?.rcwa || null;
   const rcwaRetryEligible = Boolean(
     linkProven
@@ -177,7 +196,7 @@ function pipelineFacts(r220: any, hybrid: any, development: any) {
   );
 
   let state = linkProven ? "READY_TO_TRAIN" : "LINK_REQUIRED";
-  if (activeTraining && preexistingStage) state = "DRAINING_EXISTING_GOVERNED_STAGE";
+  if (activePipelineJob && preexistingStage) state = "DRAINING_EXISTING_GOVERNED_STAGE";
   else if (activeTraining?.state === "QUEUED") state = "TRAINING_QUEUED";
   else if (["LEASED", "RUNNING"].includes(String(activeTraining?.state || ""))) state = "TRAINING_RUNNING";
   else if (training && training.state === "VERIFIED" && !trainingVerified) state = "TRAINING_RECEIPT_INVALID";
@@ -210,6 +229,9 @@ function pipelineFacts(r220: any, hybrid: any, development: any) {
     pipelineNeedsAdvance,
     rcwaRetryEligible,
     currentDevelopmentMode: mode || null,
+    resumeDevelopmentMode,
+    controllerOwnedTransitions: development?.r221_train_rcwa?.controller_owned_transitions === true,
+    browserRequiredForProgress: development?.r221_train_rcwa?.browser_required_for_progress !== false,
     trainingActive: Boolean(activeTraining),
     trainingExecutionProven: trainingVerified,
     trainingReceiptSchema: TRAINING_RECEIPT_SCHEMA,
@@ -237,6 +259,10 @@ function truthBoundary() {
     heartbeatIsLinkProofOnly: true,
     connectedDoesNotMeanRunning: true,
     heartbeatRcwaCapabilityIsNotRcwaExecutionProof: true,
+    liveActiveJobOverridesStaleRecentJobSnapshot: true,
+    controllerOwnsTrainingToRcwaTransition: true,
+    browserTabIsNotRequiredForPipelineProgress: true,
+    terminalPipelineFailureRestoresPriorNonManualMode: true,
     trainingRunningRequiresLeasedSaiRepositoryIndexJob: true,
     trainingVerifiedRequiresR179TrainingReceipt: true,
     rcwaRunningRequiresLeasedR175CrossRuntimeJob: true,
@@ -250,7 +276,7 @@ function truthBoundary() {
       "R179_LOCAL_REPOSITORY_TRAINING",
       "R175_HASH_BOUND_RCWA_CALIBRATION",
       "NATIVE_GRCWA_RETURN",
-      "RESTORE_DEVELOPMENT_LOOP",
+      "RESTORE_PRIOR_GOVERNED_MODE",
       "NEXT_GOVERNED_STAGE",
     ],
     exactTrainingKind: TRAINING_KIND,
@@ -345,6 +371,20 @@ async function statusPayload(request: Request, env: any, ctx: any, nextFetch: Ru
   };
 }
 
+async function setDevelopmentMode(
+  nextFetch: RuntimeFetch,
+  request: Request,
+  env: any,
+  ctx: any,
+  mode: string,
+): Promise<{ ok: boolean; status: number; data: any }> {
+  return callJson(nextFetch, request, env, ctx, "/api/development/mode", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ mode }),
+  });
+}
+
 async function advancePipeline(
   request: Request,
   env: any,
@@ -366,6 +406,28 @@ async function advancePipeline(
   }
 
   if (!facts.rcwaJob || (retryRcwa && facts.rcwaRetryEligible)) {
+    let isolatedHere = false;
+    if (facts.currentDevelopmentMode !== "MANUAL") {
+      const isolation = await setDevelopmentMode(nextFetch, request, env, ctx, "MANUAL");
+      if (!isolation.ok) {
+        return json({
+          ok: false,
+          schema: SCHEMA,
+          release: RELEASE,
+          code: "PIPELINE_REISOLATION_FAILED",
+          detail: isolation.data,
+          pipelineId: facts.pipelineId,
+          truthBoundary: truthBoundary(),
+        }, isolation.status >= 400 && isolation.status < 600 ? isolation.status : 502);
+      }
+      isolatedHere = true;
+    }
+
+    const restoreAfterFailure = async () => {
+      if (!isolatedHere) return { ok: true, status: 200, data: null };
+      return setDevelopmentMode(nextFetch, request, env, ctx, facts.resumeDevelopmentMode || "DEVELOPMENT_LOOP");
+    };
+
     const fixture = calibrationQueue(facts.pipelineId, facts.trainingJobId);
     const prepared = await callJson(nextFetch, request, env, ctx, "/api/validate/independent/prepare", {
       method: "POST",
@@ -374,6 +436,7 @@ async function advancePipeline(
     });
     const challenge = prepared.data?.challenge;
     if (!prepared.ok || prepared.data?.ok !== true || challenge?.schema !== RCWA_CHALLENGE_SCHEMA) {
+      const restored = await restoreAfterFailure();
       return json({
         ok: false,
         schema: SCHEMA,
@@ -382,6 +445,8 @@ async function advancePipeline(
         sourceStatus: prepared.status,
         detail: prepared.data,
         pipelineId: facts.pipelineId,
+        resumeDevelopmentMode: facts.resumeDevelopmentMode,
+        failureRecoveryRestored: restored.ok,
         truthBoundary: truthBoundary(),
       }, prepared.status >= 400 && prepared.status < 600 ? prepared.status : 502);
     }
@@ -391,8 +456,8 @@ async function advancePipeline(
       body: JSON.stringify({
         kind: RCWA_KIND,
         reason: retryRcwa
-          ? "R221 RCWA-only retry after retained verified R179 training: execute a fresh hash-bound R175 full-wave job so the sovereign host re-probes grcwa dependencies at execution time. No retraining or fallback is permitted."
-          : "R221 post-training native RCWA calibration: execute the exact hash-bound R175 full-wave fixture with grcwa on the authenticated sovereign host. No fallback, fabrication, measurement, Canon, deployment, or promotion claim is permitted.",
+          ? "R221 RCWA-only retry after retained verified R179 training: execute a fresh hash-bound R175 full-wave job so the sovereign host re-probes and repairs bounded grcwa dependencies at execution time. No retraining or fallback is permitted."
+          : "R221 post-training native RCWA calibration fallback dispatch: execute the exact hash-bound R175 full-wave fixture with grcwa on the authenticated sovereign host. The persistent controller normally owns this transition; this endpoint is idempotent recovery only.",
         payload: {
           ...challenge,
           pipeline_schema: PIPELINE_SCHEMA,
@@ -400,6 +465,7 @@ async function advancePipeline(
           r221_training_job_id: facts.trainingJobId,
           r221_stage: "RCWA_NATIVE_CALIBRATION",
           r221_rcwa_retry: retryRcwa,
+          r221_resume_mode: facts.resumeDevelopmentMode || "DEVELOPMENT_LOOP",
           calibration_fixture: true,
           canonical_mutation: false,
           deployment_authorized: false,
@@ -408,6 +474,7 @@ async function advancePipeline(
       }),
     });
     if (!enqueue.ok) {
+      const restored = await restoreAfterFailure();
       return json({
         ok: false,
         schema: SCHEMA,
@@ -416,6 +483,8 @@ async function advancePipeline(
         sourceStatus: enqueue.status,
         detail: enqueue.data,
         pipelineId: facts.pipelineId,
+        resumeDevelopmentMode: facts.resumeDevelopmentMode,
+        failureRecoveryRestored: restored.ok,
         truthBoundary: truthBoundary(),
       }, enqueue.status >= 400 && enqueue.status < 600 ? enqueue.status : 502);
     }
@@ -436,19 +505,16 @@ async function advancePipeline(
   }
 
   if (facts.currentDevelopmentMode === "MANUAL") {
-    const mode = await callJson(nextFetch, request, env, ctx, "/api/development/mode", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode: "DEVELOPMENT_LOOP" }),
-    });
+    const mode = await setDevelopmentMode(nextFetch, request, env, ctx, facts.resumeDevelopmentMode || "DEVELOPMENT_LOOP");
     if (!mode.ok) {
       return json({
         ok: false,
         schema: SCHEMA,
         release: RELEASE,
-        code: "DEVELOPMENT_LOOP_RESTORE_FAILED",
+        code: "DEVELOPMENT_MODE_RESTORE_FAILED",
         detail: mode.data,
         pipelineId: facts.pipelineId,
+        resumeDevelopmentMode: facts.resumeDevelopmentMode,
         truthBoundary: truthBoundary(),
       }, mode.status >= 400 && mode.status < 600 ? mode.status : 502);
     }
@@ -458,6 +524,7 @@ async function advancePipeline(
       advanced: true,
       stage: "NEXT_GOVERNED_STAGE",
       resumedDevelopmentLoop: true,
+      resumedMode: facts.resumeDevelopmentMode,
       ...after.payload,
     });
   }
@@ -496,7 +563,7 @@ export async function handleGovernedLocalTrainingR221(
       schema: SCHEMA,
       release: RELEASE,
       code: "EXPLICIT_CONFIRMATION_REQUIRED",
-      boundary: "R221 confirmation authorizes only the bounded sequence: drain current governed stage, local R179 repository indexing, native no-fallback R175 grcwa calibration, then restoration of the ordinary governed development loop.",
+      boundary: "R221 confirmation authorizes only the bounded sequence: drain current governed stage, local R179 repository indexing, native no-fallback R175 grcwa calibration, then restoration of the prior non-MANUAL governed development mode.",
       truthBoundary: truthBoundary(),
     }, 422);
   }
@@ -536,11 +603,10 @@ export async function handleGovernedLocalTrainingR221(
     });
   }
 
-  const manual = await callJson(nextFetch, request, env, ctx, "/api/development/mode", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ mode: "MANUAL" }),
-  });
+  const resumeDevelopmentMode = RESUMABLE_MODES.has(String(existing.currentDevelopmentMode || ""))
+    ? String(existing.currentDevelopmentMode)
+    : "DEVELOPMENT_LOOP";
+  const manual = await setDevelopmentMode(nextFetch, request, env, ctx, "MANUAL");
   if (!manual.ok) {
     return json({
       ok: false,
@@ -548,6 +614,7 @@ export async function handleGovernedLocalTrainingR221(
       release: RELEASE,
       code: "PIPELINE_ISOLATION_FAILED",
       detail: manual.data,
+      resumeDevelopmentMode,
       truthBoundary: truthBoundary(),
     }, manual.status >= 400 && manual.status < 600 ? manual.status : 502);
   }
@@ -558,15 +625,18 @@ export async function handleGovernedLocalTrainingR221(
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       kind: TRAINING_KIND,
-      reason: "R221 explicit operator pipeline: after the already-active governed stage drains, build a fresh deterministic source-grounded local repository index on the authenticated sovereign host, then require native R175 grcwa calibration before restoring the ordinary development loop.",
+      reason: "R221 explicit operator pipeline: after the already-active governed stage drains, build a fresh deterministic source-grounded local repository index on the authenticated sovereign host. The persistent controller then queues native R175 grcwa automatically and restores the prior governed mode after terminal solver return.",
       payload: {
         requested_by: "R221_TRAIN_LOCALLY",
         pipeline_schema: PIPELINE_SCHEMA,
         r221_pipeline_id: pipelineId,
         r221_stage: "R179_LOCAL_REPOSITORY_TRAINING",
+        r221_resume_mode: resumeDevelopmentMode,
         canonical_git_sha: env?.CANONICAL_GIT_SHA || null,
         training_scope: "LOCAL_REPOSITORY_INDEX_ONLY",
         next_required_stage: "R175_NATIVE_RCWA_CALIBRATION",
+        controller_owned_transition: true,
+        browser_required_for_progress: false,
         foundation_model_weights_trained: false,
         canonical_mutation: false,
         github_mutation: false,
@@ -576,11 +646,7 @@ export async function handleGovernedLocalTrainingR221(
     }),
   });
   if (!enqueue.ok) {
-    await callJson(nextFetch, request, env, ctx, "/api/development/mode", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode: "DEVELOPMENT_LOOP" }),
-    });
+    const restored = await setDevelopmentMode(nextFetch, request, env, ctx, resumeDevelopmentMode);
     return json({
       ok: false,
       schema: SCHEMA,
@@ -588,6 +654,8 @@ export async function handleGovernedLocalTrainingR221(
       code: "LOCAL_TRAINING_ENQUEUE_FAILED",
       sourceStatus: enqueue.status,
       detail: enqueue.data,
+      resumeDevelopmentMode,
+      failureRecoveryRestored: restored.ok,
       truthBoundary: truthBoundary(),
     }, enqueue.status >= 400 && enqueue.status < 600 ? enqueue.status : 502);
   }
@@ -619,30 +687,30 @@ var panel=document.querySelector('[data-view="Hybrid"]');if(!panel)return;
 var controls=panel.querySelector('.controls');var rail=panel.querySelector('.buildRail');if(!controls||!rail)return;
 Array.from(panel.querySelectorAll('button,a')).forEach(function(el){if(el.id!=='omegaR221TrainLocal'&&/train\\s+locally/i.test(String(el.textContent||''))){el.setAttribute('data-r221-superseded','true');el.style.display='none';}});
 var button=document.createElement('button');button.className='btn primary';button.id='omegaR221TrainLocal';button.textContent='Train locally + prove RCWA';button.disabled=true;controls.appendChild(button);
-var card=document.createElement('div');card.id='omegaR221Training';card.className='job';card.innerHTML='<span>R221 · TRAIN → RCWA → NEXT STAGE</span><span class="muted" id="omegaR221TrainingMessage">Checking authenticated Hybrid, training and native solver state…</span><b id="omegaR221TrainingState">CHECKING</b>';rail.insertBefore(card,rail.firstChild);
+var card=document.createElement('div');card.id='omegaR221Training';card.className='job';card.innerHTML='<span>R221 · TRAIN → RCWA → NEXT STAGE</span><span class="muted" id="omegaR221TrainingMessage">Checking persistent controller, authenticated Hybrid, training and native solver state…</span><b id="omegaR221TrainingState">CHECKING</b>';rail.insertBefore(card,rail.firstChild);
 var proof=document.createElement('details');proof.className='proof';proof.innerHTML='<summary>R221 training / RCWA / next-stage proof</summary><pre id="omegaR221TrainingProof">No R221 pipeline proof loaded.</pre>';var side=panel.querySelector('.hybridStage aside.panel');if(side)side.appendChild(proof);
 var advancing=false,lastState=null;
 function label(d){return d&&d.rcwaRetryEligible===true?'Retry native RCWA':'Train locally + prove RCWA';}
 function setState(d){lastState=d;var state=String(d&&d.state||'STATUS_UNAVAILABLE');var msg='Current authenticated Hybrid proof is required before the governed pipeline can start.';
-if(state==='READY_TO_TRAIN')msg='PC link is current. Start the bounded R179 training → native R175 grcwa → next governed stage pipeline.';
-if(state==='DRAINING_EXISTING_GOVERNED_STAGE')msg='The prior governed stage is finishing first. R221 is in MANUAL isolation so no new generic stage can jump ahead of training.';
+if(state==='READY_TO_TRAIN')msg='PC link is current. Start the bounded R179 training → native R175 grcwa → next governed stage pipeline. The persistent controller owns later transitions; this tab may close.';
+if(state==='DRAINING_EXISTING_GOVERNED_STAGE')msg='The prior governed stage is finishing first. R221 is isolated so no generic layer can jump ahead of the queued training/RCWA stage.';
 if(state==='TRAINING_QUEUED')msg='R179 local repository training is queued. Queueing is not execution proof.';
 if(state==='TRAINING_RUNNING')msg='The authenticated sovereign host leased the R179 repository-index job and is executing it.';
-if(state==='TRAINING_VERIFIED_RCWA_READY')msg='R179 receipt verified. The next wired stage is the hash-bound native R175 grcwa calibration.';
-if(state==='TRAINING_RECEIPT_INVALID')msg='Host returned VERIFIED but the R179 receipt contract failed. RCWA will not be started.';
-if(state==='TRAINING_BLOCKED'||state==='TRAINING_FAILED'||state==='TRAINING_CANCELLED')msg='Training did not verify. RCWA and later stages remain blocked.';
+if(state==='TRAINING_VERIFIED_RCWA_READY')msg='R179 receipt verified. The persistent controller is responsible for queueing the hash-bound native R175 grcwa calibration; browser polling is fallback only.';
+if(state==='TRAINING_RECEIPT_INVALID')msg='The R179 receipt contract failed. The controller restores normal development instead of leaving the system stranded in MANUAL.';
+if(state==='TRAINING_BLOCKED'||state==='TRAINING_FAILED'||state==='TRAINING_CANCELLED')msg='Training did not verify. Normal governed development is restored; start a fresh training pipeline after the real cause is repaired.';
 if(state==='RCWA_QUEUED')msg='R175 native RCWA calibration is queued from the exact hash-bound fixture. This is not execution proof.';
 if(state==='RCWA_RUNNING')msg='The sovereign host leased the R175 challenge and is running real grcwa Maxwell-RCWA with no scalar fallback.';
-if(state==='RCWA_VERIFIED_NEXT_STAGE_READY')msg='Native grcwa receipt verified. R221 is restoring DEVELOPMENT_LOOP and requiring a different next governed stage.';
+if(state==='RCWA_VERIFIED_NEXT_STAGE_READY')msg='Native grcwa receipt verified. The controller is restoring the prior governed mode and requiring a different next stage.';
 if(state==='RCWA_VERIFIED')msg='Native grcwa RCWA receipt verified.';
-if(state==='RCWA_RECEIPT_INVALID')msg='The host returned VERIFIED but the native grcwa/receipt contract failed. Repair the solver environment, then Retry native RCWA without repeating training.';
-if(state==='RCWA_BLOCKED')msg='Native RCWA is BLOCKED. Inspect dependency_status/native_result, repair grcwa if required, then Retry native RCWA. Training remains retained.';
-if(state==='RCWA_FAILED'||state==='RCWA_CANCELLED')msg='Native RCWA did not verify. Retry only the RCWA stage after repair; the verified R179 training receipt remains retained.';
-if(state==='DEVELOPMENT_ADVANCING')msg='Training and native RCWA are verified; the ordinary governed development loop is resumed on a different next stage.';
+if(state==='RCWA_RECEIPT_INVALID')msg='The native receipt contract failed. Normal development is restored; Retry native RCWA re-isolates only the solver stage and preserves verified training.';
+if(state==='RCWA_BLOCKED')msg='Native RCWA is BLOCKED by a real solver/dependency result. Normal development remains available; Retry native RCWA preserves training and performs a fresh bounded host dependency repair/probe.';
+if(state==='RCWA_FAILED'||state==='RCWA_CANCELLED')msg='Native RCWA did not verify. Normal development remains available; retry only RCWA after repair without repeating verified R179 training.';
+if(state==='DEVELOPMENT_ADVANCING')msg='Training and native RCWA are verified; the prior governed development mode is resumed on a different next stage.';
 document.getElementById('omegaR221TrainingState').textContent=state;document.getElementById('omegaR221TrainingMessage').textContent=msg;button.disabled=!(d&&(d.eligibleToTrain===true||d.rcwaRetryEligible===true));button.textContent=label(d);document.getElementById('omegaR221TrainingProof').textContent=JSON.stringify(d,null,2);}
 async function advance(d){if(advancing||!d||d.pipelineNeedsAdvance!==true||!d.pipelineId)return d;advancing=true;try{var r=await fetch('/api/system/r221/advance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({confirmed:true,pipeline_id:d.pipelineId}),cache:'no-store'});var a=await r.json();setState(a);return a;}catch(e){var x={state:'STATUS_UNAVAILABLE',eligibleToTrain:false,error:String(e)};setState(x);return x;}finally{advancing=false;}}
 async function load(){try{var r=await fetch('/api/system/r221/status',{cache:'no-store'});var d=await r.json();setState(d);if(d.pipelineNeedsAdvance===true)await advance(d);}catch(e){setState({state:'STATUS_UNAVAILABLE',eligibleToTrain:false,error:String(e)});}}
-button.addEventListener('click',async function(){button.disabled=true;var retry=lastState&&lastState.rcwaRetryEligible===true;button.textContent=retry?'Queueing fresh RCWA retry…':'Starting train → RCWA pipeline…';try{var url=retry?'/api/system/r221/advance':'/api/system/r221/train-local';var payload=retry?{confirmed:true,pipeline_id:lastState.pipelineId,retry_rcwa:true}:{confirmed:true};var r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),cache:'no-store'});var d=await r.json();setState(d);}catch(e){setState({state:'STATUS_UNAVAILABLE',eligibleToTrain:false,error:String(e)});}setTimeout(load,1800);});
+button.addEventListener('click',async function(){button.disabled=true;var retry=lastState&&lastState.rcwaRetryEligible===true;button.textContent=retry?'Queueing fresh RCWA retry…':'Starting train → RCWA pipeline…';try{var url=retry?'/api/system/r221/advance':'/api/system/r221/train-local';var payload=retry?{confirmed:true,pipeline_id:lastState.pipelineId,retry_rcwa:true}:{confirmed:true};var r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),cache:'no-store'});var d=await r.json();setState(d);}catch(e){setState({state:'STATUS_UNAVAILABLE',eligibleToTrain:false,error:String(e)});}setTimeout(load,1200);});
 load();setInterval(function(){if(document.body.contains(panel))load();},3000);
 })();</script>`;
 
