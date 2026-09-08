@@ -31,17 +31,19 @@ A candidate must not be relabeled `ADMITTED/LIVE` merely because source tests pa
 
 **Date:** 2026-09-07 (America/Phoenix)
 
-**Status:** `CANDIDATE` — PR open; dedicated R215 gate is being repaired and must pass before merge/admission.
+**Status:** `CANDIDATE` — source/package/navigation/ledger proof is green; inherited Windows sovereign loopback must complete before governed merge, then exact-head live proof is required for admission.
 
 **Canonical base:** `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` (R214 governed merge)
 
 **Candidate branch:** `r215-navigation-integrity`
 
-**Candidate SHA before ledger repair:** `51663072152b456b82ac1856b5ab5db8b09281a7`
+**Green candidate-proof head:** `02e282d81b59fc109ebf2493fc45a4376d7547ca`
 
 **PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/239
 
-**Current proof run under repair:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34174452261
+**Green R215 candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34178250422
+
+**Earlier failed wiring proof retained for traceability:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34174452261
 
 ### What changed
 
@@ -52,10 +54,23 @@ A candidate must not be relabeled `ADMITTED/LIVE` merely because source tests pa
 - Proves exact canonical SHA on the live runtime before route acceptance.
 - Proves navigation headers/DOM markers on HTML while proving JSON APIs remain untouched by navigation enhancement.
 - Keeps navigation code non-mutating: no Canon promotion, production deployment, or execution-authority escalation is introduced.
+- Establishes this durable advancement ledger and a test-enforced completion contract.
 
-### Current qualification
+### Candidate proof recorded
 
-The latest dedicated R215 workflow did **not** reach the R215 assertions. It stopped during pytest collection because the workflow referenced the nonexistent predecessor file `tests/test_r195_one_system.py`. The correct retained predecessor proof is `tests/test_r195_drive_corpus_one_system.py`. This workflow wiring defect is being corrected in this candidate; the gate is not being weakened or bypassed.
+- The stale workflow reference `tests/test_r195_one_system.py` was corrected to the retained predecessor proof `tests/test_r195_drive_corpus_one_system.py`; the original failure is retained above rather than erased.
+- 51 R215/ledger/predecessor Python assertions passed on the PR merge candidate.
+- Complete Worker TypeScript checking passed.
+- Wrangler dry-run/package proof passed with the complete canonical Worker binding set.
+- R195 preflight, R195 One-System, R190 whole-system truth, R192/R214 navigation, R180 swarm convergence, general non-mutating verify, and release-forward candidate proof are green on the same candidate lineage.
+- The release-forward deploy job correctly remains skipped on the PR; candidate proof is not being misreported as production deployment.
+
+### Remaining before admission
+
+- Complete the inherited Windows sovereign loopback gate on the current candidate lineage.
+- Govern-merge only after the required PR gates are green.
+- Require exact-head production deployment and R215 live route/workspace/API proof before relabeling this entry `ADMITTED/LIVE`.
+- Reconcile the R214 controller-transaction qualification only from an actual post-merge production controller result.
 
 ---
 
