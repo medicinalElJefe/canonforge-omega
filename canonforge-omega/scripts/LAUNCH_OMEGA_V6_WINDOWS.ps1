@@ -13,7 +13,10 @@ if (-not (Test-Path $Gateway)) {
   throw "Canonical OMEGA sovereign gateway missing: $Gateway"
 }
 
-$args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$Gateway`"")
+# Array splatting already preserves each argument boundary. Do not embed quote
+# characters in the -File value: Windows PowerShell then treats those quotes as literal
+# path characters and rejects an otherwise valid gateway path.
+$args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Gateway)
 if ($NoBrowser) { $args += '-NoBrowser' }
 if ($SkipAcceptanceProof) { $args += '-SkipAcceptanceProof' }
 
