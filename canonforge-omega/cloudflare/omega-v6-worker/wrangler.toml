@@ -1,11 +1,7 @@
 name = "omegav6"
 main = "src/runtimeEntryR169.ts"
-# Historical semantic authority marker only; this comment is NOT parsed as Wrangler config:
-# main = "src/heartbeatTruth.ts"
-# R169 remains the actual Worker entrypoint and imports/delegates the protected heartbeatTruth runtime.
-# R216 is installed inside the established R169 public response boundary so the protected
-# Worker entrypoint, execution authority, Durable Object identities, and historical lineage remain unchanged.
-# R204 preserves the canonical R169 execution composition. Wrangler substitutes only
+# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
+# R204 preserves the canonical R169 deployment entrypoint. Wrangler substitutes only
 # heartbeatTruth's ./convergence module with an additive alias that delegates original
 # convergence behavior and exports the stronger OmegaRuntime return-admission class.
 # R202 adds no Durable Object; R205 also adds no Durable Object and only correlates preserved authorities/presentation.
