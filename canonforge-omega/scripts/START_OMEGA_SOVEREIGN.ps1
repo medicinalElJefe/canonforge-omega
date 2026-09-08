@@ -1,5 +1,5 @@
 param(
-  [string]$ProductionBase = 'https://omegav6.jeffdeweyeljefe.workers.dev',
+  [string]$ProductionBase = '',
   [switch]$Headless,
   [switch]$NoBrowser,
   [switch]$SkipDevelopment,
@@ -8,6 +8,20 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Resolve one endpoint identity for the full launcher -> implementation -> proof chain.
+# Normal operator launches default to canonical production. Local/CI repair proofs may
+# explicitly override that identity without accidentally crossing back into production.
+if ([string]::IsNullOrWhiteSpace($ProductionBase)) {
+  if ($env:OMEGA_SERVER_OVERRIDE) {
+    $ProductionBase = [string]$env:OMEGA_SERVER_OVERRIDE
+  } elseif ($env:OMEGA_PUBLIC_URL) {
+    $ProductionBase = [string]$env:OMEGA_PUBLIC_URL
+  } else {
+    $ProductionBase = 'https://omegav6.jeffdeweyeljefe.workers.dev'
+  }
+}
+$ProductionBase = $ProductionBase.TrimEnd('/')
 
 # Stable system entrypoint. Release-specific launchers are implementations behind this
 # gateway; users, installers, shortcuts, proof tools and public bootstrap artifacts must
@@ -41,7 +55,7 @@ if ($Headless) { $invoke += '-Headless' }
 if ($NoBrowser) { $invoke += '-NoBrowser' }
 if ($SkipDevelopment) { $invoke += '-SkipDevelopment' }
 
-Write-GatewayLog "stable sovereign launch begin implementation=$Implementation headless=$Headless skipDevelopment=$SkipDevelopment skipAcceptance=$SkipAcceptanceProof"
+Write-GatewayLog "stable sovereign launch begin implementation=$Implementation endpoint=$ProductionBase headless=$Headless skipDevelopment=$SkipDevelopment skipAcceptance=$SkipAcceptanceProof"
 & powershell.exe @invoke
 $launchExit = $LASTEXITCODE
 if ($launchExit -ne 0) {
