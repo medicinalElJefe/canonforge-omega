@@ -31,26 +31,30 @@ From this point forward, release completion is incomplete until this ledger and 
 
 | Track | Status | Current identity | Production truth |
 | --- | --- | --- | --- |
-| R222 single-owner Hybrid/bootstrap + full inheritance repair | `CANDIDATE` — fully green pre-ledger exact head | canonical base `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d`; fully green pre-ledger head `dc627da718fdc3e7b72a2482fc72ed3294e947b2`; PR #252 | All 17 observed PR workflows completed green on `dc627da7…`, including full non-regression, Worker typecheck/dry-run, R207 real Windows R222 localhost enrollment + authenticated heartbeat, native `grcwa`, R208/R209/R210, R204 source/live-return, R216/R217, R220 compatibility/continuity and R221 training→RCWA continuity. The ledger-bearing successor must be re-proven before merge. No production/live admission is claimed from PR CI. |
-| R221 governed local training → native RCWA continuity | `CANDIDATE` after canonical merge; carried by R222 | canonical merge `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d` / PR #251 | Canonical source preserves controller-owned local training, hash-bound native `grcwa` RCWA return, and next-stage development continuity. It is not independently relabeled live here; R222 preserves and re-proves the complete successor chain. |
-| R217 production provenance lease | `CANDIDATE` | implementation head `47c69a751b42df389077ede40b9478e4f2182185` / PR #243; inherited and green in R222 | R222 exact-head source proof confirms the R217 lease contract remains intact. Actual production admission still requires the post-merge release controller to retain exact Worker-version + per-run lease ownership throughout live acceptance. |
-| R216 surface binding integrity | `HELD` after canonical merge; inherited and green in R222 | canonical `9c134dff5729b236e1867fb778d9b8fef82559cf` / PR #242 | R222 preserves the fail-closed surface binding and exact-version controller semantics. Historical R216 production writer-race evidence remains retained; R222 is not live until a new controlled release transaction succeeds. |
-| R215 navigation integrity | `SUPERSEDED` into R216/R222 successor | proven head `80cef9f9bf8c1bb9cc25939b351fe6694642a160` / PR #239 | R215 command-palette/system-route work is preserved and its dedicated integrity proof is green on R222. |
+| R222 single-owner Hybrid/bootstrap + terminal-return + full inheritance repair | `CANDIDATE` — current combined lineage; final ledger-bearing head must re-prove | current canonical `7c2a1bfdfe441bee7f314104233438d9ab3622c6`; two-parent reconciliation `6d88b94fd24f7e9bf1ef4e5680071a1a34b536c4`; successor-safe resolution `f0ac9ab43f25b5caedcebcf25fb562d3d0c22c1f`; clean pre-ledger head `bb930938b3c48e05309a95e3feb8dca7aa6d2255`; PR #252 | Earlier `dc627da7…` completed all 17 observed PR workflows green. Current canonical terminal-return closure is reconciled into the single-owner line. On clean head `bb930938…`, focused R204 + Durable Object checks passed and R204 live-return was green, while R215 and R204 source workflows failed only because two historical advancement-ledger assertions had been dropped. This ledger commit repairs those assertions; no production/live admission is claimed until the new exact head is green, governed-merged and accepted live. |
+| R221 governed local training → native RCWA continuity | `CANDIDATE` after canonical merge; carried by R222 | canonical R221 merge `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d` / PR #251; inherited by canonical R222 `7c2a1bfd…` and candidate R222 | Canonical source preserves controller-owned local training, hash-bound native `grcwa` RCWA return, and next-stage development continuity. It is not independently relabeled live here; combined R222 preserves and re-proves the complete successor chain. |
+| R217 production provenance lease | `CANDIDATE` | implementation head `47c69a751b42df389077ede40b9478e4f2182185` / PR #243; inherited by canonical/candidate R222 | R222 source proof confirms the R217 lease contract remains intact. Actual production admission still requires the post-merge release controller to retain exact Worker-version + per-run lease ownership throughout live acceptance. |
+| R216 surface binding integrity | `HELD` after canonical merge; inherited by R222 | canonical `9c134dff5729b236e1867fb778d9b8fef82559cf` / PR #242 | R222 preserves the fail-closed surface binding and exact-version controller semantics. Historical R216 production writer-race evidence remains retained; R222 is not live until a new controlled release transaction succeeds. |
+| R215 navigation integrity | `SUPERSEDED` into R216/R222 successor | proven head `80cef9f9bf8c1bb9cc25939b351fe6694642a160` / PR #239 | R215 command-palette/system-route work is preserved. The clean combined R222 head exposed a ledger-regression assertion in the R215 workflow; runtime navigation behavior was not the failing assertion. |
 | R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge; preserved in successors | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Source-backed Earth work remains preserved. Historical writer-race/R201 qualification is not erased by later source success; live successor admission must re-establish cumulative production truth. |
-| R214 Earth + Hybrid local execution authority | `HELD` historical donor | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Its useful local-authority/outbound-polling concepts have been reconciled forward through later Hybrid releases instead of merging the stale Earth branch wholesale. |
+| R214 Earth + Hybrid local execution authority | `HELD` historical donor | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Its useful local-authority/outbound-polling concepts have been reconciled forward through later Hybrid releases instead of merging the stale Earth branch wholesale. No part of this held candidate is reported as live. |
 | R214 navigation polish | `ADMITTED/LIVE` with historical controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Navigation/evidence proof was admitted on that lineage; later successor release truth is tracked separately. |
 
 ---
 
-## R222 — Single-owner Hybrid/bootstrap, successor-proof, archive/plugin/mode inheritance closure
+## R222 — Combined terminal-return + single-owner Hybrid/bootstrap + successor-proof + inheritance closure
 
 **Date:** 2026-09-08 (America/Phoenix)
 
-**Status:** `CANDIDATE` — fully green on exact pre-ledger head `dc627da718fdc3e7b72a2482fc72ed3294e947b2`; this ledger update creates a successor head that must itself remain green before governed merge. No PR-only proof is reported as production admission.
+**Status:** `CANDIDATE` — current canonical R222 terminal-return closure has been explicitly reconciled into the single-owner candidate. The clean pre-ledger head `bb930938b3c48e05309a95e3feb8dca7aa6d2255` exposed two ledger-only regression assertions; this ledger update repairs them and creates a new exact head that must itself pass the complete matrix before governed merge. No PR-only proof is reported as production admission.
 
-**Canonical base:** R221 `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d`
+**Current canonical base:** R222 terminal-return closure `7c2a1bfdfe441bee7f314104233438d9ab3622c6`
 
-**R221 → R222 reconciliation commit:** `a43ea0f610d8912131ed3a8e9bd24d50a03641b3`
+**Canonical terminal-return source parent:** `dede3308e2513ad06d739b247d96d9ba67b9b652`
+
+**R221 canonical parent:** `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d`
+
+**Earlier R221 → R222 reconciliation:** `a43ea0f610d8912131ed3a8e9bd24d50a03641b3`
 
 **Historical pre-route-order head:** `bd944bf13ac42fb517db74bc4fd7a822baa240f8`
 
@@ -62,15 +66,23 @@ From this point forward, release completion is incomplete until this ledger and 
 
 **App-ownership invariant / fully green pre-ledger head:** `dc627da718fdc3e7b72a2482fc72ed3294e947b2`
 
+**Current two-parent terminal-return/single-owner reconciliation:** `6d88b94fd24f7e9bf1ef4e5680071a1a34b536c4`
+
+**Successor-safe R173 reconciliation:** `f0ac9ab43f25b5caedcebcf25fb562d3d0c22c1f`
+
+**Clean pre-ledger combined head:** `bb930938b3c48e05309a95e3feb8dca7aa6d2255`
+
 **Candidate branch:** `r222-hybrid-bootstrap-single-instance-repair`
 
 **Main PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/252
 
-**R221 reconciliation PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/255
+**Historical R221 reconciliation PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/255
+
+**Closed conflict-reconciliation PR retained as evidence:** https://github.com/medicinalElJefe/canonforge-omega/pull/259
 
 **Public runtime:** https://omegav6.jeffdeweyeljefe.workers.dev/
 
-### What R222 wires into one system
+### What combined R222 wires into one system
 
 - One stable Windows entrypoint: `scripts/START_OMEGA_SOVEREIGN.ps1` / `.cmd`.
 - One release implementation behind that gateway: `START_OMEGA_R222_FULL_HYBRID.ps1`.
@@ -80,11 +92,13 @@ From this point forward, release completion is incomplete until this ledger and 
 - Explicit separation of authenticated link, current heartbeat, local execution authority, native execution, verified returned evidence and release authority.
 - Explicit local console approval for time/device/root-bounded native execution authority; the browser cannot grant it by itself.
 - R221 controller-owned training → native `grcwa` RCWA → returned receipt → next governed development stage preserved in the same session.
-- R208/R209 acceptance diagnostics preserved behind the stable gateway after single-owner deduplication.
-- Historical launchers/installers converted to compatibility delegates instead of parallel runtime/agent owners.
-- Windows argument transport fixed so PowerShell splatting preserves path boundaries without embedding literal quote characters.
-- Successor-safe R173/R206/R207/R208/R209 proof contracts so historical tests validate preserved semantics rather than forcing obsolete duplicated implementations back into existence.
-- `OMEGA_SYSTEM_INHERITANCE_CONTRACT_V1` classifying canonical source, proof evidence, archive donors, repair/package artifacts, external data and plugin providers.
+- Canonical R222 terminal-return closure is preserved with exact job-bound return identity, newer-terminal-over-stale-inflight truth, R204 verified-return authority and explicit separation between polling and heartbeat authority.
+- R208/R209 acceptance diagnostics are preserved behind the stable gateway after single-owner deduplication.
+- Historical launchers/installers are compatibility delegates instead of parallel runtime/agent owners.
+- Windows argument transport preserves path boundaries without embedding literal quote characters.
+- Successor-safe R173/R206/R207/R208/R209 proof contracts validate preserved semantics rather than forcing obsolete duplicated implementations or release-name pins back into existence.
+- R173 still requires the stronger R221/R222 RCWA dependency-repair, post-repair probe, keepalive and no-fallback semantics while treating the runtime-version label as observable identity rather than proof authority.
+- `OMEGA_SYSTEM_INHERITANCE_CONTRACT_V1` classifies canonical source, proof evidence, archive donors, repair/package artifacts, external data and plugin providers.
 - Archive donors require expansion/identity/diff/conflict routing/reconciliation before admission; filename, size or recency cannot become authority.
 - Plugin/provider state is explicitly `DISCOVERED → AUTHORIZED → AVAILABLE → INVOKED → RETURNED → VERIFIED`; availability is not execution.
 - Modes require operational purpose, inputs, operator/transform, outputs, evidence class, authority boundary and failure behavior; cosmetic color change alone is not mode implementation.
@@ -96,11 +110,11 @@ The pre-repair R207 run at https://github.com/medicinalElJefe/canonforge-omega/a
 
 Root cause: `api.app` mounted the preserved static UI at `/` after its own routes; `api.runtime_r222` then imported that existing app and appended successor Hybrid routes. The inherited catch-all `ui` Mount therefore appeared before those newly appended routes and could return static 404 before the R222 endpoints were reached.
 
-Repair: R222 moves only the inherited named `ui` Mount to the tail after successor routes are registered. It creates no second FastAPI app. The regression now asserts ownership structurally (`FastAPI(` / `app = FastAPI` are absent from `runtime_r222.py`) and verifies the route-reorder operations without making generic historical tests depend on importing FastAPI. Executable reachability is proven separately by the Windows integration job.
+Repair: R222 moves only the inherited named `ui` Mount to the tail after successor routes are registered. It creates no second FastAPI app. The regression asserts ownership structurally (`FastAPI(` / `app = FastAPI` are absent from `runtime_r222.py`) and verifies route-reorder operations without making generic historical tests depend on importing FastAPI. Executable reachability is proven separately by the Windows integration job.
 
-The R207 workflow now starts the actual R222 localhost runtime, uses a CI-local signing key that never goes to production, calls the real `/api/hybrid/r222/local-contract` and `/api/hybrid/enrollment` routes, verifies enrollment does **not** grant execution authority, starts the real sovereign agent against localhost, and requires a current authenticated heartbeat bound to the exact test agent. It separately proves native `grcwa`. It explicitly claims neither production cloud enrollment nor physical-PC proof.
+The R207 workflow starts the actual R222 localhost runtime, uses a CI-local signing key that never goes to production, calls the real `/api/hybrid/r222/local-contract` and `/api/hybrid/enrollment` routes, verifies enrollment does **not** grant execution authority, starts the real sovereign agent against localhost, and requires a current authenticated heartbeat bound to the exact test agent. It separately proves native `grcwa`. It explicitly claims neither production cloud enrollment nor physical-PC proof.
 
-### Fully green exact-head candidate matrix
+### Fully green earlier exact-head candidate matrix
 
 All observed PR workflows for `dc627da718fdc3e7b72a2482fc72ed3294e947b2` completed successfully:
 
@@ -122,21 +136,33 @@ All observed PR workflows for `dc627da718fdc3e7b72a2482fc72ed3294e947b2` complet
 - R221 governed training → native-RCWA → next-stage continuity: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34260608061
 - R220 downloadable/compatibility path through the stable single owner: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34260607941
 
-No failed, queued, pending or in-progress workflow remained in the observed PR matrix for that exact head when this ledger entry was prepared.
+No failed, queued, pending or in-progress workflow remained in the observed PR matrix for that exact earlier head when that proof state was recorded.
+
+### Current combined-head proof evidence retained
+
+The clean combined pre-ledger head `bb930938b3c48e05309a95e3feb8dca7aa6d2255` is intentionally **not** labeled fully green. Its current proof cycle established useful evidence before this ledger correction:
+
+- R204 live verified-return observation **green**: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34273399926
+- R215 navigation workflow **red only on two advancement-ledger contract assertions**: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34273400003
+- R204 verified-return source workflow focused R204 tests **passed 9/9**, strict Cloudflare Durable Object contract **passed**, then its inherited full suite became red on the same two advancement-ledger assertions: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34273399822
+
+Those assertions required the R216 ledger section to retain `test_r216_surface_binding_integrity.py` as explicit regression evidence and required the held R214 Hybrid donor boundary to state `No part of this held candidate is reported as live`. Both statements are restored below. These failures remain visible and are not reclassified as success.
 
 ### Historical failures remain visible
 
-The green matrix does not erase the prior failures. In particular:
+The earlier green matrix does not erase prior failures. In particular:
 
 - the pre-route-order R207 404 remains recorded at run `34238857216`;
-- the initial dependency-coupled regression caused R180/full-suite failures when a historical generic job installed only pytest; that regression was converted to dependency-neutral source assertions while executable route proof moved to the Windows integration environment;
-- a later brittle prose-string assertion (`"does not replace the app"`) failed despite the actual structural ownership behavior; it was replaced by executable/source ownership invariants asserting no second FastAPI construction.
+- the initial dependency-coupled regression caused R180/full-suite failures when a historical generic job installed only pytest; that regression was converted to dependency-correct full-system CI while executable route proof remained in the Windows integration environment;
+- a brittle prose-string assertion (`"does not replace the app"`) failed despite the actual structural ownership behavior; it was replaced by executable/source ownership invariants asserting no second FastAPI construction;
+- automatic PR #259 reconciliation was rejected because the two R222 tracks overlapped. The content was instead reconciled with explicit two-parent ancestry and a targeted successor-safe R173 resolution; #259 was closed unmerged and remains historical evidence.
 
 Those failures were used to strengthen the permanent repair contract rather than hidden or reclassified.
 
 ### Preserved authority and truth boundaries
 
 - R169 remains the actual Worker entrypoint.
+- Canonical R222 terminal-return closure remains in the combined lineage.
 - R217 release provenance remains ahead of later response composition and is not bypassed.
 - R216 fail-closed surface binding remains preserved.
 - R205/R211/R204/R181/R201/R185 truth semantics are not weakened.
@@ -148,7 +174,7 @@ Those failures were used to strengthen the permanent repair contract rather than
 
 ### Admission boundary
 
-R222 remains `CANDIDATE` until the ledger-bearing exact head also passes the required matrix, current canonical still equals the proven R221 base or any drift is explicitly reconciled, PR #252 is governed-merged, and the resulting exact canonical SHA is deployed by the release-forward controller with uninterrupted R217 Worker-version + run-lease ownership through cumulative live R211/R205/R204/R181/R201/R185 acceptance. Physical-PC acceptance remains a separate final same-session proof: one runtime, one agent, current authenticated heartbeat, local execution authority, native RCWA returned evidence, continued development, and no second runtime/console ownership.
+R222 remains `CANDIDATE` until this ledger-bearing exact head passes the required cumulative matrix, current canonical still equals `7c2a1bfdfe441bee7f314104233438d9ab3622c6` or any later drift is explicitly reconciled, PR #252 is governed-merged from the exact proven head, and the resulting exact canonical SHA is deployed by the release-forward controller with uninterrupted R217 Worker-version + run-lease ownership through cumulative live R222/R211/R205/R204/R181/R201/R185 acceptance. Physical-PC acceptance remains a separate final same-session proof: one runtime, one agent, current authenticated heartbeat, local execution authority, native RCWA returned evidence, continued development, preserved R208/R209 diagnostics, and no second runtime/console ownership.
 
 ---
 
@@ -176,7 +202,7 @@ R221 repaired the execution chain that could previously stop after Hybrid connec
 
 Training success does not imply RCWA execution. Heartbeat capability does not imply a solve. Native RCWA is accepted only from the existing R175 hash-bound `OMEGA_SOVEREIGN_RCWA_RECEIPT_R175` with `MAXWELL_RCWA`, a `grcwa:` solver version, convergence and native-execution evidence. If RCWA fails, the verified training receipt is retained so RCWA can be retried without unnecessary retraining.
 
-R222 carries this pipeline forward while repairing the bootstrap/single-owner and proof-composition layers around it.
+R222 carries this pipeline forward while repairing the bootstrap/single-owner, terminal-return and proof-composition layers around it.
 
 ---
 
@@ -267,6 +293,8 @@ R217 remains `CANDIDATE` until a canonical successor carries it through governed
 
 **Authoritative R216 production transaction:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34181278293
 
+**Regression proof:** `tests/test_r216_surface_binding_integrity.py`
+
 **Public runtime under repair:** https://omegav6.jeffdeweyeljefe.workers.dev
 
 ### Trigger
@@ -291,7 +319,7 @@ A public runtime screenshot showed a polished OMEGA surface with controls/badges
 
 ### Production transaction result
 
-The R216 release-forward transaction deployed canonical SHA `9c134dff5729b236e1867fb778d9b8fef82559cf` as Worker version `b0e12a10-6669-40e6-8544-b3f05260eca2` and verified it at 100% traffic. Before the complete live acceptance proof finished, production changed to Worker version `59ad2df6-1636-47da-abc9-4d8655874235`. Because the release-forward run no longer owned production, the strengthened controller correctly withheld its exact pre-deploy restore rather than overwriting an unknown newer deployment. The source remains `EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION` until independently proven.
+The R216 release-forward transaction deployed canonical SHA `9c134dff5729b236e1867fb778d9b8fef82559cf` as Worker version `b0e12a10-6669-40e6-8544-b3f05260eca2` and verified it at 100% traffic. Before the complete live acceptance proof finished, production changed to Worker version `59ad2df6-1636-47da-abc9-4d8655874235`. Because the release-forward run no longer owned production, the strengthened controller correctly withheld its exact pre-deploy restore rather than overwriting an unknown newer deployment. This is not evidence that overlapping release-forward runs caused the replacement. The source remains `EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION` until independent evidence identifies it; until then, the source remains `EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION` until independently proven.
 
 ---
 
@@ -385,7 +413,7 @@ The R216 release-forward transaction deployed canonical SHA `9c134dff5729b236e18
 
 ### Why held
 
-Its lineage is behind newer canonical work. Useful authority concepts are reconciled forward rather than blindly merging stale Earth/source material.
+Its lineage is behind newer canonical work. Useful authority concepts are reconciled forward rather than blindly merging stale Earth/source material. No part of this held candidate is reported as live.
 
 ---
 
