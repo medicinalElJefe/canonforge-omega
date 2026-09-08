@@ -61,8 +61,9 @@ jobs:
           grep -F 'handleReleaseProvenanceR217(request, env)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
           grep -F 'handleGovernedLocalTrainingR221(request, env, ctx, runtimeFetch)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
           grep -F 'const TRAINING_KIND = "sai_repository_index"' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'const TRAINING_RECEIPT_SCHEMA = "OMEGA_SAI_TRAINING_RECEIPT_R179"' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
           grep -F 'connectedDoesNotMeanRunning: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
-          grep -F 'verifiedRequiresReturnedEvidence: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'verifiedRequiresR179TrainingReceipt: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
           grep -F 'canonicalMutation: false' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
           grep -F 'runtimeInflation: "SINGLE_FLIGHT_PER_WORKER_ISOLATE"' canonforge-omega/cloudflare/omega-v6-worker/src/system/driveCorpusSnapshotR195.ts
           ! grep -q 'wrangler deploy --config' .github/workflows/omega-v6-r221-governed-local-training-proof.yml
@@ -94,7 +95,7 @@ jobs:
           & $py -m pip install -e '.[dev,rcwa]'
           if ($LASTEXITCODE -ne 0) { throw 'R221 Windows dependency installation failed' }
 
-      - name: Prove real sai_repository_index lease, execution, and returned evidence
+      - name: Prove real sai_repository_index lease, execution, and returned R179 receipt
         run: |
           $ErrorActionPreference = 'Stop'
           $root = (Resolve-Path '.').Path
@@ -153,8 +154,18 @@ jobs:
               Start-Sleep -Seconds 2
             }
             if (-not $verified) { throw 'R221 sai_repository_index did not return VERIFIED evidence in the bounded window' }
-            if ($verified.evidence.job_kind -ne 'sai_repository_index') { throw 'R221 returned evidence is not bound to sai_repository_index' }
-            if (-not $verified.evidence.training_output_path) { throw 'R221 returned training evidence lacks training_output_path' }
+
+            $receipt = $verified.evidence.repository_index
+            if ($verified.evidence.kind -ne 'sai_repository_index') { throw 'R221 returned evidence kind is not sai_repository_index' }
+            if ($verified.evidence.native_execution -ne $true) { throw 'R221 local training receipt is not bound to native execution' }
+            if ($verified.evidence.canonical_mutation -ne $false) { throw 'R221 local training receipt attempted Canon mutation' }
+            if (-not $receipt) { throw 'R221 returned evidence lacks repository_index receipt' }
+            if ($receipt.schema -ne 'OMEGA_SAI_TRAINING_RECEIPT_R179') { throw 'R221 returned receipt schema is not OMEGA_SAI_TRAINING_RECEIPT_R179' }
+            if ($receipt.evaluation.passed -ne $true) { throw 'R221 R179 training evaluation did not pass' }
+            if ($receipt.neuralWeightsTrained -ne $false) { throw 'R221 local training receipt incorrectly claims neural weight training' }
+            if ($receipt.fullyTrainedClaim -ne $false) { throw 'R221 local training receipt incorrectly claims fully trained authority' }
+            if (-not $receipt.receiptSha256 -or $receipt.receiptSha256.Length -ne 64) { throw 'R221 R179 training receipt hash is incomplete' }
+            if (-not $receipt.artifacts.retrievalModel) { throw 'R221 R179 training receipt lacks retrieval model artifact' }
 
             [pscustomobject]@{
               schema = 'OMEGA_R221_WINDOWS_GOVERNED_LOCAL_TRAINING_PROOF'
@@ -165,6 +176,13 @@ jobs:
               jobId = $queued.id
               jobKind = $queued.kind
               verifiedState = $verified.state
+              receiptSchema = $receipt.schema
+              receiptSha256 = $receipt.receiptSha256
+              repositoryIndexState = $receipt.state
+              evaluationPassed = [bool]$receipt.evaluation.passed
+              retrievalModel = $receipt.artifacts.retrievalModel
+              neuralWeightsTrained = [bool]$receipt.neuralWeightsTrained
+              fullyTrainedClaim = [bool]$receipt.fullyTrainedClaim
               evidence = $verified.evidence
               connectedIsNotExecution = $true
               canonicalMutation = $false
@@ -173,7 +191,7 @@ jobs:
               promotionAuthorized = $false
             } | ConvertTo-Json -Depth 40 | Set-Content -Encoding utf8 'r221-local-training-proof.json'
 
-            Write-Host 'R221_WINDOWS_SAI_REPOSITORY_INDEX_LEASE_EXECUTION_RETURN_PROVEN_NOT_USER_PC'
+            Write-Host 'R221_WINDOWS_SAI_REPOSITORY_INDEX_LEASE_EXECUTION_R179_RETURN_PROVEN_NOT_USER_PC'
           }
           finally {
             Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
@@ -213,6 +231,7 @@ jobs:
           boundary=status.get('truthBoundary') or {}
           assert boundary.get('connectedDoesNotMeanRunning') is True, status
           assert boundary.get('verifiedRequiresReturnedEvidence') is True, status
+          assert boundary.get('verifiedRequiresR179TrainingReceipt') is True, status
           r195=json.loads(Path('r195-manifest.json').read_text())
           assert r195, r195
           html=Path('hybrid.html').read_text(errors='replace')
@@ -227,4 +246,4 @@ jobs:
             sleep 10
           done
           test "$matched" = true
-          echo "R221_LIVE_EXACT_SHA_STATUS_UI_AND_R195_PROVEN"
+          echo "R221_LIVE_EXACT_SHA_STATUS_UI_R179_BOUNDARY_AND_R195_PROVEN"
