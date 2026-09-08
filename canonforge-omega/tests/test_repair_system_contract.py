@@ -15,6 +15,16 @@ def _text(path: str) -> str:
     return _resolve(path).read_text(encoding="utf-8")
 
 
+def _ledger_status(text: str, repair_id: str) -> str:
+    marker = f"## {repair_id}"
+    assert marker in text, f"missing repair ledger section {repair_id}"
+    section = text.split(marker, 1)[1]
+    for line in section.splitlines():
+        if line.startswith("**Status:**"):
+            return line.strip()
+    raise AssertionError(f"missing Status field in repair ledger section {repair_id}")
+
+
 def test_repair_contract_is_governed_and_complete():
     data = json.loads(CONTRACT.read_text(encoding="utf-8"))
     assert data["schema"] == "OMEGA_REPAIR_SYSTEM_CONTRACT_V1"
@@ -194,7 +204,7 @@ def test_repair_is_durably_ledgered_without_false_live_admission():
     assert "R222-SINGLE-OWNER-HYBRID-REPAIR" in repair_ledger
     assert "R222-CI-DEPENDENCY-AND-SEMANTIC-REGRESSION-REPAIR" in repair_ledger
     assert "Permanent system invariant" in repair_ledger
-    assert "CANDIDATE" in repair_ledger
     assert process_repair["status"] == "CANDIDATE"
-    assert "ADMITTED/LIVE" not in repair_ledger.split("## R222-SINGLE-OWNER-HYBRID-REPAIR", 1)[1]
+    assert _ledger_status(repair_ledger, repair["id"]) == "**Status:** `CANDIDATE`"
+    assert _ledger_status(repair_ledger, process_repair["id"]) == "**Status:** `CANDIDATE`"
     assert "release completion is incomplete until this ledger and the user-facing completion report" in advancement_ledger
