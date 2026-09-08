@@ -33,7 +33,10 @@ if (-not $SkipAcceptanceProof -and -not (Test-Path $AcceptanceProver)) {
   throw "R209 sovereign convergence prover missing: $AcceptanceProver"
 }
 
-$invoke = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$Implementation`"",'-ProductionBase',"`"$ProductionBase`"")
+# Call-operator array splatting preserves spaces without embedding quote characters.
+# Literal quotes inside -File/-ProductionBase become part of the value under Windows
+# PowerShell and can turn a valid path into an illegal path.
+$invoke = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Implementation,'-ProductionBase',$ProductionBase)
 if ($Headless) { $invoke += '-Headless' }
 if ($NoBrowser) { $invoke += '-NoBrowser' }
 if ($SkipDevelopment) { $invoke += '-SkipDevelopment' }
