@@ -50,10 +50,11 @@ def test_r216_ledger_records_no_disconnected_active_surface_invariant_and_race_e
         "Wrangler's actual Worker entrypoint exactly at `src/runtimeEntryR169.ts`",
         "no R216 Worker entrypoint or second runtime exists",
         "test_r216_surface_binding_integrity.py",
-        "5e698131-ed44-44b2-ba2f-479c0f2dd308",
-        "15e9d321-924d-45a5-b2bb-bd5ea68c4f30",
-        "specific writer is not assigned without evidence",
-        "172-node federation proof",
+        "b0e12a10-6669-40e6-8544-b3f05260eca2",
+        "59ad2df6-1636-47da-abc9-4d8655874235",
+        "EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION",
+        "not evidence that overlapping release-forward runs caused",
+        "source remains `EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION` until independent evidence identifies it",
     ):
         assert required in r216
     assert "**Status:** `ADMITTED/LIVE`" not in r216
