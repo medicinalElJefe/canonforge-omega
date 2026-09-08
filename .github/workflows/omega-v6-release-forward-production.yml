@@ -39,6 +39,7 @@ jobs:
           grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
           grep -F '"./convergence" = "./src/convergenceRuntimeAliasR204.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
           test -f canonforge-omega/cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts
+          test -f canonforge-omega/cloudflare/omega-v6-worker/src/system/releaseProvenanceR217.ts
           test -f canonforge-omega/scripts/INDEX_OMEGA_SOVEREIGN_PROOF_R211.ps1
           test -f canonforge-omega/scripts/verify_r185_live_federation.py
 
@@ -148,25 +149,51 @@ jobs:
           curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/_omega/health" -o /tmp/release-forward-proof/pre-health.json || true
           curl --fail --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/release-forward-proof/pre-r205.json || true
 
-      - name: Bind exact canonical SHA to temporary deployment config
+      - name: Bind exact canonical SHA and R217 run provenance to temporary deployment config
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import os, re
+          import hashlib, os, re
           from pathlib import Path
+
           source=Path('wrangler.toml').read_text(encoding='utf-8')
           sha=os.environ['GITHUB_SHA']
-          if re.search(r'(?m)^CANONICAL_GIT_SHA\s*=.*$', source):
-              rendered=re.sub(r'(?m)^CANONICAL_GIT_SHA\s*=.*$', f'CANONICAL_GIT_SHA = "{sha}"', source, count=1)
-          else:
-              marker='[vars]\n'
-              assert marker in source
-              rendered=source.replace(marker, marker+f'CANONICAL_GIT_SHA = "{sha}"\n', 1)
+          run_id=os.environ['GITHUB_RUN_ID']
+          run_attempt=os.environ['GITHUB_RUN_ATTEMPT']
+          lease=hashlib.sha256(f'{run_id}:{run_attempt}:{sha}'.encode('utf-8')).hexdigest()
+
+          values={
+              'CANONICAL_GIT_SHA': sha,
+              'OMEGA_RELEASE_LEASE': lease,
+              'OMEGA_RELEASE_RUN_ID': run_id,
+              'OMEGA_RELEASE_RUN_ATTEMPT': run_attempt,
+          }
+          rendered=source
+          marker='[vars]\n'
+          assert marker in rendered
+          additions=[]
+          for key, value in values.items():
+              pattern=rf'(?m)^{re.escape(key)}\s*=.*$'
+              if re.search(pattern, rendered):
+                  rendered=re.sub(pattern, f'{key} = "{value}"', rendered, count=1)
+              else:
+                  additions.append(f'{key} = "{value}"')
+          if additions:
+              rendered=rendered.replace(marker, marker+'\n'.join(additions)+'\n', 1)
           Path('wrangler.release-forward.toml').write_text(rendered, encoding='utf-8')
+          proof=Path('/tmp/release-forward-proof')
+          proof.mkdir(parents=True, exist_ok=True)
+          (proof/'expected-release-lease.txt').write_text(lease)
+          (proof/'expected-release-run-id.txt').write_text(run_id)
+          (proof/'expected-release-run-attempt.txt').write_text(run_attempt)
           PY
           grep -F "CANONICAL_GIT_SHA = \"$GITHUB_SHA\"" wrangler.release-forward.toml
+          grep -F 'OMEGA_RELEASE_LEASE = ' wrangler.release-forward.toml
+          grep -F "OMEGA_RELEASE_RUN_ID = \"$GITHUB_RUN_ID\"" wrangler.release-forward.toml
+          grep -F "OMEGA_RELEASE_RUN_ATTEMPT = \"$GITHUB_RUN_ATTEMPT\"" wrangler.release-forward.toml
+          test -s /tmp/release-forward-proof/expected-release-lease.txt
           git diff --exit-code -- wrangler.toml
 
       - name: Dry-run exact deployment config
@@ -235,7 +262,7 @@ jobs:
           Path('/tmp/release-forward-proof/expected-deployment-id.txt').write_text(str(current.get('id') or ''))
           PY
 
-      - name: Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes
+      - name: Prove live exact identity, R217 lease, cumulative truth, version lock, and all 172 R185 nodes
         id: liveproof
         if: steps.deploy.outcome == 'success' && steps.versionlock.outcome == 'success'
         continue-on-error: true
@@ -270,7 +297,8 @@ jobs:
           matched=false
           for attempt in $(seq 1 70); do
             assert_deployment_lock
-            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r211/manifest" -o /tmp/release-forward-proof/r211-manifest.json \
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r217/release-lease" -o /tmp/release-forward-proof/r217-release.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r211/manifest" -o /tmp/release-forward-proof/r211-manifest.json \
               && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r211/status" -o /tmp/release-forward-proof/r211-status.json \
               && curl --fail --silent --show-error --max-time 45 "$V6_URL/api/system/r211/query?domain=earth" -o /tmp/release-forward-proof/r211-earth.json \
               && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r205/manifest" -o /tmp/release-forward-proof/r205.json \
@@ -283,8 +311,30 @@ jobs:
           from pathlib import Path
           def load(name): return json.loads(Path('/tmp/release-forward-proof/'+name).read_text())
           sha=os.environ['EXPECTED_SHA']
+          expected_lease=Path('/tmp/release-forward-proof/expected-release-lease.txt').read_text().strip()
+          expected_run_id=Path('/tmp/release-forward-proof/expected-release-run-id.txt').read_text().strip()
+          expected_run_attempt=Path('/tmp/release-forward-proof/expected-release-run-attempt.txt').read_text().strip()
+          r217=load('r217-release.json')
           m=load('r211-manifest.json'); s=load('r211-status.json'); e=load('r211-earth.json')
           r205=load('r205.json'); r204=load('r204.json'); r181=load('r181.json'); r201=load('r201.json'); h=load('health.json')
+          if not (
+              r217.get('ok') is True
+              and r217.get('schema') == 'OMEGA_RELEASE_PROVENANCE_R217'
+              and r217.get('state') == 'DEPLOYMENT_PROVENANCE_BOUND'
+              and r217.get('canonicalGitSha') == sha
+              and r217.get('releaseLease') == expected_lease
+              and str(r217.get('releaseRunId')) == expected_run_id
+              and str(r217.get('releaseRunAttempt')) == expected_run_attempt
+          ):
+              Path('/tmp/release-forward-proof/RELEASE_LEASE_MISMATCH.txt').write_text(
+                  'expected_sha='+sha+'\nexpected_lease='+expected_lease+'\nexpected_run_id='+expected_run_id+'\nexpected_run_attempt='+expected_run_attempt+'\nactual='+json.dumps(r217, sort_keys=True)+'\n'
+              )
+              raise AssertionError(('RELEASE_LEASE_MISMATCH', r217))
+          assert r217.get('authority') == 'DEPLOYMENT_PROVENANCE_ONLY_NOT_AUTHORIZATION', r217
+          rb=r217.get('truthBoundaries') or {}
+          for key in ('releaseLeaseIsNotCanonAuthority','releaseLeaseIsNotPromotionAuthority','releaseLeaseIsNotExecutionAuthority','releaseLeaseIsNotPhysicalPcProof','workerVersionPlusLeaseIsDeploymentIdentityOnly','unexpectedLeaseOrVersionBlocksAdmission'):
+              assert rb.get(key) is True, (key, rb)
+          assert r217.get('canonicalMutation') is False and r217.get('promotionAuthorized') is False, r217
           assert m.get('ok') is True and m.get('schema')=='OMEGA_OPERATIONAL_PROVENANCE_FABRIC_R211', m
           assert m.get('release')=='r211-operational-provenance-fabric' and m.get('canonicalGitSha')==sha, m
           assert re.fullmatch(r'[0-9a-f]{64}', str(m.get('receiptSha256',''))), m
@@ -319,10 +369,20 @@ jobs:
             --workers 12
 
           assert_deployment_lock
+          curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r217/release-lease" -o /tmp/release-forward-proof/r217-release-final.json
+          EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          packet=json.loads(Path('/tmp/release-forward-proof/r217-release-final.json').read_text())
+          expected_lease=Path('/tmp/release-forward-proof/expected-release-lease.txt').read_text().strip()
+          assert packet.get('schema') == 'OMEGA_RELEASE_PROVENANCE_R217', packet
+          assert packet.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], packet
+          assert packet.get('releaseLease') == expected_lease, ('RELEASE_LEASE_MISMATCH', packet)
+          PY
           git fetch --no-tags origin "$CANONICAL_BRANCH"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"
-          echo "RELEASE_FORWARD_LIVE_EXACT_HEAD_VERSION_LOCK_AND_R185_FEDERATION_VERIFIED $GITHUB_SHA"
+          echo "RELEASE_FORWARD_LIVE_EXACT_HEAD_VERSION_LEASE_LOCK_AND_R185_FEDERATION_VERIFIED $GITHUB_SHA"
 
       - name: Restore exact pre-deploy Cloudflare deployment if mutation or admission failed
         if: steps.deploy.outcome != 'success' || steps.versionlock.outcome != 'success' || steps.liveproof.outcome != 'success'
@@ -356,11 +416,13 @@ jobs:
           Path('/tmp/release-forward-proof/restore-owned.txt').write_text('true' if owned else 'false')
           if not owned:
               Path('/tmp/release-forward-proof/RESTORE_WITHHELD_PRODUCTION_WRITER_RACE.txt').write_text(
-                  'expected_owned_version='+expected+'\ncurrent_active_versions='+json.dumps(active)+'\ncurrent_deployment='+str(current.get('id'))+'\n'
+                  'classification=EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION\nexpected_owned_version='+expected+'\ncurrent_active_versions='+json.dumps(active)+'\ncurrent_deployment='+str(current.get('id'))+'\n'
               )
           PY
           if [ "$(cat /tmp/release-forward-proof/restore-owned.txt)" != "true" ]; then
-            echo 'PRODUCTION_WRITER_RACE: another deployment owns production; exact restore withheld.'
+            curl --silent --show-error --max-time 30 "$V6_URL/api/system/r217/release-lease" -o /tmp/release-forward-proof/unexpected-release-provenance.json || true
+            echo 'UNEXPECTED_RELEASE_PROVENANCE captured when available.'
+            echo 'EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION: another deployment owns production; exact restore withheld.'
             exit 1
           fi
 
@@ -402,6 +464,7 @@ jobs:
             echo '- Wrangler dry-run: PASS'
             echo '- Production deploy: PASS'
             echo '- Cloudflare deployment version lock: PASS'
+            echo '- Exact release provenance lease: LIVE VERIFIED'
             echo '- R211 aggregate status.ok: TRUE'
             echo '- R211 provenance manifest/status/Earth query: LIVE VERIFIED'
             echo '- R205/R204/R181 exact identity: LIVE VERIFIED'

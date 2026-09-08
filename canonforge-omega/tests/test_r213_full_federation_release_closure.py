@@ -53,12 +53,15 @@ def workflow_mutation_lines():
 def test_r213_release_forward_owns_exhaustive_r185_gate_and_exact_restore():
     text = read(RELEASE)
     assert "MIN_CANONICAL_SHA: 878f331a38ac01ace480858f9f135e441ad3a1f6" in text
-    assert "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes" in text
+    assert "Prove live exact identity, R217 lease, cumulative truth, version lock, and all 172 R185 nodes" in text
     assert "python canonforge-omega/scripts/verify_r185_live_federation.py" in text
     assert '--expected-sha "$GITHUB_SHA"' in text
     assert '--workers 12' in text
     assert "assert s.get('ok') is True, s" in text
     assert "R211 aggregate status.ok: TRUE" in text
+    assert "OMEGA_RELEASE_PROVENANCE_R217" in text
+    assert "expected-release-lease.txt" in text
+    assert "Exact release provenance lease: LIVE VERIFIED" in text
     assert "steps.deploy.outcome != 'success'" in text
     assert "steps.versionlock.outcome != 'success'" in text
     assert "steps.liveproof.outcome != 'success'" in text
@@ -74,7 +77,7 @@ def test_r213_release_forward_owns_exhaustive_r185_gate_and_exact_restore():
 def test_r213_release_forward_is_the_only_v6_production_mutation_and_restore_authority_repository_wide():
     publishers, restores = workflow_mutation_lines()
     assert publishers, "R213 must retain one exact-head production publisher"
-    assert restores, "R216 must retain one exact pre-deploy production restore authority"
+    assert restores, "R216+ must retain one exact pre-deploy production restore authority"
     assert {item[0] for item in publishers} == {RELEASE.name}, publishers
     assert {item[0] for item in restores} == {RELEASE.name}, restores
     release_text = read(RELEASE)
@@ -83,6 +86,7 @@ def test_r213_release_forward_is_the_only_v6_production_mutation_and_restore_aut
     assert "V6_SCRIPT_NAME: omegav6" in release_text
     assert "expected-version-id.txt" in release_text
     assert "PRODUCTION_WRITER_RACE" in release_text
+    assert "EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION" in release_text
     verify_text = read(VERIFY)
     assert "CLOUDFLARE_API_TOKEN" not in verify_text
     assert "CLOUDFLARE_ACCOUNT_ID" not in verify_text

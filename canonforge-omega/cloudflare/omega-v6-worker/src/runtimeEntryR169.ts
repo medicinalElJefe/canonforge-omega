@@ -28,6 +28,7 @@ import { handleContinuityPotentialR202 } from "./system/continuityPotentialR202"
 import { handleHybridMissionR203 } from "./system/hybridMissionRouteR203";
 import { handleWholeSystemControlR205 } from "./system/wholeSystemControlR205";
 import { handleOperationalProvenanceR210 } from "./system/operationalProvenanceFabricR210";
+import { handleReleaseProvenanceR217 } from "./system/releaseProvenanceR217";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -92,6 +93,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const releaseProvenanceR217 = handleReleaseProvenanceR217(request, env);
+  if (releaseProvenanceR217) return releaseProvenanceR217;
 
   const menuTruthR214 = await handleMenuTruthR214(request, env, ctx, runtimeFetch);
   if (menuTruthR214) return menuTruthR214;
