@@ -26,7 +26,7 @@ Archive, plugin, mode, evidence and package inheritance is additionally governed
 
 **Candidate branch:** `r222-hybrid-bootstrap-single-instance-repair`
 
-**Candidate head before this ledger update:** `ca9f35e2946dcfd87a459f8659f71f7837d92e8f`
+**Candidate head before this ledger update:** `7d7fbdfee67fe0f21051662291548fa3a07cef0a`
 
 **Main PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/252
 
@@ -134,3 +134,61 @@ This repair does not grant Canon mutation, GitHub mutation, deployment or promot
 ### Admission boundary
 
 R222 remains `CANDIDATE` until the final repair/inheritance-system head is source/TypeScript/Windows/RCWA/Hybrid/verified-return verified, reconciled against the then-current canonical head, governed-merged, deployed by release-forward as the exact canonical SHA, and accepted live without a production-writer replacement or rollback. The physical PC must then demonstrate one launch, one runtime, one agent, current authenticated heartbeat, local execution authority, same-session RCWA return, continued development, preserved R208/R209 proof surfaces, and no second console/runtime ownership.
+
+---
+
+## R222-CI-DEPENDENCY-AND-SEMANTIC-REGRESSION-REPAIR
+
+**Date:** 2026-09-08 (America/Phoenix)
+
+**Status:** `CANDIDATE`
+
+**Candidate head before durable registration:** `7d7fbdfee67fe0f21051662291548fa3a07cef0a`
+
+**Semantic ownership-test repair commit:** `dc627da718fdc3e7b72a2482fc72ed3294e947b2`
+
+**Repair-contract registration commit:** `7b478ce4c8ba063bad12846abe1c3a774073266a`
+
+**Process-enforcement test commit:** `7d7fbdfee67fe0f21051662291548fa3a07cef0a`
+
+**Main PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/252
+
+### Incident
+
+Two repair-process defects were exposed by the cumulative R222 matrix. First, jobs described as full-system/full-runtime regression initially installed only a narrow test environment and then attempted to import the actual runtime; that made missing declared runtime dependencies look like product regressions. The workflows were corrected to install OMEGA's declared editable development/runtime dependency set before the full suite.
+
+Second, after the actual successor route behavior was correct, one R222 regression still asserted the literal prose fragment `does not replace the app`. The implementation docstring wrapped that sentence across a newline, so R180, general verify, R204 source proof, repair-system proof and release-forward candidate validation all became red even though `api/runtime_r222.py` imported the existing `api.app.app`, created no new FastAPI application, and moved only the named catch-all `ui` mount behind the newly added successor API routes.
+
+### Permanent system invariant
+
+A workflow may claim full-system or full-runtime regression only after installing OMEGA's declared runtime/development dependencies. Successor regressions must assert executable behavior, ownership, authority, schemas or other stable contracts. Comments, prose formatting, release labels, visual wording and obsolete implementation text cannot be the sole proof of a runtime invariant.
+
+For R222 specifically, local successor routing proof now requires that `runtime_r222.py` imports the existing `app` from `api.app`, does not instantiate `FastAPI`, defines the successor enrollment/contract routes, identifies only the named `ui` `Mount`, and reorders that mount using the existing router. R207 Windows integration remains the executable reachability proof.
+
+### Implementation and enforcement
+
+- `.github/workflows/omega-v6-r180-convergence-gate.yml` installs `.[dev]` before its focused and full regression suites.
+- `.github/workflows/omega-v6-repair-system-contract.yml` installs `.[dev]` before the repair/successor matrix.
+- `tests/test_r222_hybrid_bootstrap_single_instance.py` now proves app ownership and route-order semantics and explicitly rejects creation of a second `FastAPI` app.
+- `config/repair_system_contract.json` now requires `full_system_ci_must_install_declared_runtime_dependencies` and `successor_regressions_must_assert_behavioral_or_ownership_semantics_not_prose_or_formatting`.
+- `tests/test_repair_system_contract.py` mechanically enforces both policies, the two workflow dependency contracts and the semantic R222 regression form.
+
+### Failure evidence retained
+
+The exact head `c67dd970ce0944aac09c31b6144ce190faa7882d` demonstrated the shared brittle-regression failure after the actual runtime/dependency work had otherwise progressed:
+
+- repair-system contract red: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34260223350
+- R180 full non-regression red: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34260223334
+- general verify red: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34260223384
+- R204 verified-return source proof red: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34260223501
+- release-forward candidate validation red: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34260223406
+
+The inspected R180, general verify and R204 source logs all converged on the same failed assertion: the source behavior/ownership checks passed, but the test additionally required the literal documentation substring `does not replace the app`. These runs remain failure evidence and are not rewritten as successful proof.
+
+### Authority boundary
+
+This repair changes CI correctness and regression-proof quality only. It grants no Canon mutation, GitHub mutation, physical-PC identity, local execution lease, solver execution proof, deployment authority, production ownership or live admission. A green source matrix remains a candidate proof until governed merge and exact-head live acceptance complete.
+
+### Admission boundary
+
+This repair remains `CANDIDATE` until the final ledger-bearing R222 head passes the repair-system gate, full inherited suite, R180, R204 source proof, Windows/RCWA/Hybrid gates and the complete candidate matrix. Even then it is not `ADMITTED/LIVE` until R222 is reconciled with the current canonical head, governed-merged, deployed by the exact-head release-forward controller and accepted by the applicable live truth/provenance gates.
