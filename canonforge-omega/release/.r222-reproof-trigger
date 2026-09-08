@@ -1,2 +1,0 @@
-R222 final ledger-bearing candidate re-proof trigger.
-This file carries no runtime authority and exists only to force the PR exact-head CI matrix after ledger/test bookkeeping changes.
