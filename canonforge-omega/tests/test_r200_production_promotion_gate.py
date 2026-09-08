@@ -5,6 +5,10 @@ ROOT = Path(__file__).resolve().parents[2]
 LEGACY = ROOT / ".github" / "workflows" / "omega-v6-r198-production-deploy.yml"
 RELEASE = ROOT / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 
+DEPLOY_STEP = "Deploy exact canonical Worker to Cloudflare and bind version ID"
+LIVE_PROOF_STEP = "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes"
+RESTORE_STEP = "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed"
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
@@ -29,6 +33,8 @@ def test_r200_exact_deployment_identity_binding_survives_without_source_mutation
     assert "git diff --exit-code -- wrangler.toml" in text
     assert "/api/acceptance/r181/manifest" in text
     assert "canonicalGitSha" in text
+    assert "Current Version ID" in text
+    assert "expected-version-id.txt" in text
 
 
 def test_r200_proof_before_mutation_and_live_acceptance_after_mutation_survive():
@@ -38,9 +44,19 @@ def test_r200_proof_before_mutation_and_live_acceptance_after_mutation_survive()
     dry_run_pos = text.index("npx wrangler deploy --dry-run")
     head_gate_pos = text.index("Final exact-head lock before production mutation")
     deploy_pos = text.index("npx wrangler deploy --config wrangler.release-forward.toml")
-    live_pos = text.index("Prove live exact identity, cumulative truth, and all 172 R185 nodes")
-    rollback_pos = text.index("Roll back immediately if any live exact-head proof failed")
-    assert pytest_pos < typecheck_pos < dry_run_pos < head_gate_pos < deploy_pos < live_pos < rollback_pos
+    live_pos = text.index(LIVE_PROOF_STEP)
+    restore_pos = text.index(RESTORE_STEP)
+    assert DEPLOY_STEP in text
+    assert pytest_pos < typecheck_pos < dry_run_pos < head_gate_pos < deploy_pos < live_pos < restore_pos
+
+
+def test_r200_failed_admission_restores_predeploy_identity_instead_of_guessing_previous_version():
+    text = read(RELEASE)
+    assert "pre-deployments.json" in text
+    assert "pre-version-ids.json" in text
+    assert "pre-restore-payload.json" in text
+    assert '"$DEPLOYMENTS_URL?force=true"' in text
+    assert "RESTORE_TARGET_MISMATCH" in text
 
 
 def test_r200_cumulative_truth_boundaries_remain_in_current_live_gate():
