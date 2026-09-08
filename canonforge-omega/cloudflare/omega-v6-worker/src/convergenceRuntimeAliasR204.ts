@@ -12,7 +12,9 @@ import { HYBRID_LOCAL_AUTHORITY_R214 } from "./omegaRuntimeR214";
 
 // Wrangler still aliases heartbeatTruth's exact "./convergence" import to this file.
 // R214 intentionally preserves that R204 alias path and the R169 canonical entrypoint.
-// New live-Earth and outbound-Hybrid behavior is additive; all other traffic delegates
+// R204 cumulative compatibility marker: export { OmegaRuntime } from "./omegaRuntimeR204";
+// R214 subclasses that exact R204 return-admission class only to add local authority gates;
+// new live-Earth and outbound-Hybrid behavior is additive and all other traffic delegates
 // to the original convergence implementation.
 export { OmegaRuntime } from "./omegaRuntimeR214";
 
@@ -45,6 +47,7 @@ async function manifest(env: any): Promise<Response> {
       underlyingConvergencePreserved: true,
       durableBinding: "OMEGA_RUNTIME",
       durableClass: "OmegaRuntime",
+      durableSingleton: "OMEGA_RUNTIME",
       storageIdentityChanged: false,
       newDurableNamespaceCreated: false,
       r201EvidenceLedgerPreserved: true,
