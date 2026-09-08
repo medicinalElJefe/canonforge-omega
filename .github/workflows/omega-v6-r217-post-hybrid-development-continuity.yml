@@ -1,0 +1,159 @@
+name: OMEGA V6 R217 post-Hybrid development continuity
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r217-post-hybrid-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-and-package-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove post-Hybrid continuity contract and controller advancement
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python -m pytest -q tests/test_r217_post_hybrid_development_continuity.py tests/test_r216_surface_binding_integrity.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck complete preserved R169 Worker with R217
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Package complete Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r217-dry-run
+
+      - name: Reassert R217 authority boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'CURRENT_AUTHENTICATED_HYBRID_LINK_REQUIRED' canonforge-omega/cloudflare/omega-v6-worker/src/system/postHybridDevelopmentContinuityR217.ts
+          grep -F 'typedAllowListedJobsOnly: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/postHybridDevelopmentContinuityR217.ts
+          grep -F 'automaticProductionMutation: false' canonforge-omega/cloudflare/omega-v6-worker/src/system/postHybridDevelopmentContinuityR217.ts
+          grep -F 'enhanceSurfaceBindingIntegrityR216(r217' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+
+  windows-real-post-link-loop:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Set up supported Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Build verified Windows environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev,rcwa]'
+          if ($LASTEXITCODE -ne 0) { throw 'R217 Windows dependency installation failed' }
+
+      - name: Prove real localhost link continues into verified development and another stage
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path '.').Path
+          $env:OMEGA_PUBLIC_URL = 'http://127.0.0.1:8127'
+          $env:OMEGA_APPROVED_ROOT = $root
+          $passed = $false
+          try {
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser
+            if ($LASTEXITCODE -ne 0) { throw "R217 canonical launcher exited $LASTEXITCODE" }
+
+            $hybrid = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/hybrid/status' -TimeoutSec 5
+            if (-not $hybrid.heartbeatCurrent) { throw 'R217 loopback heartbeat is not current' }
+            if (-not $hybrid.authenticated) { throw 'R217 loopback heartbeat is not authenticated' }
+            if (-not $hybrid.pcOnline) { throw 'R217 loopback PC state did not reach online proof' }
+
+            $verified = $null
+            $development = $null
+            for ($attempt = 0; $attempt -lt 40; $attempt++) {
+              $development = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/development/status' -TimeoutSec 8
+              $verified = @($development.recent_jobs | Where-Object { $_.state -eq 'VERIFIED' -and $_.evidence }) | Select-Object -Last 1
+              $active = $development.active_job
+              if ($verified -and $active -and $active.id -ne $verified.id) {
+                $passed = $true
+                break
+              }
+              Start-Sleep -Seconds 3
+            }
+
+            [pscustomobject]@{
+              schema = 'OMEGA_R217_WINDOWS_POST_HYBRID_CONTINUITY_PROOF'
+              transport = 'WINDOWS_CI_LOOPBACK_NOT_OPERATOR_PC'
+              heartbeatCurrent = [bool]$hybrid.heartbeatCurrent
+              authenticated = [bool]$hybrid.authenticated
+              pcOnline = [bool]$hybrid.pcOnline
+              verifiedHostJob = $verified
+              nextActiveJob = $development.active_job
+              continuityProven = $passed
+              canonicalMutation = $false
+              deploymentAuthorized = $false
+              promotionAuthorized = $false
+            } | ConvertTo-Json -Depth 30 | Set-Content -Encoding utf8 'r217-post-hybrid-proof.json'
+
+            if (-not $passed) { throw 'R217 heartbeat succeeded but verified host return -> next active development stage was not proven' }
+            Write-Host 'R217_WINDOWS_LINK_TO_VERIFIED_RETURN_TO_NEXT_STAGE_PROVEN_NOT_USER_PC'
+          }
+          finally {
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.Name -match '^python' -and $_.CommandLine -and
+                ($_.CommandLine -match 'omega_sovereign_agent\.py' -or $_.CommandLine -match 'omega_runtime\.cli') -and
+                $_.CommandLine -like "*$root*"
+              } |
+              ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+          }
+
+      - name: Record physical-proof boundary
+        if: always()
+        run: |
+          @'
+          ## OMEGA R217 post-Hybrid continuity proof
+
+          This Windows runner requires a real authenticated localhost heartbeat, at least one allow-listed development job returned VERIFIED with evidence, and a different next development job active afterward.
+
+          **Authority boundary:** this proves the Windows transport/agent/development chain on CI. It is not the operator's physical PC. Operator-PC admission still requires a current authenticated heartbeat and returned evidence from that device. No source mutation, deployment, or promotion is authorized by this proof.
+          '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload R217 Windows proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r217-post-hybrid-continuity-${{ github.run_id }}
+          if-no-files-found: warn
+          path: canonforge-omega/r217-post-hybrid-proof.json
