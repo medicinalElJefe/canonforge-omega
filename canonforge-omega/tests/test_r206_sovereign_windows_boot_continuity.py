@@ -26,6 +26,16 @@ def test_r206_launcher_keeps_one_canonical_localhost_identity_through_successor_
     assert "R222 will not kill it or start a duplicate runtime" in current
 
 
+def test_r206_windows_delegation_uses_argument_boundaries_not_literal_quote_characters():
+    legacy = read(LEGACY_LAUNCHER)
+    gateway = read(GATEWAY)
+    assert "$args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Gateway)" in legacy
+    assert "$invoke = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Implementation,'-ProductionBase',$ProductionBase)" in gateway
+    assert '"`"$Gateway`""' not in legacy
+    assert '"`"$Implementation`""' not in gateway
+    assert '"`"$ProductionBase`""' not in gateway
+
+
 def test_r206_approved_repository_root_binding_survives_r207_and_r222_successors():
     legacy = read(LEGACY_LAUNCHER)
     current = read(CURRENT)
