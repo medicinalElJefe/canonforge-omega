@@ -42,7 +42,8 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
 
   if (html.includes('id="omegaR193Rail"') && !html.includes('id="omegaR214ControlMenu"')) {
     const marker = '<section class="r193Section"><div class="r193SectionTitle"><span>GOVERNED MODES</span></div>';
-    html = html.replace(marker, `${controlSubmenuMarkup(pathname)}</section>${marker}`);
+    const advanced = `<section class="r193Section" data-r214-section="advanced"><div class="r193SectionTitle"><span>ADVANCED CONTROL</span></div>${controlSubmenuMarkup(pathname)}</section>`;
+    html = html.replace(marker, `${advanced}${marker}`);
     html = html.includes("</head>") ? html.replace("</head>", navigationPolishStyle + "</head>") : navigationPolishStyle + html;
     html = html.includes("</body>") ? html.replace("</body>", navigationPolishScript + "</body>") : html + navigationPolishScript;
   }
