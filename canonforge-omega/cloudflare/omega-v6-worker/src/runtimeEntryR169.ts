@@ -252,7 +252,9 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
     finalResponse = await enhanceOneSystemNavigationR195Preserved(dewey, calibrated, request);
   }
   finalResponse = await enhanceMenuTruthR214(finalResponse);
-  const r205 = await enhanceWholeSystemSurfaceR205(finalResponse);
+  const r205 = await (async () => {
+    return enhanceWholeSystemSurfaceR205(finalResponse);
+  })();
   return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null);
 }
 
