@@ -116,3 +116,35 @@ def test_r220_surface_exposes_recovery_without_fake_success_state():
     ):
         assert required in source, required
     assert "button.disabled=!(d&&d.eligibleToResume===true)" in source
+
+
+def test_r220_downloadable_setup_uses_verified_root_venv_rcwa_and_auto_resume():
+    source = R220.read_text(encoding="utf-8")
+    for required in (
+        "/api/system/r220/setup",
+        "START_OMEGA_R220_FULL_HYBRID.cmd",
+        "Download full Hybrid setup",
+        "LOCALAPPDATA",
+        "canonical-root.txt",
+        "/api/development/status",
+        "pyproject.toml",
+        ".venv",
+        "Scripts",
+        'pip install -e "%OMEGA_ROOT%[dev,rcwa]"',
+        "import omega_runtime, grcwa",
+        "omega_runtime.rcwa_solver --probe",
+        "/api/hybrid/launcher",
+        "/api/hybrid/agent",
+        "bounded recursive development agent",
+        "/api/system/r220/status",
+        "/api/system/r220/resume",
+        "@{confirmed=$true}",
+        "OMEGA R220 FULL HYBRID SETUP IS ACTIVE",
+    ):
+        assert required in source, required
+    assert "where git" in source
+    assert "where npm" in source
+    assert "where npx" in source
+    assert "linkProven -eq $true" in source
+    assert "hostExecutionProven" in source
+    assert "continuityProven" in source
