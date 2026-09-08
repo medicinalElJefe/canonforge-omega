@@ -68,9 +68,11 @@ def test_r222_development_loop_is_durable_allow_listed_and_evidence_separated():
     assert "promotionAuthorized: false" in runtime
 
 
-def test_r222_windows_setup_is_single_instance_and_does_not_spawn_duplicate_console_agents():
+def test_r222_windows_setup_is_single_instance_and_every_wrapper_uses_stable_gateway():
     ps1 = read(ROOT / "scripts" / "START_OMEGA_R222_FULL_HYBRID.ps1")
     cmd = read(ROOT / "scripts" / "START_OMEGA_R222_FULL_HYBRID.cmd")
+    stable_ps1 = read(ROOT / "scripts" / "START_OMEGA_SOVEREIGN.ps1")
+    stable_cmd = read(ROOT / "scripts" / "START_OMEGA_SOVEREIGN.cmd")
     assert "OMEGA_R222_FULL_HYBRID_SINGLE_INSTANCE" in ps1
     assert "WaitOne(0" in ps1
     assert "No duplicate launcher was started" in ps1
@@ -84,16 +86,22 @@ def test_r222_windows_setup_is_single_instance_and_does_not_spawn_duplicate_cons
     assert "/api/development/mode" in ps1
     assert "duplicateLauncherStarted = $false" in ps1
     assert "Start-Process -FilePath $Vpy" in ps1
-    assert 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File' in cmd
+    assert "START_OMEGA_R222_FULL_HYBRID.ps1" in stable_ps1
+    assert "START_OMEGA_SOVEREIGN.ps1" in stable_cmd
+    assert "START_OMEGA_SOVEREIGN.cmd" in cmd
     assert 'start "OMEGA Sovereign Agent"' not in cmd
+    assert "omega_sovereign_agent.py" not in cmd
+    assert "omega_runtime.cli" not in cmd
 
 
 def test_public_hybrid_launcher_bootstraps_exact_canonical_source_without_embedding_pair_secret():
     control = read(WORKER / "hybridControlPlaneR222.ts")
+    r222_cmd = read(ROOT / "scripts" / "START_OMEGA_R222_FULL_HYBRID.cmd")
     assert 'path === "/api/hybrid/launcher"' in control
     assert "CANONICAL_GIT_SHA" in control
     assert "git checkout --detach %OMEGA_CANONICAL_SHA%" in control
     assert "START_OMEGA_R222_FULL_HYBRID.cmd" in control
+    assert "START_OMEGA_SOVEREIGN.cmd" in r222_cmd
     launcher_section = control.split("function bootstrapCmd", 1)[1].split("export async function handleHybridControlPlaneR222", 1)[0]
     assert "OMEGA_TOKEN=" not in launcher_section
     assert "bridgeSecretHash" not in launcher_section
