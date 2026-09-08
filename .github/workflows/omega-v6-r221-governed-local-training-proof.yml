@@ -1,0 +1,108 @@
+name: OMEGA V6 R221 governed training RCWA continuity proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r221-training-rcwa-continuity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-and-package-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove controller-owned continuity and inherited authority contracts
+        working-directory: canonforge-omega
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python -m py_compile omega_runtime/self_build.py scripts/omega_sovereign_agent.py
+          python -m pytest -q \
+            tests/test_r221_governed_local_training_and_r195_closure.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r220_post_hybrid_development_continuity.py \
+            tests/test_r216_surface_binding_integrity.py \
+            tests/test_r217_production_provenance_lease.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck preserved R169 Worker with R221 pipeline
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Package complete Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r221-dry-run
+
+      - name: Reassert layer ordering and host continuity markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'handleReleaseProvenanceR217(request, env)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'handleGovernedLocalTrainingR221(request, env, ctx, runtimeFetch)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'enhanceGovernedLocalTrainingR221(r220)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'enhanceSurfaceBindingIntegrityR216(r221' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'controllerOwnsTrainingToRcwaTransition: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'browserTabIsNotRequiredForPipelineProgress: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'liveActiveJobOverridesStaleRecentJobSnapshot: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'def _enqueue_r221_rcwa' canonforge-omega/omega_runtime/self_build.py
+          grep -F 'def repair_rcwa_dependencies(root: Path) -> dict:' canonforge-omega/scripts/omega_sovereign_agent.py
+          grep -F 'threading.Thread(target=keepalive' canonforge-omega/scripts/omega_sovereign_agent.py
+          test -s canonforge-omega/scripts/prove_r221_windows_continuity.ps1
+
+  windows-real-training-rcwa-continuity:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Build baseline Windows environment with RCWA intentionally absent
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev]'
+          if ($LASTEXITCODE -ne 0) { throw 'R221 Windows baseline dependency installation failed' }
+          $initialProbe = & $py -m omega_runtime.rcwa_solver --probe | ConvertFrom-Json
+          if ($initialProbe.available -eq $true) { throw 'R221 proof requires native RCWA to begin absent' }
+
+      - name: Prove agent self-repair and controller-owned train to native RCWA to next stage
+        run: .\scripts\prove_r221_windows_continuity.ps1
+
+      - name: Upload Windows continuity proof packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r221-training-rcwa-continuity-${{ github.run_id }}
+          path: canonforge-omega/r221-training-rcwa-continuity-proof.json
+          if-no-files-found: error
