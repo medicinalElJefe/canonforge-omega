@@ -31,7 +31,7 @@ From this point forward, release completion is incomplete until this ledger and 
 
 | Track | Status | Current identity | Production truth |
 | --- | --- | --- | --- |
-| R216 surface binding integrity | `CANDIDATE` | branch `r216-surface-binding-integrity`, base `e15d61d7...` | New fail-closed public-surface interlock is implemented in source; not merged or live-admitted yet. |
+| R216 surface binding integrity | `CANDIDATE` | branch `r216-surface-binding-integrity`, base `e15d61d7...` | New fail-closed public-surface interlock is implemented inside the preserved R169 entrypoint; not merged or live-admitted yet. |
 | R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Canonical source exists, but the exact-head production transaction was interrupted by a second Worker deployment during live proof; do not call the transaction admitted. |
 | R215 navigation integrity | `CANDIDATE` | PR #239 | Valuable navigation proof exists but must be reconciled with R216/current canonical lineage before admission. |
 | R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be extracted/reconciled onto newer canonical state. |
@@ -49,6 +49,10 @@ From this point forward, release completion is incomplete until this ledger and 
 
 **Candidate branch:** `r216-surface-binding-integrity`
 
+**Pull request:** https://github.com/medicinalElJefe/canonforge-omega/pull/241
+
+**R216 candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34179803344
+
 **Public runtime under repair:** https://omegav6.jeffdeweyeljefe.workers.dev
 
 **Failed/invalidated production transaction that exposed the deployment race:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34178356206
@@ -63,9 +67,9 @@ A public runtime screenshot showed a polished OMEGA surface with controls/badges
 
 ### What changed in the candidate
 
-- Adds `surfaceBindingIntegrityR216.ts`, a fail-closed outer UI admission interlock.
-- Adds `runtimeEntryR216.ts` as a thin outer wrapper that delegates all execution to `runtimeEntryR169.ts` and re-exports the existing Durable Object classes; R169 remains execution authority.
-- Changes Wrangler's outer entrypoint to R216 while preserving the complete R169 request/runtime composition underneath.
+- Adds `surfaceBindingIntegrityR216.ts`, a fail-closed UI admission interlock.
+- Keeps Wrangler's actual Worker entrypoint exactly at `src/runtimeEntryR169.ts`; no R216 Worker entrypoint or second runtime exists.
+- Installs R216 inside the established R169 public response boundary after the real R205 final surface composition. R169 continues importing/delegating `heartbeatTruth`, exporting the existing Durable Object classes, and owning the established execution composition.
 - Before exposing the HTML runtime, R216 probes same-origin `/api/system/r211/status` and `/api/system/r205/health` with `no-store` and cache-busting proof requests.
 - Requires the current R211 status schema and `ok === true` plus current R205 health schema and `ok === true`.
 - Binds R211/R205 identity to the exact `CANONICAL_GIT_SHA` embedded in the deployed Worker. Identity disagreement keeps controls withheld.
@@ -73,6 +77,7 @@ A public runtime screenshot showed a polished OMEGA surface with controls/badges
 - Failure state explicitly reports `LIVE BINDING INCOMPLETE — CONTROLS WITHHELD`; Retry performs the real proof again rather than cosmetically dismissing the interlock.
 - The interlock does not claim PC online, authenticated heartbeat, solver execution, cloud execution, Canon admission, or promotion authority.
 - Adds `test_r216_surface_binding_integrity.py` and a dedicated R216 CI workflow with TypeScript and Wrangler dry-run proof.
+- The initial R216 proof exposed historical source-string assumptions; the implementation was corrected to preserve the true R169 entrypoint and the established R205 final-render semantics instead of weakening the authority chain.
 
 ### Deployment-race evidence retained
 
