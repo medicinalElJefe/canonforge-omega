@@ -1,0 +1,59 @@
+name: OMEGA V6 R214 spatial Earth restoration
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/surfaceCompatibilityR214.ts'
+      - 'canonforge-omega/tests/test_r214_earth_spatial_evidence_restoration.py'
+      - '.github/workflows/omega-v6-r214-earth-spatial-restoration.yml'
+  push:
+    branches: [r214-earth-spatial-evidence-restoration, omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r214-spatial-earth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: R214 truth invariants
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r214_earth_spatial_evidence_restoration.py
+      - name: Full cumulative Python regression
+        working-directory: canonforge-omega
+        run: python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck complete canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Prove exact Worker package without deployment
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r214-dry-run
+      - name: Reassert release and truth boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'noSummaryToFakeGeometry: true' canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts
+          grep -F 'sovereignGatewayFallbackUsed: false' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceCompatibilityR214.ts
+          grep -F 'canonicalMutation: false' canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts
+          grep -F 'promotionAuthorized: false' canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts
