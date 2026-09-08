@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install proof dependency
+        run: python -m pip install -U pytest
+
       - name: Prove fail-closed surface contract
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r216_surface_binding_integrity.py
