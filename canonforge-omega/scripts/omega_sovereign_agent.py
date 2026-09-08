@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -16,6 +17,7 @@ from omega_runtime.agent_sai_r179 import SAI_JOB_KINDS, execute_sai_job, sai_cap
 
 CROSS_RUNTIME_CHALLENGE_SCHEMA = "OMEGA_CROSS_RUNTIME_CHALLENGE_R173"
 INDEPENDENT_SOLVER_CHALLENGE_SCHEMA = "OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175"
+RCWA_REQUIRED_PACKAGES = ("numpy>=1.24", "grcwa==0.1.2")
 
 SAFE_KINDS = {
     "convergence_scan",
@@ -31,6 +33,12 @@ SAFE_KINDS = {
     "verify_candidate",
     "cleanup_candidate",
 } | SAI_JOB_KINDS
+
+BASE_CAPABILITIES = [
+    "heartbeat", "convergence_scan", "inspect_workspace", "inspect_runtime", "compute_truth_suite",
+    "cross_runtime_validate", "lorentz_reference", "tmm_reference", "conservative_continuity", "scalar_wave_fdtd_1d",
+    "atlas_reference_diffusion_20736", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate",
+]
 
 
 def request_json(base: str, path: str, token: str, payload: dict | None = None) -> dict:
@@ -48,14 +56,38 @@ def request_json(base: str, path: str, token: str, payload: dict | None = None) 
 
 def run(cmd: list[str], cwd: Path, timeout: int = 300) -> dict:
     started = time.time()
-    proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=timeout)
-    return {
-        "command": cmd,
-        "exit_code": proc.returncode,
-        "stdout_tail": proc.stdout[-12000:],
-        "stderr_tail": proc.stderr[-12000:],
-        "elapsed_seconds": round(time.time() - started, 3),
-    }
+    try:
+        proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=timeout)
+        return {
+            "command": cmd,
+            "exit_code": proc.returncode,
+            "stdout_tail": proc.stdout[-12000:],
+            "stderr_tail": proc.stderr[-12000:],
+            "elapsed_seconds": round(time.time() - started, 3),
+            "timed_out": False,
+        }
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+        stderr = exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+        return {
+            "command": cmd,
+            "exit_code": 124,
+            "stdout_tail": stdout[-12000:],
+            "stderr_tail": stderr[-12000:],
+            "elapsed_seconds": round(time.time() - started, 3),
+            "timed_out": True,
+            "reason": f"command exceeded bounded timeout of {timeout}s",
+        }
+    except OSError as exc:
+        return {
+            "command": cmd,
+            "exit_code": 127,
+            "stdout_tail": "",
+            "stderr_tail": str(exc),
+            "elapsed_seconds": round(time.time() - started, 3),
+            "timed_out": False,
+            "reason": f"host executable unavailable: {exc}",
+        }
 
 
 def canonical_json(value) -> str:
@@ -139,7 +171,46 @@ def rcwa_dependency_status(root: Path) -> dict:
         "available": bool(execution["exit_code"] == 0 and parsed and parsed.get("available") is True),
         "probe": parsed,
         "exit_code": execution["exit_code"],
+        "executor": execution,
     }
+
+
+def repair_rcwa_dependencies(root: Path) -> dict:
+    """Bounded, exact self-repair for the only native RCWA packages OMEGA requires.
+
+    This is dependency preparation, not solver execution and never becomes a proof
+    receipt. A fresh --probe is mandatory after installation.
+    """
+    before = rcwa_dependency_status(root)
+    if before["available"]:
+        return {"attempted": False, "repaired": True, "before": before, "after": before, "install": None}
+    install = run(
+        [sys.executable, "-m", "pip", "install", "--disable-pip-version-check", *RCWA_REQUIRED_PACKAGES],
+        root,
+        timeout=300,
+    )
+    after = rcwa_dependency_status(root)
+    return {
+        "attempted": True,
+        "repaired": bool(install["exit_code"] == 0 and after["available"]),
+        "before": before,
+        "after": after,
+        "install": install,
+        "packages": list(RCWA_REQUIRED_PACKAGES),
+        "fallback": False,
+    }
+
+
+def runtime_capabilities(root: Path) -> tuple[list[str], dict, dict]:
+    rcwa_probe = rcwa_dependency_status(root)
+    capabilities = list(BASE_CAPABILITIES)
+    if rcwa_probe["available"]:
+        capabilities.extend(["independent_fullwave_rcwa", "maxwell_rcwa_grcwa"])
+    else:
+        capabilities.append("rcwa_dependency_probe")
+    sai_caps, sai_probe = sai_capabilities(root)
+    capabilities.extend(sai_caps)
+    return sorted(set(capabilities)), rcwa_probe, sai_probe
 
 
 def independent_fullwave_validate(job: dict, root: Path) -> dict:
@@ -164,16 +235,21 @@ def independent_fullwave_validate(job: dict, root: Path) -> dict:
         return {"kind": "cross_runtime_validate", "blocked": True, "reason": "R175 challenge is not an RCWA full-wave queue"}
 
     dependencies = rcwa_dependency_status(root)
+    dependency_repair = None
+    if not dependencies["available"]:
+        dependency_repair = repair_rcwa_dependencies(root)
+        dependencies = dependency_repair["after"]
     if not dependencies["available"]:
         return {
             "kind": "cross_runtime_validate",
             "schema": "OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175",
             "blocked": True,
-            "reason": "R175 RCWA dependencies are unavailable on the authenticated Sovereign host; no fallback is permitted",
+            "reason": "R175 RCWA dependencies remain unavailable after bounded exact repair on the authenticated Sovereign host; no fallback is permitted",
             "challenge_id": challenge_id,
             "challenge_sha256": challenge_sha,
             "queue_job_sha256": queue_sha,
             "dependency_status": dependencies,
+            "dependency_repair": dependency_repair,
             "independent_solver_family_claim": False,
             "native_execution": False,
             "canonical_mutation": False,
@@ -181,8 +257,7 @@ def independent_fullwave_validate(job: dict, root: Path) -> dict:
 
     execution = run([
         sys.executable,
-        "-m",
-        "omega_runtime.rcwa_solver",
+        "-m", "omega_runtime.rcwa_solver",
         "--input-json",
         canonical_queue,
     ], root, timeout=600)
@@ -195,6 +270,8 @@ def independent_fullwave_validate(job: dict, root: Path) -> dict:
             "blocked": True,
             "reason": "native R175 RCWA execution did not return a JSON result",
             "native_executor": execution,
+            "dependency_status": dependencies,
+            "dependency_repair": dependency_repair,
             "independent_solver_family_claim": False,
             "native_execution": False,
             "canonical_mutation": False,
@@ -209,8 +286,9 @@ def independent_fullwave_validate(job: dict, root: Path) -> dict:
             "challenge_sha256": challenge_sha,
             "queue_job_sha256": queue_sha,
             "native_result": result,
-            "native_executor": {"exit_code": execution["exit_code"], "elapsed_seconds": execution["elapsed_seconds"]},
+            "native_executor": {"exit_code": execution["exit_code"], "elapsed_seconds": execution["elapsed_seconds"], "timed_out": execution.get("timed_out", False)},
             "dependency_status": dependencies,
+            "dependency_repair": dependency_repair,
             "independent_solver_family_claim": False,
             "native_execution": False,
             "canonical_mutation": False,
@@ -223,6 +301,7 @@ def independent_fullwave_validate(job: dict, root: Path) -> dict:
             "blocked": True,
             "reason": "native R175 RCWA input hash does not match the persisted full-wave challenge",
             "native_result": result,
+            "dependency_repair": dependency_repair,
             "independent_solver_family_claim": False,
             "native_execution": False,
             "canonical_mutation": False,
@@ -233,6 +312,7 @@ def independent_fullwave_validate(job: dict, root: Path) -> dict:
             "blocked": True,
             "reason": "native R175 result is not a grcwa Maxwell-RCWA receipt",
             "native_result": result,
+            "dependency_repair": dependency_repair,
             "independent_solver_family_claim": False,
             "native_execution": False,
             "canonical_mutation": False,
@@ -245,8 +325,9 @@ def independent_fullwave_validate(job: dict, root: Path) -> dict:
         "queue_job_sha256": queue_sha,
         "native_result": result,
         "native_receipt": receipt,
-        "native_executor": {"exit_code": execution["exit_code"], "elapsed_seconds": execution["elapsed_seconds"]},
+        "native_executor": {"exit_code": execution["exit_code"], "elapsed_seconds": execution["elapsed_seconds"], "timed_out": execution.get("timed_out", False)},
         "dependency_status": dependencies,
+        "dependency_repair": dependency_repair,
         "native_execution": True,
         "blocked": False,
         "authority": "AUTHENTICATED_INDEPENDENT_SOLVER_RECEIPT_NOT_CANON",
@@ -396,45 +477,54 @@ def main() -> int:
         print(f"ROOT REJECTED: {root}", file=sys.stderr)
         return 2
 
-    capabilities = [
-        "heartbeat", "convergence_scan", "inspect_workspace", "inspect_runtime", "compute_truth_suite",
-        "cross_runtime_validate", "lorentz_reference", "tmm_reference", "conservative_continuity", "scalar_wave_fdtd_1d",
-        "atlas_reference_diffusion_20736", "run_tests", "build_vite", "wrangler_dry_run", "verify_candidate",
-    ]
-    rcwa_probe = rcwa_dependency_status(root)
-    if rcwa_probe["available"]:
-        capabilities.extend(["independent_fullwave_rcwa", "maxwell_rcwa_grcwa"])
-    else:
-        capabilities.append("rcwa_dependency_probe")
-    sai_caps, sai_probe = sai_capabilities(root)
-    capabilities.extend(sai_caps)
-
+    initial_rcwa_repair = repair_rcwa_dependencies(root)
+    capabilities, rcwa_probe, sai_probe = runtime_capabilities(root)
     last_job_id = None
     sequence_seen = 0
+    heartbeat_lock = threading.Lock()
+    heartbeat_interval = max(3.0, min(float(args.interval), 12.0))
+
     print(f"OMEGA sovereign agent starting: {args.agent_id}")
     print(f"Canonical server: {args.server}")
     print(f"Approved root: {root}")
     print("Recursive convergence is bounded: archive/branch discovery may propose candidates but cannot silently promote production.")
     print("R173 cross-runtime parity is receipt-bound: cloud challenges become L3 validation only after authenticated native execution is persisted and numerically compared.")
     print("R175 independent-solver validation is no-fallback: L4 requires current authenticated native grcwa RCWA execution, numerical convergence, persisted receipt identity, and proof admission.")
-    print("R175 RCWA capability: " + ("AVAILABLE" if rcwa_probe["available"] else "DEPENDENCY MISSING / NO FALLBACK"))
+    print("R175 RCWA bounded dependency repair: " + ("READY" if rcwa_probe["available"] else "FAILED / NO FALLBACK"))
+    if initial_rcwa_repair["attempted"]:
+        print("R175 RCWA startup repair attempted: " + ("PASS" if initial_rcwa_repair["repaired"] else "BLOCKED"))
     print("R179 SAI B059 state: " + str(sai_probe.get("state", "UNKNOWN")))
     print("R179 training law: B059 is fully trained only inside its declared deterministic source-grounded corpus scope after exact release hash + runtime selftest proof; external provider-model weights remain separately pretrained.")
-    print("PC ONLINE will only be claimed after the server accepts a current authenticated heartbeat.")
+    print("PC ONLINE remains heartbeat-backed during long training/RCWA execution; a running bounded job must not make the host look offline.")
 
-    while True:
-        try:
+    def heartbeat_once() -> dict:
+        nonlocal sequence_seen
+        with heartbeat_lock:
             hb = request_json(args.server, "/api/device/heartbeat", args.token, {
                 "agent_id": args.agent_id,
                 "approved_root": str(root),
                 "capabilities": capabilities,
-                "runtime_version": "r179-b059-ai-sai-convergence-agent",
+                "runtime_version": "r221-train-rcwa-continuity-agent",
                 "rcwa": rcwa_probe,
                 "sai_b059": sai_probe,
                 "last_job_id": last_job_id,
             })
-            proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
-            sequence_seen = int(proof.get("sequence") or sequence_seen)
+        proof = hb.get("proof") or hb.get("device", {}).get("proof") or {}
+        sequence_seen = int(proof.get("sequence") or sequence_seen)
+        return hb
+
+    def keepalive(stop: threading.Event) -> None:
+        while not stop.wait(heartbeat_interval):
+            try:
+                hb = heartbeat_once()
+                state = hb.get("state", hb.get("device", {}).get("state", "UNKNOWN"))
+                print(f"job heartbeat #{sequence_seen}: {state}")
+            except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
+                print(f"job heartbeat warning: {exc}", file=sys.stderr)
+
+    while True:
+        try:
+            hb = heartbeat_once()
             age = hb.get("heartbeat_age_seconds")
             state = hb.get("state", hb.get("device", {}).get("state", "UNKNOWN"))
             print(f"heartbeat #{sequence_seen}: {state} age={age}s")
@@ -446,6 +536,9 @@ def main() -> int:
                 request_json(args.server, f"/api/development/jobs/{last_job_id}/result", args.token, {
                     "state": "RUNNING", "evidence": {"agent_id": args.agent_id, "root": str(root), "heartbeat_sequence": sequence_seen}
                 })
+                stop = threading.Event()
+                keeper = threading.Thread(target=keepalive, args=(stop,), name="omega-job-heartbeat", daemon=True)
+                keeper.start()
                 try:
                     evidence = execute_job(job, root)
                     evidence["agent_id"] = args.agent_id
@@ -462,6 +555,14 @@ def main() -> int:
                         "state": "FAILED", "evidence": {"agent_id": args.agent_id, "heartbeat_sequence": sequence_seen}, "error": str(exc)
                     })
                     print(f"job {last_job_id} failed: {exc}", file=sys.stderr)
+                finally:
+                    stop.set()
+                    keeper.join(timeout=max(heartbeat_interval + 2.0, 5.0))
+                    capabilities, rcwa_probe, sai_probe = runtime_capabilities(root)
+                    try:
+                        heartbeat_once()
+                    except Exception as exc:
+                        print(f"post-job heartbeat warning: {exc}", file=sys.stderr)
         except urllib.error.HTTPError as exc:
             if exc.code in {401, 403}:
                 print("AUTHENTICATION REJECTED: rotate pairing by downloading a fresh launcher.", file=sys.stderr)
