@@ -86,9 +86,9 @@ jobs:
             & cmd.exe /d /c scripts\START_OMEGA_R220_FULL_HYBRID.cmd
             if ($LASTEXITCODE -ne 0) { throw "R220 exact downloadable setup exited $LASTEXITCODE" }
 
-            $home = Join-Path $env:LOCALAPPDATA 'OMEGA'
-            $proofPath = Join-Path $home 'r220_physical_continuity.json'
-            $rcwaPath = Join-Path $home 'r220_rcwa_probe.json'
+            $proofHome = Join-Path $env:LOCALAPPDATA 'OMEGA'
+            $proofPath = Join-Path $proofHome 'r220_physical_continuity.json'
+            $rcwaPath = Join-Path $proofHome 'r220_rcwa_probe.json'
             if (-not (Test-Path $proofPath)) { throw 'R220 downloadable setup did not write continuity proof' }
             if (-not (Test-Path $rcwaPath)) { throw 'R220 downloadable setup did not write RCWA proof' }
             $proof = Get-Content -Raw $proofPath | ConvertFrom-Json
