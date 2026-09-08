@@ -1,0 +1,196 @@
+name: OMEGA V6 R220 post-Hybrid development continuity
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r220-post-hybrid-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-and-package-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove post-Hybrid continuity contract and controller advancement
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python -m pytest -q tests/test_r220_post_hybrid_development_continuity.py tests/test_r216_surface_binding_integrity.py tests/test_r217_production_provenance_lease.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck complete preserved R169 Worker with R217 provenance and R220 continuity
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Package complete Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r220-dry-run
+
+      - name: Reassert authority ordering and no production mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'handleReleaseProvenanceR217(request, env)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'CURRENT_AUTHENTICATED_HYBRID_LINK_REQUIRED' canonforge-omega/cloudflare/omega-v6-worker/src/system/postHybridDevelopmentContinuityR220.ts
+          grep -F 'typedAllowListedJobsOnly: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/postHybridDevelopmentContinuityR220.ts
+          grep -F 'automaticProductionMutation: false' canonforge-omega/cloudflare/omega-v6-worker/src/system/postHybridDevelopmentContinuityR220.ts
+          grep -F 'enhanceSurfaceBindingIntegrityR216(r220' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+
+  windows-real-post-link-loop:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Set up supported Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Build verified Windows environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev,rcwa]'
+          if ($LASTEXITCODE -ne 0) { throw 'R220 Windows dependency installation failed' }
+
+      - name: Prove pairing plus a real verified host job advances to another development stage
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path '.').Path
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          $env:OMEGA_PUBLIC_URL = 'http://127.0.0.1:8127'
+          $env:OMEGA_APPROVED_ROOT = $root
+          $server = $null
+          $agent = $null
+          $passed = $false
+          $pairingFile = Join-Path $env:RUNNER_TEMP 'r220-pairing.cmd'
+          try {
+            $server = Start-Process -FilePath $py -ArgumentList @('-m','uvicorn','api.app:app','--host','127.0.0.1','--port','8127') -PassThru -WindowStyle Hidden
+            $ready = $false
+            for ($i = 0; $i -lt 60; $i++) {
+              try {
+                $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/health' -TimeoutSec 3
+                if ($health.ok) { $ready = $true; break }
+              } catch {}
+              Start-Sleep -Seconds 1
+            }
+            if (-not $ready) { throw 'R220 local sovereign API did not become ready' }
+
+            # Issue the real rotating pairing credential using the same file-based parser
+            # exercised by the exact downloadable Windows setup.
+            Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8127/api/hybrid/launcher' -OutFile $pairingFile -TimeoutSec 10
+            $launcherText = Get-Content -Raw -LiteralPath $pairingFile
+            $tokenMatch = [regex]::Match($launcherText, 'OMEGA_TOKEN=([^\x22\r\n]+)')
+            if (-not $tokenMatch.Success) { throw 'R220 could not extract the issued pairing token from the canonical launcher contract' }
+            $token = $tokenMatch.Groups[1].Value
+            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
+
+            # Make the proof deterministic: queue one fixed allow-listed job while MANUAL,
+            # then return to DEVELOPMENT_LOOP before the authenticated agent starts.
+            $jsonHeaders = @{ 'content-type' = 'application/json' }
+            Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/mode' -Headers $jsonHeaders -Body '{"mode":"MANUAL"}' -TimeoutSec 8 | Out-Null
+            $queued = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/enqueue' -Headers $jsonHeaders -Body '{"kind":"inspect_workspace","reason":"R220 deterministic authenticated post-Hybrid continuity proof","payload":{"r220_ci":true,"canonical_mutation":false,"deployment_authorized":false,"promotion_authorized":false}}' -TimeoutSec 8
+            if (-not $queued.id) { throw 'R220 fixed allow-listed proof job was not queued' }
+            Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/mode' -Headers $jsonHeaders -Body '{"mode":"DEVELOPMENT_LOOP"}' -TimeoutSec 8 | Out-Null
+
+            $agent = Start-Process -FilePath $py -ArgumentList @('scripts\omega_sovereign_agent.py','--server','http://127.0.0.1:8127','--token',$token,'--root',$root) -PassThru -WindowStyle Hidden
+
+            $hybrid = $null
+            for ($attempt = 0; $attempt -lt 45; $attempt++) {
+              try {
+                $hybrid = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/hybrid/status' -TimeoutSec 5
+                if ($hybrid.heartbeatCurrent -and $hybrid.authenticated -and $hybrid.pcOnline) { break }
+              } catch {}
+              Start-Sleep -Seconds 2
+            }
+            if (-not $hybrid -or -not $hybrid.heartbeatCurrent -or -not $hybrid.authenticated -or -not $hybrid.pcOnline) {
+              throw 'R220 authenticated heartbeat did not reach current PC-online proof'
+            }
+
+            $verified = $null
+            $development = $null
+            for ($attempt = 0; $attempt -lt 90; $attempt++) {
+              $development = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/development/status' -TimeoutSec 8
+              $verified = @($development.recent_jobs | Where-Object { $_.id -eq $queued.id -and $_.state -eq 'VERIFIED' -and $_.evidence }) | Select-Object -Last 1
+              $active = $development.active_job
+              if ($verified -and $active -and $active.id -ne $verified.id) {
+                $passed = $true
+                break
+              }
+              Start-Sleep -Seconds 2
+            }
+
+            [pscustomobject]@{
+              schema = 'OMEGA_R220_WINDOWS_POST_HYBRID_CONTINUITY_PROOF'
+              transport = 'WINDOWS_CI_LOOPBACK_NOT_OPERATOR_PC'
+              heartbeatCurrent = [bool]$hybrid.heartbeatCurrent
+              authenticated = [bool]$hybrid.authenticated
+              pcOnline = [bool]$hybrid.pcOnline
+              queuedProofJobId = $queued.id
+              verifiedHostJob = $verified
+              nextActiveJob = $development.active_job
+              continuityProven = $passed
+              canonicalMutation = $false
+              githubMutation = $false
+              deploymentAuthorized = $false
+              promotionAuthorized = $false
+            } | ConvertTo-Json -Depth 30 | Set-Content -Encoding utf8 'r220-post-hybrid-proof.json'
+
+            if (-not $passed) { throw 'R220 heartbeat succeeded but verified host return -> different next active development stage was not proven' }
+            Write-Host 'R220_WINDOWS_LINK_TO_VERIFIED_RETURN_TO_NEXT_STAGE_PROVEN_NOT_USER_PC'
+          }
+          finally {
+            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
+            if ($agent -and -not $agent.HasExited) { Stop-Process -Id $agent.Id -Force -ErrorAction SilentlyContinue }
+            if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue }
+          }
+
+      - name: Record physical-proof boundary
+        if: always()
+        run: |
+          @'
+          ## OMEGA R220 post-Hybrid continuity proof
+
+          This Windows runner requires an issued rotating pairing credential, a current authenticated heartbeat, a fixed allow-listed `inspect_workspace` job leased and returned VERIFIED with evidence by the Windows agent, and a different next development job active afterward.
+
+          **Authority boundary:** this proves the Windows transport/agent/development chain on CI. It is not the operator's physical PC. Operator-PC admission still requires a current authenticated heartbeat and returned evidence from that device. No arbitrary shell, source mutation, GitHub mutation, deployment, or promotion is authorized by this proof.
+          '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload R220 Windows proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r220-post-hybrid-continuity-${{ github.run_id }}
+          if-no-files-found: warn
+          path: canonforge-omega/r220-post-hybrid-proof.json

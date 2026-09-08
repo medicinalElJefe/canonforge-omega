@@ -1,0 +1,139 @@
+name: OMEGA V6 R220 downloadable Hybrid setup proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/scripts/START_OMEGA_R220_FULL_HYBRID.cmd'
+      - 'canonforge-omega/scripts/omega_sovereign_agent.py'
+      - 'canonforge-omega/api/**'
+      - 'canonforge-omega/omega_runtime/**'
+      - 'canonforge-omega/tests/test_r220_post_hybrid_development_continuity.py'
+      - '.github/workflows/omega-v6-r220-downloadable-hybrid-setup-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r220-downloadable-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exact-downloaded-setup-windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+
+    steps:
+      - name: Checkout exact R220 source
+        uses: actions/checkout@v4
+
+      - name: Set up supported Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Establish verified dependency environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev,rcwa]'
+          if ($LASTEXITCODE -ne 0) { throw 'R220 dependency establishment failed' }
+          $probe = & $py -m omega_runtime.rcwa_solver --probe | ConvertFrom-Json
+          if (-not $probe.available) { throw 'R220 native grcwa RCWA unavailable' }
+
+      - name: Execute the exact downloadable setup through link return and next stage
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path '.').Path
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          $env:OMEGA_PUBLIC_URL = 'http://127.0.0.1:8127'
+          $env:OMEGA_APPROVED_ROOT = $root
+          $runtimeOut = Join-Path $root 'r220-download-runtime-out.log'
+          $runtimeErr = Join-Path $root 'r220-download-runtime-err.log'
+          $api = $null
+          try {
+            $api = Start-Process -FilePath $py -ArgumentList @('-m','omega_runtime.cli','--host','127.0.0.1','--port','8127') -WorkingDirectory $root -RedirectStandardOutput $runtimeOut -RedirectStandardError $runtimeErr -PassThru
+            $ready = $false
+            for ($i=0; $i -lt 80; $i++) {
+              try {
+                $h = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/health' -TimeoutSec 2
+                if ($h.ok) { $ready = $true; break }
+              } catch {}
+              Start-Sleep -Milliseconds 250
+            }
+            if (-not $ready) { throw 'R220 local sovereign API did not become healthy' }
+
+            # Hold auto-generation until a deterministic safe job exists. The exact setup
+            # will later resume DEVELOPMENT_LOOP after authenticated host return.
+            $modeBody = @{mode='MANUAL'} | ConvertTo-Json -Compress
+            Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/mode' -ContentType 'application/json' -Body $modeBody | Out-Null
+            $jobBody = @{kind='inspect_workspace';reason='R220 exact downloadable setup Windows acceptance';payload=@{acceptance='downloaded_setup_exact_path'}} | ConvertTo-Json -Compress -Depth 8
+            $queued = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/enqueue' -ContentType 'application/json' -Body $jobBody
+            if ($queued.kind -ne 'inspect_workspace' -or $queued.state -ne 'QUEUED') { throw 'R220 deterministic acceptance job was not queued' }
+
+            $env:OMEGA_SERVER_OVERRIDE = 'http://127.0.0.1:8127'
+            $env:OMEGA_ROOT_OVERRIDE = $root
+            $env:OMEGA_NONINTERACTIVE = '1'
+            & cmd.exe /d /c scripts\START_OMEGA_R220_FULL_HYBRID.cmd
+            if ($LASTEXITCODE -ne 0) { throw "R220 exact downloadable setup exited $LASTEXITCODE" }
+
+            $proofHome = Join-Path $env:LOCALAPPDATA 'OMEGA'
+            $proofPath = Join-Path $proofHome 'r220_physical_continuity.json'
+            $rcwaPath = Join-Path $proofHome 'r220_rcwa_probe.json'
+            if (-not (Test-Path $proofPath)) { throw 'R220 downloadable setup did not write continuity proof' }
+            if (-not (Test-Path $rcwaPath)) { throw 'R220 downloadable setup did not write RCWA proof' }
+            $proof = Get-Content -Raw $proofPath | ConvertFrom-Json
+            $rcwa = Get-Content -Raw $rcwaPath | ConvertFrom-Json
+            if (-not $proof.linkProven) { throw 'R220 downloadable setup did not prove authenticated link' }
+            if (-not $proof.continuityProven) { throw 'R220 downloadable setup did not prove continued development' }
+            if (-not $proof.verifiedHostJob -or -not $proof.verifiedHostJob.evidence) { throw 'R220 downloadable setup lacks verified returned host evidence' }
+            if (-not $proof.nextActiveJob -or $proof.nextActiveJob.id -eq $proof.verifiedHostJob.id) { throw 'R220 downloadable setup did not advance to a different next job' }
+            if (-not $rcwa.available) { throw 'R220 downloadable setup RCWA proof is not available=true' }
+            if ($proof.canonicalMutation -ne $false -or $proof.githubMutation -ne $false -or $proof.deploymentAuthorized -ne $false -or $proof.promotionAuthorized -ne $false) { throw 'R220 downloadable setup violated mutation authority boundary' }
+
+            Copy-Item $proofPath (Join-Path $root 'r220-download-continuity-proof.json') -Force
+            Copy-Item $rcwaPath (Join-Path $root 'r220-download-rcwa-proof.json') -Force
+            Write-Host 'R220_EXACT_DOWNLOADED_SETUP_LINK_EXECUTION_RETURN_ADVANCE_VERIFIED'
+          }
+          finally {
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.Name -match '^python' -and $_.CommandLine -and
+                ($_.CommandLine -match 'omega_sovereign_agent\.py' -or $_.CommandLine -match 'omega_runtime\.cli') -and
+                $_.CommandLine -like "*$root*"
+              } |
+              ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+            if ($api -and -not $api.HasExited) { Stop-Process -Id $api.Id -Force -ErrorAction SilentlyContinue }
+          }
+
+      - name: Record proof boundary
+        if: always()
+        run: |
+          @'
+          ## OMEGA R220 exact downloadable Hybrid setup proof
+
+          This Windows runner executes the exact `scripts/START_OMEGA_R220_FULL_HYBRID.cmd` artifact. It requires a verified venv, native grcwa RCWA, a rotating Hybrid credential, the downloaded canonical sovereign agent, authenticated heartbeat proof, an allow-listed host job returned VERIFIED with evidence, and a different next development stage after resume.
+
+          **Authority boundary:** the GitHub-hosted Windows runner proves the downloadable software path itself. It does not impersonate or claim the operator's physical PC. Physical-PC state is admitted only when that PC returns its own current authenticated heartbeat and job evidence.
+          '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload exact-download proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r220-exact-downloadable-hybrid-proof
+          if-no-files-found: warn
+          path: |
+            canonforge-omega/r220-download-continuity-proof.json
+            canonforge-omega/r220-download-rcwa-proof.json
+            canonforge-omega/r220-download-runtime-out.log
+            canonforge-omega/r220-download-runtime-err.log
