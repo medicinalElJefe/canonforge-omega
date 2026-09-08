@@ -47,6 +47,8 @@ def test_r216_ledger_records_no_disconnected_active_surface_invariant_and_race_e
         "/api/system/r205/health",
         "CONTROLS WITHHELD",
         "runtimeEntryR169.ts",
+        "Wrangler's actual Worker entrypoint exactly at `src/runtimeEntryR169.ts`",
+        "no R216 Worker entrypoint or second runtime exists",
         "test_r216_surface_binding_integrity.py",
         "5e698131-ed44-44b2-ba2f-479c0f2dd308",
         "15e9d321-924d-45a5-b2bb-bd5ea68c4f30",
@@ -55,6 +57,8 @@ def test_r216_ledger_records_no_disconnected_active_surface_invariant_and_race_e
     ):
         assert required in r216
     assert "**Status:** `ADMITTED/LIVE`" not in r216
+    assert "Adds `runtimeEntryR216.ts`" not in r216
+    assert "Changes Wrangler's outer entrypoint to R216" not in r216
 
 
 def test_ledger_keeps_earth_and_hybrid_truth_boundaries_visible():
