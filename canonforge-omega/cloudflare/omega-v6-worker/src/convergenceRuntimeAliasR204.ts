@@ -1,11 +1,15 @@
 import convergence from "./system/../convergence";
 import { HYBRID_RETURN_ADMISSION_R204, HYBRID_RETURN_VERIFICATION_SCHEMA_R204 } from "./omegaRuntimeR204";
+import { handleHybridControlPlaneR222 } from "./hybridControlPlaneR222";
+import { HYBRID_OUTBOUND_R222 } from "./omegaRuntimeR222";
 
 // Wrangler aliases heartbeatTruth's exact "./convergence" import to this module.
 // The alternate spelling above resolves the preserved original convergence module
 // without re-entering the alias. Default behavior remains the canonical convergence
-// implementation; only the named OmegaRuntime export and one read-only manifest are added.
-export { OmegaRuntime } from "./omegaRuntimeR204";
+// implementation. R222 is additive: it reuses the exact OMEGA_RUNTIME namespace and
+// intercepts only the Hybrid/development bootstrap/control routes before delegating.
+// Historical compatibility marker: export { OmegaRuntime } from "./omegaRuntimeR204";
+export { OmegaRuntime } from "./omegaRuntimeR222";
 
 const HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 
@@ -36,10 +40,14 @@ async function manifest(env: any): Promise<Response> {
       underlyingConvergencePreserved: true,
       durableBinding: "OMEGA_RUNTIME",
       durableClass: "OmegaRuntime",
+      durableSingleton: "OMEGA_RUNTIME",
       storageIdentityChanged: false,
       newDurableNamespaceCreated: false,
       r201EvidenceLedgerPreserved: true,
       r203HybridMissionLedgerPreserved: true,
+      r222OutboundHybrid: HYBRID_OUTBOUND_R222,
+      r222InboundPcGatewayRequired: false,
+      r222LocalExecutionAuthorityRequired: true,
     },
     returnLaw: [
       "AUTHENTICATED_BRIDGE",
@@ -59,6 +67,8 @@ async function manifest(env: any): Promise<Response> {
       verifiedReturnIsNotCanonState: true,
       verifiedReturnIsNotPromotion: true,
       verifiedFailureDoesNotCompleteMission: true,
+      heartbeatIsNotExecutionAuthority: true,
+      publicBrowserMayGrantNativeExecution: false,
     },
     authority: "AUTHENTICATED_EXECUTION_RETURN_EVIDENCE_NOT_CANONSTATE",
     canonicalMutation: false,
@@ -69,9 +79,11 @@ async function manifest(env: any): Promise<Response> {
 }
 
 export default {
-  async fetch(request: Request, env: any, _ctx?: any): Promise<Response> {
+  async fetch(request: Request, env: any, ctx?: any): Promise<Response> {
     const path = new URL(request.url).pathname.replace(/\/$/, "");
     if (path === "/api/system/r204/manifest" && request.method === "GET") return manifest(env);
-    return convergence.fetch(request, env);
+    const hybrid = await handleHybridControlPlaneR222(request, env);
+    if (hybrid) return hybrid;
+    return convergence.fetch(request, env, ctx);
   },
 };
