@@ -21,6 +21,8 @@
     "archive_donors_require_validation_before_admission": true,
     "repair_packaging_is_not_source_authority": true,
     "dependency_repair_requires_post_repair_probe": true,
+    "full_system_ci_must_install_declared_runtime_dependencies": true,
+    "successor_regressions_must_assert_behavioral_or_ownership_semantics_not_prose_or_formatting": true,
     "mode_changes_require_operational_semantics_not_cosmetic_only": true,
     "measured_claims_require_source_bound_evidence": true
   },
@@ -43,6 +45,7 @@
         "scripts/START_OMEGA_SOVEREIGN.ps1",
         "scripts/START_OMEGA_SOVEREIGN.cmd",
         "scripts/START_OMEGA_R222_FULL_HYBRID.ps1",
+        "api/runtime_r222.py",
         "cloudflare/omega-v6-worker/src/hybridControlPlaneR222.ts",
         "cloudflare/omega-v6-worker/src/omegaRuntimeR222.ts",
         "cloudflare/omega-v6-worker/src/validation/independentSolverLabR175.ts"
@@ -72,6 +75,34 @@
       ],
       "authority_boundary": "The stable gateway and bounded development executor grant no Canon, GitHub, deployment or promotion authority. Physical PC online/execution claims remain heartbeat- and receipt-gated. Hosted Windows proof validates software transport only. R208/R209 diagnostics observe the already-running single-owner system and do not create execution authority. Archive donors, plugins, modes, package/repair artifacts and evidence ledgers remain non-authoritative until their declared admission path is satisfied. Release promotion remains controlled by the exact-head release-forward controller.",
       "release_admission": "CANDIDATE until exact-head source/Windows/RCWA/Hybrid/verified-return gates pass, the current canonical base is reconciled, the governed merge completes, release-forward deploys the exact canonical SHA, live cumulative acceptance passes without writer replacement/rollback, and the physical-PC single-session path is verified.",
+      "ledger": "release/OMEGA_REPAIR_SYSTEM_LEDGER.md",
+      "advancement_ledger": "release/OMEGA_V6_ADVANCEMENT_LEDGER.md"
+    },
+    {
+      "id": "R222-CI-DEPENDENCY-AND-SEMANTIC-REGRESSION-REPAIR",
+      "release": "R222",
+      "status": "CANDIDATE",
+      "incident": "During R222 successor proof, workflows claiming full-system regression initially prepared an incomplete Python environment, and a later routing regression asserted an explanatory prose fragment rather than app ownership/routing behavior. The first defect made real runtime imports fail for missing declared dependencies; the second turned an implementation with correct single-app routing semantics red solely because documentation wrapped across a line break. Both patterns make repairs non-reproducible and can pressure future releases toward false compatibility work.",
+      "invariant": "Any CI job that claims full-system or full-runtime regression installs OMEGA's declared runtime/development dependency set before executing the full suite. Successor regression tests assert executable behavior, ownership, authority, schemas or stable contracts rather than comments, prose formatting, obsolete release labels or duplicated implementation text. Explanatory documentation may support a proof but can never be the sole proof of a runtime invariant.",
+      "implementation_paths": [
+        ".github/workflows/omega-v6-r180-convergence-gate.yml",
+        ".github/workflows/omega-v6-repair-system-contract.yml",
+        "tests/test_r222_hybrid_bootstrap_single_instance.py",
+        "config/repair_system_contract.json"
+      ],
+      "legacy_entrypoints": [],
+      "regression_tests": [
+        "tests/test_repair_system_contract.py",
+        "tests/test_r222_hybrid_bootstrap_single_instance.py"
+      ],
+      "proof_workflows": [
+        ".github/workflows/omega-v6-repair-system-contract.yml",
+        ".github/workflows/omega-v6-r180-convergence-gate.yml",
+        ".github/workflows/omega-v6-verify.yml",
+        ".github/workflows/omega-v6-r204-verified-return-source-proof.yml"
+      ],
+      "authority_boundary": "Correct CI setup and semantic regression testing establish only source/process proof. They grant no Canon mutation, GitHub mutation, physical-PC identity, native execution authority, deployment authority, production ownership or live admission.",
+      "release_admission": "CANDIDATE until the final ledger-bearing R222 head passes the repair-system gate, full inherited suite, R180, R204 source proof, Windows/RCWA/Hybrid gates and the complete candidate matrix; it then remains non-live until governed merge and exact-head production admission succeed.",
       "ledger": "release/OMEGA_REPAIR_SYSTEM_LEDGER.md",
       "advancement_ledger": "release/OMEGA_V6_ADVANCEMENT_LEDGER.md"
     }
