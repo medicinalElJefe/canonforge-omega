@@ -1,7 +1,7 @@
 name = "omegav6"
-main = "src/runtimeEntryR216.ts"
-# R216 is an outer fail-closed surface admission interlock. It delegates every request to
-# runtimeEntryR169 first and preserves R169 execution authority and all Durable Object exports.
+main = "src/runtimeEntryR169.ts"
+# R216 is installed inside the established R169 public response boundary so the protected
+# Worker entrypoint, execution authority, Durable Object identities, and historical lineage remain unchanged.
 # R204 preserves the canonical R169 execution composition. Wrangler substitutes only
 # heartbeatTruth's ./convergence module with an additive alias that delegates original
 # convergence behavior and exports the stronger OmegaRuntime return-admission class.
