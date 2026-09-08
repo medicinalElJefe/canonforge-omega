@@ -45,18 +45,19 @@ def test_r214_fallback_systems_menu_reaches_newer_surfaces_and_is_accessible():
     assert 'aria-controls="omegaR192SystemsMenu"' in nav
     assert 'role="menu"' in nav
     assert 'role="menuitem"' in nav
-    for href in (
-        'href="/system"',
-        'href="/core"',
-        'href="/capabilities"',
-        'href="/federation"',
-        'href="/truth"',
-        'href="/validate"',
-        'href="/instrument"',
-        'href="/convergence"',
-        'href="/evolution"',
+    assert 'href="${href}"' in nav
+    for route in (
+        '"/system"',
+        '"/core"',
+        '"/capabilities"',
+        '"/federation"',
+        '"/truth"',
+        '"/validate"',
+        '"/instrument"',
+        '"/convergence"',
+        '"/evolution"',
     ):
-        assert href in nav
+        assert f'menuLink(pathname, {route}' in nav
     assert 'aria-current="page"' in nav
     assert "btn?.setAttribute('aria-expanded','false')" in nav
     assert "close(true)" in nav
@@ -97,7 +98,7 @@ def test_r214_preserves_existing_system_and_residual_surfaces():
     nav = (SRC / "system" / "oneSystemNavigationR195.ts").read_text()
     for fragment in (
         'href="/system"',
-        'id="r195ResidualCard"',
+        "card.id='r195ResidualCard'",
         '/api/system/r195/restoration?limit=24',
         'reconstituteOneSystemR199',
         'correlateOneSystemTruthStripR199',
