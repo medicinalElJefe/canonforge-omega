@@ -18,6 +18,8 @@ def _text(path: str) -> str:
 def test_repair_contract_is_governed_and_complete():
     data = json.loads(CONTRACT.read_text(encoding="utf-8"))
     assert data["schema"] == "OMEGA_REPAIR_SYSTEM_CONTRACT_V1"
+    assert data["system_inheritance_contract"] == "config/system_inheritance_contract.json"
+    assert _resolve(data["system_inheritance_contract"]).exists()
     policy = data["policy"]
     assert policy["required_stages"] == [
         "incident",
@@ -28,10 +30,20 @@ def test_repair_contract_is_governed_and_complete():
         "release_admission",
         "ledger",
     ]
-    assert policy["source_merge_is_not_live_admission"] is True
-    assert policy["failure_must_remain_visible"] is True
-    assert policy["legacy_entrypoints_must_delegate_or_fail_closed"] is True
-    assert policy["capability_actions_must_not_bootstrap_parallel_runtimes"] is True
+    for key in (
+        "source_merge_is_not_live_admission",
+        "failure_must_remain_visible",
+        "legacy_entrypoints_must_delegate_or_fail_closed",
+        "capability_actions_must_not_bootstrap_parallel_runtimes",
+        "successor_proofs_follow_canonical_ownership_instead_of_requiring_duplicated_legacy_implementations",
+        "proof_surfaces_must_follow_stable_entrypoint",
+        "archive_donors_require_validation_before_admission",
+        "repair_packaging_is_not_source_authority",
+        "dependency_repair_requires_post_repair_probe",
+        "mode_changes_require_operational_semantics_not_cosmetic_only",
+        "measured_claims_require_source_bound_evidence",
+    ):
+        assert policy[key] is True, key
 
     repairs = data["repairs"]
     assert repairs, "at least one governed repair must be registered"
@@ -93,6 +105,20 @@ def test_stable_gateway_owns_all_general_windows_launch_paths():
     for name, source in (("legacy launcher", legacy_launcher), ("R220 launcher", r220), ("R222 command wrapper", r222_cmd)):
         for token in forbidden_direct_owner_tokens:
             assert token not in source, f"{name} still owns a parallel process through {token}"
+
+
+def test_stable_gateway_preserves_acceptance_proof_after_ownership_deduplication():
+    gateway = _text("scripts/START_OMEGA_SOVEREIGN.ps1")
+    assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in gateway
+    assert "r209_sovereign_convergence_latest.json" in gateway
+    assert "R209 is additive to R208" in gateway
+    assert "existing single-owner runtime" in gateway
+    assert "-MaxAttempts 12 -DelaySeconds 5" in gateway
+    assert "no success claim promoted" in gateway
+    # The gateway orchestrates the current implementation and proof surfaces but does
+    # not become a second local runtime or sovereign agent owner.
+    assert "omega_runtime.cli" not in gateway
+    assert "omega_sovereign_agent.py" not in gateway
 
 
 def test_rcwa_is_a_capability_dispatch_not_a_launcher():
