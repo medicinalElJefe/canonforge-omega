@@ -117,6 +117,23 @@ def test_r221_reuses_existing_r175_no_fallback_solver_instead_of_adding_a_second
     assert '"fallback": False' in solver
 
 
+def test_r221_rcwa_retry_reuses_training_and_forces_a_fresh_host_execution_probe():
+    source = R221.read_text(encoding="utf-8")
+    agent = AGENT.read_text(encoding="utf-8")
+
+    assert 'rcwaRetryDoesNotRepeatTraining: true' in source
+    assert 'rcwaRetryFreshlyReprobesHostDependencies: true' in source
+    assert 'rcwaRetryEligible' in source
+    assert 'retryRcwa && facts.rcwaRetryEligible' in source
+    assert 'R221 RCWA-only retry after retained verified R179 training' in source
+    assert 'r221_rcwa_retry: retryRcwa' in source
+    assert 'body.retry_rcwa === true || body.retryRcwa === true' in source
+    assert 'Retry native RCWA' in source
+    assert 'retry_rcwa:true' in source
+    # Each cross_runtime_validate execution re-probes the current host instead of trusting startup heartbeat telemetry.
+    assert 'dependencies = rcwa_dependency_status(root)' in agent
+
+
 def test_r221_calibration_fixture_is_bounded_and_hash_bound_before_host_execution():
     source = R221.read_text(encoding="utf-8")
     assert 'schema: "OMEGA_FULLWAVE_QUEUE_v1"' in source
@@ -148,6 +165,7 @@ def test_r221_ui_drives_only_post_status_pipeline_advancement_after_explicit_sta
     assert "'/api/system/r221/advance'" in source
     assert 'pipelineNeedsAdvance===true' in source
     assert 'pipeline_id:d.pipelineId' in source
+    assert 'rcwaRetryEligible===true' in source
     for state in (
         "DRAINING_EXISTING_GOVERNED_STAGE",
         "TRAINING_QUEUED",
