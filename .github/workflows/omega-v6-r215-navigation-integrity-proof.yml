@@ -1,0 +1,181 @@
+name: OMEGA V6 R215 navigation integrity proof
+
+on:
+  pull_request:
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/universalWorkspaceR193.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/oneSystemNavigationR195.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/tests/test_r215_navigation_integrity.py'
+      - 'canonforge-omega/tests/test_r214_navigation_submenu_polish.py'
+      - '.github/workflows/omega-v6-r215-navigation-integrity-proof.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r215-navigation-integrity-proof.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-r215:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sovereign test dependencies
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+      - name: Prove R215 navigation integrity and predecessor preservation
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r215_navigation_integrity.py \
+            tests/test_r214_navigation_submenu_polish.py \
+            tests/test_r192_navigation_home_repair.py \
+            tests/test_r193_full_restoration.py \
+            tests/test_r195_one_system.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_role_separated_convergence_r128.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck complete canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Package complete canonical Worker without deployment
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r215-dry-run
+
+  prove-live-r215:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: verify-r215
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact canonical SHA
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 60); do
+            rm -f /tmp/r215-manifest.json
+            if curl --fail --silent --show-error --max-time 20 "$LIVE/api/fabric/r191/manifest" -o /tmp/r215-manifest.json \
+              && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          try:
+              data = json.loads(Path('/tmp/r215-manifest.json').read_text())
+          except Exception:
+              raise SystemExit(1)
+          raise SystemExit(0 if data.get('canonicalGitSha') == os.environ['EXPECTED_SHA'] else 1)
+          PY
+            then
+              matched=true
+              break
+            fi
+            echo "R215 exact canonical identity not settled (attempt $attempt/60)."
+            sleep 5
+          done
+          test "$matched" = true
+
+      - name: Prove every declared systems submenu route
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          routes=(
+            /workbench
+            /relations
+            /calibration
+            /capabilities
+            /core
+            /sai
+            /compute
+            /validate
+            /validate/cross-runtime
+            /validate/independent
+            /clouds
+            /warp
+            /warp/build
+            /federation
+            /evolution
+            /truth
+            /convergence
+            /fabric
+            /instrument
+            /system
+          )
+          index=0
+          for route in "${routes[@]}"; do
+            index=$((index+1))
+            headers="/tmp/r215-system-${index}.headers"
+            body="/tmp/r215-system-${index}.html"
+            curl --fail --silent --show-error --max-time 25 -D "$headers" "$LIVE$route" -o "$body"
+            grep -qi '^content-type: text/html' "$headers"
+            grep -qi '^x-omega-workspace: r193-full-restoration-workspace' "$headers"
+            grep -qi '^x-omega-navigation-polish: r214-submenu-navigation-polish' "$headers"
+            grep -qi '^x-omega-navigation-integrity: r215-command-palette-route-integrity' "$headers"
+            grep -Fq 'id="omegaR193Rail"' "$body"
+            grep -Fq 'id="omegaR214ControlMenu"' "$body"
+            grep -Fq 'id="omegaNavigationIntegrityR215Runtime"' "$body"
+            echo "R215_SYSTEM_ROUTE_OK $route"
+          done
+
+      - name: Prove every declared workspace deep link
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          routes=(
+            '/?app=Field'
+            '/?app=Calculus&mode=dewey-calculus'
+            '/?app=Memory'
+            '/?app=Simulate'
+            '/?app=Earth'
+            '/?app=Assistant'
+            '/?app=Hybrid'
+            '/?app=Proof'
+          )
+          index=0
+          for route in "${routes[@]}"; do
+            index=$((index+1))
+            headers="/tmp/r215-workspace-${index}.headers"
+            body="/tmp/r215-workspace-${index}.html"
+            curl --fail --silent --show-error --max-time 25 -D "$headers" "$LIVE$route" -o "$body"
+            grep -qi '^content-type: text/html' "$headers"
+            grep -qi '^x-omega-workspace: r193-full-restoration-workspace' "$headers"
+            grep -qi '^x-omega-navigation-polish: r214-submenu-navigation-polish' "$headers"
+            grep -qi '^x-omega-navigation-integrity: r215-command-palette-route-integrity' "$headers"
+            grep -Fq 'id="omegaR193Rail"' "$body"
+            grep -Fq 'id="omegaNavigationIntegrityR215Runtime"' "$body"
+            echo "R215_WORKSPACE_ROUTE_OK $route"
+          done
+
+      - name: Prove command-palette One System wiring and API non-interference
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 25 -D /tmp/r215-home.headers "$LIVE/" -o /tmp/r215-home.html
+          grep -Fq 'id="omegaR193Palette"' /tmp/r215-home.html
+          grep -Fq 'id="omegaNavigationIntegrityR215Runtime"' /tmp/r215-home.html
+          grep -Fq "b.dataset.r193Href='/system'" /tmp/r215-home.html
+          grep -Fq "b.dataset.r215System='true'" /tmp/r215-home.html
+          grep -Fq 'operator · mission · continuity · residual restoration' /tmp/r215-home.html
+
+          curl --fail --silent --show-error --max-time 25 -D /tmp/r215-api.headers "$LIVE/api/fabric/r191/status" -o /tmp/r215-api.json
+          grep -qi '^content-type: application/json' /tmp/r215-api.headers
+          ! grep -qi '^x-omega-navigation-integrity:' /tmp/r215-api.headers
+          ! grep -Fq 'omegaNavigationIntegrityR215Runtime' /tmp/r215-api.json
