@@ -40,6 +40,8 @@ def test_repair_contract_is_governed_and_complete():
         "archive_donors_require_validation_before_admission",
         "repair_packaging_is_not_source_authority",
         "dependency_repair_requires_post_repair_probe",
+        "full_system_ci_must_install_declared_runtime_dependencies",
+        "successor_regressions_must_assert_behavioral_or_ownership_semantics_not_prose_or_formatting",
         "mode_changes_require_operational_semantics_not_cosmetic_only",
         "measured_claims_require_source_bound_evidence",
     ):
@@ -49,6 +51,8 @@ def test_repair_contract_is_governed_and_complete():
     assert repairs, "at least one governed repair must be registered"
     ids = [row["id"] for row in repairs]
     assert len(ids) == len(set(ids)), "repair ids must be unique"
+    assert "R222-SINGLE-OWNER-HYBRID-REPAIR" in ids
+    assert "R222-CI-DEPENDENCY-AND-SEMANTIC-REGRESSION-REPAIR" in ids
     for repair in repairs:
         for field in (
             "incident",
@@ -62,6 +66,7 @@ def test_repair_contract_is_governed_and_complete():
             "advancement_ledger",
         ):
             assert repair.get(field), f"{repair['id']} missing {field}"
+        assert "legacy_entrypoints" in repair, f"{repair['id']} missing legacy_entrypoints declaration"
         paths = (
             repair["implementation_paths"]
             + repair["legacy_entrypoints"]
@@ -71,6 +76,22 @@ def test_repair_contract_is_governed_and_complete():
         )
         for path in paths:
             assert _resolve(path).exists(), f"{repair['id']} references missing path {path}"
+
+
+def test_full_system_ci_uses_declared_dependencies_and_successor_tests_are_semantic():
+    r180 = _text(".github/workflows/omega-v6-r180-convergence-gate.yml")
+    repair_workflow = _text(".github/workflows/omega-v6-repair-system-contract.yml")
+    r222_regression = _text("tests/test_r222_hybrid_bootstrap_single_instance.py")
+
+    assert "python -m pip install -e '.[dev]'" in r180
+    assert "python -m pip install --disable-pip-version-check -e '.[dev]'" in repair_workflow
+
+    assert 'assert "from api.app import APPROVED_BUILD_ROOT, GATEWAY_TOKEN, _pairing, app" in local' in r222_regression
+    assert 'assert "FastAPI(" not in local' in r222_regression
+    assert 'assert "app = FastAPI" not in local' in r222_regression
+    assert 'assert "does not replace the app" in local' not in r222_regression
+    assert "app.router.routes.remove(route)" in r222_regression
+    assert "app.router.routes.append(route)" in r222_regression
 
 
 def test_stable_gateway_owns_all_general_windows_launch_paths():
@@ -167,10 +188,13 @@ def test_public_bootstrap_cannot_bypass_single_owner_chain():
 def test_repair_is_durably_ledgered_without_false_live_admission():
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     repair = next(row for row in contract["repairs"] if row["id"] == "R222-SINGLE-OWNER-HYBRID-REPAIR")
+    process_repair = next(row for row in contract["repairs"] if row["id"] == "R222-CI-DEPENDENCY-AND-SEMANTIC-REGRESSION-REPAIR")
     repair_ledger = _text(repair["ledger"])
     advancement_ledger = _text(repair["advancement_ledger"])
     assert "R222-SINGLE-OWNER-HYBRID-REPAIR" in repair_ledger
+    assert "R222-CI-DEPENDENCY-AND-SEMANTIC-REGRESSION-REPAIR" in repair_ledger
     assert "Permanent system invariant" in repair_ledger
     assert "CANDIDATE" in repair_ledger
+    assert process_repair["status"] == "CANDIDATE"
     assert "ADMITTED/LIVE" not in repair_ledger.split("## R222-SINGLE-OWNER-HYBRID-REPAIR", 1)[1]
     assert "release completion is incomplete until this ledger and the user-facing completion report" in advancement_ledger
