@@ -35,13 +35,18 @@ def test_r175_requires_real_grcwa_and_has_no_reduced_order_fallback():
     assert 'handleComputeRequest' not in solver
 
 
-def test_r175_agent_only_advertises_rcwa_when_dependency_probe_passes():
+def test_r175_agent_advertises_rcwa_only_after_probe_and_may_self_repair_exact_dependencies():
     agent = read(ROOT / "scripts" / "omega_sovereign_agent.py")
     assert 'INDEPENDENT_SOLVER_CHALLENGE_SCHEMA = "OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175"' in agent
+    assert 'RCWA_REQUIRED_PACKAGES = ("numpy>=1.24", "grcwa==0.1.2")' in agent
     assert 'rcwa_dependency_status' in agent
     assert 'if rcwa_probe["available"]:' in agent
     assert 'capabilities.extend(["independent_fullwave_rcwa", "maxwell_rcwa_grcwa"])' in agent
-    assert 'R175 RCWA dependencies are unavailable on the authenticated Sovereign host; no fallback is permitted' in agent
+    assert 'def repair_rcwa_dependencies(root: Path) -> dict:' in agent
+    assert 'dependency_repair = repair_rcwa_dependencies(root)' in agent
+    assert 'dependencies = dependency_repair["after"]' in agent
+    assert 'dependencies remain unavailable after bounded exact repair on the authenticated Sovereign host; no fallback is permitted' in agent
+    assert '"fallback": False' in agent
     assert 'evidence.independent_solver_family_claim' not in agent
 
 
