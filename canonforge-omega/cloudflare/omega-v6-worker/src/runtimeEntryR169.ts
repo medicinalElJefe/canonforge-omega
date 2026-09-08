@@ -28,6 +28,7 @@ import { handleContinuityPotentialR202 } from "./system/continuityPotentialR202"
 import { handleHybridMissionR203 } from "./system/hybridMissionRouteR203";
 import { handleWholeSystemControlR205 } from "./system/wholeSystemControlR205";
 import { handleOperationalProvenanceR210 } from "./system/operationalProvenanceFabricR210";
+import { handlePostHybridDevelopmentR217, enhancePostHybridDevelopmentR217 } from "./system/postHybridDevelopmentContinuityR217";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -38,7 +39,7 @@ import { computeLabResponse } from "./compute/computeLabR170";
 import { handleValidationRequest } from "./validation/validationFabricR172";
 import { validationLabResponse } from "./validation/validationLabR172";
 import { handleCrossRuntimeValidationRequest } from "./validation/crossRuntimeParityR173";
-import { crossRuntimeLabResponse } from "./validation/crossRuntimeLabR173";
+import { crossRuntimeLabResponse } from "./validation/crossRuntimeParityR173";
 import { handleFederatedOrganRequest } from "./federation/federatedOrganFabricR174";
 import { federatedOrganLabResponse } from "./federation/federatedOrganLabR174";
 import { handleUniversalSurfaceFabricR191 } from "./federation/universalSurfaceFabricR191";
@@ -101,6 +102,9 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 
   const earthSpatialR214 = await handleEarthSpatialEvidenceR214(request, env, ctx, runtimeFetch);
   if (earthSpatialR214) return earthSpatialR214;
+
+  const postHybridR217 = await handlePostHybridDevelopmentR217(request, env, ctx, runtimeFetch);
+  if (postHybridR217) return postHybridR217;
 
   const operationalProvenanceR210 = await handleOperationalProvenanceR210(request, env, ctx, runtimeFetch);
   if (operationalProvenanceR210) return operationalProvenanceR210;
@@ -255,6 +259,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   const r205 = await (async () => {
     return enhanceWholeSystemSurfaceR205(finalResponse);
   })();
+  const r217 = await enhancePostHybridDevelopmentR217(r205);
+  if (r217 !== r205) return enhanceSurfaceBindingIntegrityR216(r217, env?.CANONICAL_GIT_SHA ?? null);
   return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null);
 }
 
