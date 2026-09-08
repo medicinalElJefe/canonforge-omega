@@ -1,7 +1,7 @@
 {
   "schema": "OMEGA_REPAIR_SYSTEM_CONTRACT_V1",
   "policy": {
-    "principle": "A repair is incomplete until the incident is converted into a permanent system invariant, implemented in the canonical path, regression-tested, enforced by CI, governed through release admission, and recorded in the advancement ledger.",
+    "principle": "A repair is incomplete until the incident is converted into a permanent system invariant, implemented in the canonical path, regression-tested, enforced by CI, governed through release admission, and recorded in durable repair and advancement ledgers.",
     "required_stages": [
       "incident",
       "invariant",
@@ -56,7 +56,8 @@
       ],
       "authority_boundary": "The stable gateway and bounded development executor grant no Canon, GitHub, deployment or promotion authority. Physical PC online/execution claims remain heartbeat- and receipt-gated. Release promotion remains controlled by the exact-head release-forward controller.",
       "release_admission": "CANDIDATE until exact-head source/Windows/RCWA/Hybrid/verified-return gates pass, the current canonical base is reconciled, the governed merge completes, release-forward deploys the exact canonical SHA, live cumulative acceptance passes without writer replacement/rollback, and the physical-PC single-session path is verified.",
-      "ledger": "release/OMEGA_V6_ADVANCEMENT_LEDGER.md"
+      "ledger": "release/OMEGA_REPAIR_SYSTEM_LEDGER.md",
+      "advancement_ledger": "release/OMEGA_V6_ADVANCEMENT_LEDGER.md"
     }
   ]
 }
