@@ -29,6 +29,24 @@ def test_r207_consumes_authenticated_enrollment_but_runs_repository_agent_with_v
     assert "Start-Process -FilePath $env:ComSpec" not in current
 
 
+def test_r207_compatibility_chain_preserves_one_explicit_server_identity():
+    legacy = read(LEGACY_LAUNCHER)
+    gateway = read(GATEWAY)
+    current = read(CURRENT)
+
+    # A localhost/CI proof must not silently jump from the local candidate to production.
+    assert "$env:OMEGA_SERVER_OVERRIDE" in legacy
+    assert "$env:OMEGA_PUBLIC_URL" in legacy
+    assert "'-ProductionBase',$ProductionBase" in legacy
+    assert "$env:OMEGA_SERVER_OVERRIDE" in gateway
+    assert "$env:OMEGA_PUBLIC_URL" in gateway
+    assert "'-ProductionBase',$ProductionBase" in gateway
+    assert "-ProductionBase $ProductionBase" in gateway
+    assert "[string]$ProductionBase" in current
+    assert "$ProductionBase/api/hybrid/enroll" in current
+    assert "$ProductionBase/api/development/status" in current
+
+
 def test_r207_keeps_pc_online_claim_behind_current_heartbeat_proof_after_successor_migration():
     text = read(CURRENT)
     assert "[bool]$hybrid.heartbeatCurrent" in text
