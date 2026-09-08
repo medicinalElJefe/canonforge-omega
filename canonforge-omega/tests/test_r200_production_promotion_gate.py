@@ -6,7 +6,7 @@ LEGACY = ROOT / ".github" / "workflows" / "omega-v6-r198-production-deploy.yml"
 RELEASE = ROOT / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 
 DEPLOY_STEP = "Deploy exact canonical Worker to Cloudflare and bind version ID"
-LIVE_PROOF_STEP = "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes"
+LIVE_PROOF_STEP = "Prove live exact identity, R217 lease, cumulative truth, version lock, and all 172 R185 nodes"
 RESTORE_STEP = "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed"
 
 
@@ -35,6 +35,8 @@ def test_r200_exact_deployment_identity_binding_survives_without_source_mutation
     assert "canonicalGitSha" in text
     assert "Current Version ID" in text
     assert "expected-version-id.txt" in text
+    assert "OMEGA_RELEASE_LEASE" in text
+    assert "expected-release-lease.txt" in text
 
 
 def test_r200_proof_before_mutation_and_live_acceptance_after_mutation_survive():
