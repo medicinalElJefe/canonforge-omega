@@ -1,0 +1,72 @@
+name: OMEGA V6 repair system contract
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-repair-system-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repair-system-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact candidate with base history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify repair registry and single-owner invariants
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install --disable-pip-version-check pytest
+          python -m pytest -q tests/test_repair_system_contract.py tests/test_r222_hybrid_bootstrap_single_instance.py
+
+      - name: Require system/process registration for governed platform changes
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ github.base_ref }}" --depth=1 || true
+          mapfile -t changed < <(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          printf '%s\n' "${changed[@]}"
+
+          sensitive=0
+          for path in "${changed[@]}"; do
+            case "$path" in
+              canonforge-omega/scripts/*|canonforge-omega/api/*|canonforge-omega/omega_runtime/*|canonforge-omega/cloudflare/omega-v6-worker/src/*|.github/workflows/*)
+                sensitive=1
+                ;;
+            esac
+          done
+
+          if [[ "$sensitive" == "1" ]]; then
+            printf '%s\n' "${changed[@]}" | grep -Fxq 'canonforge-omega/config/repair_system_contract.json' || {
+              echo 'Governed platform change missing repair_system_contract.json update.' >&2
+              exit 21
+            }
+            printf '%s\n' "${changed[@]}" | grep -Fxq 'canonforge-omega/release/OMEGA_REPAIR_SYSTEM_LEDGER.md' || {
+              echo 'Governed platform change missing OMEGA_REPAIR_SYSTEM_LEDGER.md update.' >&2
+              exit 22
+            }
+          fi
+
+      - name: Record proof boundary
+        if: always()
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## OMEGA repair-system gate
+
+          A repair is not accepted as a one-off patch. Governed platform changes must carry a machine-readable incident/invariant entry, durable repair ledger update, implementation path, regression proof, CI proof and release-admission boundary. This source gate grants no deployment or promotion authority.
+          EOF
