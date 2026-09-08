@@ -31,6 +31,7 @@ import { handleOperationalProvenanceR210 } from "./system/operationalProvenanceF
 import { handleReleaseProvenanceR217 } from "./system/releaseProvenanceR217";
 import { handlePostHybridDevelopmentR220, enhancePostHybridDevelopmentR220 } from "./system/postHybridDevelopmentContinuityR220";
 import { handleGovernedLocalTrainingR221, enhanceGovernedLocalTrainingR221 } from "./system/governedLocalTrainingR221";
+import { handleTerminalReturnClosureR222, enhanceTerminalReturnClosureR222 } from "./system/terminalReturnClosureR222";
 import { handleComputeRequest } from "./compute/computeTruthR170";
 import { handleAtlasComputeRequest } from "./compute/atlasComputeR170";
 import { handleDeweyWaterContinuityR195 } from "./compute/deweyWaterContinuityR195";
@@ -98,6 +99,9 @@ async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Respo
 
   const releaseProvenanceR217 = handleReleaseProvenanceR217(request, env);
   if (releaseProvenanceR217) return releaseProvenanceR217;
+
+  const terminalReturnR222 = await handleTerminalReturnClosureR222(request, env, ctx, runtimeFetch);
+  if (terminalReturnR222) return terminalReturnR222;
 
   const localTrainingR221 = await handleGovernedLocalTrainingR221(request, env, ctx, runtimeFetch);
   if (localTrainingR221) return localTrainingR221;
@@ -269,6 +273,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   })();
   const r220 = await enhancePostHybridDevelopmentR220(r205);
   const r221 = await enhanceGovernedLocalTrainingR221(r220);
+  const r222 = await enhanceTerminalReturnClosureR222(r221);
+  if (r222 !== r221) return enhanceSurfaceBindingIntegrityR216(r222, env?.CANONICAL_GIT_SHA ?? null);
   if (r221 !== r220) return enhanceSurfaceBindingIntegrityR216(r221, env?.CANONICAL_GIT_SHA ?? null);
   if (r220 !== r205) return enhanceSurfaceBindingIntegrityR216(r220, env?.CANONICAL_GIT_SHA ?? null);
   return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null);
