@@ -79,12 +79,14 @@ def test_r214_menu_click_is_verified_before_navigation_and_failure_is_visible():
         assert token in s, token
 
 
-def test_r214_menu_truth_is_additive_under_r169_and_non_mutating():
+def test_r214_menu_truth_is_additive_under_r169_before_final_r205_renderer():
     runtime = read(RUNTIME)
     menu = read(MENU)
     assert 'handleMenuTruthR214, enhanceMenuTruthR214' in runtime
     assert "handleMenuTruthR214(request, env, ctx, runtimeFetch)" in runtime
-    assert "return enhanceMenuTruthR214(wholeSystem)" in runtime
+    assert "finalResponse = await enhanceMenuTruthR214(finalResponse)" in runtime
+    assert "return enhanceWholeSystemSurfaceR205(finalResponse)" in runtime
+    assert runtime.index("finalResponse = await enhanceMenuTruthR214(finalResponse)") < runtime.index("return enhanceWholeSystemSurfaceR205(finalResponse)")
     assert "canonicalMutation: false" in menu
     assert "promotionAuthorized: false" in menu
     assert "wrangler deploy" not in menu.lower()
