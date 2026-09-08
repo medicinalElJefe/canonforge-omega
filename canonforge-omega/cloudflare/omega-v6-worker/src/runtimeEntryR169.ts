@@ -269,7 +269,9 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   })();
   const r220 = await enhancePostHybridDevelopmentR220(r205);
   const r221 = await enhanceGovernedLocalTrainingR221(r220);
-  return enhanceSurfaceBindingIntegrityR216(r221, env?.CANONICAL_GIT_SHA ?? null);
+  if (r221 !== r220) return enhanceSurfaceBindingIntegrityR216(r221, env?.CANONICAL_GIT_SHA ?? null);
+  if (r220 !== r205) return enhanceSurfaceBindingIntegrityR216(r220, env?.CANONICAL_GIT_SHA ?? null);
+  return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null);
 }
 
 export default { fetch: publicFetch };
