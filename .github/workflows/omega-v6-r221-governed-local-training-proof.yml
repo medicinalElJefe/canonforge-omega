@@ -1,0 +1,230 @@
+name: OMEGA V6 R221 governed local training proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r221-governed-local-training-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  source-and-package-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove R221 local-training dispatch, R220 continuity, R216 binding, and R195 closure
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python -m pytest -q \
+            tests/test_r221_governed_local_training_and_r195_closure.py \
+            tests/test_r220_post_hybrid_development_continuity.py \
+            tests/test_r216_surface_binding_integrity.py \
+            tests/test_r217_production_provenance_lease.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck complete preserved R169 Worker with R221 dispatch
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Package complete Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r221-dry-run
+
+      - name: Reassert dispatch and authority boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'handleReleaseProvenanceR217(request, env)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'handleGovernedLocalTrainingR221(request, env, ctx, runtimeFetch)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'const TRAINING_KIND = "sai_repository_index"' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'connectedDoesNotMeanRunning: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'verifiedRequiresReturnedEvidence: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'canonicalMutation: false' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'runtimeInflation: "SINGLE_FLIGHT_PER_WORKER_ISOLATE"' canonforge-omega/cloudflare/omega-v6-worker/src/system/driveCorpusSnapshotR195.ts
+          ! grep -q 'wrangler deploy --config' .github/workflows/omega-v6-r221-governed-local-training-proof.yml
+
+  windows-real-local-training:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: canonforge-omega
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Set up supported Windows Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: canonforge-omega/pyproject.toml
+
+      - name: Build verified Windows environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m venv .venv
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          & $py -m pip install --upgrade pip
+          & $py -m pip install -e '.[dev,rcwa]'
+          if ($LASTEXITCODE -ne 0) { throw 'R221 Windows dependency installation failed' }
+
+      - name: Prove real sai_repository_index lease, execution, and returned evidence
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path '.').Path
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          $env:OMEGA_PUBLIC_URL = 'http://127.0.0.1:8127'
+          $env:OMEGA_APPROVED_ROOT = $root
+          $server = $null
+          $agent = $null
+          $pairingFile = Join-Path $env:RUNNER_TEMP 'r221-pairing.cmd'
+          try {
+            $server = Start-Process -FilePath $py -ArgumentList @('-m','uvicorn','api.app:app','--host','127.0.0.1','--port','8127') -PassThru -WindowStyle Hidden
+            $ready = $false
+            for ($i = 0; $i -lt 60; $i++) {
+              try {
+                $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/health' -TimeoutSec 3
+                if ($health.ok) { $ready = $true; break }
+              } catch {}
+              Start-Sleep -Seconds 1
+            }
+            if (-not $ready) { throw 'R221 local sovereign API did not become ready' }
+
+            Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8127/api/hybrid/launcher' -OutFile $pairingFile -TimeoutSec 10
+            $launcherText = Get-Content -Raw -LiteralPath $pairingFile
+            $tokenMatch = [regex]::Match($launcherText, 'OMEGA_TOKEN=([^\x22\r\n]+)')
+            if (-not $tokenMatch.Success) { throw 'R221 could not extract the issued pairing token' }
+            $token = $tokenMatch.Groups[1].Value
+            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
+
+            $jsonHeaders = @{ 'content-type' = 'application/json' }
+            Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/mode' -Headers $jsonHeaders -Body '{"mode":"MANUAL"}' -TimeoutSec 8 | Out-Null
+            $queued = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/enqueue' -Headers $jsonHeaders -Body '{"kind":"sai_repository_index","reason":"R221 deterministic governed local-training proof","payload":{"r221_ci":true,"training_scope":"LOCAL_REPOSITORY_INDEX_ONLY","foundation_model_weights_trained":false,"canonical_mutation":false,"deployment_authorized":false,"promotion_authorized":false}}' -TimeoutSec 8
+            if (-not $queued.id -or $queued.kind -ne 'sai_repository_index' -or $queued.state -ne 'QUEUED') { throw 'R221 real local-training job was not queued truthfully' }
+
+            $agent = Start-Process -FilePath $py -ArgumentList @('scripts\omega_sovereign_agent.py','--server','http://127.0.0.1:8127','--token',$token,'--root',$root) -PassThru -WindowStyle Hidden
+
+            $hybrid = $null
+            for ($attempt = 0; $attempt -lt 45; $attempt++) {
+              try {
+                $hybrid = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/hybrid/status' -TimeoutSec 5
+                if ($hybrid.heartbeatCurrent -and $hybrid.authenticated -and $hybrid.pcOnline) { break }
+              } catch {}
+              Start-Sleep -Seconds 2
+            }
+            if (-not $hybrid -or -not $hybrid.heartbeatCurrent -or -not $hybrid.authenticated -or -not $hybrid.pcOnline) {
+              throw 'R221 authenticated heartbeat did not reach current PC-online proof'
+            }
+
+            $verified = $null
+            $development = $null
+            for ($attempt = 0; $attempt -lt 120; $attempt++) {
+              $development = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/development/status' -TimeoutSec 8
+              $verified = @($development.recent_jobs | Where-Object { $_.id -eq $queued.id -and $_.state -eq 'VERIFIED' -and $_.evidence }) | Select-Object -Last 1
+              if ($verified) { break }
+              $terminal = @($development.recent_jobs | Where-Object { $_.id -eq $queued.id -and $_.state -in @('BLOCKED','FAILED','CANCELLED') }) | Select-Object -Last 1
+              if ($terminal) { throw ('R221 local training terminated as '+$terminal.state+': '+($terminal | ConvertTo-Json -Depth 20 -Compress)) }
+              Start-Sleep -Seconds 2
+            }
+            if (-not $verified) { throw 'R221 sai_repository_index did not return VERIFIED evidence in the bounded window' }
+            if ($verified.evidence.job_kind -ne 'sai_repository_index') { throw 'R221 returned evidence is not bound to sai_repository_index' }
+            if (-not $verified.evidence.training_output_path) { throw 'R221 returned training evidence lacks training_output_path' }
+
+            [pscustomobject]@{
+              schema = 'OMEGA_R221_WINDOWS_GOVERNED_LOCAL_TRAINING_PROOF'
+              transport = 'WINDOWS_CI_LOOPBACK_NOT_OPERATOR_PC'
+              heartbeatCurrent = [bool]$hybrid.heartbeatCurrent
+              authenticated = [bool]$hybrid.authenticated
+              pcOnline = [bool]$hybrid.pcOnline
+              jobId = $queued.id
+              jobKind = $queued.kind
+              verifiedState = $verified.state
+              evidence = $verified.evidence
+              connectedIsNotExecution = $true
+              canonicalMutation = $false
+              githubMutation = $false
+              deploymentAuthorized = $false
+              promotionAuthorized = $false
+            } | ConvertTo-Json -Depth 40 | Set-Content -Encoding utf8 'r221-local-training-proof.json'
+
+            Write-Host 'R221_WINDOWS_SAI_REPOSITORY_INDEX_LEASE_EXECUTION_RETURN_PROVEN_NOT_USER_PC'
+          }
+          finally {
+            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
+            if ($agent -and -not $agent.HasExited) { Stop-Process -Id $agent.Id -Force -ErrorAction SilentlyContinue }
+            if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue }
+          }
+
+      - name: Upload R221 Windows local-training proof packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-r221-local-training-${{ github.run_id }}
+          if-no-files-found: warn
+          path: canonforge-omega/r221-local-training-proof.json
+
+  live-nonmutating-proof:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: [source-and-package-proof, windows-real-local-training]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for exact canonical R221 deployment and prove live surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r221/status" -o r221-status.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r195/manifest" -o r195-manifest.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/?app=Hybrid" -o hybrid.html; then
+              if EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          status=json.loads(Path('r221-status.json').read_text())
+          assert status.get('schema') == 'OMEGA_GOVERNED_LOCAL_TRAINING_R221', status
+          assert status.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], status
+          boundary=status.get('truthBoundary') or {}
+          assert boundary.get('connectedDoesNotMeanRunning') is True, status
+          assert boundary.get('verifiedRequiresReturnedEvidence') is True, status
+          r195=json.loads(Path('r195-manifest.json').read_text())
+          assert r195, r195
+          html=Path('hybrid.html').read_text(errors='replace')
+          assert 'OMEGA_GOVERNED_LOCAL_TRAINING_SURFACE_R221' in html, 'R221 Hybrid surface marker missing'
+          assert 'omegaR221TrainLocal' in html, 'R221 train-local control missing'
+          PY
+              then
+                matched=true
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$matched" = true
+          echo "R221_LIVE_EXACT_SHA_STATUS_UI_AND_R195_PROVEN"
