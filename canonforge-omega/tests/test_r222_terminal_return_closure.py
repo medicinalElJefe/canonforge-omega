@@ -137,7 +137,9 @@ def test_r222_preserves_existing_execution_and_return_authorities():
     assert 'r204VerifiedReturnAuthorityPreserved: true' in r222
     assert 'r141r142ExactPayloadAuthorityPreserved: true' in r222
     assert 'r159ConvergenceRequiresVerifiedReplay: true' in r222
-    assert 'RUNNING != RETURNED != VERIFIED' in r203
+    assert 'RETURNED_HOST_PROOF_HASHED' in r203
+    assert 'hostProofLaw:' in r203
+    assert 'not physical correctness, CanonState admission or promotion authority' in r203
     assert 'verification.verified === true' in r204
 
 
@@ -174,7 +176,9 @@ def test_r222_does_not_mutate_canon_or_authorize_promotion():
 def test_r220_stale_projection_is_specifically_closed_by_r222_without_replacing_r220():
     r220 = read(R220)
     r222 = read(R222)
-    assert '["QUEUED", "LEASED", "RUNNING"]' in r220
+    assert 'const active = development?.active_job || null;' in r220
+    assert 'if (provenLink && (activeState === "LEASED" || activeState === "RUNNING")) state = "HOST_EXECUTING";' in r220
+    assert 'if (provenLink && !active && latestTerminal?.state === "VERIFIED") state = "HOST_RETURNED";' in r220
     assert '"COMPLETE"' in r222 and '"COMPLETED"' in r222
     assert 'next.active_job = null;' in r222
     assert 'HOST COMPLETED · RETURN EVIDENCE MISSING' in r222
