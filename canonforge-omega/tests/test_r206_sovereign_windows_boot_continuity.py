@@ -29,10 +29,16 @@ def test_r206_launcher_keeps_one_canonical_localhost_identity_through_successor_
 def test_r206_windows_delegation_uses_argument_boundaries_not_literal_quote_characters():
     legacy = read(LEGACY_LAUNCHER)
     gateway = read(GATEWAY)
-    assert "$args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Gateway)" in legacy
+    # R222 strengthens the old R206 delegation contract: the server identity is now an
+    # explicit argument as well as the gateway path, while array splatting continues to
+    # preserve Windows argument boundaries without embedding literal quote characters.
+    assert "$args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Gateway,'-ProductionBase',$ProductionBase)" in legacy
     assert "$invoke = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Implementation,'-ProductionBase',$ProductionBase)" in gateway
+    assert "$env:OMEGA_SERVER_OVERRIDE" in legacy
+    assert "$env:OMEGA_SERVER_OVERRIDE" in gateway
     assert '"`"$Gateway`""' not in legacy
     assert '"`"$Implementation`""' not in gateway
+    assert '"`"$ProductionBase`""' not in legacy
     assert '"`"$ProductionBase`""' not in gateway
 
 
