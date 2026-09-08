@@ -47,9 +47,17 @@ def test_repair_contract_is_governed_and_complete():
             "authority_boundary",
             "release_admission",
             "ledger",
+            "advancement_ledger",
         ):
             assert repair.get(field), f"{repair['id']} missing {field}"
-        for path in repair["implementation_paths"] + repair["legacy_entrypoints"] + repair["regression_tests"] + repair["proof_workflows"] + [repair["ledger"]]:
+        paths = (
+            repair["implementation_paths"]
+            + repair["legacy_entrypoints"]
+            + repair["regression_tests"]
+            + repair["proof_workflows"]
+            + [repair["ledger"], repair["advancement_ledger"]]
+        )
+        for path in paths:
             assert _resolve(path).exists(), f"{repair['id']} references missing path {path}"
 
 
@@ -125,14 +133,18 @@ def test_public_bootstrap_cannot_bypass_single_owner_chain():
     control = _text("cloudflare/omega-v6-worker/src/hybridControlPlaneR222.ts")
     assert 'path === "/api/hybrid/launcher"' in control
     assert "START_OMEGA_R222_FULL_HYBRID.cmd" in control
-    # R222 command is itself a mandatory delegate to the stable gateway, verified above.
+    # The release wrapper is itself a mandatory delegate to the stable gateway.
     assert "SOVEREIGN_ORIGIN" not in control
     assert 'const CANONICAL_SINGLETON = "OMEGA_RUNTIME"' in control
 
 
-def test_repair_is_recorded_in_advancement_ledger():
-    ledger = _text("release/OMEGA_V6_ADVANCEMENT_LEDGER.md")
-    assert "R222" in ledger
-    assert "repair" in ledger.lower()
-    assert "single" in ledger.lower()
-    assert "CANDIDATE" in ledger
+def test_repair_is_durably_ledgered_without_false_live_admission():
+    contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+    repair = next(row for row in contract["repairs"] if row["id"] == "R222-SINGLE-OWNER-HYBRID-REPAIR")
+    repair_ledger = _text(repair["ledger"])
+    advancement_ledger = _text(repair["advancement_ledger"])
+    assert "R222-SINGLE-OWNER-HYBRID-REPAIR" in repair_ledger
+    assert "Permanent system invariant" in repair_ledger
+    assert "CANDIDATE" in repair_ledger
+    assert "ADMITTED/LIVE" not in repair_ledger.split("## R222-SINGLE-OWNER-HYBRID-REPAIR", 1)[1]
+    assert "release completion is incomplete until this ledger and the user-facing completion report" in advancement_ledger
