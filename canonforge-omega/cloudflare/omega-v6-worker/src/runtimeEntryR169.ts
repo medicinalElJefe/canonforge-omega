@@ -55,6 +55,8 @@ import { enhanceOneSystemNavigationR195 } from "./system/oneSystemNavigationR195
 import { handleEarthSarFusionR198 } from "./earthSarTruthFusionR198";
 import { enhanceEarthSarIntegratedRepairR198_1 } from "./earthSarIntegratedRepairR198_1";
 import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_2";
+import { handleEarthSpatialEvidenceR214, enhanceEarthSpatialEvidenceR214 } from "./earthSpatialEvidenceR214";
+import { handleSurfaceCompatibilityR214 } from "./surfaceCompatibilityR214";
 import { enhanceWholeSystemSurfaceR205 } from "./wholeSystemSurfaceR205";
 
 export { OmegaRuntime } from "./heartbeatTruth";
@@ -88,6 +90,12 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const compatibilityR214 = await handleSurfaceCompatibilityR214(request, env, ctx, runtimeFetch);
+  if (compatibilityR214) return compatibilityR214;
+
+  const earthSpatialR214 = await handleEarthSpatialEvidenceR214(request, env, ctx, runtimeFetch);
+  if (earthSpatialR214) return earthSpatialR214;
 
   const operationalProvenanceR210 = await handleOperationalProvenanceR210(request, env, ctx, runtimeFetch);
   if (operationalProvenanceR210) return operationalProvenanceR210;
@@ -231,10 +239,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
     const earthBase = calibrated !== dewey ? calibrated : dewey;
     const oneSystemEarth = await enhanceOneSystemNavigationR195(earthBase, requestUrl.pathname);
     const nativeSarEarth = await enhanceEarthSarIntegratedRepairR198_1(oneSystemEarth, request.url);
-    const preserveR198_2 = async (): Promise<Response> => {
-      return enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
-    };
-    finalResponse = await preserveR198_2();
+    const r198_2 = await enhanceEarthSarVisualContextR198_2(nativeSarEarth, request.url);
+    finalResponse = await enhanceEarthSpatialEvidenceR214(r198_2, request.url);
   } else {
     finalResponse = await enhanceOneSystemNavigationR195Preserved(dewey, calibrated, request);
   }
