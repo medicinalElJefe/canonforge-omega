@@ -76,7 +76,8 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           text = Path('.github/workflows/omega-v6-r221-governed-local-training-proof.yml').read_text(encoding='utf-8')
-          assert 'wrangler deploy --config' not in text
+          forbidden = 'wrangler ' + 'deploy --config'
+          assert forbidden not in text
           assert 'CLOUDFLARE_API_TOKEN' not in text
           PY
 
