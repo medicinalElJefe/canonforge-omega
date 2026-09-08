@@ -118,9 +118,11 @@ def test_r173_operator_lab_and_runtime_mount_are_additive_and_atlas_route_is_rep
     assert 'url.pathname.startsWith("/api/compute/atlas/")' in entry
     assert 'return canonical.fetch(request, env, ctx)' in entry
     assert 'CROSS_RUNTIME_VALIDATION_ID = "r173-authenticated-cloud-sovereign-pc-parity"' in wrangler
-    # R173 must survive later sovereign-agent evolution. Lock the current agent identity
-    # and the stronger R221 continuity/no-fallback behavior instead of an obsolete R179 label.
-    assert 'runtime_version": "r221-train-rcwa-continuity-agent"' in agent
+    # R173 owns the cross-runtime proof semantics, not the release name of the
+    # sovereign agent. Successor releases may advance runtime_version while the
+    # authenticated R173/R175 contracts remain intact. Stronger R221/R222 RCWA
+    # repair/no-fallback behavior is asserted independently of that release label.
+    assert '"runtime_version":' in agent
     assert 'CROSS_RUNTIME_CHALLENGE_SCHEMA = "OMEGA_CROSS_RUNTIME_CHALLENGE_R173"' in agent
     assert 'INDEPENDENT_SOLVER_CHALLENGE_SCHEMA = "OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175"' in agent
     assert 'RCWA_REQUIRED_PACKAGES = ("numpy>=1.24", "grcwa==0.1.2")' in agent
