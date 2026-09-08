@@ -6,6 +6,7 @@ import { enhanceMissionSurfaceR200 } from "./missionSurfaceR200";
 
 export const ONE_SYSTEM_NAVIGATION_RELEASE_R195 = "r195-drive-corpus-one-system";
 export const NAVIGATION_POLISH_RELEASE_R214 = "r214-submenu-navigation-polish";
+export const NAVIGATION_INTEGRITY_RELEASE_R215 = "r215-command-palette-route-integrity";
 
 const residualStyle = `<style id="omegaResidualRestorationR195Style">
 #r195ResidualCard{grid-column:1/-1}.r195ResidualHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap}.r195ResidualMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}.r195ResidualMetric{padding:10px;border:1px solid var(--l,#2b4058);border-radius:9px;background:#07111a}.r195ResidualMetric b{display:block;font-size:22px}.r195ResidualRows{display:grid;gap:6px;max-height:420px;overflow:auto}.r195ResidualRow{display:grid;grid-template-columns:minmax(160px,1.5fr) minmax(180px,1fr) minmax(140px,.8fr);gap:8px;padding:9px;border:1px solid var(--l,#2b4058);border-radius:9px;background:#071019}.r195ResidualRow code{font-size:10px;white-space:normal}.r195ResidualState{font-weight:800}.r195ResidualState[data-severity="5"]{color:#ff8585}.r195ResidualState[data-severity="4"]{color:#e7c96e}.r195ResidualState[data-severity="3"]{color:#8bd8ff}@media(max-width:850px){.r195ResidualMetrics{grid-template-columns:1fr 1fr}.r195ResidualRow{grid-template-columns:1fr}}
@@ -29,6 +30,8 @@ function controlSubmenuMarkup(pathname: string): string {
 
 const navigationPolishScript = `<script id="omegaNavigationPolishR214Runtime">(()=>{const menu=document.getElementById('omegaR214ControlMenu');if(!menu)return;const links=Array.from(menu.querySelectorAll('.r214SubLink'));const here=new URL(location.href);let matched=false;for(const link of links){const u=new URL(link.href,location.origin);const pathMatch=u.pathname==='/'?here.pathname==='/':here.pathname===u.pathname||here.pathname.startsWith(u.pathname+'/');const appMatch=!u.searchParams.get('app')||here.searchParams.get('app')===u.searchParams.get('app');const on=pathMatch&&appMatch;if(on){link.classList.add('current');link.setAttribute('aria-current','page');matched=true}}if(matched)menu.open=true;menu.addEventListener('toggle',()=>{if(menu.open&&innerWidth>760&&!document.body.classList.contains('r193Expanded')){document.body.classList.add('r193Expanded');try{localStorage.setItem('omega_r193_expanded','1')}catch{}}});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.open&&!document.getElementById('omegaR193Palette')?.classList.contains('open'))menu.open=false})})();</script>`;
 
+const commandPaletteIntegrityScript = `<script id="omegaNavigationIntegrityR215Runtime">(()=>{const palette=document.getElementById('omegaR193Palette'),query=document.getElementById('r193Query'),results=document.getElementById('r193Results'),command=document.getElementById('omegaR193Command');if(!palette||!query||!results)return;const searchable='one system operator mission continuity residual restoration drive corpus calculus execution proof r195';function matches(){const q=String(query.value||'').trim().toLowerCase();return !q||searchable.includes(q)}function augment(){if(!palette.classList.contains('open')||!matches()||results.querySelector('[data-r215-system]'))return;const b=document.createElement('button');b.className='r193Result';b.dataset.r193Href='/system';b.dataset.r215System='true';b.setAttribute('aria-label','Open One System operator');b.innerHTML='<span><b>ONE SYSTEM</b><br><small>operator · mission · continuity · residual restoration</small></span><small>SYSTEM · R195+</small>';b.addEventListener('click',()=>{location.href='/system'});results.appendChild(b)}const later=()=>queueMicrotask(augment);query.addEventListener('input',later);command?.addEventListener('click',later);document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k')later()});new MutationObserver(later).observe(palette,{attributes:true,attributeFilter:['class']});if(palette.classList.contains('open'))later()})();</script>`;
+
 export async function enhanceOneSystemNavigationR195(response: Response, pathname: string): Promise<Response> {
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
@@ -48,6 +51,10 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
     html = html.includes("</body>") ? html.replace("</body>", navigationPolishScript + "</body>") : html + navigationPolishScript;
   }
 
+  if (html.includes('id="omegaR193Palette"') && !html.includes('id="omegaNavigationIntegrityR215Runtime"')) {
+    html = html.includes("</body>") ? html.replace("</body>", commandPaletteIntegrityScript + "</body>") : html + commandPaletteIntegrityScript;
+  }
+
   const active = pathname === "/system" || pathname.startsWith("/system/");
   if (active && !html.includes('id="omegaResidualRestorationR195Runtime"')) {
     html = html.includes("</head>") ? html.replace("</head>", residualStyle + "</head>") : residualStyle + html;
@@ -59,6 +66,7 @@ export async function enhanceOneSystemNavigationR195(response: Response, pathnam
   headers.set("x-omega-one-system", ONE_SYSTEM_NAVIGATION_RELEASE_R195);
   headers.set("x-omega-one-system-correlation", ONE_SYSTEM_CORRELATION_RELEASE_R199);
   headers.set("x-omega-navigation-polish", NAVIGATION_POLISH_RELEASE_R214);
+  headers.set("x-omega-navigation-integrity", NAVIGATION_INTEGRITY_RELEASE_R215);
   const preserved = new Response(html, { status: response.status, statusText: response.statusText, headers });
   const reconstituted = await reconstituteOneSystemR199(preserved, pathname);
   const correlated = await correlateOneSystemTruthStripR199(reconstituted);
