@@ -1,0 +1,139 @@
+name: OMEGA V6 R222 terminal return closure proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r222-terminal-return-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
+jobs:
+  terminal-return-source-and-package-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove R222 terminal truth and inherited R221/R220/R204/R203/R216/R217 contracts
+        working-directory: canonforge-omega
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python -m py_compile omega_runtime/self_build.py scripts/omega_sovereign_agent.py
+          python -m pytest -q \
+            tests/test_r222_terminal_return_closure.py \
+            tests/test_r221_governed_local_training_and_r195_closure.py \
+            tests/test_r175_independent_solver_validation.py \
+            tests/test_r220_post_hybrid_development_continuity.py \
+            tests/test_r204_verified_return_admission.py \
+            tests/test_r203_hybrid_mission_continuity.py \
+            tests/test_r216_surface_binding_integrity.py \
+            tests/test_r217_production_provenance_lease.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck the complete preserved R169 Worker with R222
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Package complete Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r222-dry-run
+
+      - name: Reassert R169 ordering, R204 identity authority, R221 continuity, R216 final binding, and non-promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'handleReleaseProvenanceR217(request, env)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'handleTerminalReturnClosureR222(request, env, ctx, runtimeFetch)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'handleGovernedLocalTrainingR221(request, env, ctx, runtimeFetch)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'enhanceGovernedLocalTrainingR221(r220)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'enhanceTerminalReturnClosureR222(r221)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'enhanceSurfaceBindingIntegrityR216(r222' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'OMEGA_HYBRID_RETURN_VERIFICATION_R204' canonforge-omega/cloudflare/omega-v6-worker/src/system/terminalReturnClosureR222.ts
+          grep -F 'R204_AUTHENTICATED_RETURN_ADMISSION' canonforge-omega/cloudflare/omega-v6-worker/src/system/terminalReturnClosureR222.ts
+          grep -F 'containerVerificationRequiresExactJobIdentity: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/terminalReturnClosureR222.ts
+          grep -F 'sameJobNewerTerminalBeatsStaleInflightProjection: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/terminalReturnClosureR222.ts
+          grep -F 'r222PollingIsNotHeartbeatAuthority: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/terminalReturnClosureR222.ts
+          grep -F 'controllerOwnsTrainingToRcwaTransition: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'browserTabIsNotRequiredForPipelineProgress: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'liveActiveJobOverridesStaleRecentJobSnapshot: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'rcwaRetryDoesNotRepeatTraining: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'noReducedOrderOrScalarFallbackPromotedAsRcwa: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
+          grep -F 'def repair_rcwa_dependencies(root: Path) -> dict:' canonforge-omega/scripts/omega_sovereign_agent.py
+          test -s canonforge-omega/scripts/prove_r221_windows_continuity.ps1
+          python - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/omega-v6-r222-terminal-return-closure.yml').read_text(encoding='utf-8')
+          assert 'wrangler deploy --dry-run' in workflow
+          forbidden = 'wrangler ' + 'deploy --config'
+          assert forbidden not in workflow
+          token_name = 'CLOUDFLARE_' + 'API_TOKEN'
+          assert token_name not in workflow
+          r222 = Path('canonforge-omega/cloudflare/omega-v6-worker/src/system/terminalReturnClosureR222.ts').read_text(encoding='utf-8')
+          assert 'canonicalMutation: true' not in r222
+          assert 'promotionAuthorized: true' not in r222
+          PY
+
+  live-exact-sha-terminal-return-proof:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: [terminal-return-source-and-package-proof]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for release-forward and prove exact deployed R222 surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r222/status" -o r222-status.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/?app=Hybrid" -o r222-hybrid.html; then
+              if EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          status = json.loads(Path('r222-status.json').read_text())
+          assert status.get('schema') == 'OMEGA_TERMINAL_RETURN_CLOSURE_R222', status
+          assert status.get('release') == 'r222-terminal-return-closure', status
+          assert status.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], status
+          boundaries = status.get('boundaries') or {}
+          assert boundaries.get('completeIsNotVerified') is True, status
+          assert boundaries.get('r204VerifiedReturnAuthorityPreserved') is True, status
+          assert boundaries.get('containerVerificationRequiresExactJobIdentity') is True, status
+          assert boundaries.get('sameJobNewerTerminalBeatsStaleInflightProjection') is True, status
+          assert boundaries.get('r222PollingIsNotHeartbeatAuthority') is True, status
+          assert status.get('canonicalMutation') is False, status
+          assert status.get('promotionAuthorized') is False, status
+          html = Path('r222-hybrid.html').read_text(errors='replace')
+          assert 'omegaTerminalReturnR222Runtime' in html, 'R222 runtime marker missing from live Hybrid surface'
+          assert 'HOST COMPLETED · RETURN EVIDENCE MISSING' in html, 'R222 terminal-return UI truth copy missing'
+          PY
+              then
+                matched=true
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$matched" = true
+          echo "R222_LIVE_EXACT_SHA_TERMINAL_RETURN_SURFACE_PROVEN"
