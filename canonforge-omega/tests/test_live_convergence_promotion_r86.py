@@ -6,7 +6,7 @@ WORKFLOW = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-pro
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
 DEPLOY_STEP = "Deploy exact canonical Worker to Cloudflare and bind version ID"
-LIVE_PROOF_STEP = "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes"
+LIVE_PROOF_STEP = "Prove live exact identity, R217 lease, cumulative truth, version lock, and all 172 R185 nodes"
 RESTORE_STEP = "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed"
 
 
@@ -15,6 +15,7 @@ def test_v6_promotion_requires_live_post_deploy_convergence_proof():
     assert DEPLOY_STEP in source
     assert LIVE_PROOF_STEP in source
     assert "https://omegav6.jeffdeweyeljefe.workers.dev" in source
+    assert "/api/system/r217/release-lease" in source
     assert "/api/system/r211/manifest" in source
     assert "/api/system/r205/manifest" in source
     assert "/api/system/r204/manifest" in source
@@ -25,6 +26,7 @@ def test_v6_promotion_requires_live_post_deploy_convergence_proof():
     assert "pcOnlineRequiresCurrentAuthenticatedHeartbeat" in source
     assert "R185 manifest + deployment identity stable across complete sweep: VERIFIED" in source
     assert "expected-version-id.txt" in source
+    assert "expected-release-lease.txt" in source
     assert "PRODUCTION_WRITER_RACE" in source
 
 

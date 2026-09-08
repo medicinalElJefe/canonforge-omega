@@ -41,7 +41,7 @@ def test_r216_ledger_records_no_disconnected_active_surface_invariant_and_race_e
     end = text.index("\n---\n\n## R214 — Source-backed", start)
     r216 = text[start:end]
     for required in (
-        "**Status:** `CANDIDATE`",
+        "**Status:** `HELD`",
         "No deceptive or disconnected active surface",
         "/api/system/r211/status",
         "/api/system/r205/health",
