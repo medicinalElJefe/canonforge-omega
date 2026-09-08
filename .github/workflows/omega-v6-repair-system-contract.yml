@@ -15,7 +15,7 @@ concurrency:
 jobs:
   repair-system-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - name: Checkout exact candidate with base history
         uses: actions/checkout@v4
@@ -27,11 +27,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verify repair registry and single-owner invariants
+      - name: Verify repair inheritance single-owner and successor invariants
         working-directory: canonforge-omega
         run: |
           python -m pip install --disable-pip-version-check pytest
-          python -m pytest -q tests/test_repair_system_contract.py tests/test_r222_hybrid_bootstrap_single_instance.py
+          python -m pytest -q \
+            tests/test_repair_system_contract.py \
+            tests/test_system_inheritance_contract.py \
+            tests/test_r222_hybrid_bootstrap_single_instance.py \
+            tests/test_r206_sovereign_windows_boot_continuity.py \
+            tests/test_r207_windows_verified_venv_launch.py \
+            tests/test_r208_physical_sovereign_acceptance.py \
+            tests/test_r209_sovereign_convergence_diagnostics.py \
+            tests/test_cross_runtime_parity_r173.py
 
       - name: Require system/process registration for governed platform changes
         if: github.event_name == 'pull_request'
@@ -56,6 +64,10 @@ jobs:
               echo 'Governed platform change missing repair_system_contract.json update.' >&2
               exit 21
             }
+            printf '%s\n' "${changed[@]}" | grep -Fxq 'canonforge-omega/config/system_inheritance_contract.json' || {
+              echo 'Governed platform change missing system_inheritance_contract.json update.' >&2
+              exit 23
+            }
             printf '%s\n' "${changed[@]}" | grep -Fxq 'canonforge-omega/release/OMEGA_REPAIR_SYSTEM_LEDGER.md' || {
               echo 'Governed platform change missing OMEGA_REPAIR_SYSTEM_LEDGER.md update.' >&2
               exit 22
@@ -66,7 +78,7 @@ jobs:
         if: always()
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
-          ## OMEGA repair-system gate
+          ## OMEGA repair + inheritance system gate
 
-          A repair is not accepted as a one-off patch. Governed platform changes must carry a machine-readable incident/invariant entry, durable repair ledger update, implementation path, regression proof, CI proof and release-admission boundary. This source gate grants no deployment or promotion authority.
+          A repair is not accepted as a one-off patch. Governed platform changes must carry a machine-readable incident/invariant entry, archive/plugin/mode inheritance law, durable repair ledger update, implementation path, successor regression proof, CI proof and release-admission boundary. Archive donors, plugins, package/repair artifacts and modes cannot silently inflate authority. This source gate grants no deployment or promotion authority.
           EOF
