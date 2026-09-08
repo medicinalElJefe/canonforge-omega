@@ -1,0 +1,76 @@
+name: OMEGA V6 R217 production provenance lease proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/releaseProvenanceR217.ts'
+      - 'canonforge-omega/tests/test_r217_production_provenance_lease.py'
+      - '.github/workflows/omega-v6-release-forward-production.yml'
+      - '.github/workflows/omega-v6-r217-production-provenance-proof.yml'
+      - 'canonforge-omega/release/OMEGA_V6_ADVANCEMENT_LEDGER.md'
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-r217-provenance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prove-r217-production-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove single-writer provenance lease and inherited authority contracts
+        working-directory: canonforge-omega
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
+          python scripts/check_cloudflare_contract.py --strict
+          python -m pytest -q tests/test_r213_full_federation_release_closure.py tests/test_r216_surface_binding_integrity.py tests/test_r217_production_provenance_lease.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck complete R169 Worker with R217 additive route
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+          grep -F 'main = "src/runtimeEntryR169.ts"' wrangler.toml
+
+      - name: Dry-run complete Worker without production mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r217-dry-run
+
+      - name: Publish R217 source proof boundary
+        shell: bash
+        run: |
+          {
+            echo '## OMEGA V6 R217 production provenance lease proof'
+            echo
+            echo "- Candidate SHA: $GITHUB_SHA"
+            echo '- R169 entrypoint: PRESERVED'
+            echo '- Deployment identity: canonical SHA + Cloudflare version ID + per-run release lease'
+            echo '- Repository workflow writer scan: ENFORCED'
+            echo '- Indirect mutation-script reference scan: ENFORCED'
+            echo '- Unexpected writer attribution: EXTERNAL_OR_UNATTRIBUTED unless independently proven'
+            echo '- Canon mutation authority added by R217 surface: FALSE'
+            echo '- Promotion authority added by R217 surface: FALSE'
+            echo '- Physical-PC proof implied by R217: FALSE'
+            echo '- Production mutation by this workflow: FALSE'
+          } >> "$GITHUB_STEP_SUMMARY"
