@@ -4,14 +4,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "cloudflare" / "omega-v6-worker" / "src"
 
 
-def test_r216_is_the_outer_entrypoint_but_delegates_canonical_r169():
+def test_r216_preserves_actual_r169_worker_entrypoint_and_wraps_its_public_boundary():
     wrangler = (ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml").read_text(encoding="utf-8")
-    entry = (SRC / "runtimeEntryR216.ts").read_text(encoding="utf-8")
-    assert 'main = "src/runtimeEntryR216.ts"' in wrangler
-    assert 'import runtimeR169 from "./runtimeEntryR169"' in entry
-    assert 'export * from "./runtimeEntryR169"' in entry
-    assert "canonicalR169.fetch(request, env, ctx)" in entry
-    assert "enhanceSurfaceBindingIntegrityR216(response" in entry
+    entry = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
+    assert 'main = "src/runtimeEntryR169.ts"' in wrangler
+    assert 'import canonicalRuntime from "./heartbeatTruth"' in entry
+    assert 'import { enhanceSurfaceBindingIntegrityR216 } from "./surfaceBindingIntegrityR216"' in entry
+    assert "const r205 = await enhanceWholeSystemSurfaceR205(finalResponse)" in entry
+    assert "return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null)" in entry
+    assert "export default { fetch: publicFetch }" in entry
 
 
 def test_r216_surface_is_fail_closed_until_r211_and_r205_are_both_healthy():
@@ -32,7 +33,6 @@ def test_r216_surface_is_fail_closed_until_r211_and_r205_are_both_healthy():
     ):
         assert required in source, required
 
-    # A screenshot-worthy but disconnected surface must never become interactive.
     assert "visibility:hidden!important" in source
     assert "event.preventDefault()" in source
     assert "event.stopImmediatePropagation()" in source
@@ -43,11 +43,13 @@ def test_r216_surface_is_fail_closed_until_r211_and_r205_are_both_healthy():
 
 def test_r216_does_not_inflate_physical_host_or_execution_truth():
     source = (SRC / "surfaceBindingIntegrityR216.ts").read_text(encoding="utf-8")
-    entry = (SRC / "runtimeEntryR216.ts").read_text(encoding="utf-8")
+    entry = (SRC / "runtimeEntryR169.ts").read_text(encoding="utf-8")
     combined = source + "\n" + entry
-    assert "pcOnline=true" not in combined
-    assert "pcOnline: true" not in combined
-    assert "authenticated=true" not in combined
-    assert "promotionAuthorized: true" not in combined
-    assert "canonicalMutation: true" not in combined
-    assert "create a second runtime" in entry
+    assert "pcOnline=true" not in source
+    assert "pcOnline: true" not in source
+    assert "authenticated=true" not in source
+    assert "promotionAuthorized: true" not in source
+    assert "canonicalMutation: true" not in source
+    assert 'main = "src/runtimeEntryR169.ts"' in (ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml").read_text(encoding="utf-8")
+    assert "handleOperationalProvenanceR210" in combined
+    assert "handleWholeSystemControlR205" in combined
