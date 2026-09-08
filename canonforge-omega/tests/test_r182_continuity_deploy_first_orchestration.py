@@ -13,7 +13,7 @@ R181 = REPO / ".github" / "workflows" / "omega-v6-r181-live-ai-sai-sovereign-pro
 VISUAL = REPO / ".github" / "workflows" / "omega-v6-visual-delivery.yml"
 
 DEPLOY_STEP = "Deploy exact canonical Worker to Cloudflare and bind version ID"
-LIVE_PROOF_STEP = "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes"
+LIVE_PROOF_STEP = "Prove live exact identity, R217 lease, cumulative truth, version lock, and all 172 R185 nodes"
 RESTORE_STEP = "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed"
 
 
@@ -47,7 +47,8 @@ def test_r182_live_proofs_are_reusable_not_blind_push_pollers():
 def test_r182_exact_sha_deploy_precedes_current_post_deploy_proof_and_restore_gate():
     release = text(RELEASE)
     assert 'Checkout exact canonical SHA' in release
-    assert 'CANONICAL_GIT_SHA = "{sha}"' in release
+    assert "'CANONICAL_GIT_SHA': sha" in release
+    assert 'grep -F "CANONICAL_GIT_SHA = \\"$GITHUB_SHA\\"" wrangler.release-forward.toml' in release
     assert 'Final exact-head lock before production mutation' in release
     deploy = release.index(DEPLOY_STEP)
     proof = release.index(LIVE_PROOF_STEP)
@@ -57,6 +58,7 @@ def test_r182_exact_sha_deploy_precedes_current_post_deploy_proof_and_restore_ga
     assert 'test "$(git rev-parse "origin/$CANONICAL_BRANCH")" = "$GITHUB_SHA"' in release
     assert "expected-version-id.txt" in release
     assert "pre-restore-payload.json" in release
+    assert "expected-release-lease.txt" in release
 
 
 def test_r182_keeps_full_integrity_demand_driven_while_r213_uses_bounded_release_proof():
