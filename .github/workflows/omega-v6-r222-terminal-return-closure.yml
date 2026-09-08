@@ -14,6 +14,9 @@ concurrency:
   group: omega-r222-terminal-return-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+
 jobs:
   terminal-return-source-and-package-proof:
     runs-on: ubuntu-latest
@@ -91,3 +94,46 @@ jobs:
           assert 'canonicalMutation: true' not in r222
           assert 'promotionAuthorized: true' not in r222
           PY
+
+  live-exact-sha-terminal-return-proof:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: [terminal-return-source-and-package-proof]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for release-forward and prove exact deployed R222 surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent --show-error --max-time 30 "$V6_URL/api/system/r222/status" -o r222-status.json \
+              && curl --fail --silent --show-error --max-time 30 "$V6_URL/?app=Hybrid" -o r222-hybrid.html; then
+              if EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          status = json.loads(Path('r222-status.json').read_text())
+          assert status.get('schema') == 'OMEGA_TERMINAL_RETURN_CLOSURE_R222', status
+          assert status.get('release') == 'r222-terminal-return-closure', status
+          assert status.get('canonicalGitSha') == os.environ['EXPECTED_SHA'], status
+          boundaries = status.get('boundaries') or {}
+          assert boundaries.get('completeIsNotVerified') is True, status
+          assert boundaries.get('r204VerifiedReturnAuthorityPreserved') is True, status
+          assert boundaries.get('containerVerificationRequiresExactJobIdentity') is True, status
+          assert boundaries.get('sameJobNewerTerminalBeatsStaleInflightProjection') is True, status
+          assert boundaries.get('r222PollingIsNotHeartbeatAuthority') is True, status
+          assert status.get('canonicalMutation') is False, status
+          assert status.get('promotionAuthorized') is False, status
+          html = Path('r222-hybrid.html').read_text(errors='replace')
+          assert 'omegaTerminalReturnR222Runtime' in html, 'R222 runtime marker missing from live Hybrid surface'
+          assert 'HOST COMPLETED · RETURN EVIDENCE MISSING' in html, 'R222 terminal-return UI truth copy missing'
+          PY
+              then
+                matched=true
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$matched" = true
+          echo "R222_LIVE_EXACT_SHA_TERMINAL_RETURN_SURFACE_PROVEN"
