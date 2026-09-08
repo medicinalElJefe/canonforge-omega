@@ -94,6 +94,7 @@ jobs:
           $server = $null
           $agent = $null
           $passed = $false
+          $pairingFile = Join-Path $env:RUNNER_TEMP 'r220-pairing.cmd'
           try {
             $server = Start-Process -FilePath $py -ArgumentList @('-m','uvicorn','api.app:app','--host','127.0.0.1','--port','8127') -PassThru -WindowStyle Hidden
             $ready = $false
@@ -106,11 +107,14 @@ jobs:
             }
             if (-not $ready) { throw 'R220 local sovereign API did not become ready' }
 
-            # Issue the real rotating pairing credential, but do not start the agent yet.
-            $launcher = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8127/api/hybrid/launcher' -TimeoutSec 10
-            $tokenMatch = [regex]::Match($launcher.Content, 'OMEGA_TOKEN=([^\x22\r\n]+)')
+            # Issue the real rotating pairing credential using the same file-based parser
+            # exercised by the exact downloadable Windows setup.
+            Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8127/api/hybrid/launcher' -OutFile $pairingFile -TimeoutSec 10
+            $launcherText = Get-Content -Raw -LiteralPath $pairingFile
+            $tokenMatch = [regex]::Match($launcherText, 'OMEGA_TOKEN=([^\x22\r\n]+)')
             if (-not $tokenMatch.Success) { throw 'R220 could not extract the issued pairing token from the canonical launcher contract' }
             $token = $tokenMatch.Groups[1].Value
+            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
 
             # Make the proof deterministic: queue one fixed allow-listed job while MANUAL,
             # then return to DEVELOPMENT_LOOP before the authenticated agent starts.
@@ -167,6 +171,7 @@ jobs:
             Write-Host 'R220_WINDOWS_LINK_TO_VERIFIED_RETURN_TO_NEXT_STAGE_PROVEN_NOT_USER_PC'
           }
           finally {
+            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
             if ($agent -and -not $agent.HasExited) { Stop-Process -Id $agent.Id -Force -ErrorAction SilentlyContinue }
             if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue }
           }
