@@ -21,30 +21,24 @@ def test_r222_local_runtime_adds_signed_outbound_enrollment_without_replacing_ap
     assert "executionAuthorityGranted" in local
 
 
-def test_r222_successor_api_routes_precede_inherited_catch_all_ui_mount():
-    # api.app mounts the preserved UI at '/'. R222 extends that same FastAPI app, so
-    # successor API routes must be moved ahead of the catch-all mount or Starlette will
-    # return a truthful static 404 without ever reaching the new Hybrid endpoints.
-    from api.runtime_r222 import app as runtime_app
-
-    routes = list(runtime_app.router.routes)
-    ui_indices = [
-        i
-        for i, route in enumerate(routes)
-        if getattr(route, "name", None) == "ui" and getattr(route, "path", None) == "/"
-    ]
-    assert len(ui_indices) <= 1
-    if ui_indices:
-        ui_index = ui_indices[0]
-        assert ui_index == len(routes) - 1
-        for path in ("/api/hybrid/enrollment", "/api/hybrid/r222/local-contract"):
-            route_index = next(i for i, route in enumerate(routes) if getattr(route, "path", None) == path)
-            assert route_index < ui_index
-
+def test_r222_successor_api_routes_are_reordered_ahead_of_inherited_catch_all_ui_mount():
+    # Keep this regression source-only so generic historical non-regression jobs do not
+    # acquire a new FastAPI installation requirement. The R207 Windows integration proof
+    # starts the real runtime and is the executable route-reachability proof.
     local = read(ROOT / "api" / "runtime_r222.py")
-    assert "_ensure_successor_api_precedes_ui_mount" in local
-    assert "isinstance(route, Mount)" in local
+    enrollment = local.index('@app.get("/api/hybrid/enrollment")')
+    contract = local.index('@app.get("/api/hybrid/r222/local-contract")')
+    reorder_def = local.index("def _ensure_successor_api_precedes_ui_mount")
+    reorder_call = local.rindex("_ensure_successor_api_precedes_ui_mount()")
+
+    assert enrollment < reorder_def
+    assert contract < reorder_def
+    assert reorder_def < reorder_call
+    assert "from starlette.routing import Mount" in local
+    assert 'isinstance(route, Mount) and getattr(route, "name", None) == "ui"' in local
+    assert "app.router.routes.remove(route)" in local
     assert "app.router.routes.append(route)" in local
+    assert "does not replace the app" in local
 
 
 def test_r222_preserves_exact_durable_object_identity_and_removes_hybrid_gateway_fallback():
