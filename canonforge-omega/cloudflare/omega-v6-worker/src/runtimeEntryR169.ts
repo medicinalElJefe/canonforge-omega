@@ -57,6 +57,7 @@ import { enhanceEarthSarIntegratedRepairR198_1 } from "./earthSarIntegratedRepai
 import { enhanceEarthSarVisualContextR198_2 } from "./earthSarVisualContextR198_2";
 import { handleEarthSpatialEvidenceR214, enhanceEarthSpatialEvidenceR214 } from "./earthSpatialEvidenceR214";
 import { handleSurfaceCompatibilityR214 } from "./surfaceCompatibilityR214";
+import { handleMenuTruthR214, enhanceMenuTruthR214 } from "./menuTruthR214";
 import { enhanceWholeSystemSurfaceR205 } from "./wholeSystemSurfaceR205";
 
 export { OmegaRuntime } from "./heartbeatTruth";
@@ -90,6 +91,9 @@ function json(data: unknown, status = 200): Response {
 
 async function runtimeFetch(request: Request, env: any, ctx: any): Promise<Response> {
   const url = new URL(request.url);
+
+  const menuTruthR214 = await handleMenuTruthR214(request, env, ctx, runtimeFetch);
+  if (menuTruthR214) return menuTruthR214;
 
   const compatibilityR214 = await handleSurfaceCompatibilityR214(request, env, ctx, runtimeFetch);
   if (compatibilityR214) return compatibilityR214;
@@ -246,7 +250,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   } else {
     finalResponse = await enhanceOneSystemNavigationR195Preserved(dewey, calibrated, request);
   }
-  return enhanceWholeSystemSurfaceR205(finalResponse);
+  const wholeSystem = await enhanceWholeSystemSurfaceR205(finalResponse);
+  return enhanceMenuTruthR214(wholeSystem);
 }
 
 export default { fetch: publicFetch };
