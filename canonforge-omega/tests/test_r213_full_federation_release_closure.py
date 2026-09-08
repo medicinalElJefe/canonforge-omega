@@ -21,7 +21,7 @@ def is_v6_workflow(path: Path, text: str) -> bool:
 
 def workflow_mutation_lines():
     publishers = []
-    rollbacks = []
+    restores = []
     for path in sorted(WORKFLOWS.glob("*.y*ml")):
         text = read(path)
         if not is_v6_workflow(path, text):
@@ -41,35 +41,48 @@ def workflow_mutation_lines():
             )
             if publishes:
                 publishers.append((path.name, lineno, raw.strip()))
-            if "wrangler rollback" in line:
-                rollbacks.append((path.name, lineno, raw.strip()))
-    return publishers, rollbacks
+            restores_production = (
+                "wrangler rollback" in line
+                or "deployments_url?force=true" in line
+            )
+            if restores_production:
+                restores.append((path.name, lineno, raw.strip()))
+    return publishers, restores
 
 
-def test_r213_release_forward_owns_exhaustive_r185_gate_and_rollback():
+def test_r213_release_forward_owns_exhaustive_r185_gate_and_exact_restore():
     text = read(RELEASE)
     assert "MIN_CANONICAL_SHA: 878f331a38ac01ace480858f9f135e441ad3a1f6" in text
-    assert "Prove live exact identity, cumulative truth, and all 172 R185 nodes" in text
+    assert "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes" in text
     assert "python canonforge-omega/scripts/verify_r185_live_federation.py" in text
     assert '--expected-sha "$GITHUB_SHA"' in text
     assert '--workers 12' in text
     assert "assert s.get('ok') is True, s" in text
     assert "R211 aggregate status.ok: TRUE" in text
-    assert "if: steps.liveproof.outcome != 'success'" in text
-    assert "npx wrangler rollback" in text
+    assert "steps.deploy.outcome != 'success'" in text
+    assert "steps.versionlock.outcome != 'success'" in text
+    assert "steps.liveproof.outcome != 'success'" in text
+    assert "pre-restore-payload.json" in text
+    assert "pre-version-ids.json" in text
+    assert '"$DEPLOYMENTS_URL?force=true"' in text
+    assert "RESTORE_TARGET_MISMATCH" in text
     assert "R185 172 advertised public routes: LIVE VERIFIED" in text
     assert "R185 172 machine routes and Durable Object runtimes: LIVE VERIFIED" in text
     assert "R185 manifest + deployment identity stable across complete sweep: VERIFIED" in text
 
 
-def test_r213_release_forward_is_the_only_v6_production_mutation_authority_repository_wide():
-    publishers, rollbacks = workflow_mutation_lines()
+def test_r213_release_forward_is_the_only_v6_production_mutation_and_restore_authority_repository_wide():
+    publishers, restores = workflow_mutation_lines()
     assert publishers, "R213 must retain one exact-head production publisher"
+    assert restores, "R216 must retain one exact pre-deploy production restore authority"
     assert {item[0] for item in publishers} == {RELEASE.name}, publishers
-    assert {item[0] for item in rollbacks} == {RELEASE.name}, rollbacks
+    assert {item[0] for item in restores} == {RELEASE.name}, restores
     release_text = read(RELEASE)
     assert "CLOUDFLARE_API_TOKEN" in release_text
     assert "CLOUDFLARE_ACCOUNT_ID" in release_text
+    assert "V6_SCRIPT_NAME: omegav6" in release_text
+    assert "expected-version-id.txt" in release_text
+    assert "PRODUCTION_WRITER_RACE" in release_text
     verify_text = read(VERIFY)
     assert "CLOUDFLARE_API_TOKEN" not in verify_text
     assert "CLOUDFLARE_ACCOUNT_ID" not in verify_text
