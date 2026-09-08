@@ -118,7 +118,7 @@ def test_r173_operator_lab_and_runtime_mount_are_additive_and_atlas_route_is_rep
     assert 'url.pathname.startsWith("/api/compute/atlas/")' in entry
     assert 'return canonical.fetch(request, env, ctx)' in entry
     assert 'CROSS_RUNTIME_VALIDATION_ID = "r173-authenticated-cloud-sovereign-pc-parity"' in wrangler
-    assert 'runtime_version": "r179-b059-ai-sai-convergence-agent"' in agent
+    assert 'runtime_version": "r221-train-rcwa-continuity-agent"' in agent
     assert 'CROSS_RUNTIME_CHALLENGE_SCHEMA = "OMEGA_CROSS_RUNTIME_CHALLENGE_R173"' in agent
     assert 'INDEPENDENT_SOLVER_CHALLENGE_SCHEMA = "OMEGA_INDEPENDENT_SOLVER_CHALLENGE_R175"' in agent
     assert '"cross_runtime_validate"' in agent
