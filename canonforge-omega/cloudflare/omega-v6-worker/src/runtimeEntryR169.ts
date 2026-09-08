@@ -250,8 +250,8 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
   } else {
     finalResponse = await enhanceOneSystemNavigationR195Preserved(dewey, calibrated, request);
   }
-  const wholeSystem = await enhanceWholeSystemSurfaceR205(finalResponse);
-  return enhanceMenuTruthR214(wholeSystem);
+  finalResponse = await enhanceMenuTruthR214(finalResponse);
+  return enhanceWholeSystemSurfaceR205(finalResponse);
 }
 
 export default { fetch: publicFetch };
