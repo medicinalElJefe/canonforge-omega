@@ -43,12 +43,17 @@ def test_r221_isolates_pipeline_so_generic_layer_builds_cannot_jump_between_trai
     source = R221.read_text(encoding="utf-8")
     api = API.read_text(encoding="utf-8")
 
+    # Runtime order crosses two handlers, so prove each semantic gate inside its own control-flow segment.
     manual = source.index('body: JSON.stringify({ mode: "MANUAL" })')
     training = source.index('kind: TRAINING_KIND', manual)
-    rcwa_prepare = source.index('"/api/validate/independent/prepare"')
+    assert manual < training
+
+    training_guard = source.index('if (!facts.trainingExecutionProven)')
+    rcwa_prepare = source.index('"/api/validate/independent/prepare"', training_guard)
     rcwa_enqueue = source.index('kind: RCWA_KIND', rcwa_prepare)
-    restore = source.index('body: JSON.stringify({ mode: "DEVELOPMENT_LOOP" })', rcwa_enqueue)
-    assert manual < training < rcwa_prepare < rcwa_enqueue < restore
+    rcwa_verified_guard = source.index('if (!facts.rcwaExecutionProven)', rcwa_enqueue)
+    restore = source.index('body: JSON.stringify({ mode: "DEVELOPMENT_LOOP" })', rcwa_verified_guard)
+    assert training_guard < rcwa_prepare < rcwa_enqueue < rcwa_verified_guard < restore
 
     assert '@app.post("/api/development/mode")' in api
     assert 'return _builder.set_mode(BuildMode(req.mode))' in api
