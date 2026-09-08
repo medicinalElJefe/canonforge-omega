@@ -6,7 +6,7 @@ LEGACY = ROOT / ".github" / "workflows" / "omega-v6-r198-production-deploy.yml"
 RELEASE = ROOT / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 
 DEPLOY_STEP = "Deploy exact canonical Worker to Cloudflare and bind version ID"
-LIVE_PROOF_STEP = "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes"
+LIVE_PROOF_STEP = "Prove live exact identity, R217 lease, cumulative truth, version lock, and all 172 R185 nodes"
 RESTORE_STEP = "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed"
 
 
@@ -29,12 +29,18 @@ def test_r200_exact_head_and_runtime_immutability_laws_survive_in_release_forwar
 def test_r200_exact_deployment_identity_binding_survives_without_source_mutation():
     text = read(RELEASE)
     assert "CANONICAL_GIT_SHA" in text
+    assert "OMEGA_RELEASE_LEASE" in text
+    assert "OMEGA_RELEASE_RUN_ID" in text
+    assert "OMEGA_RELEASE_RUN_ATTEMPT" in text
     assert "wrangler.release-forward.toml" in text
     assert "git diff --exit-code -- wrangler.toml" in text
+    assert "/api/system/r217/release-lease" in text
     assert "/api/acceptance/r181/manifest" in text
     assert "canonicalGitSha" in text
+    assert "releaseLease" in text
     assert "Current Version ID" in text
     assert "expected-version-id.txt" in text
+    assert "expected-release-lease.txt" in text
 
 
 def test_r200_proof_before_mutation_and_live_acceptance_after_mutation_survive():
@@ -50,18 +56,22 @@ def test_r200_proof_before_mutation_and_live_acceptance_after_mutation_survive()
     assert pytest_pos < typecheck_pos < dry_run_pos < head_gate_pos < deploy_pos < live_pos < restore_pos
 
 
-def test_r200_failed_admission_restores_predeploy_identity_instead_of_guessing_previous_version():
+def test_r200_failed_admission_restores_predeploy_identity_only_when_run_still_owns_production():
     text = read(RELEASE)
     assert "pre-deployments.json" in text
     assert "pre-version-ids.json" in text
     assert "pre-restore-payload.json" in text
     assert '"$DEPLOYMENTS_URL?force=true"' in text
     assert "RESTORE_TARGET_MISMATCH" in text
+    assert "restore-owned.txt" in text
+    assert "RESTORE_WITHHELD_PRODUCTION_WRITER_RACE" in text
+    assert "EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION" in text
 
 
 def test_r200_cumulative_truth_boundaries_remain_in_current_live_gate():
     text = read(RELEASE)
     for token in (
+        "OMEGA_RELEASE_PROVENANCE_R217",
         "OMEGA_OPERATIONAL_PROVENANCE_FABRIC_R211",
         "OMEGA_WHOLE_SYSTEM_CONTROL_MANIFEST_R205",
         "OMEGA_VERIFIED_HYBRID_RETURN_MANIFEST_R204",
