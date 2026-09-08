@@ -5,7 +5,8 @@ ROOT = Path(__file__).resolve().parents[1]
 R209 = ROOT / "scripts" / "PROVE_OMEGA_V6_R209_WINDOWS.ps1"
 R208 = ROOT / "scripts" / "PROVE_OMEGA_V6_WINDOWS.ps1"
 R210 = ROOT / "scripts" / "ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1"
-LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
+LEGACY_LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
+GATEWAY = ROOT / "scripts" / "START_OMEGA_SOVEREIGN.ps1"
 
 
 def text(path: Path) -> str:
@@ -103,8 +104,14 @@ def test_r210_archiver_is_evidence_retention_not_acceptance_authority():
     assert "promotionAuthorized = $false" in source
 
 
-def test_launcher_still_wires_r209_truth_convergence_surface():
-    launcher = text(LAUNCHER)
-    assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in launcher
-    assert "r209_sovereign_convergence_latest.json" in launcher
-    assert "R209" in launcher
+def test_stable_gateway_wires_r209_truth_without_reintroducing_runtime_ownership():
+    legacy = text(LEGACY_LAUNCHER)
+    gateway = text(GATEWAY)
+    assert "START_OMEGA_SOVEREIGN.ps1" in legacy
+    assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in gateway
+    assert "r209_sovereign_convergence_latest.json" in gateway
+    assert "-MaxAttempts 12 -DelaySeconds 5" in gateway
+    assert "R209 is additive to R208" in gateway
+    assert "existing single-owner runtime" in gateway
+    assert "omega_runtime.cli" not in gateway
+    assert "omega_sovereign_agent.py" not in gateway

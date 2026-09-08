@@ -10,7 +10,10 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8127)
     parser.add_argument("--reload", action="store_true")
     args = parser.parse_args()
-    uvicorn.run("api.app:app", host=args.host, port=args.port, reload=args.reload)
+    # R222 composes the preserved FastAPI application with the localhost-only
+    # outbound Hybrid enrollment contract. The canonical 8127 identity remains
+    # unchanged; only the bootstrap route is added.
+    uvicorn.run("api.runtime_r222:app", host=args.host, port=args.port, reload=args.reload)
 
 
 if __name__ == "__main__":
