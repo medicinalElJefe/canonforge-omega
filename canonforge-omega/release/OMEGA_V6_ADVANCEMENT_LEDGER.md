@@ -32,7 +32,7 @@ From this point forward, release completion is incomplete until this ledger and 
 | Track | Status | Current identity | Production truth |
 | --- | --- | --- | --- |
 | R214 navigation polish | `ADMITTED/LIVE` with controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Exact-SHA navigation and R194 evidence-plane proof passed; original rollback transaction defect remains recorded. |
-| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Source is canonical and exact SHA + cumulative truth + 172 R185 nodes were live-proved. Controller rollback step and R201 bounded mission execution remain failed qualifications. |
+| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Merged to canonical source; exact SHA + cumulative truth + 172 R185 nodes were live-proved. Controller rollback step and R201 bounded mission execution remain failed qualifications. |
 | R215 navigation integrity | `CANDIDATE` | PR #239 reconciled onto canonical Earth `e15d61d7...` | R215 code, proof suite, workflow and ledger are reconciled onto canonical Earth; the exact reconciled head must rerun all gates before merge. |
 | R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be extracted/reconciled onto newer canonical Earth/navigation state. |
 
@@ -115,7 +115,7 @@ From this point forward, release completion is incomplete until this ledger and 
 - The stale workflow reference `tests/test_r195_one_system.py` was corrected to the retained predecessor proof `tests/test_r195_drive_corpus_one_system.py`; the original failure remains recorded rather than erased.
 - The pre-Earth candidate passed 51 R215/ledger/predecessor assertions, complete Worker TypeScript checking, Wrangler dry-run, R195 preflight, R195 One-System, R190 whole-system truth, R192/R214 navigation, R180 convergence, general verify, and Windows sovereign loopback.
 - Canonical then advanced independently to Earth merge `e15d61d7...`; R215 was therefore not merged from its stale base.
-- A safety branch was created, the active R215 ref was rebased to `e15d61d7...`, and the five R215 files are being reapplied with the Earth overlap preserved.
+- A safety branch was created, the active R215 ref was rebased to `e15d61d7...`, and the five R215 files were reapplied with the Earth overlap preserved.
 - The reconciled exact head must rerun all mandatory gates. Prior green runs are historical evidence, not authorization to merge the new head.
 - After governed merge, exact-head production deployment and the R215 live 20-route + 8-workspace + API non-interference proof are required before `ADMITTED/LIVE`.
 
