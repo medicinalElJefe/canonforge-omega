@@ -31,12 +31,133 @@ From this point forward, release completion is incomplete until this ledger and 
 
 | Track | Status | Current identity | Production truth |
 | --- | --- | --- | --- |
+| R222 single-owner Hybrid/bootstrap + full inheritance repair | `CANDIDATE` | canonical base `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d`; route-order repair head before this ledger update `b84f777c500a451f30ac808a19d408b8917daecd`; PR #252 | On predecessor exact head `bd944bf...`, release-forward candidate proof, general verify, R180, R190, R204 source/live-return, R208, R209, R210, R216, R220 setup/continuity, R221 training→native-RCWA and repair-system gates were green. The sole red gate was R207 Windows loopback: native `grcwa` and all 30 successor invariants passed, then the inherited catch-all UI mount intercepted the later R222 enrollment route with a truthful 404. R222 now reorders only the inherited `ui` mount behind successor API routes and adds a runtime-order regression test. Fresh exact-head CI is required before merge/admission. |
+| R221 governed local training → native RCWA continuity | `CANDIDATE` after canonical merge; carried by R222 | canonical merge `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d` / PR #251 | Canonical source preserves controller-owned local training, hash-bound native `grcwa` RCWA return, and next-stage development continuity. It is not independently relabeled live here; R222 is proving the complete successor chain and preserves R221 semantics. |
 | R217 production provenance lease | `CANDIDATE` | implementation head `47c69a751b42df389077ede40b9478e4f2182185` / PR #243 | Source/package proof is green. Promotion remains blocked until the ledger-bearing exact head is re-proven, merged without canonical drift, and the release-forward controller retains both exact Cloudflare version ownership and the exact per-run R217 lease through the complete live R211/R205/R204/R181/R201/R185 proof window. |
 | R216 surface binding integrity | `HELD` after canonical merge | canonical `9c134dff5729b236e1867fb778d9b8fef82559cf` / PR #242 | R215 navigation and R216 fail-closed binding/controller changes are canonical, but the authoritative production transaction was not admitted: the controller-owned Worker was replaced during live proof by an unexpected production version. The writer remains `EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION` unless independently proven. |
 | R215 navigation integrity | `SUPERSEDED` into R216 canonical successor | proven head `80cef9f9bf8c1bb9cc25939b351fe6694642a160` / PR #239; preserved in `9c134dff...` | R215 command-palette/system-route work is preserved in canonical R216 and is not independently promoted around the stronger controller. |
 | R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Source is canonical. Earlier exact-head deployment/federation evidence remains qualified by the observed production-writer race and R201 bounded mission failure. |
 | R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be selectively reconciled onto the current canonical successor instead of blindly merged. |
 | R214 navigation polish | `ADMITTED/LIVE` with historical controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Navigation/evidence proof was admitted on that lineage; later canonical work and controller qualifications are tracked separately. |
+
+---
+
+## R222 — Single-owner Hybrid/bootstrap, successor-proof, archive/plugin/mode inheritance closure
+
+**Date:** 2026-09-08 (America/Phoenix)
+
+**Status:** `CANDIDATE` — the architecture and almost the entire cumulative matrix are green; the final Windows route-order defect has been repaired in source and must now pass fresh exact-head CI before governed merge.
+
+**Canonical base:** R221 `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d`
+
+**R221 → R222 reconciliation commit:** `a43ea0f610d8912131ed3a8e9bd24d50a03641b3`
+
+**Candidate head before final route-order repair:** `bd944bf13ac42fb517db74bc4fd7a822baa240f8`
+
+**Route-order implementation commit:** `d5832a8f707523276bc2280ae0a0ea33ceefee82`
+
+**Route-order regression commit:** `b84f777c500a451f30ac808a19d408b8917daecd`
+
+**Candidate branch:** `r222-hybrid-bootstrap-single-instance-repair`
+
+**Main PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/252
+
+**R221 reconciliation PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/255
+
+**Public runtime:** https://omegav6.jeffdeweyeljefe.workers.dev/
+
+### What R222 wires into one system
+
+- One stable Windows entrypoint: `scripts/START_OMEGA_SOVEREIGN.ps1` / `.cmd`.
+- One release implementation behind that gateway: `START_OMEGA_R222_FULL_HYBRID.ps1`.
+- One localhost runtime identity at `127.0.0.1:8127` and one sovereign outbound agent for an approved root.
+- One established Durable Object singleton, `OMEGA_RUNTIME`; no second Hybrid state authority is introduced.
+- Localhost-signed outbound enrollment with HMAC freshness/replay protection rather than an unauthenticated public pairing endpoint.
+- Explicit separation of authenticated link, current heartbeat, local execution authority, native execution, verified returned evidence and release authority.
+- Explicit local console approval for time/device/root-bounded native execution authority; the browser cannot grant it by itself.
+- R221 controller-owned training → native `grcwa` RCWA → returned receipt → next governed development stage preserved in the same session.
+- R208/R209 acceptance diagnostics preserved behind the stable gateway after single-owner deduplication.
+- Historical launchers/installers converted to compatibility delegates instead of parallel runtime/agent owners.
+- Windows argument transport fixed so PowerShell splatting preserves path boundaries without embedding literal quote characters.
+- Successor-safe R173/R206/R207/R208/R209 proof contracts so historical tests validate preserved semantics rather than forcing obsolete duplicated implementations back into existence.
+- `OMEGA_SYSTEM_INHERITANCE_CONTRACT_V1` classifying canonical source, proof evidence, archive donors, repair/package artifacts, external data and plugin providers.
+- Archive donors require expansion/identity/diff/conflict routing/reconciliation before admission; filename, size or recency cannot become authority.
+- Plugin/provider state is explicitly `DISCOVERED → AUTHORIZED → AVAILABLE → INVOKED → RETURNED → VERIFIED`; availability is not execution.
+- Modes require operational purpose, inputs, operator/transform, outputs, evidence class, authority boundary and failure behavior; cosmetic color change alone is not mode implementation.
+- Repair incidents become permanent invariants with regression, CI, release and ledger requirements instead of one-off patches.
+
+### Exact-head proof before the final route-order repair
+
+On `bd944bf13ac42fb517db74bc4fd7a822baa240f8`, the following were green:
+
+- release-forward exact-head candidate proof: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857179
+- R204 verified Hybrid return source proof: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857491
+- R204 live verified-return proof: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857469
+- repair-system contract: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857427
+- R209 convergence proof: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857208
+- R208 acceptance source/boundary proof: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857132
+- general verify: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857591
+- R216 surface binding: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857276
+- R190 whole-system capability truth: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857410
+- R180 B059/SAI convergence: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857124
+- R210 proof archive: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857150
+- R220 post-Hybrid development continuity: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857335
+- R220 downloadable Hybrid compatibility/setup: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857296
+- R221 governed training/native-RCWA continuity: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857310
+
+The sole red run was R207 Windows sovereign loopback: https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34238857216
+
+That Windows run successfully parsed the PowerShell surfaces, built the verified `.venv`, installed/proved native `grcwa`, and passed all 30 Windows/successor invariants. It then entered the real R222 single-owner launcher and received a truthful HTTP 404 while minting `/api/hybrid/enrollment`.
+
+### Route-order root cause and repair
+
+`api.app` correctly mounts the preserved static UI at `/` after its own legacy API routes. R222 extends that same FastAPI application after import. Before this repair, the inherited catch-all UI `Mount` therefore sat before the newly appended R222 `/api/hybrid/enrollment` and `/api/hybrid/r222/local-contract` routes. Starlette could return a static 404 before the successor endpoint was reached.
+
+R222 now moves only the inherited named `ui` mount to the tail after successor routes are registered. It does not replace the FastAPI app, create a second runtime, change evidence state, or change execution authority. `tests/test_r222_hybrid_bootstrap_single_instance.py` now proves both R222 successor routes precede the inherited catch-all mount whenever that UI mount is present.
+
+### Preserved authority and truth boundaries
+
+- R169 remains the actual Worker entrypoint.
+- R217 release provenance remains ahead of later response composition and is not bypassed.
+- R216 fail-closed surface binding remains preserved.
+- R205/R211/R204/R181/R201/R185 truth semantics are not weakened.
+- Heartbeat does not equal execution authority.
+- Native `grcwa` capability does not equal an executed solve; returned hash-bound R175 evidence remains mandatory.
+- Hosted Windows CI is not the operator's physical PC.
+- Archive/plugin/mode/repair artifacts do not gain Canon or release authority by being present.
+- Canon mutation, GitHub mutation, deployment authority and promotion authority are not granted by R222.
+
+### Admission boundary
+
+R222 remains `CANDIDATE` until the ledger-bearing exact head passes the complete source/TypeScript/Windows/native-RCWA/Hybrid/return matrix, current canonical ancestry is rechecked, PR #252 is governed-merged, the resulting exact canonical SHA is deployed by the release-forward controller, and cumulative live acceptance passes without writer replacement/rollback. Physical-PC acceptance remains a separate final same-session proof: one runtime, one agent, current authenticated heartbeat, local execution authority, native RCWA returned evidence, continued development, and no second runtime/console ownership.
+
+---
+
+## R221 — Governed local training → native RCWA → next-stage continuity
+
+**Date:** 2026-09-08 (America/Phoenix)
+
+**Status:** `CANDIDATE` after canonical merge — the source is canonical and is preserved by R222; this ledger does not inflate that fact into independent live physical-PC admission.
+
+**Previous canonical base:** `4d4f14954f739d33a99a8015efe5b13249447912`
+
+**Candidate head:** `681606273812fa810c65f275d3255025a18c286e`
+
+**Canonical merge:** `6a4c4f3f8a3f951f3780411e9b2d2d7f75c1550d`
+
+**PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/251
+
+**Dedicated R221 candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34191000013
+
+### What R221 added
+
+R221 repaired the execution chain that could previously stop after Hybrid connection/local training while native RCWA remained outside the ordinary governed sequence. The preserved pipeline is:
+
+`AUTHENTICATED_LINK → DRAIN_EXISTING_GOVERNED_STAGE → R179_LOCAL_REPOSITORY_TRAINING → R175_HASH_BOUND_RCWA_CALIBRATION → NATIVE_GRCWA_RETURN → RESTORE_DEVELOPMENT_LOOP → NEXT_GOVERNED_STAGE`.
+
+Training success does not imply RCWA execution. Heartbeat capability does not imply a solve. Native RCWA is accepted only from the existing R175 hash-bound `OMEGA_SOVEREIGN_RCWA_RECEIPT_R175` with `MAXWELL_RCWA`, a `grcwa:` solver version, convergence and native-execution evidence. If RCWA fails, the verified training receipt is retained so RCWA can be retried without unnecessary retraining.
+
+R222 carries this pipeline forward while repairing the bootstrap/single-owner and proof-composition layers around it.
 
 ---
 
@@ -306,4 +427,4 @@ Its lineage is behind newer canonical work. The Hybrid local-authority/outbound-
 
 ## Pre-ledger continuity note
 
-R214/R215/R216/R217 are normalized into this dedicated advancement ledger. Earlier releases remain represented by source history, PRs, workflow evidence, subsystem ledgers, recovery/convergence records, and Canon artifacts. Their absence from this file must not be interpreted as absence of earlier work. Backfill must remain evidence-based rather than reconstructed from memory.
+R214/R215/R216/R217/R221/R222 are normalized into this dedicated advancement ledger. Earlier releases remain represented by source history, PRs, workflow evidence, subsystem ledgers, recovery/convergence records, and Canon artifacts. Their absence from this file must not be interpreted as absence of earlier work. Backfill must remain evidence-based rather than reconstructed from memory.

@@ -2,7 +2,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
+LEGACY_LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
+GATEWAY = ROOT / "scripts" / "START_OMEGA_SOVEREIGN.ps1"
+CURRENT = ROOT / "scripts" / "START_OMEGA_R222_FULL_HYBRID.ps1"
 INSTALLER = ROOT / "scripts" / "INSTALL_OMEGA_V6_WINDOWS.ps1"
 
 
@@ -10,38 +12,63 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def test_r207_consumes_pairing_envelope_but_runs_repository_agent_with_verified_venv():
-    text = read(LAUNCHER)
-    assert "param(" in text and "[switch]$NoBrowser" in text
-    assert "Join-Path $Root '.venv\\Scripts\\python.exe'" in text
-    assert "Join-Path $Root 'scripts\\omega_sovereign_agent.py'" in text
-    assert "Join-Path $Root '.omega_pairing_once.cmd'" in text
-    assert "requesting one-time pairing envelope" in text
-    assert "set \"OMEGA_TOKEN=([^\"\\r\\n]+)\"" in text
-    assert "set \"OMEGA_SERVER=([^\"\\r\\n]+)\"" in text
-    assert "Remove-Item $PairingEnvelope" in text
-    assert "Start-Process -FilePath $Vpy" in text
-    assert "--token" in text and "--root" in text and "--interval" in text
-    assert "Start-Process -FilePath $env:ComSpec" not in text
+def test_r207_consumes_authenticated_enrollment_but_runs_repository_agent_with_verified_venv():
+    legacy = read(LEGACY_LAUNCHER)
+    gateway = read(GATEWAY)
+    current = read(CURRENT)
+    assert "param(" in legacy and "[switch]$NoBrowser" in legacy
+    assert "START_OMEGA_SOVEREIGN.ps1" in legacy
+    assert "START_OMEGA_R222_FULL_HYBRID.ps1" in gateway
+    assert "Join-Path $Root '.venv\\Scripts\\python.exe'" in current
+    assert "Join-Path $Root 'scripts\\omega_sovereign_agent.py'" in current
+    assert "/api/hybrid/r222/local-contract" in current
+    assert "/api/hybrid/enrollment" in current
+    assert "/api/hybrid/enroll" in current
+    assert "Start-Process -FilePath $Vpy" in current
+    assert "--token" in current and "--root" in current and "--interval" in current
+    assert "Start-Process -FilePath $env:ComSpec" not in current
 
 
-def test_r207_keeps_pc_online_claim_behind_current_heartbeat_proof():
-    text = read(LAUNCHER)
-    assert "$hybrid.heartbeatCurrent -or $hybrid.pcOnline" in text
-    assert "PC ONLINE is still proof-gated" in text
-    assert "sovereign heartbeat is still pending and is not being promoted to PC ONLINE" in text
+def test_r207_compatibility_chain_preserves_one_explicit_server_identity():
+    legacy = read(LEGACY_LAUNCHER)
+    gateway = read(GATEWAY)
+    current = read(CURRENT)
+
+    # A localhost/CI proof must not silently jump from the local candidate to production.
+    assert "$env:OMEGA_SERVER_OVERRIDE" in legacy
+    assert "$env:OMEGA_PUBLIC_URL" in legacy
+    assert "'-ProductionBase',$ProductionBase" in legacy
+    assert "$env:OMEGA_SERVER_OVERRIDE" in gateway
+    assert "$env:OMEGA_PUBLIC_URL" in gateway
+    assert "'-ProductionBase',$ProductionBase" in gateway
+    assert "-ProductionBase $ProductionBase" in gateway
+    assert "[string]$ProductionBase" in current
+    assert "$ProductionBase/api/hybrid/enroll" in current
+    assert "$ProductionBase/api/development/status" in current
 
 
-def test_r207_startup_continuity_is_headless_but_desktop_launch_remains_interactive():
+def test_r207_keeps_pc_online_claim_behind_current_heartbeat_proof_after_successor_migration():
+    text = read(CURRENT)
+    assert "[bool]$hybrid.heartbeatCurrent" in text
+    assert "[bool]$hybrid.authenticated" in text
+    assert "[bool]$hybrid.pcOnline" in text
+    assert "$hybrid.proof.agent_id -eq $DeviceId" in text
+    assert "Outbound agent did not establish current authenticated cloud heartbeat" in text
+
+
+def test_r207_startup_continuity_is_headless_but_desktop_launch_remains_interactive_through_gateway():
     text = read(INSTALLER)
-    assert "OMEGA V6 Sovereign Continuity.lnk" in text
-    assert "-NoBrowser" in text
+    assert "OMEGA Sovereign Continuity.lnk" in text
+    assert "-NoBrowser -SkipAcceptanceProof" in text
     assert "OMEGA V6.lnk" in text
+    assert "START_OMEGA_SOVEREIGN.ps1" in text
 
 
-def test_r207_windows_install_keeps_native_rcwa_and_adds_r207_gate():
+def test_r207_windows_install_keeps_native_rcwa_and_adds_successor_repair_gates():
     text = read(INSTALLER)
     assert 'pip install -e "$Root[dev,rcwa]"' in text
     assert "omega_runtime.rcwa_solver --probe" in text
     assert "test_r175_independent_solver_validation.py" in text
     assert "test_r207_windows_verified_venv_launch.py" in text
+    assert "test_r222_hybrid_bootstrap_single_instance.py" in text
+    assert "test_repair_system_contract.py" in text

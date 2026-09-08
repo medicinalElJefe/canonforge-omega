@@ -3,7 +3,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PROVER = ROOT / "scripts" / "PROVE_OMEGA_V6_WINDOWS.ps1"
-LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
+LEGACY_LAUNCHER = ROOT / "scripts" / "LAUNCH_OMEGA_V6_WINDOWS.ps1"
+GATEWAY = ROOT / "scripts" / "START_OMEGA_SOVEREIGN.ps1"
+CURRENT = ROOT / "scripts" / "START_OMEGA_R222_FULL_HYBRID.ps1"
 INSTALLER = ROOT / "scripts" / "INSTALL_OMEGA_V6_WINDOWS.ps1"
 
 
@@ -49,12 +51,26 @@ def test_r208_prover_uses_verified_venv_and_no_rcwa_fallback():
     assert "new-service" not in source.lower()
 
 
-def test_r208_remains_additive_to_r207_launch_contract():
-    launcher = text(LAUNCHER)
+def test_r208_remains_additive_after_single_owner_successor_migration():
+    legacy = text(LEGACY_LAUNCHER)
+    gateway = text(GATEWAY)
+    current = text(CURRENT)
     installer = text(INSTALLER)
-    assert "$Port = 8127" in launcher
-    assert ".venv\\Scripts\\python.exe" in launcher
-    assert "Remove-Item $PairingEnvelope" in launcher
-    assert "PC ONLINE is still proof-gated" in launcher
+
+    # Ownership moved behind the stable gateway; R208/R209 proof must move with it
+    # rather than forcing the compatibility launcher to own another runtime.
+    assert "START_OMEGA_SOVEREIGN.ps1" in legacy
+    assert "START_OMEGA_R222_FULL_HYBRID.ps1" in gateway
+    assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in gateway
+    assert "R208/R209 acceptance diagnostics" in gateway
+    assert "$Port = 8127" in current
+    assert "Join-Path $Root '.venv\\Scripts\\python.exe'" in current
+    assert "Outbound agent did not establish current authenticated cloud heartbeat" in current
+
+    # Installer persists the stable gateway and the non-secret canonical root; it does
+    # not resurrect the old R207 process owner just to satisfy a historical filename.
     assert "canonical-root.txt" in installer
-    assert "OMEGA V6 Sovereign Continuity.lnk" in installer
+    assert "OMEGA Sovereign Continuity.lnk" in installer
+    assert "START_OMEGA_SOVEREIGN.ps1" in installer
+    assert "PROVE_OMEGA_V6_WINDOWS.ps1" in installer
+    assert "PROVE_OMEGA_V6_R209_WINDOWS.ps1" in installer

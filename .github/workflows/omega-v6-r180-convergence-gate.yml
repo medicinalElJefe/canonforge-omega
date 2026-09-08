@@ -24,7 +24,8 @@ jobs:
       - name: Verify R179 B059 + R180 convergence contracts
         working-directory: canonforge-omega
         run: |
-          python -m pip install -U pip pytest
+          python -m pip install -U pip
+          python -m pip install -e '.[dev]'
           python -m pytest -q \
             tests/test_omega_runtime.py \
             tests/test_r179_sai_training_runtime.py \
