@@ -14,10 +14,37 @@ def test_r222_local_runtime_adds_signed_outbound_enrollment_without_replacing_ap
     assert 'uvicorn.run("api.runtime_r222:app"' in cli
     assert "from api.app import APPROVED_BUILD_ROOT, GATEWAY_TOKEN, _pairing, app" in local
     assert '@app.get("/api/hybrid/enrollment")' in local
+    assert '@app.get("/api/hybrid/r222/local-contract")' in local
     assert "hmac.new(GATEWAY_TOKEN.encode" in local
     assert "LOCAL_GATEWAY_ENROLLMENT_KEY_NOT_CONFIGURED" in local
     assert "inboundCloudToPcRequired" in local
     assert "executionAuthorityGranted" in local
+
+
+def test_r222_successor_api_routes_precede_inherited_catch_all_ui_mount():
+    # api.app mounts the preserved UI at '/'. R222 extends that same FastAPI app, so
+    # successor API routes must be moved ahead of the catch-all mount or Starlette will
+    # return a truthful static 404 without ever reaching the new Hybrid endpoints.
+    from api.runtime_r222 import app as runtime_app
+
+    routes = list(runtime_app.router.routes)
+    ui_indices = [
+        i
+        for i, route in enumerate(routes)
+        if getattr(route, "name", None) == "ui" and getattr(route, "path", None) == "/"
+    ]
+    assert len(ui_indices) <= 1
+    if ui_indices:
+        ui_index = ui_indices[0]
+        assert ui_index == len(routes) - 1
+        for path in ("/api/hybrid/enrollment", "/api/hybrid/r222/local-contract"):
+            route_index = next(i for i, route in enumerate(routes) if getattr(route, "path", None) == path)
+            assert route_index < ui_index
+
+    local = read(ROOT / "api" / "runtime_r222.py")
+    assert "_ensure_successor_api_precedes_ui_mount" in local
+    assert "isinstance(route, Mount)" in local
+    assert "app.router.routes.append(route)" in local
 
 
 def test_r222_preserves_exact_durable_object_identity_and_removes_hybrid_gateway_fallback():
