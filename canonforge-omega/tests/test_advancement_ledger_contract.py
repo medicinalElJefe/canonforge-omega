@@ -23,6 +23,7 @@ def test_ledger_records_whole_active_build_without_overclaiming():
     text = LEDGER.read_text(encoding="utf-8")
     for required in (
         "## Current governed progress snapshot",
+        "R217 production provenance lease",
         "R216 surface binding integrity",
         "R214 spatial Earth restoration",
         "R215 navigation integrity",
@@ -35,13 +36,13 @@ def test_ledger_records_whole_active_build_without_overclaiming():
         assert required in text
 
 
-def test_r216_ledger_records_no_disconnected_active_surface_invariant_and_race_evidence():
+def test_r216_ledger_records_no_disconnected_active_surface_invariant_and_current_race_evidence():
     text = LEDGER.read_text(encoding="utf-8")
     start = text.index("## R216 — Fail-closed live surface binding integrity")
     end = text.index("\n---\n\n## R214 — Source-backed", start)
     r216 = text[start:end]
     for required in (
-        "**Status:** `CANDIDATE`",
+        "**Status:** `HELD` after canonical merge",
         "No deceptive or disconnected active surface",
         "/api/system/r211/status",
         "/api/system/r205/health",
@@ -50,15 +51,33 @@ def test_r216_ledger_records_no_disconnected_active_surface_invariant_and_race_e
         "Wrangler's actual Worker entrypoint exactly at `src/runtimeEntryR169.ts`",
         "no R216 Worker entrypoint or second runtime exists",
         "test_r216_surface_binding_integrity.py",
-        "5e698131-ed44-44b2-ba2f-479c0f2dd308",
-        "15e9d321-924d-45a5-b2bb-bd5ea68c4f30",
-        "specific writer is not assigned without evidence",
-        "172-node federation proof",
+        "b0e12a10-6669-40e6-8544-b3f05260eca2",
+        "59ad2df6-1636-47da-abc9-4d8655874235",
+        "EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION",
+        "not admitted",
+        "complete live acceptance proof",
     ):
         assert required in r216
     assert "**Status:** `ADMITTED/LIVE`" not in r216
     assert "Adds `runtimeEntryR216.ts`" not in r216
     assert "Changes Wrangler's outer entrypoint to R216" not in r216
+
+
+def test_r217_ledger_keeps_version_lease_identity_separate_from_runtime_authority():
+    text = LEDGER.read_text(encoding="utf-8")
+    start = text.index("## R217 — Version + run provenance lease")
+    end = text.index("\n---\n\n## R216 —", start)
+    r217 = text[start:end]
+    for required in (
+        "**Status:** `CANDIDATE`",
+        "/api/system/r217/release-lease",
+        "OMEGA_RELEASE_PROVENANCE_R217",
+        "canonical SHA + exact Cloudflare Worker version ID + exact per-run release provenance lease",
+        "EXTERNAL_OR_UNATTRIBUTED_PRODUCTION_MUTATION",
+        "grants no Canon mutation, promotion, Hybrid execution, solver execution, cloud execution, or physical-PC authority",
+        "not reported live",
+    ):
+        assert required in r217
 
 
 def test_ledger_keeps_earth_and_hybrid_truth_boundaries_visible():
