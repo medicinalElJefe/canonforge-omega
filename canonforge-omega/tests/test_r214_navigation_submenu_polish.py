@@ -36,8 +36,38 @@ def test_r214_control_deck_reaches_current_operator_and_proof_surfaces():
     assert "@media(max-width:760px)" in nav
 
 
+def test_r214_fallback_systems_menu_reaches_newer_surfaces_and_is_accessible():
+    nav = (SRC / "universalNavigationR192.ts").read_text()
+    assert 'UNIVERSAL_NAVIGATION_RELEASE_R192 = "r192-navigation-home-repair"' in nav
+    assert 'UNIVERSAL_NAVIGATION_POLISH_R214 = "r214-r192-submenu-reachability"' in nav
+    assert 'id="omegaR192SystemsMenu"' in nav
+    assert 'aria-haspopup="menu"' in nav
+    assert 'aria-controls="omegaR192SystemsMenu"' in nav
+    assert 'role="menu"' in nav
+    assert 'role="menuitem"' in nav
+    assert 'href="${href}"' in nav
+    for route in (
+        '"/system"',
+        '"/core"',
+        '"/capabilities"',
+        '"/federation"',
+        '"/truth"',
+        '"/validate"',
+        '"/instrument"',
+        '"/convergence"',
+        '"/evolution"',
+    ):
+        assert f'menuLink(pathname, {route}' in nav
+    assert 'aria-current="page"' in nav
+    assert "btn?.setAttribute('aria-expanded','false')" in nav
+    assert "close(true)" in nav
+    assert "@media(max-width:760px)" in nav
+    assert 'x-omega-navigation-fallback-polish' in nav
+
+
 def test_r214_does_not_create_new_runtime_or_execution_authority():
     nav = (SRC / "system" / "oneSystemNavigationR195.ts").read_text()
+    fallback = (SRC / "universalNavigationR192.ts").read_text()
     entry = (SRC / "runtimeEntryR169.ts").read_text()
     wrangler = (ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml").read_text()
 
@@ -47,9 +77,12 @@ def test_r214_does_not_create_new_runtime_or_execution_authority():
     assert 'enhanceEarthSarIntegratedRepairR198_1' in entry
     assert 'enhanceEarthSarVisualContextR198_2' in entry
     assert "new Response(html" in nav
+    assert "new Response(body" in fallback
     assert "handleOneSystemOperatorR199" not in nav
     assert "canonicalMutation" not in nav
     assert "promotionAuthorized" not in nav
+    assert "canonicalMutation" not in fallback
+    assert "promotionAuthorized" not in fallback
 
 
 def test_r214_markup_insertion_is_balanced_and_idempotent_by_construction():
@@ -65,7 +98,7 @@ def test_r214_preserves_existing_system_and_residual_surfaces():
     nav = (SRC / "system" / "oneSystemNavigationR195.ts").read_text()
     for fragment in (
         'href="/system"',
-        'id="r195ResidualCard"',
+        "card.id='r195ResidualCard'",
         '/api/system/r195/restoration?limit=24',
         'reconstituteOneSystemR199',
         'correlateOneSystemTruthStripR199',

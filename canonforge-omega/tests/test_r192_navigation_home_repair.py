@@ -30,8 +30,9 @@ def test_universal_navigation_reaches_every_primary_human_surface():
         '"/convergence"',
     ):
         assert route in nav
-    for secondary in ('href="/core"', 'href="/capabilities"', 'href="/evolution"', 'href="/federation"'):
-        assert secondary in nav
+    assert 'return `<a role="menuitem" class="${active.trim()}" href="${href}"${current}>' in nav
+    for secondary in ('"/core"', '"/capabilities"', '"/evolution"', '"/federation"', '"/system"'):
+        assert f'menuLink(pathname, {secondary}' in nav
 
 
 def test_home_no_longer_starts_behind_the_full_screen_launcher():
