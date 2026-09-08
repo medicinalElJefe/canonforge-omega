@@ -45,7 +45,9 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $files = @(
             'scripts\INSTALL_OMEGA_V6_WINDOWS.ps1',
-            'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1'
+            'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1',
+            'scripts\START_OMEGA_SOVEREIGN.ps1',
+            'scripts\START_OMEGA_R222_FULL_HYBRID.ps1'
           )
           foreach ($file in $files) {
             $tokens = $null
@@ -89,28 +91,104 @@ jobs:
             tests\test_pairing_and_agent.py `
             tests\test_r175_independent_solver_validation.py `
             tests\test_r206_sovereign_windows_boot_continuity.py `
-            tests\test_r207_windows_verified_venv_launch.py
+            tests\test_r207_windows_verified_venv_launch.py `
+            tests\test_r222_hybrid_bootstrap_single_instance.py
           if ($LASTEXITCODE -ne 0) { throw 'R207 Windows sovereign invariant suite failed' }
 
-      - name: Execute real Windows localhost pairing heartbeat loop
+      - name: Execute real R222 Windows localhost enrollment and heartbeat loop
         run: |
           $ErrorActionPreference = 'Stop'
           $root = (Resolve-Path '.').Path
-          $env:OMEGA_PUBLIC_URL = 'http://127.0.0.1:8127'
+          $local = 'http://127.0.0.1:8127'
+          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+          $env:OMEGA_PUBLIC_URL = $local
           $env:OMEGA_APPROVED_ROOT = $root
+          # CI-local signing key only. It never leaves localhost and is not a production
+          # SOVEREIGN_GATEWAY_TOKEN. This proves route composition and local transport,
+          # not production cloud enrollment or the operator's physical PC.
+          $env:OMEGA_GATEWAY_TOKEN = 'R207_WINDOWS_CI_LOCAL_ONLY_NOT_A_PRODUCTION_SECRET'
+          $runtimeOut = Join-Path $root 'r207-runtime-out.log'
+          $runtimeErr = Join-Path $root 'r207-runtime-err.log'
+          $agentOut = Join-Path $root 'r207-agent-out.log'
+          $agentErr = Join-Path $root 'r207-agent-err.log'
+          $runtime = $null
+          $agent = $null
           $passed = $false
           try {
-            & pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1 -NoBrowser
-            if ($LASTEXITCODE -ne 0) { throw "R207 canonical launcher exited $LASTEXITCODE" }
+            $runtime = Start-Process -FilePath $py -ArgumentList @('-m','omega_runtime.cli','--host','127.0.0.1','--port','8127') -WorkingDirectory $root -RedirectStandardOutput $runtimeOut -RedirectStandardError $runtimeErr -PassThru
+            $ready = $false
+            for ($i = 0; $i -lt 80; $i++) {
+              if ($runtime.HasExited) { break }
+              try {
+                $health = Invoke-RestMethod -Uri "$local/api/health" -TimeoutSec 2
+                if ($health.ok) { $ready = $true; break }
+              } catch {}
+              Start-Sleep -Milliseconds 250
+            }
+            if (-not $ready) { throw 'R207 R222 localhost runtime did not become healthy' }
 
-            $status = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/hybrid/status' -TimeoutSec 5
-            $status | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 'r207-loopback-proof.json'
-            if (-not $status.heartbeatCurrent) { throw 'R207 loopback heartbeat is not current' }
+            # This is the exact successor route that the inherited catch-all UI mount
+            # previously intercepted. Reachability here is executable proof of the repair.
+            $contract = Invoke-RestMethod -Uri "$local/api/hybrid/r222/local-contract" -TimeoutSec 5
+            if (-not $contract.ok -or -not $contract.gatewayEnrollmentKeyConfigured -or $contract.canonicalPort -ne 8127) {
+              throw 'R207 R222 local contract route did not prove configured canonical enrollment transport'
+            }
+            $enrollment = Invoke-RestMethod -Uri "$local/api/hybrid/enrollment" -TimeoutSec 5
+            if (-not $enrollment.ok -or -not $enrollment.token -or -not $enrollment.signature) {
+              throw 'R207 R222 signed localhost enrollment route did not return a complete packet'
+            }
+            if ($enrollment.executionAuthorityGranted -ne $false) {
+              throw 'R207 enrollment incorrectly inflated link credential into execution authority'
+            }
+
+            $agentId = 'r207-windows-ci-loopback'
+            $agentArgs = @(
+              'scripts\omega_sovereign_agent.py',
+              '--server', $local,
+              '--token', [string]$enrollment.token,
+              '--root', $root,
+              '--agent-id', $agentId,
+              '--interval', '1'
+            )
+            $agent = Start-Process -FilePath $py -ArgumentList $agentArgs -WorkingDirectory $root -RedirectStandardOutput $agentOut -RedirectStandardError $agentErr -PassThru
+
+            $status = $null
+            for ($i = 0; $i -lt 40; $i++) {
+              if ($agent.HasExited) { break }
+              try {
+                $status = Invoke-RestMethod -Uri "$local/api/hybrid/status" -TimeoutSec 3
+                if ($status.heartbeatCurrent -and $status.authenticated -and $status.pcOnline -and $status.proof.agent_id -eq $agentId) { break }
+              } catch {}
+              Start-Sleep -Milliseconds 500
+            }
+            if (-not $status -or -not $status.heartbeatCurrent) { throw 'R207 loopback heartbeat is not current' }
             if (-not $status.authenticated) { throw 'R207 loopback heartbeat is not authenticated' }
             if (-not $status.pcOnline) { throw 'R207 loopback PC state did not reach online proof' }
-            if (-not $status.proof) { throw 'R207 loopback heartbeat proof is missing' }
+            if (-not $status.proof -or $status.proof.agent_id -ne $agentId) { throw 'R207 loopback heartbeat proof is missing or bound to the wrong agent' }
+
+            $proof = [ordered]@{
+              schema = 'OMEGA_R207_WINDOWS_R222_LOCAL_TRANSPORT_PROOF'
+              state = 'VERIFIED'
+              sourceSha = (git rev-parse HEAD).Trim()
+              canonicalPort = 8127
+              enrollmentSchema = [string]$enrollment.schema
+              enrollmentSignaturePresent = [bool]$enrollment.signature
+              executionAuthorityGranted = [bool]$enrollment.executionAuthorityGranted
+              heartbeatCurrent = [bool]$status.heartbeatCurrent
+              authenticated = [bool]$status.authenticated
+              pcOnline = [bool]$status.pcOnline
+              agentId = [string]$status.proof.agent_id
+              nativeRcwaCapabilityProbeSeparate = $true
+              productionGatewaySecretUsed = $false
+              productionCloudEnrollmentClaimed = $false
+              physicalPcClaimed = $false
+              canonicalMutation = $false
+              deploymentAuthorized = $false
+              promotionAuthorized = $false
+            }
+            $proof | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 'r207-loopback-proof.json'
             $passed = $true
-            Write-Host 'R207_WINDOWS_LOOPBACK_SOVEREIGN_TRANSPORT_VERIFIED_NOT_USER_PC'
+            Write-Host 'R207_WINDOWS_R222_ROUTE_ENROLLMENT_HEARTBEAT_VERIFIED_NOT_USER_PC'
           }
           finally {
             Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
@@ -120,8 +198,10 @@ jobs:
                 $_.CommandLine -like "*$root*"
               } |
               ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+            if ($agent -and -not $agent.HasExited) { Stop-Process -Id $agent.Id -Force -ErrorAction SilentlyContinue }
+            if ($runtime -and -not $runtime.HasExited) { Stop-Process -Id $runtime.Id -Force -ErrorAction SilentlyContinue }
           }
-          if (-not $passed) { throw 'R207 Windows loopback proof did not complete' }
+          if (-not $passed) { throw 'R207 Windows R222 local transport proof did not complete' }
 
       - name: Record proof boundary
         if: always()
@@ -129,9 +209,9 @@ jobs:
           @'
           ## OMEGA R207 Windows sovereign proof
 
-          This runner verifies the Windows packaging/launch transport itself: PowerShell syntax, the installer-equivalent `.venv`, native `grcwa` RCWA availability, local pairing-token rotation, canonical repository-agent startup, and an authenticated localhost heartbeat.
+          This runner verifies the Windows packaging/runtime transport itself: PowerShell syntax, the installer-equivalent `.venv`, native `grcwa` RCWA availability, the real R222 successor enrollment-route composition, local pairing-token issuance, canonical repository-agent startup, and an authenticated localhost heartbeat.
 
-          **Authority boundary:** this is a Windows CI transport proof. It is not the operator's physical Sovereign PC heartbeat and cannot satisfy R181 user-device acceptance by itself.
+          **Authority boundary:** the HMAC key used by this job is CI-local only and is never sent to the production Worker. This is Windows CI transport proof, not production cloud enrollment and not the operator's physical Sovereign PC. It cannot satisfy R181 physical user-device acceptance by itself.
           '@ | Add-Content -Encoding utf8 $env:GITHUB_STEP_SUMMARY
 
       - name: Upload Windows proof packet
@@ -143,4 +223,8 @@ jobs:
           path: |
             canonforge-omega/r207-rcwa-probe.json
             canonforge-omega/r207-loopback-proof.json
+            canonforge-omega/r207-runtime-out.log
+            canonforge-omega/r207-runtime-err.log
+            canonforge-omega/r207-agent-out.log
+            canonforge-omega/r207-agent-err.log
             canonforge-omega/logs/
