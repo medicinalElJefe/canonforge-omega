@@ -37,7 +37,7 @@ jobs:
             tests/test_r215_navigation_integrity.py \
             tests/test_r214_navigation_submenu_polish.py \
             tests/test_r192_navigation_home_repair.py \
-            tests/test_r193_full_restoration.py \
+            tests/test_r193_full_restoration_workspace.py \
             tests/test_r195_one_system.py \
             tests/test_r190_whole_system_acceptance.py \
             tests/test_role_separated_convergence_r128.py
