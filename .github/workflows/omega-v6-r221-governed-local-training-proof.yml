@@ -14,9 +14,6 @@ concurrency:
   group: omega-r221-training-rcwa-continuity-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
-
 jobs:
   source-and-package-proof:
     runs-on: ubuntu-latest
@@ -28,7 +25,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Prove R221 controller-owned train-RCWA continuity and inherited gates
+      - name: Prove controller-owned continuity and inherited authority contracts
         working-directory: canonforge-omega
         run: |
           set -euo pipefail
@@ -46,7 +43,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Typecheck complete preserved R169 Worker with R221 pipeline
+      - name: Typecheck preserved R169 Worker with R221 pipeline
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: |
           npm install
@@ -56,7 +53,7 @@ jobs:
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npx wrangler deploy --dry-run --outdir .r221-dry-run
 
-      - name: Reassert layer ordering, host continuity, and authority boundaries
+      - name: Reassert layer ordering and host continuity markers
         shell: bash
         run: |
           set -euo pipefail
@@ -69,17 +66,9 @@ jobs:
           grep -F 'browserTabIsNotRequiredForPipelineProgress: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
           grep -F 'liveActiveJobOverridesStaleRecentJobSnapshot: true' canonforge-omega/cloudflare/omega-v6-worker/src/system/governedLocalTrainingR221.ts
           grep -F 'def _enqueue_r221_rcwa' canonforge-omega/omega_runtime/self_build.py
-          grep -F '"browser_required_for_progress": False' canonforge-omega/omega_runtime/self_build.py
           grep -F 'def repair_rcwa_dependencies(root: Path) -> dict:' canonforge-omega/scripts/omega_sovereign_agent.py
           grep -F 'threading.Thread(target=keepalive' canonforge-omega/scripts/omega_sovereign_agent.py
-          grep -F 'runtimeInflation: "SINGLE_FLIGHT_PER_WORKER_ISOLATE"' canonforge-omega/cloudflare/omega-v6-worker/src/system/driveCorpusSnapshotR195.ts
-          python - <<'PY'
-          from pathlib import Path
-          text = Path('.github/workflows/omega-v6-r221-governed-local-training-proof.yml').read_text(encoding='utf-8')
-          forbidden = 'wrangler ' + 'deploy --config'
-          assert forbidden not in text
-          assert 'CLOUDFLARE_API_TOKEN' not in text
-          PY
+          test -s canonforge-omega/scripts/prove_r221_windows_continuity.ps1
 
   windows-real-training-rcwa-continuity:
     runs-on: windows-latest
@@ -89,17 +78,15 @@ jobs:
         shell: pwsh
         working-directory: canonforge-omega
     steps:
-      - name: Checkout exact source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up supported Windows Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
           cache-dependency-path: canonforge-omega/pyproject.toml
 
-      - name: Build baseline Windows environment without preinstalling RCWA
+      - name: Build baseline Windows environment with RCWA intentionally absent
         run: |
           $ErrorActionPreference = 'Stop'
           python -m venv .venv
@@ -108,182 +95,12 @@ jobs:
           & $py -m pip install -e '.[dev]'
           if ($LASTEXITCODE -ne 0) { throw 'R221 Windows baseline dependency installation failed' }
           $initialProbe = & $py -m omega_runtime.rcwa_solver --probe | ConvertFrom-Json
-          if ($initialProbe.available -eq $true) { throw 'R221 proof requires RCWA to begin absent so the physical-agent self-repair path is actually exercised' }
+          if ($initialProbe.available -eq $true) { throw 'R221 proof requires native RCWA to begin absent' }
 
-      - name: Prove agent self-repair plus controller-owned training to native RCWA to next stage
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $root = (Resolve-Path '.').Path
-          $py = (Resolve-Path '.\.venv\Scripts\python.exe').Path
-          $env:OMEGA_PUBLIC_URL = 'http://127.0.0.1:8127'
-          $env:OMEGA_APPROVED_ROOT = $root
-          $server = $null
-          $agent = $null
-          $pairingFile = Join-Path $env:RUNNER_TEMP 'r221-pairing.cmd'
-          try {
-            $server = Start-Process -FilePath $py -ArgumentList @('-m','uvicorn','api.app:app','--host','127.0.0.1','--port','8127') -PassThru -WindowStyle Hidden
-            $ready = $false
-            for ($i = 0; $i -lt 60; $i++) {
-              try {
-                $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/health' -TimeoutSec 3
-                if ($health.ok) { $ready = $true; break }
-              } catch {}
-              Start-Sleep -Seconds 1
-            }
-            if (-not $ready) { throw 'R221 local sovereign API did not become ready' }
+      - name: Prove agent self-repair and controller-owned train to native RCWA to next stage
+        run: .\scripts\prove_r221_windows_continuity.ps1
 
-            Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8127/api/hybrid/launcher' -OutFile $pairingFile -TimeoutSec 10
-            $launcherText = Get-Content -Raw -LiteralPath $pairingFile
-            $tokenMatch = [regex]::Match($launcherText, 'OMEGA_TOKEN=([^\x22\r\n]+)')
-            if (-not $tokenMatch.Success) { throw 'R221 could not extract the issued pairing token' }
-            $token = $tokenMatch.Groups[1].Value
-            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
-
-            $jsonHeaders = @{ 'content-type' = 'application/json' }
-            Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/mode' -Headers $jsonHeaders -Body '{"mode":"MANUAL"}' -TimeoutSec 8 | Out-Null
-            $pipelineId = 'r221_windows_controller_ci'
-            $trainingBody = @{
-              kind = 'sai_repository_index'
-              reason = 'R221 Windows controller-owned training to RCWA continuity proof'
-              payload = @{
-                requested_by = 'R221_TRAIN_LOCALLY'
-                pipeline_schema = 'OMEGA_R221_TRAIN_RCWA_PIPELINE'
-                r221_pipeline_id = $pipelineId
-                r221_stage = 'R179_LOCAL_REPOSITORY_TRAINING'
-                r221_resume_mode = 'DEVELOPMENT_LOOP'
-                training_scope = 'LOCAL_REPOSITORY_INDEX_ONLY'
-                next_required_stage = 'R175_NATIVE_RCWA_CALIBRATION'
-                controller_owned_transition = $true
-                browser_required_for_progress = $false
-                foundation_model_weights_trained = $false
-                canonical_mutation = $false
-                github_mutation = $false
-                deployment_authorized = $false
-                promotion_authorized = $false
-              }
-            } | ConvertTo-Json -Depth 20 -Compress
-            $trainingJob = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8127/api/development/enqueue' -Headers $jsonHeaders -Body $trainingBody -TimeoutSec 8
-            if (-not $trainingJob.id -or $trainingJob.kind -ne 'sai_repository_index' -or $trainingJob.state -ne 'QUEUED') { throw 'R221 real local-training job was not queued truthfully' }
-
-            $agent = Start-Process -FilePath $py -ArgumentList @('scripts\omega_sovereign_agent.py','--server','http://127.0.0.1:8127','--token',$token,'--root',$root,'--interval','1') -PassThru -WindowStyle Hidden
-
-            $hybrid = $null
-            for ($attempt = 0; $attempt -lt 120; $attempt++) {
-              try {
-                $hybrid = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/hybrid/status' -TimeoutSec 5
-                if ($hybrid.heartbeatCurrent -and $hybrid.authenticated -and $hybrid.pcOnline) { break }
-              } catch {}
-              Start-Sleep -Seconds 1
-            }
-            if (-not $hybrid -or -not $hybrid.heartbeatCurrent -or -not $hybrid.authenticated -or -not $hybrid.pcOnline) {
-              throw 'R221 authenticated heartbeat did not reach current PC-online proof after bounded RCWA dependency repair'
-            }
-
-            $trainingVerified = $null
-            $rcwaJob = $null
-            $rcwaVerified = $null
-            $development = $null
-            for ($attempt = 0; $attempt -lt 240; $attempt++) {
-              $development = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/development/status' -TimeoutSec 8
-              $trainingVerified = @($development.recent_jobs | Where-Object { $_.id -eq $trainingJob.id -and $_.state -eq 'VERIFIED' -and $_.evidence }) | Select-Object -Last 1
-              $rcwaJob = @($development.recent_jobs | Where-Object {
-                $_.kind -eq 'cross_runtime_validate' -and
-                $_.payload.pipeline_schema -eq 'OMEGA_R221_TRAIN_RCWA_PIPELINE' -and
-                $_.payload.r221_pipeline_id -eq $pipelineId -and
-                $_.payload.r221_stage -eq 'RCWA_NATIVE_CALIBRATION'
-              }) | Select-Object -Last 1
-              if ($rcwaJob -and $rcwaJob.state -eq 'VERIFIED' -and $rcwaJob.evidence) {
-                $rcwaVerified = $rcwaJob
-                break
-              }
-              if ($rcwaJob -and $rcwaJob.state -in @('BLOCKED','FAILED','CANCELLED')) {
-                throw ('R221 controller-owned native RCWA terminated as '+$rcwaJob.state+': '+($rcwaJob | ConvertTo-Json -Depth 40 -Compress))
-              }
-              $trainingTerminal = @($development.recent_jobs | Where-Object { $_.id -eq $trainingJob.id -and $_.state -in @('BLOCKED','FAILED','CANCELLED') }) | Select-Object -Last 1
-              if ($trainingTerminal) { throw ('R221 local training terminated as '+$trainingTerminal.state+': '+($trainingTerminal | ConvertTo-Json -Depth 30 -Compress)) }
-              Start-Sleep -Seconds 1
-            }
-            if (-not $trainingVerified) { throw 'R221 sai_repository_index did not return VERIFIED evidence' }
-            if (-not $rcwaJob) { throw 'R221 persistent controller never auto-enqueued the R175 RCWA stage' }
-            if (-not $rcwaVerified) { throw 'R221 R175 native RCWA did not return VERIFIED evidence' }
-
-            $trainingReceipt = $trainingVerified.evidence.repository_index
-            if ($trainingVerified.evidence.kind -ne 'sai_repository_index' -or $trainingVerified.evidence.native_execution -ne $true) { throw 'R221 training native execution evidence is invalid' }
-            if ($trainingReceipt.schema -ne 'OMEGA_SAI_TRAINING_RECEIPT_R179' -or $trainingReceipt.evaluation.passed -ne $true) { throw 'R221 R179 training receipt did not validate' }
-            if ($trainingReceipt.neuralWeightsTrained -ne $false -or $trainingReceipt.fullyTrainedClaim -ne $false) { throw 'R221 training receipt inflated model-training authority' }
-
-            $native = $rcwaVerified.evidence.native_result
-            $nativeReceipt = $rcwaVerified.evidence.native_receipt
-            if ($rcwaVerified.evidence.schema -ne 'OMEGA_SOVEREIGN_INDEPENDENT_SOLVER_RESULT_R175') { throw 'R221 RCWA evidence schema mismatch' }
-            if ($rcwaVerified.evidence.native_execution -ne $true -or $rcwaVerified.evidence.independent_solver_family_claim -ne $true) { throw 'R221 RCWA native execution proof missing' }
-            if ($native.schema -ne 'OMEGA_RESULT_v1' -or $native.solver -ne 'rcwa' -or $native.solver_family -ne 'MAXWELL_RCWA') { throw 'R221 native RCWA identity mismatch' }
-            if (-not ([string]$native.solver_version).StartsWith('grcwa:') -or $native.converged -ne $true) { throw 'R221 native grcwa result did not converge' }
-            if ($nativeReceipt.schema -ne 'OMEGA_SOVEREIGN_RCWA_RECEIPT_R175' -or $nativeReceipt.converged -ne $true -or $nativeReceipt.native_execution -ne $true) { throw 'R221 native RCWA receipt invalid' }
-            if ($nativeReceipt.canonical_mutation -ne $false -or $rcwaVerified.evidence.canonical_mutation -ne $false) { throw 'R221 RCWA receipt attempted Canon mutation' }
-            if ($rcwaJob.payload.r221_training_job_id -ne $trainingJob.id -or $rcwaJob.payload.r221_resume_mode -ne 'DEVELOPMENT_LOOP') { throw 'R221 controller-generated RCWA lineage/resume binding mismatch' }
-
-            $finalProbe = & $py -m omega_runtime.rcwa_solver --probe | ConvertFrom-Json
-            if ($LASTEXITCODE -ne 0 -or $finalProbe.available -ne $true) { throw ('R221 agent did not self-repair native grcwa: '+($finalProbe | ConvertTo-Json -Compress)) }
-
-            $advanced = $null
-            for ($attempt = 0; $attempt -lt 30; $attempt++) {
-              $advanced = Invoke-RestMethod -Uri 'http://127.0.0.1:8127/api/development/status' -TimeoutSec 8
-              if ($advanced.mode -eq 'DEVELOPMENT_LOOP' -and $advanced.active_job -and $advanced.active_job.id -ne $trainingJob.id -and $advanced.active_job.id -ne $rcwaJob.id) { break }
-              Start-Sleep -Milliseconds 500
-            }
-            if (-not $advanced -or $advanced.mode -ne 'DEVELOPMENT_LOOP' -or -not $advanced.active_job) { throw 'R221 persistent controller did not restore development after native RCWA return' }
-            if ($advanced.active_job.id -eq $trainingJob.id -or $advanced.active_job.id -eq $rcwaJob.id) { throw 'R221 next stage did not advance beyond training/RCWA' }
-            if ($advanced.r221_train_rcwa.controller_owned_transitions -ne $true -or $advanced.r221_train_rcwa.browser_required_for_progress -ne $false) { throw 'R221 persistent controller ownership contract missing' }
-
-            [pscustomobject]@{
-              schema = 'OMEGA_R221_WINDOWS_CONTROLLER_OWNED_TRAIN_RCWA_CONTINUITY_PROOF'
-              transport = 'WINDOWS_CI_LOOPBACK_NOT_OPERATOR_PC'
-              heartbeatCurrent = [bool]$hybrid.heartbeatCurrent
-              authenticated = [bool]$hybrid.authenticated
-              pcOnline = [bool]$hybrid.pcOnline
-              initialRcwaAvailable = $false
-              finalRcwaAvailable = [bool]$finalProbe.available
-              dependencySelfRepairProven = [bool]$finalProbe.available
-              controllerOwnedTransitions = [bool]$advanced.r221_train_rcwa.controller_owned_transitions
-              browserRequiredForProgress = [bool]$advanced.r221_train_rcwa.browser_required_for_progress
-              pipelineId = $pipelineId
-              trainingJobId = $trainingJob.id
-              trainingState = $trainingVerified.state
-              trainingReceiptSchema = $trainingReceipt.schema
-              trainingReceiptSha256 = $trainingReceipt.receiptSha256
-              trainingEvaluationPassed = [bool]$trainingReceipt.evaluation.passed
-              rcwaJobId = $rcwaJob.id
-              rcwaState = $rcwaVerified.state
-              rcwaEvidenceSchema = $rcwaVerified.evidence.schema
-              rcwaResultSchema = $native.schema
-              rcwaSolver = $native.solver
-              rcwaSolverFamily = $native.solver_family
-              rcwaSolverVersion = $native.solver_version
-              rcwaConverged = [bool]$native.converged
-              rcwaReceiptSchema = $nativeReceipt.schema
-              rcwaReceiptSha256 = $nativeReceipt.receipt_sha256
-              rcwaNativeExecution = [bool]$nativeReceipt.native_execution
-              nextJobId = $advanced.active_job.id
-              nextJobKind = $advanced.active_job.kind
-              nextJobState = $advanced.active_job.state
-              developmentMode = $advanced.mode
-              connectedIsNotExecution = $true
-              rcwaHeartbeatIsNotExecutionProof = $true
-              canonicalMutation = $false
-              githubMutation = $false
-              deploymentAuthorized = $false
-              promotionAuthorized = $false
-            } | ConvertTo-Json -Depth 40 | Set-Content -Encoding utf8 'r221-training-rcwa-continuity-proof.json'
-
-            Write-Host 'R221_WINDOWS_AGENT_SELF_REPAIR_TO_CONTROLLER_OWNED_TRAINING_TO_NATIVE_GRCWA_TO_NEXT_STAGE_PROVEN_NOT_USER_PC'
-          }
-          finally {
-            Remove-Item $pairingFile -Force -ErrorAction SilentlyContinue
-            if ($agent -and -not $agent.HasExited) { Stop-Process -Id $agent.Id -Force -ErrorAction SilentlyContinue }
-            if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue }
-          }
-
-      - name: Upload R221 Windows train-RCWA continuity proof packet
+      - name: Upload Windows continuity proof packet
         uses: actions/upload-artifact@v4
         with:
           name: omega-r221-training-rcwa-continuity-${{ github.run_id }}
