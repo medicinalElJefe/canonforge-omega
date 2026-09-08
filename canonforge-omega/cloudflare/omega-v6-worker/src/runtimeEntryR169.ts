@@ -59,6 +59,7 @@ import { handleEarthSpatialEvidenceR214, enhanceEarthSpatialEvidenceR214 } from 
 import { handleSurfaceCompatibilityR214 } from "./surfaceCompatibilityR214";
 import { handleMenuTruthR214, enhanceMenuTruthR214 } from "./menuTruthR214";
 import { enhanceWholeSystemSurfaceR205 } from "./wholeSystemSurfaceR205";
+import { enhanceSurfaceBindingIntegrityR216 } from "./surfaceBindingIntegrityR216";
 
 export { OmegaRuntime } from "./heartbeatTruth";
 export { OmegaMissionLedgerR201 } from "./system/omegaRuntimeR201";
@@ -251,7 +252,10 @@ async function publicFetch(request: Request, env: any, ctx: any): Promise<Respon
     finalResponse = await enhanceOneSystemNavigationR195Preserved(dewey, calibrated, request);
   }
   finalResponse = await enhanceMenuTruthR214(finalResponse);
-  return enhanceWholeSystemSurfaceR205(finalResponse);
+  const r205 = await (async () => {
+    return enhanceWholeSystemSurfaceR205(finalResponse);
+  })();
+  return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null);
 }
 
 export default { fetch: publicFetch };

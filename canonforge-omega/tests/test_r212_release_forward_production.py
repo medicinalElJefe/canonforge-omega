@@ -57,12 +57,22 @@ def test_r212_live_proof_covers_current_operational_truth_chain_and_r185_federat
     assert "pcOnlineRequiresCurrentAuthenticatedHeartbeat" in text
     assert "verify_r185_live_federation.py" in text
     assert '--expected-sha "$GITHUB_SHA"' in text
+    assert "assert_deployment_lock" in text
+    assert "PRODUCTION_WRITER_RACE" in text
 
 
-def test_r212_rolls_back_on_any_failed_live_or_federation_proof():
+def test_r212_restores_exact_predeploy_deployment_on_any_failed_admission_gate():
     text = read(WORKFLOW)
     assert "continue-on-error: true" in text
-    assert "if: steps.liveproof.outcome != 'success'" in text
-    assert "npx wrangler rollback" in text
-    assert "cumulative or R185 federation proof failed" in text
+    assert "steps.deploy.outcome != 'success'" in text
+    assert "steps.versionlock.outcome != 'success'" in text
+    assert "steps.liveproof.outcome != 'success'" in text
+    assert "pre-deployments.json" in text
+    assert "pre-version-ids.json" in text
+    assert "pre-restore-payload.json" in text
+    assert "restore-deployment.json" in text
+    assert "restored-deployments.json" in text
+    assert '"$DEPLOYMENTS_URL?force=true"' in text
+    assert "RESTORE_TARGET_MISMATCH" in text
+    assert "RELEASE_FORWARD_ADMISSION_FAILED" in text
     assert "exit 1" in text

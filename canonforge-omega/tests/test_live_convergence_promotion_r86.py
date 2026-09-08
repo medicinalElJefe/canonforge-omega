@@ -5,11 +5,15 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT.parent / ".github" / "workflows" / "omega-v6-release-forward-production.yml"
 WRANGLER = ROOT / "cloudflare" / "omega-v6-worker" / "wrangler.toml"
 
+DEPLOY_STEP = "Deploy exact canonical Worker to Cloudflare and bind version ID"
+LIVE_PROOF_STEP = "Prove live exact identity, cumulative truth, version lock, and all 172 R185 nodes"
+RESTORE_STEP = "Restore exact pre-deploy Cloudflare deployment if mutation or admission failed"
+
 
 def test_v6_promotion_requires_live_post_deploy_convergence_proof():
     source = WORKFLOW.read_text(encoding="utf-8")
-    assert "Deploy exact canonical Worker to Cloudflare" in source
-    assert "Prove live exact identity, cumulative truth, and all 172 R185 nodes" in source
+    assert DEPLOY_STEP in source
+    assert LIVE_PROOF_STEP in source
     assert "https://omegav6.jeffdeweyeljefe.workers.dev" in source
     assert "/api/system/r211/manifest" in source
     assert "/api/system/r205/manifest" in source
@@ -20,15 +24,26 @@ def test_v6_promotion_requires_live_post_deploy_convergence_proof():
     assert "canonicalGitSha" in source
     assert "pcOnlineRequiresCurrentAuthenticatedHeartbeat" in source
     assert "R185 manifest + deployment identity stable across complete sweep: VERIFIED" in source
+    assert "expected-version-id.txt" in source
+    assert "PRODUCTION_WRITER_RACE" in source
 
 
-def test_live_proof_runs_after_deploy_and_before_success_record_or_rollback_decision():
+def test_live_proof_runs_after_deploy_and_before_success_record_or_restore_decision():
     source = WORKFLOW.read_text(encoding="utf-8")
-    deploy = source.index("Deploy exact canonical Worker to Cloudflare")
-    proof = source.index("Prove live exact identity, cumulative truth, and all 172 R185 nodes")
-    rollback = source.index("Roll back immediately if any live exact-head proof failed")
+    deploy = source.index(DEPLOY_STEP)
+    proof = source.index(LIVE_PROOF_STEP)
+    restore = source.index(RESTORE_STEP)
     record = source.index("Publish production proof summary")
-    assert deploy < proof < rollback < record
+    assert deploy < proof < restore < record
+
+
+def test_failed_admission_restores_the_exact_predeploy_version_set():
+    source = WORKFLOW.read_text(encoding="utf-8")
+    assert "pre-restore-payload.json" in source
+    assert "pre-version-ids.json" in source
+    assert '"$DEPLOYMENTS_URL?force=true"' in source
+    assert "RESTORE_TARGET_MISMATCH" in source
+    assert "exit 1" in source
 
 
 def test_public_health_has_distinct_edge_settle_build_identity():

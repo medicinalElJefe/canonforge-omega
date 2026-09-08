@@ -31,10 +31,69 @@ From this point forward, release completion is incomplete until this ledger and 
 
 | Track | Status | Current identity | Production truth |
 | --- | --- | --- | --- |
-| R214 navigation polish | `ADMITTED/LIVE` with controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Exact-SHA navigation and R194 evidence-plane proof passed; original rollback transaction defect remains recorded. |
-| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | merged to canonical source; exact SHA + cumulative truth + 172 R185 nodes were live-proved. Controller rollback step and R201 bounded mission execution remain failed qualifications. |
-| R215 navigation integrity | `CANDIDATE` | PR #239 reconciled onto canonical Earth `e15d61d7...` | R215 code, proof suite, workflow and ledger are reconciled onto canonical Earth; the exact reconciled head must rerun all gates before merge. |
-| R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be extracted/reconciled onto newer canonical Earth/navigation state. |
+| R216 surface binding integrity | `CANDIDATE` | branch `r216-surface-binding-integrity`, base `e15d61d7...` | New fail-closed public-surface interlock is implemented inside the preserved R169 entrypoint; not merged or live-admitted yet. |
+| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Canonical source exists, but the exact-head production transaction was interrupted by a second Worker deployment during live proof; do not call the transaction admitted. |
+| R215 navigation integrity | `CANDIDATE` | PR #239 | Valuable navigation proof exists but must be reconciled with R216/current canonical lineage before admission. |
+| R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be extracted/reconciled onto newer canonical state. |
+| R214 navigation polish | `ADMITTED/LIVE` with historical controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Navigation/evidence proof was admitted on that lineage; subsequent canonical work is tracked separately. |
+
+---
+
+## R216 — Fail-closed live surface binding integrity
+
+**Date:** 2026-09-07 (America/Phoenix)
+
+**Status:** `CANDIDATE` — source implementation exists on current canonical lineage; it is not reported as live until full CI, governed merge, exact-head deployment, and post-deploy binding proof pass.
+
+**Canonical base:** `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b`
+
+**Candidate branch:** `r216-surface-binding-integrity`
+
+**Pull request:** https://github.com/medicinalElJefe/canonforge-omega/pull/241
+
+**R216 candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34179803344
+
+**Public runtime under repair:** https://omegav6.jeffdeweyeljefe.workers.dev
+
+**Failed/invalidated production transaction that exposed the deployment race:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34178356206
+
+### Trigger
+
+A public runtime screenshot showed a polished OMEGA surface with controls/badges such as SYSTEM, MISSION, OPERATE, CORRELATION, SAI, Hybrid/PC and Swarm while the backing runtime chain was not coherently admitted. That presentation is now treated as a release-integrity failure, not a cosmetic issue.
+
+### New invariant
+
+**No deceptive or disconnected active surface.** A visible interactive runtime surface must not become usable until the same-origin deployed runtime proves authoritative live bindings. If the proof cannot complete, the public interface remains withheld behind an explicit diagnostic rather than displaying controls that merely look operational.
+
+### What changed in the candidate
+
+- Adds `surfaceBindingIntegrityR216.ts`, a fail-closed UI admission interlock.
+- Keeps Wrangler's actual Worker entrypoint exactly at `src/runtimeEntryR169.ts`; no R216 Worker entrypoint or second runtime exists.
+- Installs R216 inside the established R169 public response boundary after the real R205 final surface composition. R169 continues importing/delegating `heartbeatTruth`, exporting the existing Durable Object classes, and owning the established execution composition.
+- Before exposing the HTML runtime, R216 probes same-origin `/api/system/r211/status` and `/api/system/r205/health` with `no-store` and cache-busting proof requests.
+- Requires the current R211 status schema and `ok === true` plus current R205 health schema and `ok === true`.
+- Binds R211/R205 identity to the exact `CANONICAL_GIT_SHA` embedded in the deployed Worker. Identity disagreement keeps controls withheld.
+- While verifying or failed, the underlying runtime surface is hidden and capture-phase input blocking prevents click, pointer, keyboard and submit actions from reaching it.
+- Failure state explicitly reports `LIVE BINDING INCOMPLETE — CONTROLS WITHHELD`; Retry performs the real proof again rather than cosmetically dismissing the interlock.
+- The interlock does not claim PC online, authenticated heartbeat, solver execution, cloud execution, Canon admission, or promotion authority.
+- Adds `test_r216_surface_binding_integrity.py` and a dedicated R216 CI workflow with TypeScript and Wrangler dry-run proof.
+- The initial R216 proof exposed historical source-string assumptions; the implementation was corrected to preserve the true R169 entrypoint and the established R205 final-render semantics instead of weakening the authority chain.
+
+### Deployment-race evidence retained
+
+The R214 Earth exact-head release-forward run deployed canonical SHA `e15d61d7...` and Wrangler reported Worker version `5e698131-ed44-44b2-ba2f-479c0f2dd308` at approximately 01:58 UTC. During the same live-proof window, the required endpoints changed from 503 to 404. When rollback began, Wrangler reported the then-current production version was instead `15e9d321-924d-45a5-b2bb-bd5ea68c4f30`, created at approximately 02:02 UTC. The controller then restored `5e698131...`. This is direct evidence that another Worker deployment replaced the release-forward version during admission. The specific writer is not assigned without evidence.
+
+### Admission boundary
+
+R216 remains `CANDIDATE` until:
+
+1. source regression, strict Cloudflare contract, TypeScript and dry-run gates are green;
+2. historical authority/DO lifecycle gates remain green;
+3. the candidate is reconciled with any newer canonical changes and merged through a governed PR;
+4. the sole release-forward controller deploys the exact resulting canonical SHA;
+5. R211 aggregate status and R205 whole-system health are both green on that exact deployment;
+6. the R185 172-node federation proof completes without deployment identity changing underneath it;
+7. the public page itself exposes the R216 verified-binding marker only after those same-origin health requirements pass.
 
 ---
 
@@ -42,7 +101,7 @@ From this point forward, release completion is incomplete until this ledger and 
 
 **Date:** 2026-09-07 (America/Phoenix)
 
-**Status:** `CANDIDATE` after canonical-source merge — exact live identity and the 172-node federation acceptance passed, but whole advancement admission remains qualified by the release-controller rollback defect and an R201 bounded mission execution failure.
+**Status:** `CANDIDATE` after canonical-source merge — source is canonical, but production admission remains qualified by the interrupted release transaction and R201 continuity failure.
 
 **Previous canonical base:** `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38`
 
@@ -59,22 +118,16 @@ From this point forward, release completion is incomplete until this ledger and 
 ### What changed
 
 - Replaces decorative/pseudo-spatial Earth event presentation with source-backed geospatial evidence surfaces.
-- Places USGS earthquake events from returned longitude, latitude, depth, magnitude, and event time rather than deriving fake event geometry from counts or visual animation.
+- Places USGS earthquake events from returned longitude, latitude, depth, magnitude, and event time rather than deriving fake event geometry from counts or animation.
 - Adds NASA GIBS true-color optical context and NASA EONET returned event geometry.
-- Retains R198 public SAR footprints and Earth→Region→City→Street→Ground composition instead of building over them.
-- Adds returned point-weather context and NOAA SWPC planetary Kp with explicit global/spatial-scope boundaries rather than inventing terrestrial event coordinates.
-- Keeps OMEGA model/interface state visually and semantically separate from returned observations.
-- Restores read-only status/restoration/federation paths locally so they do not fall through to an unconfigured sovereign gateway.
-- Disables unavailable source layers instead of leaving controls that imply a capability that cannot currently return evidence.
-- Preserves R169 execution authority, R205 final surface authority, governed navigation lineage, and R195 residual restoration; no Canon mutation or promotion authority is added.
+- Retains R198 public SAR footprints and Earth→Region→City→Street→Ground composition.
+- Adds returned point-weather context and NOAA SWPC planetary Kp with explicit global/spatial-scope boundaries.
+- Keeps model/interface state visually and semantically separate from returned observations.
+- Preserves R169 execution authority, R205 whole-system authority, governed navigation lineage, and R195 residual restoration; no Canon mutation or promotion authority is added.
 
-### Production evidence and qualification
+### Qualification retained
 
-- The source is now canonical at `e15d61d7...`.
-- The release-forward job passed ancestry, full cumulative Python/Cloudflare regression, TypeScript, dry-run, exact canonical lock, production deployment, exact live identity, cumulative live truth, and all 172 R185 federation nodes.
-- That same controller then executed its rollback step even though the live exact-head proof had passed; the rollback step failed and the overall controller run ended red. This is a controller transaction-semantics defect and remains visible.
-- The separate R201 live continuity workflow successfully waited for exact `e15d61d7...`, verified the live manifest/authority boundary, and reached durable read surfaces, but failed while executing one bounded read-only R200 mission through R201 durability. That is a distinct execution-path defect and is not hidden by the successful 172-node proof.
-- Relabel this advancement `ADMITTED/LIVE` only after the controller transaction semantics and applicable R201 continuity path are green on a canonical exact-head run.
+The release-forward controller's own exact Worker version was replaced by a different production version while its live proof was still running. The run therefore cannot be used as an unqualified final admission receipt. R216 records and closes the public-surface consequence of that failure mode while production-writer investigation/locking continues.
 
 ---
 
@@ -82,42 +135,24 @@ From this point forward, release completion is incomplete until this ledger and 
 
 **Date:** 2026-09-07 (America/Phoenix)
 
-**Status:** `CANDIDATE` — reconciled onto the canonical Earth-bearing head `e15d61d7...`; the reconciled candidate must rerun source/package/Windows/whole-system gates before governed merge and exact-head live admission.
+**Status:** `CANDIDATE` — route integrity work is retained; it must be reconciled onto the latest canonical/R216 lineage and re-proven before governed merge.
 
-**Canonical reconciliation base:** `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b`
+**Canonical reconciliation base at R215 creation:** `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b`
 
 **Candidate branch:** `r215-navigation-integrity`
 
-**Safety branch preserving pre-Earth R215:** `r215-navigation-integrity-pre-earth-reconcile`
-
 **PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/239
 
-**Earlier green pre-Earth R215 candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34178250422
-
-**Earlier general non-mutating verify:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34178250403
-
-**Earlier failed wiring proof retained for traceability:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34174452261
+**Earlier green candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34178250422
 
 ### What changed
 
-- Repairs the R193/R195 command-palette reachability seam so `ONE SYSTEM` / `/system` is discoverable through command search as well as the rail.
+- Repairs command-palette reachability for the One-System/system surface.
 - Preserves the R193 workspace/command-palette implementation rather than replacing it.
-- Adds deterministic command-palette augmentation for search rendering, click navigation, Ctrl/Cmd-K opening, and palette re-render observation.
+- Adds deterministic command-palette augmentation, keyboard opening, route rendering and click navigation.
 - Adds exhaustive route proof for all 20 declared SYSTEMS destinations and all 8 workspace deep links.
-- Proves exact canonical SHA on the live runtime before route acceptance.
-- Proves navigation headers/DOM markers on HTML while proving JSON APIs remain untouched by navigation enhancement.
-- Keeps navigation code non-mutating: no Canon promotion, production deployment, or execution-authority escalation is introduced.
-- Establishes this durable advancement ledger and a test-enforced completion contract.
-- Reconciles onto canonical Earth without removing the R214 residual-markup repair in `oneSystemNavigationR195.ts`; a dedicated R215 assertion now guards that cross-lineage preservation.
-
-### Candidate history and current boundary
-
-- The stale workflow reference `tests/test_r195_one_system.py` was corrected to the retained predecessor proof `tests/test_r195_drive_corpus_one_system.py`; the original failure remains recorded rather than erased.
-- The pre-Earth candidate passed 51 R215/ledger/predecessor assertions, complete Worker TypeScript checking, Wrangler dry-run, R195 preflight, R195 One-System, R190 whole-system truth, R192/R214 navigation, R180 convergence, general verify, and Windows sovereign loopback.
-- Canonical then advanced independently to Earth merge `e15d61d7...`; R215 was therefore not merged from its stale base.
-- A safety branch was created, the active R215 ref was rebased to `e15d61d7...`, and the five R215 files were reapplied with the Earth overlap preserved.
-- The reconciled exact head must rerun all mandatory gates. Prior green runs are historical evidence, not authorization to merge the new head.
-- After governed merge, exact-head production deployment and the R215 live 20-route + 8-workspace + API non-interference proof are required before `ADMITTED/LIVE`.
+- Keeps navigation non-mutating: no Canon promotion, deployment authority, or execution-authority escalation.
+- Established the durable advancement-ledger contract now carried into R216.
 
 ---
 
@@ -125,11 +160,9 @@ From this point forward, release completion is incomplete until this ledger and 
 
 **Date:** 2026-09-07 (America/Phoenix)
 
-**Status:** `ADMITTED/LIVE` for runtime/navigation evidence, with a recorded release-controller transaction-semantic qualification from the original controller run.
+**Status:** `ADMITTED/LIVE` on its recorded lineage, with later release-controller qualifications tracked separately.
 
 **Governed merge SHA:** `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38`
-
-**Commit:** https://github.com/medicinalElJefe/canonforge-omega/commit/5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38
 
 **PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/238
 
@@ -137,28 +170,14 @@ From this point forward, release completion is incomplete until this ledger and 
 
 **R194 evidence-plane live proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34174039636
 
-**Production / federation acceptance:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34174039663
+**Production/federation acceptance:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34174039663
 
 ### What changed
 
-- Expanded the universal R193/R195 control navigation to expose current operator/proof surfaces instead of the older partial route set.
-- Added the advanced control submenu for `/system`, `/truth`, `/instrument`, `/convergence`, `/evolution`, Earth, Hybrid/PC, and Proof workspaces.
-- Upgraded the R192 fallback SYSTEMS submenu so fallback navigation and the modern rail do not disagree about restored destinations.
-- Added active/current-page state, ARIA semantics, keyboard Escape handling, outside-click behavior, mobile-safe geometry, and idempotent submenu insertion.
-- Preserved R169 execution authority and later whole-system, Earth/SAR, residual-restoration, operator and mission layers.
-- Added regression proof that navigation cannot acquire Canon mutation or production-deployment authority.
-
-### Proof recorded
-
-- Complete Worker TypeScript and Wrangler package dry-run passed.
-- Windows native `grcwa`, sovereign invariants, and real localhost pairing/heartbeat proof passed in inherited gates.
-- R194 live evidence-plane/root-repair proof passed against the exact R214 deployment.
-- R214 exact-SHA live navigation proof passed.
-- Production acceptance passed exact identity, cumulative truth, and all 172 R185 federation nodes.
-
-### Qualification retained
-
-The original production-controller run subsequently entered a rollback path after successful admission evidence and ended red when that rollback failed. Runtime acceptance remains green, but controller transaction semantics remain separately qualified until repaired and proven.
+- Expanded universal navigation to expose current operator/proof surfaces.
+- Added advanced control submenu destinations including system, truth, instrument, convergence, evolution, Earth, Hybrid/PC and Proof.
+- Added active-page state, ARIA semantics, Escape/outside-click handling and mobile-safe geometry.
+- Preserved R169 execution authority and later whole-system/Earth/operator/mission layers.
 
 ---
 
@@ -166,9 +185,9 @@ The original production-controller run subsequently entered a rollback path afte
 
 **Date:** 2026-09-07 (America/Phoenix)
 
-**Status:** `HELD` — valuable Hybrid authority work is retained, but this branch must not merge as-is over newer canonical Earth/navigation state.
+**Status:** `HELD` — valuable Hybrid authority work is retained, but this branch must not merge as-is over newer canonical Earth/navigation/R216 state.
 
-**Historical base:** `04a46933d5994e9b747dac1cb47ba2daa2a02b4c` (R213)
+**Historical base:** `04a46933d5994e9b747dac1cb47ba2daa2a02b4c`
 
 **Candidate head:** `5171dfb728e263cfcdabaa6fb16d96df3b140e28`
 
@@ -176,23 +195,17 @@ The original production-controller run subsequently entered a rollback path afte
 
 ### What changed
 
-- Adds a Durable Object outbound Hybrid control plane using the existing `OMEGA_RUNTIME` identity rather than treating an inbound cloud→PC gateway as the per-operation execution path.
+- Adds a Durable Object outbound Hybrid control plane using the existing `OMEGA_RUNTIME` identity.
 - Separates PC heartbeat/connectivity from execution authority.
-- Requires explicit local console consent before native execution, bound to the current authenticated device, exact approved root, operation allow-list, and an expiring lease.
-- Prevents a remote browser from manufacturing the local execution grant.
-- Blocks job creation, mission creation, and agent polling outside the active local authority envelope.
-- Adds truthful bounded local adapters; unsupported operations block rather than pretend to succeed.
+- Requires explicit local console consent bound to the authenticated device, approved root, operation allow-list and expiring lease.
+- Blocks job creation and agent polling outside the active local authority envelope.
 
-### Why this track is held instead of merged
+### Why held
 
-- PR #236 is behind the canonical R214 navigation and Earth restoration lineage.
-- Its Earth portion overlaps work already reconciled and merged through PR #235; blindly merging it could reintroduce older runtime/presentation state.
-- The Hybrid local-authority/outbound-polling work should be extracted/reconciled onto the current canonical Earth head rather than discarded.
-- The first legacy pairing migration still has an inbound-verification edge that must be closed or explicitly bounded before calling the Hybrid path fully outbound.
-- A fresh cumulative CI and exact-head production proof is required after reconciliation. No part of this held candidate is reported as live merely because its source exists.
+Its lineage is behind newer canonical work. The Hybrid local-authority/outbound-polling pieces must be selectively reconciled rather than blindly merged. No part of this held candidate is reported as live.
 
 ---
 
 ## Pre-ledger continuity note
 
-R214/R215 are the first releases normalized into this dedicated advancement ledger. Earlier releases remain represented by source history, PRs, workflow evidence, subsystem ledgers, recovery/convergence records, and Canon artifacts. Their absence from this file must not be interpreted as absence of earlier work. Backfill must remain evidence-based rather than reconstructing unverified historical states from memory.
+R214/R215/R216 are normalized into this dedicated advancement ledger. Earlier releases remain represented by source history, PRs, workflow evidence, subsystem ledgers, recovery/convergence records, and Canon artifacts. Their absence from this file must not be interpreted as absence of earlier work. Backfill must remain evidence-based rather than reconstructed from memory.
