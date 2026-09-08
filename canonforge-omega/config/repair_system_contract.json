@@ -1,0 +1,62 @@
+{
+  "schema": "OMEGA_REPAIR_SYSTEM_CONTRACT_V1",
+  "policy": {
+    "principle": "A repair is incomplete until the incident is converted into a permanent system invariant, implemented in the canonical path, regression-tested, enforced by CI, governed through release admission, and recorded in the advancement ledger.",
+    "required_stages": [
+      "incident",
+      "invariant",
+      "implementation",
+      "regression",
+      "ci_proof",
+      "release_admission",
+      "ledger"
+    ],
+    "source_merge_is_not_live_admission": true,
+    "failure_must_remain_visible": true,
+    "legacy_entrypoints_must_delegate_or_fail_closed": true,
+    "capability_actions_must_not_bootstrap_parallel_runtimes": true
+  },
+  "canonical_entrypoints": {
+    "windows_powershell": "scripts/START_OMEGA_SOVEREIGN.ps1",
+    "windows_cmd": "scripts/START_OMEGA_SOVEREIGN.cmd",
+    "current_implementation": "scripts/START_OMEGA_R222_FULL_HYBRID.ps1",
+    "localhost_port": 8127,
+    "durable_singleton": "OMEGA_RUNTIME"
+  },
+  "repairs": [
+    {
+      "id": "R222-SINGLE-OWNER-HYBRID-REPAIR",
+      "release": "R222",
+      "status": "CANDIDATE",
+      "incident": "Hybrid/bootstrap and legacy Windows entrypoints could diverge or create parallel runtime/agent ownership; production bootstrap routing and source contracts could also drift from the implementation that physical-PC proof exercised.",
+      "invariant": "For one approved root, OMEGA has one canonical localhost runtime on 127.0.0.1:8127, one sovereign outbound agent, one authenticated Hybrid session and one bounded local execution-authority lease. RCWA, SAI, tests, builds and validation dispatch through that existing agent. Capability actions never launch another OMEGA runtime. Legacy launch/install entrypoints delegate to the stable sovereign gateway or fail closed.",
+      "implementation_paths": [
+        "scripts/START_OMEGA_SOVEREIGN.ps1",
+        "scripts/START_OMEGA_SOVEREIGN.cmd",
+        "scripts/START_OMEGA_R222_FULL_HYBRID.ps1",
+        "cloudflare/omega-v6-worker/src/hybridControlPlaneR222.ts",
+        "cloudflare/omega-v6-worker/src/omegaRuntimeR222.ts",
+        "cloudflare/omega-v6-worker/src/validation/independentSolverLabR175.ts"
+      ],
+      "legacy_entrypoints": [
+        "scripts/LAUNCH_OMEGA_V6_WINDOWS.ps1",
+        "scripts/START_OMEGA_R220_FULL_HYBRID.cmd",
+        "scripts/START_OMEGA_R222_FULL_HYBRID.cmd",
+        "scripts/INSTALL_OMEGA_V6_WINDOWS.ps1",
+        "INSTALL_OMEGA_V6_WINDOWS.bat"
+      ],
+      "regression_tests": [
+        "tests/test_r222_hybrid_bootstrap_single_instance.py",
+        "tests/test_repair_system_contract.py"
+      ],
+      "proof_workflows": [
+        ".github/workflows/omega-v6-repair-system-contract.yml",
+        ".github/workflows/omega-v6-r220-downloadable-hybrid-setup-proof.yml",
+        ".github/workflows/omega-v6-r220-post-hybrid-development-continuity.yml"
+      ],
+      "authority_boundary": "The stable gateway and bounded development executor grant no Canon, GitHub, deployment or promotion authority. Physical PC online/execution claims remain heartbeat- and receipt-gated. Release promotion remains controlled by the exact-head release-forward controller.",
+      "release_admission": "CANDIDATE until exact-head source/Windows/RCWA/Hybrid/verified-return gates pass, the current canonical base is reconciled, the governed merge completes, release-forward deploys the exact canonical SHA, live cumulative acceptance passes without writer replacement/rollback, and the physical-PC single-session path is verified.",
+      "ledger": "release/OMEGA_V6_ADVANCEMENT_LEDGER.md"
+    }
+  ]
+}
