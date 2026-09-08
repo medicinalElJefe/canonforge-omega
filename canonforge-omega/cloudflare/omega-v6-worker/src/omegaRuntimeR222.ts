@@ -373,7 +373,7 @@ export class OmegaRuntime extends R204OmegaRuntime {
       const device = devices.find((row: any) => row.id === deviceId && row.online && !row.revoked);
       if (!device) return json({ ok: false, code: "CURRENT_AUTHENTICATED_HEARTBEAT_REQUIRED" }, 409);
       const requested = Array.isArray(body.allowedKinds) ? body.allowedKinds.map((value: unknown) => text(value)) : [];
-      const allowedKinds = (requested.length ? requested : SAFE_DEVELOPMENT_KINDS).filter(kind => SAFE_DEVELOPMENT_KINDS.includes(kind));
+      const allowedKinds = (requested.length ? requested : SAFE_DEVELOPMENT_KINDS).filter((kind: string) => SAFE_DEVELOPMENT_KINDS.includes(kind));
       const seconds = Math.max(300, Math.min(MAX_AUTHORITY_SECONDS, Number(body.expiresSeconds) || DEFAULT_AUTHORITY_SECONDS));
       const lease: AuthorityLease = {
         schema: HYBRID_AUTHORITY_SCHEMA_R222,
