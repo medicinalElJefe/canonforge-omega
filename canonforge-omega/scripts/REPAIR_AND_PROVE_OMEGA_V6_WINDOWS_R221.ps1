@@ -101,14 +101,14 @@ function Test-OwnedRuntimeProcess($Process) {
 
 function Stop-OwnedProcess($Process, [string]$Kind) {
   if ($null -eq $Process) { return }
-  $pid = [int]$Process.ProcessId
-  Write-R221Log "stopping stale owned $Kind process pid=$pid"
-  Stop-Process -Id $pid -Force -ErrorAction Stop
+  $processId = [int]$Process.ProcessId
+  Write-R221Log "stopping stale owned $Kind process pid=$processId"
+  Stop-Process -Id $processId -Force -ErrorAction Stop
   for ($i = 0; $i -lt 40; $i++) {
-    if (-not (Get-Process -Id $pid -ErrorAction SilentlyContinue)) { return }
+    if (-not (Get-Process -Id $processId -ErrorAction SilentlyContinue)) { return }
     Start-Sleep -Milliseconds 250
   }
-  throw "Owned $Kind process pid=$pid did not stop within bounded wait."
+  throw "Owned $Kind process pid=$processId did not stop within bounded wait."
 }
 
 function Get-RcwaTruth {
@@ -139,7 +139,9 @@ function Get-HostSummary {
   }
   $rootDrive = [System.IO.Path]::GetPathRoot($Root)
   $drive = $null
-  try { $drive = Get-PSDrive -Name $rootDrive.TrimEnd(':','\') -ErrorAction Stop } catch {}
+  if ($rootDrive -match '^[A-Za-z]:\\$') {
+    try { $drive = Get-PSDrive -Name $rootDrive.Substring(0,1) -ErrorAction Stop } catch {}
+  }
   return [ordered]@{
     osCaption = if ($null -ne $os) { [string]$os.Caption } else { $null }
     osVersion = if ($null -ne $os) { [string]$os.Version } else { $null }
@@ -237,8 +239,7 @@ if (-not $ReportOnly) {
   $localAfterInstall = Get-LocalTruth
   if (-not [bool]$localAfterInstall.runtimeHealthy -or -not [bool]$localAfterInstall.heartbeatCurrent -or -not [bool]$localAfterInstall.authenticated) {
     Write-R221Log 'invoking canonical R209 launcher for runtime + authenticated heartbeat convergence'
-    $launchArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$Launcher`"",'-NoBrowser','-SkipAcceptanceProof')
-    & powershell.exe @launchArgs
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Launcher -NoBrowser -SkipAcceptanceProof
   }
 }
 
@@ -255,7 +256,7 @@ $convergence = $null
 $index = $null
 if ([bool]$after.runtimeHealthy -and [bool]$after.authenticated -and [bool]$after.heartbeatCurrent -and -not $ReportOnly) {
   Write-R221Log 'local authenticated heartbeat proven; running bounded R209/R208/R181 acceptance convergence'
-  $r209Args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$R209`",'-MaxAttempts',"$MaxAttempts",'-DelaySeconds',"$DelaySeconds")
+  $r209Args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$R209,'-MaxAttempts',"$MaxAttempts",'-DelaySeconds',"$DelaySeconds")
   if ($RequireFullAcceptance) { $r209Args += '-RequireFullAcceptance' }
   & powershell.exe @r209Args
   $r209Exit = $LASTEXITCODE
