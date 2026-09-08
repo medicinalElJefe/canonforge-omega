@@ -33,6 +33,7 @@ export const DRIVE_REGISTRY_COLUMNS_R195 = [
 let cached: any | null = null;
 let cachedText: string | null = null;
 let cachedDigest: string | null = null;
+let inflating: Promise<string> | null = null;
 
 async function sha256Text(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -41,18 +42,30 @@ async function sha256Text(value: string): Promise<string> {
 
 async function inflateDriveCorpusR195(): Promise<string> {
   if (cachedText !== null) return cachedText;
-  const encoded = [c0, c1, c2, c3, c4].join("");
-  const binary = atob(encoded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  const stream = new Response(bytes).body;
-  if (!stream) throw new Error("R195_DRIVE_CORPUS_STREAM_UNAVAILABLE");
-  cachedText = await new Response(stream.pipeThrough(new DecompressionStream("gzip"))).text();
-  cachedDigest = await sha256Text(cachedText);
-  if (cachedDigest !== DRIVE_CORPUS_SNAPSHOT_SHA256_R195) {
-    throw new Error(`R195_DRIVE_CORPUS_HASH_MISMATCH:${cachedDigest}`);
+  if (inflating !== null) return inflating;
+
+  inflating = (async () => {
+    const encoded = [c0, c1, c2, c3, c4].join("");
+    const binary = atob(encoded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    const stream = new Response(bytes).body;
+    if (!stream) throw new Error("R195_DRIVE_CORPUS_STREAM_UNAVAILABLE");
+    const text = await new Response(stream.pipeThrough(new DecompressionStream("gzip"))).text();
+    const digest = await sha256Text(text);
+    if (digest !== DRIVE_CORPUS_SNAPSHOT_SHA256_R195) {
+      throw new Error(`R195_DRIVE_CORPUS_HASH_MISMATCH:${digest}`);
+    }
+    cachedText = text;
+    cachedDigest = digest;
+    return text;
+  })();
+
+  try {
+    return await inflating;
+  } finally {
+    inflating = null;
   }
-  return cachedText;
 }
 
 function normalizeRegistryRowR195(row: any): any {
@@ -88,6 +101,7 @@ export async function driveCorpusIntegrityR195() {
     observedSha256: cachedDigest,
     compression: "gzip+base64-chunks",
     chunks: 5,
+    runtimeInflation: "SINGLE_FLIGHT_PER_WORKER_ISOLATE",
     driveEvidence: DRIVE_CORPUS_EVIDENCE_R195,
     registryEncoding: "14_COLUMN_ROW_ARRAY_NORMALIZED_TO_NAMED_RECORDS_AT_READ_BOUNDARY",
     registryContainerSupport: ["DIRECT_ARRAY", "WRAPPED_ROWS"],
