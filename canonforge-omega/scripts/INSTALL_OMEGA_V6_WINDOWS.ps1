@@ -12,7 +12,7 @@ function Log([string]$Text) {
   $line | Tee-Object -FilePath $Log -Append
 }
 
-Log "OMEGA V6 R210 install root=$Root"
+Log "OMEGA V6 governed install root=$Root"
 
 if (-not (Get-Command py -ErrorAction SilentlyContinue) -and -not (Get-Command python -ErrorAction SilentlyContinue)) {
   throw 'Python 3.10+ is required. Install Python and rerun this installer.'
@@ -61,7 +61,8 @@ if (-not (Test-Path $Vpy)) { throw "OMEGA virtual environment is incomplete: $Vp
 & $Vpy -m pip install --upgrade pip | Tee-Object -FilePath $Log -Append
 if ($LASTEXITCODE -ne 0) { throw 'pip upgrade failed.' }
 
-# Installation is the governed dependency-establishment phase; execution paths remain no-install.
+# Installation establishes dependencies only. Runtime ownership always enters through
+# START_OMEGA_SOVEREIGN.ps1 so installation cannot recreate a historical parallel owner.
 & $Vpy -m pip install -e "$Root[dev,rcwa]" | Tee-Object -FilePath $Log -Append
 if ($LASTEXITCODE -ne 0) {
   throw 'OMEGA dependencies failed to install. RCWA is mandatory for full sovereign independent-solver acceptance; no scalar fallback is promoted as RCWA.'
@@ -74,7 +75,7 @@ if ($LASTEXITCODE -ne 0 -or ($RcwaProbe -join "`n") -notmatch '"available"\s*:\s
   throw 'Native grcwa RCWA probe failed. Installation is not promoted.'
 }
 
-Log 'running sovereign runtime, pairing, independent-solver, R207 launch, R208 acceptance, R209 convergence, and R210 archive verification'
+Log 'running sovereign runtime, pairing, solver, Windows acceptance, single-owner R222, and repair-system verification'
 & $Vpy -m pytest -q `
   (Join-Path $Root 'tests\test_omega_runtime.py') `
   (Join-Path $Root 'tests\test_pairing_and_agent.py') `
@@ -83,15 +84,17 @@ Log 'running sovereign runtime, pairing, independent-solver, R207 launch, R208 a
   (Join-Path $Root 'tests\test_r207_windows_verified_venv_launch.py') `
   (Join-Path $Root 'tests\test_r208_physical_sovereign_acceptance.py') `
   (Join-Path $Root 'tests\test_r209_sovereign_convergence_diagnostics.py') `
-  (Join-Path $Root 'tests\test_r210_sovereign_proof_archive.py') |
+  (Join-Path $Root 'tests\test_r210_sovereign_proof_archive.py') `
+  (Join-Path $Root 'tests\test_r222_hybrid_bootstrap_single_instance.py') `
+  (Join-Path $Root 'tests\test_repair_system_contract.py') |
   Tee-Object -FilePath $Log -Append
 if ($LASTEXITCODE -ne 0) { throw 'OMEGA verification failed; installation not promoted.' }
 
-$Launcher = Join-Path $Root 'scripts\LAUNCH_OMEGA_V6_WINDOWS.ps1'
+$Launcher = Join-Path $Root 'scripts\START_OMEGA_SOVEREIGN.ps1'
 $R208Prover = Join-Path $Root 'scripts\PROVE_OMEGA_V6_WINDOWS.ps1'
 $R209Prover = Join-Path $Root 'scripts\PROVE_OMEGA_V6_R209_WINDOWS.ps1'
 $R210Archiver = Join-Path $Root 'scripts\ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1'
-if (-not (Test-Path $Launcher)) { throw "Canonical launcher missing: $Launcher" }
+if (-not (Test-Path $Launcher)) { throw "Canonical sovereign gateway missing: $Launcher" }
 if (-not (Test-Path $R208Prover)) { throw "R208 physical acceptance prover missing: $R208Prover" }
 if (-not (Test-Path $R209Prover)) { throw "R209 sovereign convergence prover missing: $R209Prover" }
 if (-not (Test-Path $R210Archiver)) { throw "R210 sovereign proof archiver missing: $R210Archiver" }
@@ -109,22 +112,24 @@ $Shortcut = $Shell.CreateShortcut($DesktopShortcut)
 $Shortcut.TargetPath = 'powershell.exe'
 $Shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$Launcher`""
 $Shortcut.WorkingDirectory = $Root
-$Shortcut.Description = 'OMEGA V6 Sovereign Runtime + authenticated PC link + R209 convergence + R210 proof retention'
+$Shortcut.Description = 'OMEGA Sovereign stable single-owner runtime + authenticated Hybrid execution gateway'
 $Shortcut.Save()
-Log "desktop shortcut created: $DesktopShortcut"
+Log "desktop shortcut created through stable gateway: $DesktopShortcut"
 
 $StartupDir = [Environment]::GetFolderPath('Startup')
 if ($StartupDir) {
-  $StartupShortcut = Join-Path $StartupDir 'OMEGA V6 Sovereign Continuity.lnk'
+  # Remove OMEGA launch shortcuts before writing exactly one canonical continuity owner.
+  Get-ChildItem -Path $StartupDir -Filter 'OMEGA*.lnk' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+  $StartupShortcut = Join-Path $StartupDir 'OMEGA Sovereign Continuity.lnk'
   $Auto = $Shell.CreateShortcut($StartupShortcut)
   $Auto.TargetPath = 'powershell.exe'
   $Auto.Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Launcher`" -NoBrowser -SkipAcceptanceProof"
   $Auto.WorkingDirectory = $Root
-  $Auto.Description = 'Start canonical OMEGA V6 runtime and authenticated sovereign heartbeat after Windows login'
+  $Auto.Description = 'Start the canonical OMEGA single-owner runtime and authenticated sovereign heartbeat after Windows login'
   $Auto.Save()
-  Log "startup continuity shortcut created: $StartupShortcut"
+  Log "single canonical startup continuity shortcut created: $StartupShortcut"
 }
 
-Log 'PASS dependencies, native RCWA, targeted tests, verified-venv launch, R208 truth acceptance, R209 bounded convergence, R210 content-addressed retention, and Windows continuity'
-Write-Host 'OMEGA V6 installation verified. Starting canonical runtime, sovereign PC link, bounded convergence proof, and evidence retention now.'
+Log 'PASS dependencies, native RCWA, repair-system regression suite, stable single-owner gateway, and Windows continuity'
+Write-Host 'OMEGA V6 installation verified. Starting the canonical stable sovereign gateway now.'
 Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$Launcher`"") -WorkingDirectory $Root
