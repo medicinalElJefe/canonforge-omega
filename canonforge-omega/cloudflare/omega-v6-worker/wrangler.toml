@@ -6,6 +6,8 @@ main = "src/runtimeEntryR169.ts"
 # convergence behavior and exports the stronger OmegaRuntime return-admission class.
 # R202 adds no Durable Object; R205 also adds no Durable Object and only correlates preserved authorities/presentation.
 # R205 adds no Durable Object; it correlates the preserved R169-R204 authorities and presentation.
+# R214 adds no Durable Object and does not change the OMEGA_RUNTIME singleton identity.
+# R214 adds source-backed Earth rendering and explicit local execution authority through the preserved R204 alias seam.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -57,6 +59,9 @@ CONTINUITY_POTENTIAL_R202_ID = "r202-unified-continuity-potential"
 HYBRID_MISSION_CONTINUITY_R203_ID = "r203-r201-anchored-r202-aware-hybrid-mission-continuity"
 HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"
 WHOLE_SYSTEM_R205_ID = "r205-whole-system-professional-control"
+EARTH_LIVE_GEOSPATIAL_R214_ID = "r214-live-source-backed-geospatial-earth"
+HYBRID_LOCAL_AUTHORITY_R214_ID = "r214-explicit-local-execution-authority"
+HYBRID_CONTROL_PLANE_R214_ID = "r214-durable-outbound-hybrid-control-plane"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
@@ -101,6 +106,7 @@ class_name = "OmegaSwarmAutonomicCoordinator"
 # Existing namespaces remain live. R201 is a dedicated evidence-only SQLite namespace;
 # R202 and R205 add no Durable Object. R203 adds one isolated correlation-evidence namespace.
 # R204 strengthens only the existing OMEGA_RUNTIME return boundary; no namespace identity changes.
+# R214 keeps that same OMEGA_RUNTIME binding and singleton; authority is stored inside the existing runtime.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"

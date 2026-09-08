@@ -1,11 +1,22 @@
 import convergence from "./system/../convergence";
 import { HYBRID_RETURN_ADMISSION_R204, HYBRID_RETURN_VERIFICATION_SCHEMA_R204 } from "./omegaRuntimeR204";
+import { EARTH_LIVE_GEOSPATIAL_R214, handleEarthLiveGeospatialR214, enhanceEarthLiveGeospatialR214 } from "./earthLiveGeospatialR214";
+import {
+  HYBRID_CONTROL_PLANE_R214,
+  handleHybridControlPlaneR214,
+  tryLegacyHeartbeatFromDurableR214,
+  migrateVerifiedLegacyHeartbeatR214,
+  handleLegacyDevelopmentLeaseR214,
+} from "./hybridControlPlaneR214";
+import { HYBRID_LOCAL_AUTHORITY_R214 } from "./omegaRuntimeR214";
 
-// Wrangler aliases heartbeatTruth's exact "./convergence" import to this module.
-// The alternate spelling above resolves the preserved original convergence module
-// without re-entering the alias. Default behavior remains the canonical convergence
-// implementation; only the named OmegaRuntime export and one read-only manifest are added.
-export { OmegaRuntime } from "./omegaRuntimeR204";
+// Wrangler still aliases heartbeatTruth's exact "./convergence" import to this file.
+// R214 intentionally preserves that R204 alias path and the R169 canonical entrypoint.
+// R204 cumulative compatibility marker: export { OmegaRuntime } from "./omegaRuntimeR204";
+// R214 subclasses that exact R204 return-admission class only to add local authority gates;
+// new live-Earth and outbound-Hybrid behavior is additive and all other traffic delegates
+// to the original convergence implementation.
+export { OmegaRuntime } from "./omegaRuntimeR214";
 
 const HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 
@@ -36,10 +47,14 @@ async function manifest(env: any): Promise<Response> {
       underlyingConvergencePreserved: true,
       durableBinding: "OMEGA_RUNTIME",
       durableClass: "OmegaRuntime",
+      durableSingleton: "OMEGA_RUNTIME",
       storageIdentityChanged: false,
       newDurableNamespaceCreated: false,
       r201EvidenceLedgerPreserved: true,
       r203HybridMissionLedgerPreserved: true,
+      r214AdditiveControlPlane: HYBRID_CONTROL_PLANE_R214,
+      r214LocalAuthority: HYBRID_LOCAL_AUTHORITY_R214,
+      r214EarthLive: EARTH_LIVE_GEOSPATIAL_R214,
     },
     returnLaw: [
       "AUTHENTICATED_BRIDGE",
@@ -59,6 +74,8 @@ async function manifest(env: any): Promise<Response> {
       verifiedReturnIsNotCanonState: true,
       verifiedReturnIsNotPromotion: true,
       verifiedFailureDoesNotCompleteMission: true,
+      pcOnlineIsNotExecutionAuthority: true,
+      remoteBrowserMayNotGrantLocalExecutionAuthority: true,
     },
     authority: "AUTHENTICATED_EXECUTION_RETURN_EVIDENCE_NOT_CANONSTATE",
     canonicalMutation: false,
@@ -69,9 +86,31 @@ async function manifest(env: any): Promise<Response> {
 }
 
 export default {
-  async fetch(request: Request, env: any, _ctx?: any): Promise<Response> {
+  async fetch(request: Request, env: any, ctx?: any): Promise<Response> {
     const path = new URL(request.url).pathname.replace(/\/$/, "");
     if (path === "/api/system/r204/manifest" && request.method === "GET") return manifest(env);
-    return convergence.fetch(request, env);
+
+    const earth = await handleEarthLiveGeospatialR214(request);
+    if (earth) return earth;
+
+    const hybrid = await handleHybridControlPlaneR214(request, env);
+    if (hybrid) return hybrid;
+
+    if (path === "/api/device/heartbeat" && request.method === "POST") {
+      const durable = await tryLegacyHeartbeatFromDurableR214(request.clone(), env);
+      if (durable) return durable;
+      const verifiedLegacy = await convergence.fetch(request.clone(), env);
+      if (!verifiedLegacy.ok) return verifiedLegacy;
+      const migrated = await migrateVerifiedLegacyHeartbeatR214(request.clone(), env);
+      return migrated || verifiedLegacy;
+    }
+
+    if (path === "/api/development/lease" && request.method === "POST") {
+      const retiredLease = await handleLegacyDevelopmentLeaseR214(request.clone(), env);
+      if (retiredLease) return retiredLease;
+    }
+
+    const response = await convergence.fetch(request, env);
+    return enhanceEarthLiveGeospatialR214(response, request.url);
   },
 };
