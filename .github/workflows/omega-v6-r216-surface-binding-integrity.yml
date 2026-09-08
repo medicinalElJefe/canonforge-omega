@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Typecheck R216 outer entrypoint
+      - name: Typecheck preserved R169 entrypoint plus R216 interlock
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: |
           npm install
@@ -42,13 +42,14 @@ jobs:
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npx wrangler deploy --dry-run --outdir .r216-dry-run
 
-      - name: Assert R169 execution authority remains delegated
+      - name: Assert R169 execution authority remains the real entrypoint
         shell: bash
         run: |
           set -euo pipefail
-          grep -F 'main = "src/runtimeEntryR216.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
-          grep -F 'import runtimeR169 from "./runtimeEntryR169"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR216.ts
-          grep -F 'export * from "./runtimeEntryR169"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR216.ts
+          grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'import canonicalRuntime from "./heartbeatTruth"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'import { enhanceSurfaceBindingIntegrityR216 } from "./surfaceBindingIntegrityR216"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
+          grep -F 'return enhanceSurfaceBindingIntegrityR216(r205, env?.CANONICAL_GIT_SHA ?? null)' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts
           grep -F '/api/system/r211/status' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceBindingIntegrityR216.ts
           grep -F '/api/system/r205/health' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceBindingIntegrityR216.ts
           grep -F 'CONTROLS WITHHELD' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceBindingIntegrityR216.ts
