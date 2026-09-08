@@ -108,7 +108,7 @@ jobs:
 
             # Issue the real rotating pairing credential, but do not start the agent yet.
             $launcher = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8127/api/hybrid/launcher' -TimeoutSec 10
-            $tokenMatch = [regex]::Match($launcher.Content, 'set "OMEGA_TOKEN=([^\"]+)"')
+            $tokenMatch = [regex]::Match($launcher.Content, 'OMEGA_TOKEN=([^\x22\r\n]+)')
             if (-not $tokenMatch.Success) { throw 'R220 could not extract the issued pairing token from the canonical launcher contract' }
             $token = $tokenMatch.Groups[1].Value
 
