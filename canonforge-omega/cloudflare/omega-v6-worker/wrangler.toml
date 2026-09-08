@@ -1,11 +1,8 @@
 name = "omegav6"
-main = "src/runtimeEntryR169.ts"
-# Protected canonical implementation remains main = "src/heartbeatTruth.ts" semantically;
-# R204 preserves the canonical R169 deployment entrypoint. Wrangler substitutes only
-# heartbeatTruth's ./convergence module with an additive alias that delegates original
-# convergence behavior and exports the stronger OmegaRuntime return-admission class.
-# R202 adds no Durable Object; R205 also adds no Durable Object and only correlates preserved authorities/presentation.
-# R205 adds no Durable Object; it correlates the preserved R169-R204 authorities and presentation.
+main = "src/runtimeEntryR214.ts"
+# R214 is an additive wrapper over the exact R169/R213 runtime. It intercepts only
+# live-source Earth and Hybrid broker routes, then delegates every preserved route and
+# enhancer to runtimeEntryR169. Existing Durable Object namespaces remain unchanged.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -13,7 +10,7 @@ workers_dev = true
 "./convergence" = "./src/convergenceRuntimeAliasR204.ts"
 
 [vars]
-BUILD_ID = "r87-semantic-edge-settle-proof"
+BUILD_ID = "r214-full-visual-hybrid-authority-restoration"
 TRUTH_BOUNDARY_ID = "r88-hybrid-heartbeat-truth"
 CONVERGENCE_TRANSPORT_ID = "r89-genesis-service-binding"
 CAPABILITY_ROUTER_ID = "r91-actionable-capability-router"
@@ -57,6 +54,9 @@ CONTINUITY_POTENTIAL_R202_ID = "r202-unified-continuity-potential"
 HYBRID_MISSION_CONTINUITY_R203_ID = "r203-r201-anchored-r202-aware-hybrid-mission-continuity"
 HYBRID_RETURN_ADMISSION_R204_ID = "r204-verified-hybrid-return-admission"
 WHOLE_SYSTEM_R205_ID = "r205-whole-system-professional-control"
+EARTH_LIVE_GEOSPATIAL_R214_ID = "r214-live-source-backed-geospatial-earth"
+HYBRID_LOCAL_AUTHORITY_R214_ID = "r214-explicit-local-execution-authority"
+HYBRID_CONTROL_PLANE_R214_ID = "r214-durable-outbound-hybrid-control-plane"
 SWARM_MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 [ai]
@@ -98,9 +98,9 @@ class_name = "OmegaSwarmOrganismCoordinator"
 name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
-# Existing namespaces remain live. R201 is a dedicated evidence-only SQLite namespace;
-# R202 and R205 add no Durable Object. R203 adds one isolated correlation-evidence namespace.
-# R204 strengthens only the existing OMEGA_RUNTIME return boundary; no namespace identity changes.
+# R214 changes the exported OmegaRuntime implementation additively while preserving
+# this exact SQLite Durable Object binding/storage identity. No new execution namespace
+# is created, so R204 return receipts and historical R33 state remain addressable.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"
