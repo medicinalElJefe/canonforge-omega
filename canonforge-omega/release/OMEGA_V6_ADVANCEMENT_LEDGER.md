@@ -32,7 +32,7 @@ From this point forward, release completion is incomplete until this ledger and 
 | Track | Status | Current identity | Production truth |
 | --- | --- | --- | --- |
 | R214 navigation polish | `ADMITTED/LIVE` with controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Exact-SHA navigation and R194 evidence-plane proof passed; original rollback transaction defect remains recorded. |
-| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Merged to canonical source; exact SHA + cumulative truth + 172 R185 nodes were live-proved. Controller rollback step and R201 bounded mission execution remain failed qualifications. |
+| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | merged to canonical source; exact SHA + cumulative truth + 172 R185 nodes were live-proved. Controller rollback step and R201 bounded mission execution remain failed qualifications. |
 | R215 navigation integrity | `CANDIDATE` | PR #239 reconciled onto canonical Earth `e15d61d7...` | R215 code, proof suite, workflow and ledger are reconciled onto canonical Earth; the exact reconciled head must rerun all gates before merge. |
 | R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be extracted/reconciled onto newer canonical Earth/navigation state. |
 
