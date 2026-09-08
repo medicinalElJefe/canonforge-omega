@@ -1,8 +1,9 @@
 name = "omegav6"
-main = "src/runtimeEntryR214.ts"
-# R214 is an additive wrapper over the exact R169/R213 runtime. It intercepts only
-# live-source Earth and Hybrid broker routes, then delegates every preserved route and
-# enhancer to runtimeEntryR169. Existing Durable Object namespaces remain unchanged.
+main = "src/runtimeEntryR169.ts"
+# R214 preserves the exact R169/R213 canonical Worker entrypoint. Its new live-Earth
+# and Hybrid broker behavior is injected additively through the already-established
+# ./convergence -> convergenceRuntimeAliasR204.ts seam, so cumulative routes and UI
+# enhancers are not flattened or replaced.
 compatibility_date = "2026-08-29"
 workers_dev = true
 
@@ -98,9 +99,9 @@ class_name = "OmegaSwarmOrganismCoordinator"
 name = "OMEGA_SWARM_AUTONOMIC"
 class_name = "OmegaSwarmAutonomicCoordinator"
 
-# R214 changes the exported OmegaRuntime implementation additively while preserving
-# this exact SQLite Durable Object binding/storage identity. No new execution namespace
-# is created, so R204 return receipts and historical R33 state remain addressable.
+# R214 changes the exported OmegaRuntime class through the existing convergence alias
+# while preserving this exact SQLite Durable Object binding/storage identity. No new
+# execution namespace is created; R204/R203/R201 and historical R33 state remain intact.
 [exports.OmegaRuntime]
 type = "durable-object"
 storage = "sqlite"
