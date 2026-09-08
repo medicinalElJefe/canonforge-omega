@@ -1,0 +1,51 @@
+name: OMEGA V6 R216 surface binding integrity
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r216-surface-binding-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prove fail-closed surface contract
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r216_surface_binding_integrity.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Typecheck R216 outer entrypoint
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+
+      - name: Prove production package without mutation
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r216-dry-run
+
+      - name: Assert R169 execution authority remains delegated
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'main = "src/runtimeEntryR216.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          grep -F 'import runtimeR169 from "./runtimeEntryR169"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR216.ts
+          grep -F 'export * from "./runtimeEntryR169"' canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR216.ts
+          grep -F '/api/system/r211/status' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceBindingIntegrityR216.ts
+          grep -F '/api/system/r205/health' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceBindingIntegrityR216.ts
+          grep -F 'CONTROLS WITHHELD' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceBindingIntegrityR216.ts
