@@ -7,7 +7,9 @@ on:
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/surfaceCompatibilityR214.ts'
+      - 'canonforge-omega/cloudflare/omega-v6-worker/src/menuTruthR214.ts'
       - 'canonforge-omega/tests/test_r214_earth_spatial_evidence_restoration.py'
+      - 'canonforge-omega/tests/test_r214_menu_route_truth.py'
       - '.github/workflows/omega-v6-r214-earth-spatial-restoration.yml'
   push:
     branches: [r214-earth-spatial-evidence-restoration, omega-v6-full-convergence]
@@ -31,9 +33,9 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -e '.[dev]'
-      - name: R214 truth invariants
+      - name: R214 Earth and visible-menu truth invariants
         working-directory: canonforge-omega
-        run: python -m pytest -q tests/test_r214_earth_spatial_evidence_restoration.py
+        run: python -m pytest -q tests/test_r214_earth_spatial_evidence_restoration.py tests/test_r214_menu_route_truth.py
       - name: Full cumulative Python regression
         working-directory: canonforge-omega
         run: python -m pytest -q
@@ -45,6 +47,44 @@ jobs:
         run: |
           npm install
           npm run typecheck
+      - name: Audit every currently visible production menu destination
+        env:
+          V6_URL: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request, urllib.error, time
+          base = 'https://omegav6.jeffdeweyeljefe.workers.dev'
+          hrefs = [
+            '/?app=Field','/?app=Calculus&mode=dewey-calculus','/?app=Memory','/?app=Simulate',
+            '/?app=Earth','/?app=Assistant','/?app=Hybrid','/?app=Proof',
+            '/workbench','/relations','/calibration','/capabilities','/core','/sai','/compute','/validate',
+            '/validate/cross-runtime','/validate/independent','/clouds','/warp','/warp/build','/federation',
+            '/evolution','/truth','/convergence','/fabric','/instrument',
+          ]
+          failures=[]
+          for href in hrefs:
+              last=None
+              for attempt in range(3):
+                  try:
+                      req=urllib.request.Request(base+href, headers={'User-Agent':'OMEGA-R214-menu-audit/1.0','Accept':'text/html,application/json'})
+                      with urllib.request.urlopen(req, timeout=15) as r:
+                          last=r.status
+                          if 200 <= r.status < 400:
+                              print('PASS', r.status, href, r.headers.get('content-type',''))
+                              break
+                  except urllib.error.HTTPError as e:
+                      last=e.code
+                  except Exception as e:
+                      last=type(e).__name__+':'+str(e)
+                  time.sleep(1)
+              else:
+                  failures.append((href,last))
+                  print('FAIL', href, last)
+          if failures:
+              raise SystemExit('Visible menu routes failed current production audit: '+repr(failures))
+          PY
       - name: Prove exact Worker package without deployment
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: npx wrangler deploy --dry-run --outdir .r214-dry-run
@@ -55,5 +95,6 @@ jobs:
           grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
           grep -F 'noSummaryToFakeGeometry: true' canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts
           grep -F 'sovereignGatewayFallbackUsed: false' canonforge-omega/cloudflare/omega-v6-worker/src/surfaceCompatibilityR214.ts
+          grep -F 'UNPROBED_UNTIL_ROUTE_RESPONSE' canonforge-omega/cloudflare/omega-v6-worker/src/menuTruthR214.ts
           grep -F 'canonicalMutation: false' canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts
           grep -F 'promotionAuthorized: false' canonforge-omega/cloudflare/omega-v6-worker/src/earthSpatialEvidenceR214.ts
