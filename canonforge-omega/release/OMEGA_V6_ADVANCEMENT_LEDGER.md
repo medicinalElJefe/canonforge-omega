@@ -31,11 +31,11 @@ From this point forward, release completion is incomplete until this ledger and 
 
 | Track | Status | Current identity | Production truth |
 | --- | --- | --- | --- |
-| R216 surface binding integrity | `CANDIDATE` | branch `r216-surface-binding-integrity`, base `e15d61d7...` | New fail-closed public-surface interlock is implemented inside the preserved R169 entrypoint; not merged or live-admitted yet. |
-| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Canonical source exists, but the exact-head production transaction was interrupted by a second Worker deployment during live proof; do not call the transaction admitted. |
-| R215 navigation integrity | `CANDIDATE` | PR #239 | Valuable navigation proof exists but must be reconciled with R216/current canonical lineage before admission. |
-| R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be extracted/reconciled onto newer canonical state. |
-| R214 navigation polish | `ADMITTED/LIVE` with historical controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Navigation/evidence proof was admitted on that lineage; subsequent canonical work is tracked separately. |
+| R216 surface binding integrity | `CANDIDATE` · R215 reconciled | two-parent reconciliation `6fba4371c636d9315693bc7529fbe2a1f8c4d2e5` / PR #242 | R215 navigation and R216 binding/controller work now exist in one tree. The first combined source matrix is being treated as historical candidate evidence only; final admission still requires the exact final ledger-bearing SHA to pass all gates, merge, deploy, and complete live acceptance. |
+| R215 navigation integrity | `CANDIDATE` · integrated into R216 successor | proven head `80cef9f9bf8c1bb9cc25939b351fe6694642a160` / PR #239; first parent of `6fba4371...` | R215 command-palette/system-route work is preserved in the reconciled R216 tree rather than merged independently through the older controller. |
+| R214 spatial Earth restoration | `CANDIDATE` after canonical-source merge | `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b` / PR #235 | Source is canonical. Earlier exact-head deployment/federation evidence remains qualified by the observed production-writer race and R201 bounded mission failure. |
+| R214 Earth + Hybrid local execution authority | `HELD` | `5171dfb728e263cfcdabaa6fb16d96df3b140e28` / PR #236 | Not live. Hybrid authority work remains valuable but must be selectively reconciled onto the current canonical successor instead of blindly merged. |
+| R214 navigation polish | `ADMITTED/LIVE` with historical controller qualification | `5ab6981bd2a50bce6b9c6b6deeb27b1e54732e38` / PR #238 | Navigation/evidence proof was admitted on that lineage; later canonical work and controller qualifications are tracked separately. |
 
 ---
 
@@ -43,15 +43,23 @@ From this point forward, release completion is incomplete until this ledger and 
 
 **Date:** 2026-09-07 (America/Phoenix)
 
-**Status:** `CANDIDATE` — source implementation exists on current canonical lineage; it is not reported as live until full CI, governed merge, exact-head deployment, and post-deploy binding proof pass.
+**Status:** `CANDIDATE` — R216 has now been reconciled with the complete proven R215 navigation candidate in an explicit two-parent successor. It is not reported as live until the final ledger-bearing SHA passes cumulative CI, governed merge, exact-head deployment, and post-deploy binding/federation proof.
 
 **Canonical base:** `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b`
 
-**Candidate branch:** `r216-surface-binding-integrity`
+**R215 parent:** `80cef9f9bf8c1bb9cc25939b351fe6694642a160`
 
-**Pull request:** https://github.com/medicinalElJefe/canonforge-omega/pull/241
+**Repaired R216 parent:** `412d4f594e8aa437198ac62a148ff4fe8eb2a695`
 
-**R216 candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34179803344
+**Two-parent reconciliation commit:** `6fba4371c636d9315693bc7529fbe2a1f8c4d2e5`
+
+**Reconciled candidate branch:** `r216-r215-reconciled-convergence`
+
+**Governed reconciliation PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/242
+
+**Original R216 development PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/241
+
+**R215 source PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/239
 
 **Public runtime under repair:** https://omegav6.jeffdeweyeljefe.workers.dev
 
@@ -59,13 +67,13 @@ From this point forward, release completion is incomplete until this ledger and 
 
 ### Trigger
 
-A public runtime screenshot showed a polished OMEGA surface with controls/badges such as SYSTEM, MISSION, OPERATE, CORRELATION, SAI, Hybrid/PC and Swarm while the backing runtime chain was not coherently admitted. That presentation is now treated as a release-integrity failure, not a cosmetic issue.
+A public runtime screenshot showed a polished OMEGA surface with controls/badges such as SYSTEM, MISSION, OPERATE, CORRELATION, SAI, Hybrid/PC and Swarm while the backing runtime chain was not coherently admitted. That presentation is treated as a release-integrity failure, not a cosmetic issue.
 
 ### New invariant
 
 **No deceptive or disconnected active surface.** A visible interactive runtime surface must not become usable until the same-origin deployed runtime proves authoritative live bindings. If the proof cannot complete, the public interface remains withheld behind an explicit diagnostic rather than displaying controls that merely look operational.
 
-### What changed in the candidate
+### What R216 changes
 
 - Adds `surfaceBindingIntegrityR216.ts`, a fail-closed UI admission interlock.
 - Keeps Wrangler's actual Worker entrypoint exactly at `src/runtimeEntryR169.ts`; no R216 Worker entrypoint or second runtime exists.
@@ -76,8 +84,21 @@ A public runtime screenshot showed a polished OMEGA surface with controls/badges
 - While verifying or failed, the underlying runtime surface is hidden and capture-phase input blocking prevents click, pointer, keyboard and submit actions from reaching it.
 - Failure state explicitly reports `LIVE BINDING INCOMPLETE — CONTROLS WITHHELD`; Retry performs the real proof again rather than cosmetically dismissing the interlock.
 - The interlock does not claim PC online, authenticated heartbeat, solver execution, cloud execution, Canon admission, or promotion authority.
-- Adds `test_r216_surface_binding_integrity.py` and a dedicated R216 CI workflow with TypeScript and Wrangler dry-run proof.
-- The initial R216 proof exposed historical source-string assumptions; the implementation was corrected to preserve the true R169 entrypoint and the established R205 final-render semantics instead of weakening the authority chain.
+- Adds `test_r216_surface_binding_integrity.py` and the dedicated R216 source/package workflow.
+
+### Release-controller strengthening carried by R216
+
+- Captures the exact active Cloudflare deployment and version set before mutation.
+- Parses and binds Wrangler's exact post-deploy Worker version ID.
+- Re-checks that exact version before and throughout live acceptance, writing `PRODUCTION_WRITER_RACE` evidence if a second writer replaces it.
+- Restores the exact captured pre-deploy deployment payload on mutation/admission failure instead of guessing which historical version a generic rollback command would select.
+- Validates the restored active version set against the captured pre-deploy version IDs.
+- Preserves the release-forward controller as the sole repository production mutation/restore authority.
+- Historical R86/R91/R182/R200/R212/R213 regression tests were upgraded to validate these stronger semantics rather than brittle old step labels or an obsolete generic rollback assumption.
+
+### R215 reconciliation carried by R216
+
+The successor tree preserves R215's command-palette `/system` reachability, 20 SYSTEM route contract, 8 workspace deep links, residual-markup repair, non-mutating navigation boundary, R215 workflow, and R215 regression suite. The reconciliation commit has R215 as its first parent and repaired R216 as its second parent; this is an explicit lineage merge rather than a stale branch overwrite.
 
 ### Deployment-race evidence retained
 
@@ -87,13 +108,15 @@ The R214 Earth exact-head release-forward run deployed canonical SHA `e15d61d7..
 
 R216 remains `CANDIDATE` until:
 
-1. source regression, strict Cloudflare contract, TypeScript and dry-run gates are green;
-2. historical authority/DO lifecycle gates remain green;
-3. the candidate is reconciled with any newer canonical changes and merged through a governed PR;
-4. the sole release-forward controller deploys the exact resulting canonical SHA;
-5. R211 aggregate status and R205 whole-system health are both green on that exact deployment;
-6. the R185 172-node federation proof completes without deployment identity changing underneath it;
-7. the public page itself exposes the R216 verified-binding marker only after those same-origin health requirements pass.
+1. the final ledger-bearing candidate passes source regression, strict Cloudflare contract, TypeScript and dry-run gates;
+2. historical authority, swarm, navigation, evidence, provenance, continuity, Earth, independent-solver and DO lifecycle gates remain green together;
+3. Windows native `grcwa`, sovereign invariants, and the real localhost pairing/heartbeat loop pass on that exact final candidate;
+4. PR #242 is governed-merged without canonical drift;
+5. the sole release-forward controller deploys the exact resulting canonical SHA and binds the exact Cloudflare Worker version;
+6. R211 aggregate status and R205 whole-system health are both green on that exact deployment;
+7. the R185 172-node federation proof completes without deployment identity changing underneath it;
+8. the public page exposes the R216 verified-binding marker only after those same-origin health requirements pass;
+9. the ledger is updated from `CANDIDATE` to the resulting admitted or held state with the exact proof links.
 
 ---
 
@@ -127,7 +150,7 @@ R216 remains `CANDIDATE` until:
 
 ### Qualification retained
 
-The release-forward controller's own exact Worker version was replaced by a different production version while its live proof was still running. The run therefore cannot be used as an unqualified final admission receipt. R216 records and closes the public-surface consequence of that failure mode while production-writer investigation/locking continues.
+The release-forward controller's own exact Worker version was replaced by a different production version while its live proof was still running. The run therefore cannot be used as an unqualified final admission receipt. R216 records and closes the public-surface consequence of that failure mode while production-writer locking is strengthened. The R201 bounded mission execution failure remains a separate qualification until re-proven on the successor lineage.
 
 ---
 
@@ -135,15 +158,17 @@ The release-forward controller's own exact Worker version was replaced by a diff
 
 **Date:** 2026-09-07 (America/Phoenix)
 
-**Status:** `CANDIDATE` — route integrity work is retained; it must be reconciled onto the latest canonical/R216 lineage and re-proven before governed merge.
+**Status:** `CANDIDATE` — source candidate proven and now integrated into the R216 two-parent successor; R215 is not independently promoted around the controller repair.
 
 **Canonical reconciliation base at R215 creation:** `e15d61d7c2f71c0c60ac22ba248c0b96ae35993b`
+
+**Proven candidate head:** `80cef9f9bf8c1bb9cc25939b351fe6694642a160`
 
 **Candidate branch:** `r215-navigation-integrity`
 
 **PR:** https://github.com/medicinalElJefe/canonforge-omega/pull/239
 
-**Earlier green candidate proof:** https://github.com/medicinalElJefe/canonforge-omega/actions/runs/34178250422
+**Reconciled successor:** `6fba4371c636d9315693bc7529fbe2a1f8c4d2e5` / PR #242
 
 ### What changed
 
@@ -152,7 +177,12 @@ The release-forward controller's own exact Worker version was replaced by a diff
 - Adds deterministic command-palette augmentation, keyboard opening, route rendering and click navigation.
 - Adds exhaustive route proof for all 20 declared SYSTEMS destinations and all 8 workspace deep links.
 - Keeps navigation non-mutating: no Canon promotion, deployment authority, or execution-authority escalation.
-- Established the durable advancement-ledger contract now carried into R216.
+- Establishes the durable advancement-ledger contract now carried into R216.
+- Preserves the canonical R214 Earth residual-markup repair in the overlapping One-System navigation source.
+
+### Reconciliation boundary
+
+The exact R215 candidate was green across its source/package/whole-system/navigation/Windows gates. Instead of merging it independently through the older release controller, its complete tree is the first parent of the reconciled R216 candidate. The final R216 successor must re-prove the combined tree before admission; historical R215 green runs are evidence of the preserved parent, not authorization to skip successor proof.
 
 ---
 
