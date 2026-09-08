@@ -7,6 +7,8 @@ on:
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/system/oneSystemNavigationR195.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/src/runtimeEntryR169.ts'
       - 'canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml'
+      - 'canonforge-omega/release/OMEGA_V6_ADVANCEMENT_LEDGER.md'
+      - 'canonforge-omega/tests/test_advancement_ledger_contract.py'
       - 'canonforge-omega/tests/test_r215_navigation_integrity.py'
       - 'canonforge-omega/tests/test_r214_navigation_submenu_polish.py'
       - '.github/workflows/omega-v6-r215-navigation-integrity-proof.yml'
@@ -30,15 +32,16 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -e '.[dev]'
-      - name: Prove R215 navigation integrity and predecessor preservation
+      - name: Prove R215 navigation integrity, advancement ledger, and predecessor preservation
         working-directory: canonforge-omega
         run: |
           python -m pytest -q \
+            tests/test_advancement_ledger_contract.py \
             tests/test_r215_navigation_integrity.py \
             tests/test_r214_navigation_submenu_polish.py \
             tests/test_r192_navigation_home_repair.py \
             tests/test_r193_full_restoration_workspace.py \
-            tests/test_r195_one_system.py \
+            tests/test_r195_drive_corpus_one_system.py \
             tests/test_r190_whole_system_acceptance.py \
             tests/test_role_separated_convergence_r128.py
       - uses: actions/setup-node@v4
