@@ -1,0 +1,200 @@
+name: OMEGA V6 R223 live system and surface closure
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+    paths:
+      - 'canonforge-omega/**'
+      - '.github/workflows/omega-v6-r223-live-system-surface-closure.yml'
+      - '.github/workflows/omega-v6-release-forward-production.yml'
+  push:
+    branches: [omega-v6-full-convergence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install declared runtime and test dependencies
+        working-directory: canonforge-omega
+        run: python -m pip install --disable-pip-version-check -e '.[dev]'
+      - name: Prove R223 plus owning predecessor contracts
+        working-directory: canonforge-omega
+        run: |
+          python -m pytest -q \
+            tests/test_r223_live_system_surface_closure.py \
+            tests/test_r215_navigation_integrity.py \
+            tests/test_r195_drive_corpus_one_system.py \
+            tests/test_r201_durable_mission_ledger.py \
+            tests/test_r190_whole_system_acceptance.py \
+            tests/test_repair_system_contract.py \
+            tests/test_system_inheritance_contract.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Typecheck exact Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm install
+          npm run typecheck
+      - name: Package exact Worker without deployment
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run --outdir .r223-dry-run
+
+  live-closure:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/omega-v6-full-convergence'
+    needs: source-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Wait for exact deployed canonical SHA
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=false
+          for attempt in $(seq 1 80); do
+            status=$(curl --silent --show-error --max-time 20 -o /tmp/r223-identity.json -w '%{http_code}' "$LIVE/api/acceptance/r190/manifest" || true)
+            if [ "$status" = 200 ] && EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r223-identity.json').read_text())
+          raise SystemExit(0 if d.get('canonicalGitSha') == os.environ['EXPECTED_SHA'] else 1)
+          PY
+            then matched=true; break; fi
+            echo "R223 exact identity waiting: HTTP $status attempt $attempt/80"
+            sleep 4
+          done
+          test "$matched" = true
+
+      - name: Prove bounded R195 R211 and R190 deep status returns structured JSON
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          capture() {
+            local method="$1" url="$2" data="$3" out="$4"
+            local code
+            if [ "$method" = POST ]; then
+              code=$(curl --silent --show-error --max-time 30 -o "$out" -w '%{http_code}' -X POST "$url" -H 'content-type: application/json' --data "$data" || true)
+            else
+              code=$(curl --silent --show-error --max-time 30 -o "$out" -w '%{http_code}' "$url" || true)
+            fi
+            echo "$code" > "$out.http"
+            echo "$url -> HTTP $code"
+            test "$code" != 000
+          }
+          capture GET "$LIVE/api/system/r195/status" '' /tmp/r223-r195.json
+          capture GET "$LIVE/api/system/r211/status" '' /tmp/r223-r211.json
+          capture POST "$LIVE/api/acceptance/r190/probe" '{"depth":"full"}' /tmp/r223-r190.json
+          EXPECTED_SHA="$EXPECTED_SHA" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r195=json.loads(Path('/tmp/r223-r195.json').read_text())
+          r211=json.loads(Path('/tmp/r223-r211.json').read_text())
+          r190=json.loads(Path('/tmp/r223-r190.json').read_text())
+          assert r195.get('schema')=='OMEGA_ONE_SYSTEM_LIVE_STATUS_R195',r195
+          assert r195.get('closureRelease')=='r223-live-system-surface-closure',r195
+          assert r195.get('canonicalGitSha')==os.environ['EXPECTED_SHA'],r195
+          assert (r195.get('corpusProof') or {}).get('runtimeIntegrityVerified') is True,r195
+          assert (r195.get('resourcePolicy') or {}).get('unboundedPromiseAll') is False,r195
+          assert r211.get('schema')=='OMEGA_OPERATIONAL_PROVENANCE_STATUS_R211',r211
+          assert r211.get('closureRelease')=='r223-live-system-surface-closure',r211
+          assert r211.get('canonicalGitSha')==os.environ['EXPECTED_SHA'],r211
+          assert (r211.get('resourcePolicy') or {}).get('nestedBurstFanoutProhibited') is True,r211
+          assert r190.get('schema')=='OMEGA_WHOLE_SYSTEM_ACCEPTANCE_R190',r190
+          assert r190.get('closureRelease')=='r223-live-system-surface-closure',r190
+          assert r190.get('canonicalGitSha')==os.environ['EXPECTED_SHA'],r190
+          assert r190.get('overallState')!='ACCEPTANCE_FAILED',r190
+          assert (r190.get('summary') or {}).get('hardFailures')==0,r190
+          assert (r190.get('resourcePolicy') or {}).get('unboundedPromiseAll') is False,r190
+          PY
+
+      - name: Prove R201 mission can consume bounded One-System status
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(curl --silent --show-error --max-time 35 -o /tmp/r223-r201.json -w '%{http_code}' \
+            -X POST "$LIVE/api/mission/r201/execute" -H 'content-type: application/json' \
+            --data '{"intent":"R223 bounded continuity proof","useAI":false,"allModes":true,"allDomains":false}' || true)
+          echo "R201 execute HTTP $code"
+          cat /tmp/r223-r201.json || true
+          test "$code" = 200
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r223-r201.json').read_text())
+          assert d.get('ok') is True,d
+          assert d.get('schema') or d.get('release'),d
+          PY
+
+      - name: Prove all systems and workspace links share final surface contract
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          routes=(
+            /workbench /relations /calibration /capabilities /core /sai /compute /validate
+            /validate/cross-runtime /validate/independent /clouds /warp /warp/build /federation
+            /evolution /truth /convergence /fabric /instrument /system
+            '/?app=Field' '/?app=Calculus&mode=dewey-calculus' '/?app=Memory' '/?app=Simulate'
+            '/?app=Earth' '/?app=Assistant' '/?app=Hybrid' '/?app=Proof'
+          )
+          i=0
+          for route in "${routes[@]}"; do
+            i=$((i+1))
+            h="/tmp/r223-route-$i.headers"; b="/tmp/r223-route-$i.html"
+            curl --fail --silent --show-error --max-time 30 -D "$h" "$LIVE$route" -o "$b"
+            grep -qi '^content-type: text/html' "$h"
+            grep -qi '^x-omega-workspace: r193-full-restoration-workspace' "$h"
+            grep -qi '^x-omega-navigation-polish: r214-submenu-navigation-polish' "$h"
+            grep -qi '^x-omega-navigation-integrity: r215-command-palette-route-integrity' "$h"
+            grep -qi '^x-omega-surface-contract: r223-final-universal-surface-contract' "$h"
+            grep -qi '^x-omega-surface-contract-state: COMPLETE' "$h"
+            grep -Fq 'id="omegaR193Rail"' "$b"
+            grep -Fq 'id="omegaR214ControlMenu"' "$b"
+            grep -Fq 'id="omegaNavigationIntegrityR215Runtime"' "$b"
+            grep -Fq 'id="omegaSurfaceBindingIntegrityR216Runtime"' "$b"
+            grep -Fq 'id="omegaFinalSurfaceContractR223"' "$b"
+            echo "R223_SURFACE_OK $route"
+          done
+
+      - name: Prove machine-readable surface registry
+        env:
+          LIVE: https://omegav6.jeffdeweyeljefe.workers.dev
+        run: |
+          curl --fail --silent --show-error --max-time 25 "$LIVE/api/surface/r223/registry" -o /tmp/r223-registry.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/r223-registry.json').read_text())
+          assert d.get('schema')=='OMEGA_SURFACE_CAPABILITY_REGISTRY_R223',d
+          assert len(d.get('routes') or [])==28,d
+          assert len({x.get('href') for x in d.get('routes') or []})==28,d
+          assert d.get('canonicalMutation') is False and d.get('promotionAuthorized') is False,d
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r223-live-system-surface-proof-${{ github.sha }}
+          path: |
+            /tmp/r223-*.json
+            /tmp/r223-*.http
+            /tmp/r223-route-*.headers
+          if-no-files-found: warn
