@@ -1,3 +1,5 @@
+import { enhanceFinalSurfaceContractR223 } from "./surfaceContractR223";
+
 export const SURFACE_BINDING_INTEGRITY_RELEASE_R216 = "r216-live-surface-binding-integrity";
 
 const STYLE = `<style id="omegaSurfaceBindingIntegrityR216Style">
@@ -84,5 +86,6 @@ export async function enhanceSurfaceBindingIntegrityR216(response: Response, exp
   headers.set("cache-control", "no-store");
   headers.set("x-omega-surface-binding-integrity", SURFACE_BINDING_INTEGRITY_RELEASE_R216);
   if (expectedCanonicalSha) headers.set("x-omega-canonical-git-sha", expectedCanonicalSha);
-  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+  const bound = new Response(html, { status: response.status, statusText: response.statusText, headers });
+  return enhanceFinalSurfaceContractR223(bound);
 }
