@@ -66,3 +66,26 @@ R226 is release-proof infrastructure only. It grants no Canon mutation, merge, d
 
 ### Admission boundary
 R226 remains `CANDIDATE` until this exact successor head independently passes the cumulative source/governance matrix. Production integration is intentionally excluded from this candidate so an experimental proof refactor cannot alter the active canonical release transaction.
+
+---
+## R226.1-R211-BOUNDED-PROBE-FANOUT
+**Date:** 2026-09-15  
+**Status:** `CANDIDATE`  
+**PR:** #267
+
+### Incident evidence
+R226 production run `34928144118`, attempt 2, proved exact canonical SHA, R217 lease/run provenance, deployment and active-version ownership. `/api/system/r217/release-lease` and the R211 manifest returned successfully, while the following R211 status observation repeatedly terminated as HTTP 503 and never produced its receipt. Ownership-checked rollback restored the pre-deployment version set.
+
+### Permanent invariant
+A correlated evidence endpoint must not create avoidable self-fanout pressure by launching the complete evidence registry simultaneously. The same complete registry and required truth set may be evaluated in bounded batches. Batching changes scheduling only: no evidence source, classification, required condition or authority boundary may be removed or waived.
+
+### Implementation
+- `cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts` — same 19-source registry, bounded four-at-a-time probe scheduling for status/query.
+- `.github/workflows/omega-v6-r211-operational-provenance-proof.yml` — successor-aware authority proof: immutable R210 authorities remain byte-diff protected while the governed R222 convergence alias is proved by its current singleton/no-new-namespace invariants rather than incorrectly requiring R210-era bytes forever.
+- `config/repair_system_contract.json`, `config/system_inheritance_contract.json`, and this ledger register the repair as governed platform work.
+
+### Authority boundary
+This is source/proof repair only. It creates no production writer and grants no merge, Canon, deployment, rollback, promotion or physical execution authority. Exact-head, R217 provenance/lease, cumulative truth, active-version ownership and ownership-checked rollback remain unchanged.
+
+### Admission boundary
+`SOURCE_PROVEN ≠ MERGED ≠ DEPLOYED ≠ LIVE_VERIFIED`. R226.1 remains candidate-only until its exact head passes the cumulative matrix; only then may governed merge and the inherited serialized exact-head production transaction be considered.
