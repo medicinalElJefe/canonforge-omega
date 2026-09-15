@@ -6,42 +6,17 @@
     "single_runtime_ownership": true,
     "software_address_levels_not_physical_dimensions": [12, 144, 1728, 20736, 248832],
     "stable_windows_entrypoint": "scripts/START_OMEGA_SOVEREIGN.ps1",
-    "durable_runtime_singleton": "OMEGA_RUNTIME"
+    "durable_runtime_singleton": "OMEGA_RUNTIME",
+    "paths_and_proof_closures_are_addressable": true,
+    "unresolved_closure_navigation_is_proof_governed": true
   },
   "source_classes": {
-    "CANONICAL_SOURCE": {
-      "may_define_runtime_behavior": true,
-      "requires_governed_release_admission": true
-    },
-    "PROOF_EVIDENCE": {
-      "may_define_runtime_behavior": false,
-      "may_support_admission": true,
-      "requires_identity_and_freshness": true
-    },
-    "ARCHIVE_DONOR": {
-      "may_define_runtime_behavior": false,
-      "requires_extraction_diff_validation": true,
-      "requires_conflict_routing": true,
-      "may_be_promoted_only_after_reimplementation_or_governed_reconciliation": true
-    },
-    "PACKAGE_OR_REPAIR_ARTIFACT": {
-      "may_define_runtime_behavior": false,
-      "may_repair_or_package_canonical_source": true,
-      "requires_post_repair_probe": true,
-      "requires_rollback_or_fail_closed_behavior": true
-    },
-    "EXTERNAL_DATA": {
-      "may_define_runtime_behavior": false,
-      "requires_source_provenance": true,
-      "measured_claims_require_returned_or_measured_fields": true,
-      "derived_fields_must_be_labeled_derived": true
-    },
-    "PLUGIN_PROVIDER": {
-      "may_define_runtime_behavior": false,
-      "requires_capability_registration": true,
-      "requires_invocation_return_verification_state": true,
-      "availability_is_not_execution": true
-    }
+    "CANONICAL_SOURCE": {"may_define_runtime_behavior": true, "requires_governed_release_admission": true},
+    "PROOF_EVIDENCE": {"may_define_runtime_behavior": false, "may_support_admission": true, "requires_identity_and_freshness": true},
+    "ARCHIVE_DONOR": {"may_define_runtime_behavior": false, "requires_extraction_diff_validation": true, "requires_conflict_routing": true, "may_be_promoted_only_after_reimplementation_or_governed_reconciliation": true},
+    "PACKAGE_OR_REPAIR_ARTIFACT": {"may_define_runtime_behavior": false, "may_repair_or_package_canonical_source": true, "requires_post_repair_probe": true, "requires_rollback_or_fail_closed_behavior": true},
+    "EXTERNAL_DATA": {"may_define_runtime_behavior": false, "requires_source_provenance": true, "measured_claims_require_returned_or_measured_fields": true, "derived_fields_must_be_labeled_derived": true},
+    "PLUGIN_PROVIDER": {"may_define_runtime_behavior": false, "requires_capability_registration": true, "requires_invocation_return_verification_state": true, "availability_is_not_execution": true}
   },
   "archive_rules": {
     "archive_name_or_recency_is_not_authority": true,
@@ -61,16 +36,7 @@
   "mode_rules": {
     "mode_requires_operational_semantics": true,
     "cosmetic_color_change_is_not_mode_implementation": true,
-    "required_contract_fields": [
-      "mode_id",
-      "purpose",
-      "inputs",
-      "operator_or_transform",
-      "outputs",
-      "evidence_class",
-      "authority_boundary",
-      "failure_behavior"
-    ],
+    "required_contract_fields": ["mode_id", "purpose", "inputs", "operator_or_transform", "outputs", "evidence_class", "authority_boundary", "failure_behavior"],
     "mode_may_change_view_without_changing_truth": true,
     "mode_may_change_computation_only_when_declared": true,
     "mode_cannot_inflate_derived_data_to_measured_data": true,
@@ -82,31 +48,12 @@
     "dependency_repair_requires_fresh_import_or_probe": true,
     "acceptance_and_proof_surfaces_follow_stable_entrypoints": true,
     "repair_packaging_is_not_source_authority": true,
-    "failed_proof_remains_in_ledger": true
+    "failed_proof_remains_in_ledger": true,
+    "proof_obligations_require_closure_addresses": true,
+    "learning_controller_selects_unresolved_closures_not_undifferentiated_improvement_loops": true,
+    "closure_dependencies_must_be_satisfied_before_navigation": true,
+    "candidate_learning_cannot_directly_mutate_canon": true
   },
-  "admission_pipeline": [
-    "DISCOVER",
-    "CLASSIFY_SOURCE",
-    "EXPAND_OR_FETCH",
-    "HASH_OR_IDENTIFY",
-    "DIFF",
-    "CONFLICT_ROUTE",
-    "REIMPLEMENT_OR_RECONCILE",
-    "REGRESSION_PROVE",
-    "CI_PROVE",
-    "GOVERNED_MERGE",
-    "EXACT_HEAD_DEPLOY",
-    "LIVE_ACCEPTANCE",
-    "LEDGER"
-  ],
-  "forbidden_shortcuts": [
-    "ARCHIVE_TO_CANON_WITHOUT_VALIDATION",
-    "PLUGIN_AVAILABLE_EQUALS_EXECUTED",
-    "MODE_COLOR_EQUALS_MODE_FUNCTION",
-    "REPAIR_SCRIPT_EQUALS_SOURCE_AUTHORITY",
-    "MERGED_EQUALS_LIVE",
-    "HEARTBEAT_EQUALS_EXECUTION_AUTHORITY",
-    "CAPABILITY_PROBE_EQUALS_EXECUTION_PROOF",
-    "DERIVED_EQUALS_MEASURED"
-  ]
+  "admission_pipeline": ["DISCOVER", "CLASSIFY_SOURCE", "EXPAND_OR_FETCH", "HASH_OR_IDENTIFY", "DIFF", "CONFLICT_ROUTE", "REIMPLEMENT_OR_RECONCILE", "REGRESSION_PROVE", "CI_PROVE", "GOVERNED_MERGE", "EXACT_HEAD_DEPLOY", "LIVE_ACCEPTANCE", "LEDGER"],
+  "forbidden_shortcuts": ["ARCHIVE_TO_CANON_WITHOUT_VALIDATION", "PLUGIN_AVAILABLE_EQUALS_EXECUTED", "MODE_COLOR_EQUALS_MODE_FUNCTION", "REPAIR_SCRIPT_EQUALS_SOURCE_AUTHORITY", "MERGED_EQUALS_LIVE", "HEARTBEAT_EQUALS_EXECUTION_AUTHORITY", "CAPABILITY_PROBE_EQUALS_EXECUTION_PROOF", "DERIVED_EQUALS_MEASURED", "UNADDRESSED_IMPROVEMENT_LOOP_EQUALS_PROOF", "LEARNING_CANDIDATE_EQUALS_CANON"]
 }
