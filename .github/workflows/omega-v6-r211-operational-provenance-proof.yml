@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Prove R210 ancestry and immutable runtime authorities
+      - name: Prove R210 ancestry and preserved runtime authorities
         env:
           R210_BASE: 797cfe9698d0a3084ad6afb12cb18a7ed1030c94
         shell: bash
@@ -42,13 +42,18 @@ jobs:
           git cat-file -e "$R210_BASE^{commit}"
           git merge-base --is-ancestor "$R210_BASE" HEAD
           grep -F 'main = "src/runtimeEntryR169.ts"' canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml
+          # R222 legitimately evolved convergenceRuntimeAliasR204 while preserving the
+          # same OMEGA_RUNTIME durable singleton. Keep immutable checks only on the
+          # R210 authorities that have not acquired governed successors.
           git diff --exit-code "$R210_BASE" HEAD -- \
             canonforge-omega/cloudflare/omega-v6-worker/wrangler.toml \
             canonforge-omega/cloudflare/omega-v6-worker/src/heartbeatTruth.ts \
-            canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts \
             canonforge-omega/cloudflare/omega-v6-worker/src/system/omegaRuntimeR201.ts \
             canonforge-omega/cloudflare/omega-v6-worker/src/system/hybridMissionLedgerR203.ts \
             canonforge-omega/scripts/ARCHIVE_OMEGA_SOVEREIGN_PROOF_R210.ps1
+          grep -F 'export { OmegaRuntime } from "./omegaRuntimeR222"' canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
+          grep -F 'durableSingleton: "OMEGA_RUNTIME"' canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
+          grep -F 'newDurableNamespaceCreated: false' canonforge-omega/cloudflare/omega-v6-worker/src/convergenceRuntimeAliasR204.ts
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -82,3 +87,4 @@ jobs:
           grep -F 'pcOnlineRequiresCurrentAuthenticatedHeartbeat: true' "$F"
           grep -F 'canonicalMutation: false' "$F"
           grep -F 'promotionAuthorized: false' "$F"
+          grep -F 'PROBE_BATCH_SIZE_R226 = 4' "$F"
