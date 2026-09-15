@@ -6,6 +6,7 @@ type EvidenceClass = "LIVE_VERIFIED" | "LIVE_OBSERVED" | "ARCHIVAL_SNAPSHOT" | "
 type Probe = { id: string; domain: string; path: string; expected: string[] };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" };
+const PROBE_BATCH_SIZE_R226 = 4;
 const SOURCES: Probe[] = [
   { id: "canonical", domain: "runtime", path: "/_omega/health", expected: ["ok"] },
   { id: "acceptance", domain: "proof", path: "/api/acceptance/r181/manifest", expected: ["canonicalGitSha"] },
@@ -79,6 +80,15 @@ async function probe(request: Request, env: any, ctx: any, canonicalFetch: Canon
   }
 }
 
+async function probeBoundedR226(request: Request, env: any, ctx: any, canonicalFetch: CanonicalFetch, sources: Probe[]) {
+  const results: Awaited<ReturnType<typeof probe>>[] = [];
+  for (let offset = 0; offset < sources.length; offset += PROBE_BATCH_SIZE_R226) {
+    const batch = sources.slice(offset, offset + PROBE_BATCH_SIZE_R226);
+    results.push(...await Promise.all(batch.map(source => probe(request, env, ctx, canonicalFetch, source))));
+  }
+  return results;
+}
+
 async function manifest(env: any) {
   const core = {
     ok: true,
@@ -120,7 +130,7 @@ async function manifest(env: any) {
 }
 
 async function status(request: Request, env: any, ctx: any, canonicalFetch: CanonicalFetch) {
-  const calls = await Promise.all(SOURCES.map(source => probe(request, env, ctx, canonicalFetch, source)));
+  const calls = await probeBoundedR226(request, env, ctx, canonicalFetch, SOURCES);
   const publicSources = calls.map(({ body, ...call }) => call);
   const required = new Set(["canonical", "acceptance", "workspace", "drive", "earthSar", "durability", "returnAdmission", "wholeSystem"]);
   const requiredCalls = calls.filter(call => required.has(call.id));
@@ -143,6 +153,7 @@ async function status(request: Request, env: any, ctx: any, canonicalFetch: Cano
       solver: "Independent-solver availability is distinct from a solver execution receipt.",
       health: "A source that responds with a valid OMEGA schema but reports a degraded internal state is DEGRADED, not UNAVAILABLE.",
       canon: "R211 correlates evidence; it cannot mutate CanonState, HostState, or promotion authority.",
+      r226FanoutRepair: "R211 probes the same complete source registry in bounded batches; batching changes transport pressure only and does not remove, relabel, or waive any evidence requirement.",
     },
     canonicalMutation: false,
     hostStateMutation: false,
@@ -157,7 +168,7 @@ async function query(request: Request, env: any, ctx: any, canonicalFetch: Canon
   const id = (url.searchParams.get("id") || "").trim().toLowerCase();
   const selected = SOURCES.filter(source => (!domain || source.domain.toLowerCase() === domain) && (!id || source.id.toLowerCase() === id));
   if (!selected.length) return json({ ok: false, code: "R211_SOURCE_NOT_FOUND", filter: { domain: domain || null, id: id || null }, canonicalMutation: false, promotionAuthorized: false }, 404);
-  const calls = await Promise.all(selected.map(source => probe(request, env, ctx, canonicalFetch, source)));
+  const calls = await probeBoundedR226(request, env, ctx, canonicalFetch, selected);
   const results = calls.map(call => ({ id: call.id, domain: call.domain, path: call.path, ok: call.ok, status: call.status, schema: call.schema, release: call.release, evidenceClass: call.evidenceClass, elapsedMs: call.elapsedMs, evidence: call.body, ...(call.error ? { error: call.error } : {}) }));
   const core = { ok: results.every(result => result.ok), schema: "OMEGA_OPERATIONAL_PROVENANCE_QUERY_R211", release: OPERATIONAL_PROVENANCE_RELEASE_R211, canonicalGitSha: env?.CANONICAL_GIT_SHA ?? null, filter: { domain: domain || null, id: id || null }, results, authority: "SOURCE_RESPONSES_WITH_PROVENANCE_NOT_CANON_ADMISSION", canonicalMutation: false, hostStateMutation: false, promotionAuthorized: false };
   return { ...core, receiptSha256: await digest(core) };
