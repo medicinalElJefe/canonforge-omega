@@ -82,3 +82,33 @@ R225 is bounded computational candidate execution. It grants no direct Canon mut
 
 ### Admission boundary
 This successor head must independently pass the cumulative exact-head V6 matrix. Only then may it be governed-merged. Merge still does not equal deployment: exact canonical production deployment and live acceptance must independently verify the resulting identity before R225 can be called live.
+
+---
+## R227-UNIFIED-COMPUTATIONAL-FABRIC
+**Date:** 2026-09-15  
+**Status:** `CANDIDATE`  
+**PR:** #264
+
+### Incident
+R223-R225 established closure addresses, resolution-dependent address fields and bounded addressed evolution, but Address Field, Woven Packet, Closure Address, immutable operator identity and Proof Ledger were not yet one common causal protocol shared by the major OMEGA consumers. That left a risk that surfaces could implement similar ideas while diverging in packet identity, operator identity, proof transport or authority boundaries.
+
+### Permanent system invariant
+Registered OMEGA consumers share one deterministic proof-carrying computational protocol: `Address Field × Woven Packet × Closure Address × Operator Descriptor × Proof Ledger`. The address/path/closure is part of computational identity rather than disposable metadata. Operators carry stable descriptors rather than relying on a display name. Packets and receipts bind address, closure, history and proof identity. Consumer/address mismatches fail closed. Candidate computation remains isolated from Canon, and software skins remain computational resolution levels rather than physical dimensions.
+
+### Implementation
+- `omega_runtime/unified_fabric.py` — unified proof-carrying fabric, stable operator descriptors, WovenPacket identity, ProofLedgerEntry and FabricReceipt, consumer registry and fail-closed boundaries.
+- `tests/test_unified_fabric_r227.py` — deterministic identity, registered-consumer, address/closure, receipt and authority regressions.
+- `config/repair_system_contract.json` — R227 governed repair registration.
+- `config/system_inheritance_contract.json` — inherited unified-fabric law and forbidden shortcuts.
+
+### Consumer convergence
+Genesis, Forecast, SAR, Optical, Render, Sovereign, AI/SAI and Interface are registered as consumers of the common protocol. Registration does not by itself claim that every historical implementation has already been rewritten; it defines the shared execution/proof boundary that successor integrations must use rather than spawning parallel truth or runtime ownership.
+
+### First exact-head evidence
+Initial R227 head `47634d31e15df868b8a6fd916518d8a275b9d2aa` reached the repair-system workflow. Its inherited repair-system test suite passed 48 tests, after which the process gate correctly rejected the candidate because this governed runtime change had not yet been registered in `repair_system_contract.json`, `system_inheritance_contract.json`, and this durable ledger. That failure is preserved as valid governance evidence. The present successor head adds those missing governance surfaces and must rerun the exact-head matrix independently; the earlier failure is not reclassified as success.
+
+### Authority boundary
+R227 is candidate computation/proof transport only. It grants no direct Canon mutation, GitHub merge authority through runtime code, production/deployment/promotion authority, physical execution authority, physical-dimension claim, or authority to convert derived state into measured evidence.
+
+### Admission boundary
+R227 remains `CANDIDATE` until its exact successor head passes the cumulative source matrix and is governed-merged to `omega-v6-full-convergence`. Production mutation remains serialized: while the existing R225 production transaction is unresolved, R227 must not create a competing production writer. After that lease settles, exact canonical deployment and live acceptance must independently establish the resulting production identity.
