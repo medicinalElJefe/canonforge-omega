@@ -5,6 +5,8 @@ This ledger is additive to `OMEGA_V6_ADVANCEMENT_LEDGER.md`. Detailed predecesso
 ## Contract
 Every governed repair records incident, invariant, implementation, regression proof, CI proof, authority boundary, release-admission state, source identity, and unresolved qualification. Archive/plugin/mode/package inheritance remains governed by `config/system_inheritance_contract.json`.
 
+Permanent system invariant: governed repairs preserve historical evidence and authority boundaries; source proof, governance proof, merge, deployment, and live verification remain distinct states.
+
 ---
 ## R222-SINGLE-OWNER-HYBRID-REPAIR
 **Status:** `CANDIDATE`
