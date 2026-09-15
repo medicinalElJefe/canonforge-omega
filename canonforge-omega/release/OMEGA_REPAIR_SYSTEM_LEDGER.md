@@ -43,49 +43,36 @@ Permanent invariant: `Address + Field + History + Relation → admissible Operat
 **Date:** 2026-09-15  
 **Status:** `CANDIDATE`
 
-### Incident
-The exact-head production transaction can complete source proof, deployment and active-version ownership, then spend a large portion of the job timeout inside live acceptance retries. That makes a deterministic identity/provenance mismatch operationally indistinguishable from transient edge propagation until the retry envelope expires and can monopolize the serialized production lease.
-
-### Permanent system invariant
-Live release proof is a bounded closure. Deterministic identity, canonical-SHA, provenance or release-lease mismatch fails immediately. Only transport, decode or propagation-class failures may retry, and only until an explicit monotonic deadline. Every terminal result carries a classification and evidence. A probe never mutates Canon or production and cannot grant release authority.
-
-### Implementation
-- `scripts/release_live_probe_r226.py` — bounded live-release probe with deterministic-mismatch versus transient-failure classification and evidence output.
-- `tests/test_release_live_probe_r226.py` — deterministic mismatch, transient retry, deadline and fail-closed regression coverage.
-- `config/repair_system_contract.json` — registers the governed repair.
-- `config/system_inheritance_contract.json` — makes bounded/classified release proof inherited system law.
-
-### Preserved production boundary
-R226 deliberately does not replace or rewrite the proven production workflow in this isolated candidate. The inherited exact-head release-forward workflow, its single-writer serialization, exact canonical identity checks, cumulative truth proof, federation proof and ownership-checked rollback remain authoritative. The probe must first prove independently before any separately governed workflow integration is considered.
-
-### Prior failure evidence
-The first R226 exact-head candidate passed the inherited repair contract test suite itself, then the process-registration gate correctly failed because the new governed script and regression test were not yet represented in all three governance surfaces. That failure is retained as valid evidence. This successor registers the invariant rather than bypassing the gate.
-
-### Authority boundary
-R226 is release-proof infrastructure only. It grants no Canon mutation, merge, deployment, promotion, rollback, physical execution or production authority. `SOURCE_PROVEN` remains distinct from `MERGED`, `DEPLOYED` and `LIVE_VERIFIED`.
-
-### Admission boundary
-R226 remains `CANDIDATE` until this exact successor head independently passes the cumulative source/governance matrix. Production integration is intentionally excluded from this candidate so an experimental proof refactor cannot alter the active canonical release transaction.
+Permanent invariant: live release proof is a bounded closure. Deterministic identity, canonical-SHA, provenance or release-lease mismatch fails immediately. Only transport, decode or propagation-class failures may retry to an explicit deadline. Exact-head, single-writer, cumulative truth and ownership-checked rollback remain authoritative.
 
 ---
 ## R226.1-R211-BOUNDED-PROBE-FANOUT
 **Date:** 2026-09-15  
-**Status:** `CANDIDATE`  
+**Status:** `MERGED; LIVE QUALIFICATION INCOMPLETE`  
 **PR:** #267
 
+Permanent invariant: correlated evidence endpoints preserve the complete evidence registry and required truth set while scheduling recursive probes in bounded batches. Batching changes transport pressure only and grants no authority.
+
+---
+## R226.2-R194-BOUNDED-EVIDENCE-FANOUT
+**Date:** 2026-09-15  
+**Status:** `CANDIDATE`
+
 ### Incident evidence
-R226 production run `34928144118`, attempt 2, proved exact canonical SHA, R217 lease/run provenance, deployment and active-version ownership. `/api/system/r217/release-lease` and the R211 manifest returned successfully, while the following R211 status observation repeatedly terminated as HTTP 503 and never produced its receipt. Ownership-checked rollback restored the pre-deployment version set.
+After governed merge of R226.1, exact canonical SHA `117a666f64cfdbfc9394b8082fa5541c594a7b91` was observed live. Push-side R194 and R215 proofs then failed within approximately one second of each other: `/api/workspace/r194/status` returned HTTP 503 while R215 reached thirteen prior navigation routes before `/federation` returned HTTP 503. R194 source restoration, typecheck and package proof passed before the live failure.
 
 ### Permanent invariant
-A correlated evidence endpoint must not create avoidable self-fanout pressure by launching the complete evidence registry simultaneously. The same complete registry and required truth set may be evaluated in bounded batches. Batching changes scheduling only: no evidence source, classification, required condition or authority boundary may be removed or waived.
+Evidence aggregation must preserve every declared source and truth classification while bounding correlated recursive Worker fanout. Transport-pressure repair may change scheduling/concurrency only; it may not remove a source, convert unavailable external evidence into verified evidence, weaken local verification thresholds, alter Canon authority, or convert a candidate into a live admission.
 
 ### Implementation
-- `cloudflare/omega-v6-worker/src/system/operationalProvenanceFabricR211.ts` — same 19-source registry, bounded four-at-a-time probe scheduling for status/query.
-- `.github/workflows/omega-v6-r211-operational-provenance-proof.yml` — successor-aware authority proof: immutable R210 authorities remain byte-diff protected while the governed R222 convergence alias is proved by its current singleton/no-new-namespace invariants rather than incorrectly requiring R210-era bytes forever.
-- `config/repair_system_contract.json`, `config/system_inheritance_contract.json`, and this ledger register the repair as governed platform work.
+- `cloudflare/omega-v6-worker/src/evidencePlaneR194.ts` — preserves all eleven R194 probes in original order and evaluates them in bounded batches of three rather than one eleven-way `Promise.all`.
+- R194 response includes an explicit R226.2 transport-repair receipt recording batch size and source preservation.
+
+### Regression / qualification requirement
+The exact candidate must pass inherited typecheck, package and repair-system governance proofs. Live qualification must independently prove `/api/workspace/r194/status` and `/federation` without 503 on the admitted exact SHA. If `/federation` remains independently defective after R194 pressure is removed, route execution must be diagnosed separately rather than weakening either live proof.
 
 ### Authority boundary
-This is source/proof repair only. It creates no production writer and grants no merge, Canon, deployment, rollback, promotion or physical execution authority. Exact-head, R217 provenance/lease, cumulative truth, active-version ownership and ownership-checked rollback remain unchanged.
+R226.2 is source/runtime-pressure repair only. It grants no Canon mutation, merge, deployment, rollback, promotion, physical execution or production authority. Exact-head, release provenance/lease, single-writer serialization, cumulative truth, active-version ownership and ownership-checked rollback remain mandatory.
 
 ### Admission boundary
-`SOURCE_PROVEN ≠ MERGED ≠ DEPLOYED ≠ LIVE_VERIFIED`. R226.1 remains candidate-only until its exact head passes the cumulative matrix; only then may governed merge and the inherited serialized exact-head production transaction be considered.
+`SOURCE_PROVEN ≠ GOVERNANCE_PROVEN ≠ MERGED ≠ DEPLOYED ≠ LIVE_VERIFIED`. This branch remains candidate-only until the exact candidate passes the cumulative matrix.
