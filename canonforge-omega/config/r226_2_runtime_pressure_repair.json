@@ -1,0 +1,26 @@
+{
+  "schema": "OMEGA_R226_2_RUNTIME_PRESSURE_REPAIR_V1",
+  "baseCanonicalSha": "117a666f64cfdbfc9394b8082fa5541c594a7b91",
+  "incident": {
+    "r194": "/api/workspace/r194/status returned HTTP 503 during exact-SHA live proof",
+    "r215": "/federation returned HTTP 503 after thirteen prior navigation routes succeeded",
+    "correlation": "failures occurred within approximately one second"
+  },
+  "repair": {
+    "target": "cloudflare/omega-v6-worker/src/evidencePlaneR194.ts",
+    "probeCountPreserved": 11,
+    "batchSize": 3,
+    "sourceRemoval": false,
+    "thresholdWeakening": false,
+    "authorityChange": false
+  },
+  "qualification": {
+    "sourceProofRequired": true,
+    "governanceProofRequired": true,
+    "governedMergeRequired": true,
+    "serializedExactHeadDeploymentRequired": true,
+    "r194Live200Required": true,
+    "federationLive200Required": true,
+    "liveVerifiedBeforeQualification": false
+  }
+}
