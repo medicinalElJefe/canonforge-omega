@@ -1,0 +1,27 @@
+name: OMEGA V6 R226.2 bounded R194 evidence fanout proof
+
+on:
+  pull_request:
+    branches: [omega-v6-full-convergence]
+  push:
+    branches: [omega-v6-full-convergence, r226-2-live-runtime-503-repair]
+
+permissions:
+  contents: read
+
+jobs:
+  prove-r194-bounded-fanout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prove bounded fanout and source preservation
+        working-directory: canonforge-omega
+        run: python -m pytest -q tests/test_r226_2_r194_bounded_fanout.py tests/test_system_inheritance_contract.py tests/test_repair_system_contract.py
+      - name: Typecheck canonical Worker
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: |
+          npm ci
+          npm run typecheck
+      - name: Dry-run canonical Worker package
+        working-directory: canonforge-omega/cloudflare/omega-v6-worker
+        run: npx wrangler deploy --dry-run
