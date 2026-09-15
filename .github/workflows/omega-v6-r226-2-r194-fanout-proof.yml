@@ -23,11 +23,14 @@ jobs:
       - name: Prove bounded fanout and source preservation
         working-directory: canonforge-omega
         run: python -m pytest -q tests/test_r226_2_r194_bounded_fanout.py tests/test_system_inheritance_contract.py tests/test_repair_system_contract.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Typecheck canonical Worker
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
         run: |
-          npm ci
+          npm install
           npm run typecheck
       - name: Dry-run canonical Worker package
         working-directory: canonforge-omega/cloudflare/omega-v6-worker
-        run: npx wrangler deploy --dry-run
+        run: npx wrangler deploy --dry-run --outdir .r226-2-dry-run
