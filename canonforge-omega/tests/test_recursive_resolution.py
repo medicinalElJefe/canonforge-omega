@@ -210,3 +210,35 @@ def test_information_gain_requires_real_probability_model():
     assert information_gain([0.5, 0.5], [(1.0, [1.0, 0.0])]) == 1.0
     with pytest.raises(ValueError):
         information_gain([0.5, 0.5], [])
+
+
+def test_resolution_ledger_is_append_only_and_replayable():
+    from omega_fusion_core.recursive_resolution import ResolutionLedger
+
+    ledger = ResolutionLedger()
+    first = ledger.append("OBSERVE", {"value": 1})
+    second = ledger.append("BRANCH", {"id": "b1"})
+    assert first.index == 0
+    assert second.index == 1
+    assert second.previous_digest == first.digest
+    assert ledger.verify() is True
+    assert ledger.replay_digest() == ledger.canonical_digest
+
+
+def test_resolution_ledger_preserves_decline_scar():
+    from omega_fusion_core.recursive_resolution import ResolutionLedger
+
+    branch = BranchCandidate(
+        "bad",
+        None,
+        _state("bad"),
+        physical_checks=[
+            CheckResult("energy", False, Authority.DERIVED_STANDARD, "violates conservation")
+        ],
+    )
+    BranchResolutionEngine().admit(branch)
+    ledger = ResolutionLedger()
+    event = ledger.record_branch(branch)
+    assert event.payload["disposition"] == BranchDisposition.REJECTED_PHYSICAL.value
+    assert event.payload["scar"][0].startswith("PHYSICAL:")
+    assert ledger.verify() is True
