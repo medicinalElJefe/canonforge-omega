@@ -266,3 +266,32 @@ It does provide a rigorous structure for determining:
 - what is inconsistent,
 - what remains unresolved,
 - and what observation would discriminate the surviving branches.
+
+
+## 13. Addressed motion graph
+
+`ResolutionGraph` binds the abstract calculus to executable state-space
+identification.
+
+Nodes are exact `NodeState` values keyed from their full `OmegaAddr`.
+Transitions are exact `TransitionRecord` values. Rejected physical edges are
+retained as evidence but are excluded from reachability by default.
+
+The graph exposes:
+
+- forward reachable sets,
+- backward reachable sets,
+- bounded-hop layers,
+- constrained forward/backward intersections,
+- preserved rejected transitions.
+
+For known past state `P` and future state `F`, the runtime can therefore
+compute the addressed intersection of states that are reachable from `P` and
+can still reach `F`.
+
+A single surviving node is a resolved addressed intermediate state. Multiple
+nodes are a bounded manifold. An empty intersection means the current
+data/model/constraints are inconsistent.
+
+This is the runtime bridge from the Canon concept of an inscribed or inevitable
+pathway to a testable state-space computation.
