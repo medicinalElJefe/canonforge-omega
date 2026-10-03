@@ -37,3 +37,15 @@ Candidate learning cannot directly rewrite Canon. `CanonGate` requires replay, i
 ## Integration rule
 
 Existing OMEGA engines may adopt `OmegaAddr` and `NodeState` incrementally. Do not replace domain metrics with arbitrary Euclidean distance: register the metric, projector and translator appropriate to the data domain. Missing or unresolved variables remain unknown rather than being synthesized as facts.
+
+
+## Recursive resolution successor
+
+The addressed-skin kernel now has a governed successor layer in
+[`RECURSIVE_RESOLUTION_CALCULUS.md`](./RECURSIVE_RESOLUTION_CALCULUS.md).
+
+That layer adds physical-veto-first branching, forward/backward reachability
+intersection, exact decline scars, lemma composition, recursive promotion
+(`EDGE -> LEMMA -> THEOREM -> LENS`), and projection/evolution commutation
+tests. It preserves this kernel's original rule that unresolved variables
+remain unknown rather than being synthesized as facts.
