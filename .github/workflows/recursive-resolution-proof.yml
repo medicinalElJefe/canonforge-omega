@@ -5,9 +5,11 @@ on:
     paths:
       - "canonforge-omega/omega_fusion_core/intrinsic_skin.py"
       - "canonforge-omega/omega_fusion_core/recursive_resolution.py"
+      - "canonforge-omega/omega_fusion_core/resolution_graph.py"
       - "canonforge-omega/omega_fusion_core/__init__.py"
       - "canonforge-omega/tests/test_intrinsic_skin.py"
       - "canonforge-omega/tests/test_recursive_resolution.py"
+      - "canonforge-omega/tests/test_resolution_graph.py"
       - "canonforge-omega/docs/INTRINSIC_SKIN_COMPUTE.md"
       - "canonforge-omega/docs/RECURSIVE_RESOLUTION_CALCULUS.md"
       - ".github/workflows/recursive-resolution-proof.yml"
@@ -44,10 +46,11 @@ jobs:
         run: |
           python -m py_compile omega_fusion_core/intrinsic_skin.py
           python -m py_compile omega_fusion_core/recursive_resolution.py
+          python -m py_compile omega_fusion_core/resolution_graph.py
           python -m py_compile omega_fusion_core/__init__.py
 
       - name: Prove intrinsic skin + recursive resolution contracts
-        run: pytest -q tests/test_intrinsic_skin.py tests/test_recursive_resolution.py
+        run: pytest -q tests/test_intrinsic_skin.py tests/test_recursive_resolution.py tests/test_resolution_graph.py
 
       - name: Import proof
         run: |
