@@ -364,3 +364,130 @@ def information_gain(
         for weight, posterior in posterior_scenarios
     )
     return normalized_entropy(prior) - expected
+
+
+@dataclass(frozen=True)
+class LedgerEvent:
+    index: int
+    kind: str
+    payload: Dict[str, Any]
+    previous_digest: str
+    digest: str
+
+
+class ResolutionLedger:
+    """Append-only deterministic branch/proof ledger.
+
+    The ledger is deliberately small and transportable: every event is chained
+    to the previous digest so replay can prove that decline scars, promotions,
+    and branch outcomes were not silently deleted or reordered.
+    """
+
+    GENESIS = "0" * 64
+
+    def __init__(self) -> None:
+        self._events: List[LedgerEvent] = []
+
+    @property
+    def events(self) -> Tuple[LedgerEvent, ...]:
+        return tuple(self._events)
+
+    @property
+    def canonical_digest(self) -> str:
+        return self._events[-1].digest if self._events else self.GENESIS
+
+    def append(self, kind: str, payload: Dict[str, Any]) -> LedgerEvent:
+        if not kind:
+            raise ValueError("ledger event kind is required")
+        index = len(self._events)
+        previous = self.canonical_digest
+        normalized = {
+            "index": index,
+            "kind": kind,
+            "payload": payload,
+            "previous_digest": previous,
+        }
+        event = LedgerEvent(
+            index=index,
+            kind=kind,
+            payload=dict(payload),
+            previous_digest=previous,
+            digest=stable_hash(normalized),
+        )
+        self._events.append(event)
+        return event
+
+    def record_branch(self, branch: BranchCandidate) -> LedgerEvent:
+        return self.append(
+            "BRANCH",
+            {
+                "branch_id": branch.branch_id,
+                "parent_branch_id": branch.parent_branch_id,
+                "disposition": branch.disposition.value,
+                "authority": int(branch.authority),
+                "scar": list(branch.decline_scar),
+                "coord": branch.state.coord,
+                "canon_score": branch.canon_score(),
+                "residual": branch.residual,
+            },
+        )
+
+    def record_transition(self, transition: TransitionRecord) -> LedgerEvent:
+        return self.append(
+            "TRANSITION",
+            {
+                "transition_id": transition.transition_id,
+                "source": transition.source,
+                "target": transition.target,
+                "authority": int(transition.authority),
+                "physically_admissible": transition.physically_admissible,
+                "residuals": transition.residuals,
+            },
+        )
+
+    def record_promotion(
+        self,
+        level: PromotionLevel,
+        object_name: str,
+        decision: str,
+        evidence: PromotionEvidence,
+    ) -> LedgerEvent:
+        if decision not in ("PROMOTE", "HOLD"):
+            raise ValueError("promotion decision must be PROMOTE or HOLD")
+        return self.append(
+            "PROMOTION",
+            {
+                "level": level.value,
+                "object_name": object_name,
+                "decision": decision,
+                "evidence": evidence,
+            },
+        )
+
+    def verify(self) -> bool:
+        previous = self.GENESIS
+        for expected_index, event in enumerate(self._events):
+            if event.index != expected_index or event.previous_digest != previous:
+                return False
+            normalized = {
+                "index": event.index,
+                "kind": event.kind,
+                "payload": event.payload,
+                "previous_digest": event.previous_digest,
+            }
+            if stable_hash(normalized) != event.digest:
+                return False
+            previous = event.digest
+        return True
+
+    def replay_digest(self) -> str:
+        previous = self.GENESIS
+        for event in self._events:
+            normalized = {
+                "index": event.index,
+                "kind": event.kind,
+                "payload": event.payload,
+                "previous_digest": previous,
+            }
+            previous = stable_hash(normalized)
+        return previous
