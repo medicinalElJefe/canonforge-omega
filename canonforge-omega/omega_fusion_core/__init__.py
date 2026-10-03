@@ -59,11 +59,15 @@ __all__ = [
     "RecursivePromotionGate",
     "RelationEdge",
     "ResolutionLedger",
+    "ResolutionGraph",
     "ResolutionResult",
+    "ReachabilityLayer",
+    "ReachabilityReport",
     "SkinRegistry",
     "TrainingCell",
     "TransitionRecord",
     "compose_lemmas",
+    "coord_key",
     "cross_skin_q",
     "information_gain",
     "intersect_reachable_states",
@@ -73,3 +77,10 @@ __all__ = [
     "stable_hash",
     "vector_residual",
 ]
+
+from .resolution_graph import (
+    ReachabilityLayer,
+    ReachabilityReport,
+    ResolutionGraph,
+    coord_key,
+)
